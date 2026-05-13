@@ -1,0 +1,13 @@
+node_modules
+dist
+.env
+.env.local
+uploads/
+coverage/
+*.log
+.DS_Store
+
+# Local NCERT PoC scripts artifacts (now superseded by /admin/ingest pipeline)
+scripts/ncert-import/pages/
+scripts/ncert-import/problems.json
+scripts/ncert-import/exercise-index.json

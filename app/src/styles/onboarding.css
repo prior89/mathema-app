@@ -1,0 +1,388 @@
+/* Mathēma — Onboarding + Main app design tokens & base
+ * Source: prototype `App onboarding/styles.css`.
+ * Sage palette is the default (was indigo in prototype).
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Palette — Sage (default) */
+  --p-bg: oklch(0.985 0.005 90);
+  --p-surface: #ffffff;
+  --p-surface-2: oklch(0.97 0.007 90);
+  --p-ink: oklch(0.18 0.015 175);
+  --p-ink-2: oklch(0.38 0.012 175);
+  --p-muted: oklch(0.58 0.01 175);
+  --p-border: oklch(0.92 0.006 90);
+  --p-border-strong: oklch(0.86 0.008 90);
+  --p-primary: oklch(0.45 0.08 175);
+  --p-primary-fg: #ffffff;
+  --p-primary-tint: oklch(0.95 0.022 175);
+  --p-accent: oklch(0.72 0.13 75);
+  --p-accent-tint: oklch(0.96 0.025 75);
+  --p-success: oklch(0.62 0.13 155);
+  --p-danger: oklch(0.6 0.18 25);
+
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --font-display: 'Instrument Serif', 'Source Serif Pro', Georgia, serif;
+  --font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Indigo palette (optional) */
+.pal-indigo {
+  --p-ink: oklch(0.18 0.015 268);
+  --p-ink-2: oklch(0.38 0.012 268);
+  --p-muted: oklch(0.58 0.01 268);
+  --p-primary: oklch(0.42 0.14 268);
+  --p-primary-tint: oklch(0.95 0.025 268);
+  --p-accent: oklch(0.72 0.15 60);
+  --p-accent-tint: oklch(0.96 0.03 70);
+}
+
+/* Plum palette (optional) */
+.pal-plum {
+  --p-primary: oklch(0.4 0.13 330);
+  --p-primary-tint: oklch(0.95 0.025 330);
+  --p-accent: oklch(0.72 0.14 45);
+  --p-accent-tint: oklch(0.96 0.03 50);
+}
+
+/* Dark mode */
+.dark {
+  --p-bg: oklch(0.18 0.012 175);
+  --p-surface: oklch(0.22 0.014 175);
+  --p-surface-2: oklch(0.25 0.014 175);
+  --p-ink: oklch(0.97 0.005 90);
+  --p-ink-2: oklch(0.82 0.01 175);
+  --p-muted: oklch(0.62 0.012 175);
+  --p-border: oklch(0.3 0.012 175);
+  --p-border-strong: oklch(0.36 0.014 175);
+  --p-primary: oklch(0.72 0.1 175);
+  --p-primary-tint: oklch(0.28 0.04 175);
+  --p-accent: oklch(0.78 0.14 65);
+  --p-accent-tint: oklch(0.3 0.04 65);
+}
+
+.mathema-app, .mathema-app * { box-sizing: border-box; }
+
+.mathema-app .screen {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  background: var(--p-bg);
+  color: var(--p-ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.mathema-app .screen-body {
+  flex: 1;
+  min-height: 0;
+  padding: 24px 24px 12px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.mathema-app .screen-foot { padding: 12px 24px 24px; display: flex; flex-direction: column; gap: 10px; }
+
+.mathema-app .steps {
+  display: flex; gap: 4px; padding: 8px 24px 0;
+}
+.mathema-app .steps .dot { flex: 1; height: 3px; border-radius: 2px; background: var(--p-border); }
+.mathema-app .steps .dot.active { background: var(--p-primary); }
+.mathema-app .steps .dot.done { background: var(--p-primary); opacity: 0.5; }
+
+.mathema-app .top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 24px 0; font-size: 13px; color: var(--p-muted);
+}
+.mathema-app .top-bar button {
+  background: none; border: none; color: var(--p-muted);
+  font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; padding: 8px 4px;
+}
+.mathema-app .top-bar .back {
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; margin-left: -8px;
+}
+
+/* Typography */
+.mathema-app .eyebrow {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--p-muted); font-weight: 500;
+}
+.mathema-app .display {
+  font-family: var(--font-display); font-size: 40px; line-height: 1.05;
+  letter-spacing: -0.02em; font-weight: 400; color: var(--p-ink); margin: 0;
+}
+.mathema-app .display em { font-style: italic; color: var(--p-primary); }
+.mathema-app .title {
+  font-family: var(--font-display); font-size: 30px; line-height: 1.1;
+  font-weight: 400; letter-spacing: -0.015em; color: var(--p-ink); margin: 0;
+}
+.mathema-app .subtitle {
+  font-size: 15px; color: var(--p-ink-2); margin: 8px 0 0; line-height: 1.45; text-wrap: pretty;
+}
+.mathema-app .caption { font-size: 12.5px; color: var(--p-muted); line-height: 1.45; }
+
+/* Buttons */
+.mathema-app .btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; height: 54px; border-radius: 14px; border: 1px solid transparent;
+  background: var(--p-primary); color: var(--p-primary-fg);
+  font-family: inherit; font-size: 16px; font-weight: 600; letter-spacing: -0.005em;
+  cursor: pointer; transition: transform .12s ease, opacity .12s ease;
+}
+.mathema-app .btn:hover { opacity: 0.95; }
+.mathema-app .btn:active { transform: scale(0.99); }
+.mathema-app .btn:disabled { cursor: not-allowed; }
+.mathema-app .btn.ghost { background: transparent; color: var(--p-ink-2); border-color: var(--p-border-strong); }
+.mathema-app .btn.outline { background: var(--p-surface); color: var(--p-ink); border-color: var(--p-border-strong); }
+.mathema-app .btn.text { background: none; border: none; color: var(--p-ink-2); height: 44px; font-weight: 500; }
+
+/* Inputs */
+.mathema-app .field { display: flex; flex-direction: column; gap: 6px; }
+.mathema-app .field label { font-size: 12px; font-weight: 600; color: var(--p-ink-2); letter-spacing: -0.005em; }
+.mathema-app .field input, .mathema-app .field select {
+  width: 100%; height: 52px; padding: 0 16px; border-radius: 12px;
+  border: 1px solid var(--p-border-strong); background: var(--p-surface);
+  color: var(--p-ink); font-family: inherit; font-size: 16px; outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.mathema-app .field input:focus, .mathema-app .field select:focus {
+  border-color: var(--p-primary); box-shadow: 0 0 0 4px var(--p-primary-tint);
+}
+
+/* Cards */
+.mathema-app .card { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 16px; padding: 16px; }
+.mathema-app .option-card {
+  background: var(--p-surface); border: 1.5px solid var(--p-border); border-radius: 16px;
+  padding: 16px; display: flex; gap: 14px; align-items: flex-start; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.mathema-app .option-card:hover { border-color: var(--p-border-strong); }
+.mathema-app .option-card.selected { border-color: var(--p-primary); background: var(--p-primary-tint); }
+.mathema-app .option-card .check {
+  width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--p-border-strong);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 2px;
+}
+.mathema-app .option-card.selected .check { background: var(--p-primary); border-color: var(--p-primary); color: var(--p-primary-fg); }
+
+/* Chips */
+.mathema-app .chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;
+  border-radius: 999px; background: var(--p-surface-2); color: var(--p-ink-2);
+  font-size: 12px; font-weight: 500; border: 1px solid var(--p-border);
+}
+.mathema-app .chip.accent { background: var(--p-accent-tint); color: var(--p-ink); border-color: transparent; }
+.mathema-app .chip.primary { background: var(--p-primary-tint); color: var(--p-primary); border-color: transparent; }
+
+/* Grade picker */
+.mathema-app .grade-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.mathema-app .grade-pill {
+  height: 64px; border-radius: 14px; border: 1.5px solid var(--p-border); background: var(--p-surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .15s ease;
+}
+.mathema-app .grade-pill .num { font-family: var(--font-display); font-size: 24px; line-height: 1; color: var(--p-ink); }
+.mathema-app .grade-pill .lbl { font-size: 10.5px; color: var(--p-muted); margin-top: 4px; letter-spacing: 0.04em; }
+.mathema-app .grade-pill.selected { border-color: var(--p-primary); background: var(--p-primary-tint); }
+.mathema-app .grade-pill.selected .num, .mathema-app .grade-pill.selected .lbl { color: var(--p-primary); }
+
+/* Choice (diagnostic / practice) */
+.mathema-app .choice {
+  display: flex; align-items: center; gap: 12px; padding: 14px;
+  border-radius: 14px; border: 1.5px solid var(--p-border); background: var(--p-surface);
+  cursor: pointer; transition: all .12s ease;
+}
+.mathema-app .choice:hover { border-color: var(--p-border-strong); }
+.mathema-app .choice .letter {
+  width: 28px; height: 28px; border-radius: 8px; border: 1.5px solid var(--p-border-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--p-ink-2); flex-shrink: 0;
+}
+.mathema-app .choice .text { font-size: 15px; font-family: var(--font-mono); color: var(--p-ink); }
+.mathema-app .choice.selected { border-color: var(--p-primary); background: var(--p-primary-tint); }
+.mathema-app .choice.selected .letter { background: var(--p-primary); border-color: var(--p-primary); color: var(--p-primary-fg); }
+.mathema-app .choice.correct { border-color: var(--p-success); background: oklch(0.96 0.04 155); }
+.mathema-app .choice.correct .letter { background: var(--p-success); border-color: var(--p-success); color: #fff; }
+
+/* Hero glyph */
+.mathema-app .hero-glyph {
+  width: 100%; aspect-ratio: 1.1 / 1; border-radius: 28px;
+  background: var(--p-primary); position: relative; overflow: hidden; color: var(--p-primary-fg);
+}
+.mathema-app .hero-glyph .grid-bg {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Toggle */
+.mathema-app .toggle {
+  width: 44px; height: 26px; border-radius: 999px; background: var(--p-border-strong);
+  position: relative; cursor: pointer; transition: background .15s ease; flex-shrink: 0;
+}
+.mathema-app .toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%; background: #fff;
+  transition: transform .15s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.mathema-app .toggle.on { background: var(--p-primary); }
+.mathema-app .toggle.on::after { transform: translateX(18px); }
+
+/* Consent rows */
+.mathema-app .consent-row { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--p-border); }
+.mathema-app .consent-row:last-child { border-bottom: none; }
+.mathema-app .consent-row .ck {
+  width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid var(--p-border-strong);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 2px; cursor: pointer;
+}
+.mathema-app .consent-row .ck.checked { background: var(--p-primary); border-color: var(--p-primary); color: var(--p-primary-fg); }
+.mathema-app .consent-row .info { flex: 1; min-width: 0; }
+.mathema-app .consent-row .info .name { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 600; color: var(--p-ink); }
+.mathema-app .consent-row .info .desc { font-size: 12.5px; color: var(--p-muted); margin-top: 4px; line-height: 1.45; }
+.mathema-app .req-pill {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 2px 6px; border-radius: 4px;
+  background: var(--p-surface-2); color: var(--p-muted); border: 1px solid var(--p-border);
+}
+
+/* Mastery row */
+.mathema-app .mastery-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.mathema-app .mastery-row .label { width: 110px; font-size: 13px; color: var(--p-ink-2); font-weight: 500; }
+.mathema-app .mastery-row .track { flex: 1; height: 8px; border-radius: 4px; background: var(--p-surface-2); overflow: hidden; position: relative; }
+.mathema-app .mastery-row .fill { height: 100%; border-radius: 4px; background: var(--p-primary); }
+.mathema-app .mastery-row .value { width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--p-ink-2); font-weight: 500; }
+
+.mathema-app .math { font-family: var(--font-mono); font-size: 15px; letter-spacing: -0.005em; color: var(--p-ink); }
+.mathema-app .math-big { font-family: var(--font-mono); font-size: 22px; color: var(--p-ink); letter-spacing: -0.01em; }
+
+/* ===== Main app ===== */
+.mathema-app .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--p-surface); border-top: 1px solid var(--p-border); padding: 6px 4px 8px; }
+.mathema-app .tabbar .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; color: var(--p-muted); font-size: 10.5px; font-weight: 500; cursor: pointer; }
+.mathema-app .tabbar .tab .icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.mathema-app .tabbar .tab.active { color: var(--p-primary); }
+
+.mathema-app .app-head { padding: 18px 22px 8px; display: flex; align-items: center; justify-content: space-between; }
+.mathema-app .app-head .greet { flex: 1; min-width: 0; }
+.mathema-app .app-head .greet .hello { font-size: 12px; color: var(--p-muted); letter-spacing: 0.02em; }
+.mathema-app .app-head .greet .name { font-family: var(--font-display); font-size: 24px; line-height: 1.1; letter-spacing: -0.01em; }
+.mathema-app .app-head .greet .name em { font-style: italic; color: var(--p-primary); }
+.mathema-app .app-head .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--p-primary); color: var(--p-primary-fg); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 18px; font-style: italic; }
+
+.mathema-app .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.mathema-app .stat { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 14px; padding: 12px 14px; }
+.mathema-app .stat .k { font-size: 10.5px; letter-spacing: 0.06em; color: var(--p-muted); font-family: var(--font-mono); text-transform: uppercase; }
+.mathema-app .stat .v { font-family: var(--font-display); font-size: 24px; color: var(--p-ink); line-height: 1.1; margin-top: 6px; letter-spacing: -0.01em; }
+.mathema-app .stat .v.italic { font-style: italic; }
+.mathema-app .stat .delta { font-family: var(--font-mono); font-size: 11px; color: var(--p-success); margin-top: 2px; }
+.mathema-app .stat .delta.down { color: var(--p-danger); }
+
+.mathema-app .section-h { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 0; margin: 14px 0 8px; }
+.mathema-app .section-h .label { font-size: 13.5px; font-weight: 600; color: var(--p-ink); }
+.mathema-app .section-h .more { font-size: 12px; color: var(--p-muted); cursor: pointer; }
+
+.mathema-app .plan-card { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; }
+.mathema-app .plan-card .badge { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: var(--font-display); font-size: 22px; font-style: italic; }
+.mathema-app .plan-card .info { flex: 1; min-width: 0; }
+.mathema-app .plan-card .info .ttl { font-size: 14px; font-weight: 600; color: var(--p-ink); }
+.mathema-app .plan-card .info .sub { font-size: 12px; color: var(--p-muted); margin-top: 2px; }
+
+.mathema-app .heatmap { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; }
+.mathema-app .heatmap .cell { aspect-ratio: 1; border-radius: 3px; background: var(--p-surface-2); }
+.mathema-app .heatmap .cell.l1 { background: oklch(from var(--p-primary) l c h / 0.25); }
+.mathema-app .heatmap .cell.l2 { background: oklch(from var(--p-primary) l c h / 0.5); }
+.mathema-app .heatmap .cell.l3 { background: var(--p-primary); }
+
+.mathema-app .viz-frame { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 18px; padding: 18px; position: relative; overflow: hidden; }
+.mathema-app .viz-frame .viz-bg { position: absolute; inset: 0; background-image: linear-gradient(to right, oklch(0.92 0.005 90 / 0.5) 1px, transparent 1px), linear-gradient(to bottom, oklch(0.92 0.005 90 / 0.5) 1px, transparent 1px); background-size: 24px 24px; }
+
+.mathema-app .prob-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 22px; border-bottom: 1px solid var(--p-border); }
+.mathema-app .timer { font-family: var(--font-mono); font-size: 16px; font-weight: 600; color: var(--p-ink); letter-spacing: 0.02em; }
+.mathema-app .step-pill { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: var(--p-primary-tint); color: var(--p-primary); font-size: 11px; font-weight: 600; font-family: var(--font-mono); letter-spacing: 0.06em; }
+
+.mathema-app .guide-tabs { display: flex; gap: 6px; padding: 12px 0 14px; }
+.mathema-app .guide-tab { flex: 1; padding: 8px 0; text-align: center; font-size: 11.5px; font-weight: 600; border-radius: 10px; background: var(--p-surface-2); color: var(--p-ink-2); cursor: pointer; }
+.mathema-app .guide-tab.active { background: var(--p-primary); color: var(--p-primary-fg); }
+
+.mathema-app .sheet-backdrop { position: absolute; inset: 0; background: oklch(0.18 0.012 175 / 0.35); z-index: 10; }
+.mathema-app .bottom-sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--p-surface); border-radius: 24px 24px 0 0; padding: 12px 22px 18px; z-index: 11; box-shadow: 0 -8px 24px oklch(0 0 0 / 0.06); max-height: 72%; display: flex; flex-direction: column; }
+.mathema-app .bottom-sheet .grip { width: 36px; height: 4px; border-radius: 2px; background: var(--p-border-strong); margin: 0 auto 4px; }
+
+.mathema-app .notes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.mathema-app .note-card { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 130px; }
+.mathema-app .note-card .src { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em; color: var(--p-muted); }
+.mathema-app .note-card .body { font-size: 12.5px; font-family: var(--font-mono); color: var(--p-ink); line-height: 1.4; max-height: 56px; overflow: hidden; }
+.mathema-app .note-card .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
+.mathema-app .status-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; font-family: var(--font-mono); letter-spacing: 0.04em; }
+.mathema-app .status-chip.pending { background: oklch(0.96 0.04 70); color: oklch(0.45 0.12 70); }
+.mathema-app .status-chip.analyzing { background: var(--p-primary-tint); color: var(--p-primary); }
+.mathema-app .status-chip.mastered { background: oklch(0.95 0.05 155); color: var(--p-success); }
+
+.mathema-app .filter-row { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px; -webkit-overflow-scrolling: touch; }
+.mathema-app .filter-row::-webkit-scrollbar { display: none; }
+.mathema-app .filter-chip { padding: 6px 12px; border-radius: 999px; background: var(--p-surface); border: 1px solid var(--p-border); font-size: 12px; color: var(--p-ink-2); white-space: nowrap; cursor: pointer; flex-shrink: 0; }
+.mathema-app .filter-chip.active { background: var(--p-ink); color: var(--p-bg); border-color: var(--p-ink); }
+
+.mathema-app .fab { position: absolute; right: 22px; bottom: 92px; width: 56px; height: 56px; border-radius: 18px; background: var(--p-primary); color: var(--p-primary-fg); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px oklch(from var(--p-primary) l c h / 0.35); cursor: pointer; z-index: 5; }
+
+.mathema-app .achiev { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px dashed var(--p-border); }
+.mathema-app .achiev:last-child { border-bottom: none; }
+.mathema-app .achiev .medal { width: 32px; height: 32px; border-radius: 10px; background: var(--p-accent-tint); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-style: italic; color: var(--p-ink); font-size: 14px; flex-shrink: 0; }
+
+/* ===== Mobile viewport ===== */
+/* Mobile-first: phone IS the viewport (target market = app, narrow screens).
+ * On real device builds (Capacitor / iOS / Android), safe-area-inset accounts
+ * for the system status bar at top and gesture bar at bottom. */
+.mathema-viewport {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh; /* dynamic viewport units — accounts for mobile chrome */
+  background: var(--p-bg);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+}
+.mathema-phone {
+  width: 100%;
+  height: 100%;
+  background: var(--p-bg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Desktop preview — show centered phone-frame; cap height to viewport so nothing clips. */
+@media (min-width: 480px) {
+  .mathema-viewport {
+    align-items: center;
+    padding: 24px 0;
+    overflow-y: auto;
+  }
+  .mathema-phone {
+    max-width: 428px;
+    width: 428px;
+    height: min(892px, calc(100vh - 48px));
+    max-height: 892px;
+    border-radius: 36px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.08), 0 0 0 1px var(--p-border);
+  }
+}

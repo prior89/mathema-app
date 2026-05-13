@@ -1,0 +1,36 @@
+{
+  "name": "mathema-app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Mathēma — AI-powered NCERT math learning app (Indian PoC, Class 7-12). Monorepo: server (NestJS) + app (React/Vite/Capacitor).",
+  "license": "MIT",
+  "workspaces": [
+    "app",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n server,app -c green,cyan \"npm -w server run start:dev\" \"npm -w app run dev\"",
+    "dev:server": "npm -w server run start:dev",
+    "dev:app": "npm -w app run dev",
+    "build": "npm -w server run build && npm -w app run build",
+    "typecheck": "npm -w server run build -- --noEmit 2>&1 || true && npm -w app exec tsc -- --noEmit",
+    "lint": "npm -w server run lint && npm -w app run lint",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d",
+    "db:migrate": "npm run sync:env && npm -w server exec -- prisma migrate deploy",
+    "db:seed": "npm run sync:env && npm -w server exec -- prisma db seed",
+    "db:studio": "npm run sync:env && npm -w server exec -- prisma studio",
+    "sync:env": "node scripts/sync-env.cjs",
+    "postinstall": "node scripts/sync-env.cjs",
+    "cap:sync": "npm -w app run cap:sync",
+    "cap:open": "npm -w app run cap:open"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

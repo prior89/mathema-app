@@ -1,0 +1,1329 @@
+// =============================================================
+//  Mathēma — Single Source of Truth
+//  Unified naming for subject (User) / objects (Problem, WrongNote, Attempt, ...)
+// =============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- ENUMS (1:1 with src/common/enums/*) ----------
+
+enum Difficulty {
+  MIDDLE // medium
+  UPPER_MIDDLE // upper-medium
+  SEMI_KILLER // semi-killer
+  KILLER // killer
+}
+
+enum ErrorType {
+  CONCEPT_MISUNDERSTANDING // conceptual misunderstanding
+  CALCULATION_MISTAKE // calculation mistake
+  TIME_SHORTAGE // ran out of time
+  OTHER // other
+}
+
+enum NoteStatus {
+  PENDING
+  ANALYZING
+  MASTERED
+}
+
+enum SessionContext {
+  STUDY
+  EXAM
+  PRACTICE
+  DIAGNOSTIC
+}
+
+enum MockExamType {
+  HAKPYEONG // Korean academic-ability test (hakpyeong)
+  MOPYEONG // Korean mock CSAT (mopyeong)
+  SUNEUNG // Korean CSAT (suneung)
+  RECOMMENDED // AI-personalized diagnostic
+  MINI // per-unit mini exam
+  WRONG_REDO // re-test of previous wrong answers
+  REAL // full-scale realistic mock exam
+}
+
+/// Step kinds of the 3-stage multiple-choice solving flow
+enum StepType {
+  CONCEPT // Stage 1: which concept to apply
+  PROCESS // Stage 2: the solving process
+  ANSWER // Stage 3: final answer
+}
+
+/// Analytical classification of attractive distractors — tracks student thinking patterns via data
+enum DistractorType {
+  CONCEPT_CONFUSION // confusion with another concept (e.g., disk vs. shell)
+  CALC_ERROR // calculation-step mistake (sign, exponent, substitution)
+  PROCESS_SKIP // missing a solving step (forgot to square, multiply by π, convert intervals)
+  TIME_PRESSURE_GUESS // common misclick under time pressure (mixed up with another problem's answer)
+}
+
+/// Grade selected at signup. For unit mapping see Unit.gradeLevels.
+/// First launch: India NCERT (Class 7~12) ↔ G_MIDDLE_1~G_HIGH_3 mapping
+enum GradeLevel {
+  G_MIDDLE_1 // Class 7  (Korean middle school grade 1)
+  G_MIDDLE_2 // Class 8  (Korean middle school grade 2)
+  G_MIDDLE_3 // Class 9  (Korean middle school grade 3)
+  G_HIGH_1 // Class 10 (Korean high school grade 1)
+  G_HIGH_2 // Class 11 (Korean high school grade 2)
+  G_HIGH_3 // Class 12 (Korean high school grade 3)
+}
+
+/// NCERT class — classification dimension for ConceptLesson.
+/// Separate from GradeLevel: the NCERT chapter tree uses the Indian class system as primary reference.
+enum NcertClass {
+  CLASS_7
+  CLASS_8
+  CLASS_9
+  CLASS_10
+  CLASS_11
+  CLASS_12
+}
+
+/// Step kinds within a single concept-lesson session — translates the 6 cognitive-psychology principles into stages.
+///   HOOK            activate interest / prior knowledge (Ausubel advance organizer)
+///   CONCRETE        concrete objects / manipulation (Bruner CPA — Concrete)
+///   PICTORIAL       visual representation (Bruner CPA — Pictorial, Dual Coding)
+///   ABSTRACT        symbols / definitions (Bruner CPA — Abstract, Variation Theory)
+///   WORKED_EXAMPLE  demonstration of solving process (Sweller worked-example effect, CLT)
+///   GUIDED_PRACTICE scaffolded practice (Fading guidance)
+///   RETRIEVAL       recall testing (Karpicke testing effect)
+///   MISCONCEPTION   exposing and correcting common misconceptions (Conceptual change)
+///   REFLECT         metacognitive summary (self-explanation)
+enum ConceptStepKind {
+  HOOK
+  CONCRETE
+  PICTORIAL
+  ABSTRACT
+  WORKED_EXAMPLE
+  GUIDED_PRACTICE
+  RETRIEVAL
+  MISCONCEPTION
+  REFLECT
+}
+
+/// DPDP (India Digital Personal Data Protection Act 2023) + GDPR consent kinds.
+///   DATA_PROCESSING  required — auto-granted at signup; revocation deactivates the account
+///   ANALYTICS        optional — learning-pattern / wrong-answer analysis (service improvement)
+///   MARKETING        optional — email / push notifications
+///   AI_TRAINING      optional — using learning data to fine-tune AI models
+enum ConsentKind {
+  DATA_PROCESSING
+  ANALYTICS
+  MARKETING
+  AI_TRAINING
+}
+
+/// School level — corresponds to the spec's Student.schoolLevel.
+enum SchoolLevel {
+  ELEMENTARY
+  MIDDLE
+  HIGH
+}
+
+/// Study goal — selected by the student on onboarding screen 05. Used to branch recommendation-engine weights.
+///   BOARD   : preparation for CBSE Class 10/12 board exams
+///   JEE     : entrance-exam prep such as JEE Main / JEE Advanced / NEET
+///   SCHOOL  : keeping up with school progress (regular assessments)
+///   CATCHUP : filling gaps from earlier grades (foundation reinforcement)
+enum StudyGoal {
+  BOARD
+  JEE
+  SCHOOL
+  CATCHUP
+}
+
+/// User role — basis for the spec §1 split UI of student / parent / teacher / admin.
+enum UserRole {
+  STUDENT
+  PARENT
+  TEACHER
+  ADMIN
+}
+
+/// Error-cause codes — the spec's errorCodes. Used by both ErrorPatternProfile and Attempt.
+enum ErrorCode {
+  SIGN // sign handling
+  ALG // algebraic transformation
+  CON // conceptual misunderstanding / misapplied definition
+  FORMULA // formula misuse
+  GRAPH // graph interpretation
+  UNIT // unit conversion
+  CALC // calculation mistake
+  LOGIC // logical flow / case separation
+}
+
+/// Status of a recurring-mistake pattern — expressed to the student as an "improvable state", not a fixed ability.
+enum ErrorPatternStatus {
+  ACTIVE // recurred 3+ times recently
+  IMPROVING // frequency declining over the last 5 occurrences
+  RESOLVED // not seen in the last 5+ occurrences
+}
+
+/// Validation state of LLM analysis output. Prevents rawOutput from being used directly in business logic.
+enum LLMValidationStatus {
+  PENDING
+  VALIDATED
+  REJECTED
+  NEEDS_REVIEW
+}
+
+/// LLM analysis-queue job status — DB tracking state kept in sync with the BullMQ queue.
+///   PENDING      : just enqueued
+///   PROCESSING   : worker has started (active)
+///   COMPLETED    : finished successfully and LLMAnalysisLog was created
+///   FAILED       : exceeded retry limit (kept permanently in dead-letter)
+///   NEEDS_REVIEW : low LLM confidence — awaiting manual review
+///   RETRYING     : transient failure — retrying with backoff
+enum LLMJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  NEEDS_REVIEW
+  RETRYING
+}
+
+/// Recommendation kinds — RecommendationLog.recommendationType.
+enum RecommendationType {
+  ADAPTIVE_NEXT // one next problem (within the current solving flow)
+  SIMILAR_PROBLEM // one of 5 similar problems
+  REVIEW_PROBLEM // review based on SM-2 forgettingRisk
+}
+
+enum RecommendationResult {
+  CORRECT
+  INCORRECT
+  SKIPPED
+}
+
+/// MasteryTrajectory.trend.
+enum MasteryTrend {
+  UP
+  DOWN
+  STABLE
+}
+
+/// MasteryTrajectory.updatedBy — tracks the source of the update.
+enum MasteryUpdateSource {
+  RULE_BASED
+  LLM
+  HYBRID
+  TEACHER_OVERRIDE
+}
+
+/// Feedback.targetType — the 4 kinds of AI output.
+enum FeedbackTargetType {
+  AI_INSIGHT
+  WEEKLY_REPORT
+  NEXT_PROBLEM
+  EXPLANATION
+}
+
+/// Feedback.raterType — who is rating. The same 1~5 score means different things by rater.
+enum FeedbackRaterType {
+  STUDENT
+  TEACHER
+  PARENT
+  ADMIN
+}
+
+/// TeacherOverride.targetType — the kind of AI judgment the teacher is overriding.
+enum TeacherOverrideTargetType {
+  MASTERY
+  ERROR_PATTERN
+  RECOMMENDATION
+}
+
+/// User country — basis for curriculum / locale / currency mapping.
+/// First launch: IN (India). KR, US, UK, AU, etc. will be added subsequently.
+enum CountryCode {
+  IN // India (NCERT/CBSE) — 1st launch
+  KR // Korea (CSAT)
+  US // United States (Common Core / SAT)
+  UK // United Kingdom (GCSE)
+  AU // Australia (ACARA)
+  SG // Singapore (MOE)
+  GLOBAL // unspecified / other
+}
+
+// ---------- USER ----------
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String
+  name         String // e.g., Arjun
+  examDate     DateTime // exam date → D-day calculation
+  targetGrade  Int // target grade (1~9)
+  /// Grade selected at signup — used to recommend / filter units. Nullable for backward compatibility with existing users.
+  gradeLevel   GradeLevel?  @default(G_HIGH_3)
+  /// User country — determines curriculum / currency / date format. Defaults to GLOBAL when unspecified.
+  country      CountryCode  @default(IN)
+  /// School level — corresponds to the spec's Student.schoolLevel. Derivable from gradeLevel, but storing it explicitly simplifies analytics.
+  schoolLevel  SchoolLevel?
+  /// Study goal — onboarding screen 05. NULL = unspecified (legacy users).
+  studyGoal    StudyGoal?
+  /// Role — basis for the spec §1 split UI of student / parent / teacher / admin. Defaults to STUDENT.
+  role         UserRole     @default(STUDENT)
+  /// Parent-child mapping (Parent → Student.id). Used only when role is PARENT.
+  /// (Future phase: when a parent manages multiple children, split into a dedicated ParentChildLink model)
+  childOfUserId String?
+  /// Academy / institution (multi-tenant). null = solo student.
+  tenantId     String?
+  /// Soft delete — null means active user. If set, authentication is blocked but analytics assets are preserved.
+  deletedAt    DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  attempts                Attempt[]
+  wrongNotes              WrongNote[]
+  studySessions           StudySession[]
+  mockExamResults         MockExamResult[]
+  activities              DailyActivity[]
+  masteries               MasterySnapshot[]
+  weeklyReports           WeeklyReport[]
+  analyticsEvents         AnalyticsEvent[]
+  deviceTokens            DeviceToken[]
+  conceptProgress         ConceptProgress[]
+  consents                Consent[]
+  masteryTrajectories     MasteryTrajectory[]
+  masteryEvents           MasteryEvent[]
+  errorPatterns           ErrorPatternProfile[]
+  llmAnalysisLogs         LLMAnalysisLog[]
+  recommendationLogs      RecommendationLog[]
+  feedbacks               Feedback[]
+  teacherOverridesGiven   TeacherOverride[]     @relation("TeacherOverrider")
+  teacherOverridesApplied TeacherOverride[]     @relation("StudentTarget")
+  uploadedIngestJobs      ContentIngestJob[]    @relation("UploadedIngestJobs")
+  reviewedDrafts          ContentDraft[]        @relation("ReviewedDrafts")
+
+  @@index([examDate])
+  @@index([deletedAt])
+  @@index([tenantId])
+}
+
+/// DPDP/GDPR consent record — append-only.
+/// Repeated grant/revoke for the same (userId, kind) accumulates as separate rows for history tracking.
+/// Current effective state is determined by the most recent row's revokedAt (NULL = active).
+model Consent {
+  id            String      @id @default(uuid())
+  userId        String
+  kind          ConsentKind
+  /// Version of the policy consented to — used to trigger re-consent on policy updates. e.g., "2026-05-01"
+  policyVersion String      @default("1.0")
+  grantedAt     DateTime    @default(now())
+  /// NULL = currently effective. If set, consent has been revoked.
+  revokedAt     DateTime?
+  /// IP / UA captured at the time of consent — for legal evidence
+  ipAddress     String?
+  userAgent     String?     @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind, revokedAt])
+  @@index([userId, grantedAt])
+}
+
+// ---------- CURRICULUM ----------
+
+model Unit {
+  id             String            @id @default(uuid())
+  name           String            @unique // Calculus II
+  order          Int
+  /// List of grades that can study this unit (e.g., [G_HIGH_1, G_HIGH_2])
+  gradeLevels    GradeLevel[]      @default([])
+  subUnits       SubUnit[]
+  problems       Problem[]
+  studySessions  StudySession[]
+  masteries      MasterySnapshot[]
+  conceptLessons ConceptLesson[]
+  concepts       Concept[]
+}
+
+model SubUnit {
+  id     String @id @default(uuid())
+  unitId String
+  name   String // Applications of the Definite Integral
+  order  Int
+
+  unit           Unit            @relation(fields: [unitId], references: [id])
+  problems       Problem[]
+  conceptLessons ConceptLesson[]
+
+  @@unique([unitId, name])
+}
+
+// ---------- PROBLEM ----------
+
+model Problem {
+  id         String     @id @default(uuid())
+  source     String // "2024 September Mock Exam, Q30"
+  unitId     String
+  subUnitId  String?
+  difficulty Difficulty
+  body       String     @db.Text // problem body (LaTeX)
+  formula    String?    @db.Text // answer formula / key solving step
+  /// Core concept explanation — shown in correct/incorrect feedback and wrong-note detail
+  concept    String?    @db.Text
+  answer     String // final answer (kept for compatibility; fallback when steps[] is absent)
+  imageUrl   String?
+  hint       String?    @db.Text
+
+  /// Numeric difficulty 1~5 (the spec's difficultyLevel). Separate from the Difficulty enum — used for the recommendation engine's score.
+  difficultyLevel       Int         @default(3)
+  /// Skills required to solve (the spec's requiredSkills). e.g., ['chain_rule', 'composite_function']
+  requiredSkills        String[]    @default([])
+  /// Typical solving steps (the spec's expectedSolutionSteps). Compared against stepByStepInput during LLM analysis.
+  expectedSolutionSteps Json?
+  /// Frequently occurring error codes (the spec's commonErrorCodes). Hint for the LLM's first-pass guess.
+  commonErrorCodes      ErrorCode[] @default([])
+  /// Expected solving time (seconds). Used for response-time comparison.
+  expectedTimeSec       Int?
+
+  /// Mapped ConceptLesson — once the unit's concept learning is done, this problem becomes the 3-step MC problem.
+  /// Filled by chapter-name matching in seed/migration. NULL = not mapped to concept learning (legacy).
+  conceptLessonId String?
+  conceptLesson   ConceptLesson? @relation(fields: [conceptLessonId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  unit            Unit                @relation(fields: [unitId], references: [id])
+  subUnit         SubUnit?            @relation(fields: [subUnitId], references: [id])
+  attempts        Attempt[]
+  wrongNotes      WrongNote[]
+  steps           ProblemStep[]
+  concepts        ProblemConcept[] // many-to-many with Concept
+  recommendations RecommendationLog[] @relation("RecommendedProblem")
+
+  @@index([unitId, difficulty])
+  @@index([difficultyLevel])
+  @@index([conceptLessonId])
+}
+
+/// 3-stage multiple-choice (CONCEPT → PROCESS → ANSWER) for a single problem
+model ProblemStep {
+  id        String   @id @default(uuid())
+  problemId String
+  stepIndex Int // 1, 2, 3
+  stepType  StepType
+  prompt    String   @db.Text // e.g., "What is the key concept for solving this problem?"
+
+  problem Problem         @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  choices ProblemChoice[]
+
+  @@unique([problemId, stepIndex])
+  @@index([problemId])
+}
+
+/// 5 choices per step. 1 correct + 4 attractive distractors.
+model ProblemChoice {
+  id             String          @id @default(uuid())
+  stepId         String
+  choiceIndex    Int // 1~5
+  text           String          @db.Text
+  isCorrect      Boolean         @default(false)
+  /// Distractor classification (NULL if this choice is the correct answer)
+  distractorType DistractorType?
+  /// Analyst-facing note — hypothesis on why a student might pick this distractor
+  rationale      String?         @db.Text
+
+  step       ProblemStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  selectedBy Attempt[]
+
+  @@unique([stepId, choiceIndex])
+  @@index([stepId])
+}
+
+// ---------- ATTEMPT (the source of all statistics) ----------
+
+model Attempt {
+  id                  String         @id @default(uuid())
+  userId              String
+  problemId           String
+  /// Academy / institution (multi-tenant). Same as User.tenantId (denormalized for fast per-tenant analytics).
+  tenantId            String?
+  context             SessionContext
+  answer              String
+  isCorrect           Boolean
+  durationSec         Int
+  /// More precise response time (milliseconds). Used alongside durationSec for fine-grained per-step analysis.
+  responseTimeMs      Int?
+  /// Metacognitive self-rating — confidence 0~100 just before submitting. NULL = not provided
+  confidence          Int?
+  /// 1~5 scale self-confidence (the spec's selfConfidenceScore). Separate from confidence (0~100).
+  selfConfidenceScore Int?
+  /// Whether a hint was used — a correction factor in recommendation / mastery calculations.
+  hintUsed            Boolean        @default(false)
+  /// Number of hints viewed (the spec's hintCount).
+  hintCount           Int            @default(0)
+  /// Step-by-step solution entered by the student (the spec's stepByStepInput). Key input for LLM analysis.
+  stepByStepInput     Json?
+  /// Error-cause codes finalized via rule-based first guess + LLM validation (the spec's errorCodes).
+  errorCodes          ErrorCode[]    @default([])
+  /// 'android' | 'ios' | 'web' — for per-device learning-pattern analysis.
+  deviceType          String?
+  /// 0~23 — for time-of-day learning-efficiency analysis. Based on user-local hour of createdAt.
+  timeOfDay           Int?
+  /// 3-step MC step index (1/2/3). NULL = single-answer mode (compatibility)
+  stepIndex           Int?
+  /// The ProblemChoice the student selected. NULL = free-form / single-answer mode
+  choiceId            String?
+  studySessionId      String?
+  mockExamResultId    String?
+  createdAt           DateTime       @default(now())
+
+  user            User             @relation(fields: [userId], references: [id])
+  problem         Problem          @relation(fields: [problemId], references: [id])
+  choice          ProblemChoice?   @relation(fields: [choiceId], references: [id])
+  studySession    StudySession?    @relation(fields: [studySessionId], references: [id])
+  mockExamResult  MockExamResult?  @relation(fields: [mockExamResultId], references: [id])
+  llmAnalysisLogs LLMAnalysisLog[]
+
+  @@index([userId, createdAt])
+  @@index([userId, problemId])
+  @@index([choiceId])
+  @@index([tenantId, createdAt])
+}
+
+// ---------- WRONG NOTE ----------
+
+model WrongNote {
+  id           String     @id @default(uuid())
+  userId       String
+  problemId    String
+  errorType    ErrorType
+  insight      String     @db.Text // AI insight (summary text, kept for compatibility)
+  /// Structured LLM output — schema:
+  ///   { rootCause: string, correctConcept: string, drillSteps: string[],
+  ///     similarPatterns: string[], confidenceCalibration: 'over'|'under'|'aligned',
+  ///     reviewIntervalDays: number, lang: 'ko'|'en'|'hi' }
+  insightJson  Json?
+  status       NoteStatus @default(PENDING)
+  similarCount Int        @default(0)
+  occurrences  Int        @default(1) // cumulative occurrences of the same pattern
+  masteredAt   DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // SM-2 spaced repetition
+  easinessFactor  Float     @default(2.5) // must be >= 1.3
+  repetitionCount Int       @default(0) // consecutive-correct count
+  intervalDays    Int       @default(0) // last assigned review interval (days)
+  nextReviewAt    DateTime? // scheduled next review (NULL = not yet reviewed)
+  lastReviewedAt  DateTime? // last review time
+  lapseCount      Int       @default(0) // cumulative failures (quality<3)
+
+  user    User    @relation(fields: [userId], references: [id])
+  problem Problem @relation(fields: [problemId], references: [id])
+
+  @@unique([userId, problemId])
+  @@index([userId, status])
+  @@index([userId, errorType])
+  @@index([userId, nextReviewAt])
+}
+
+// ---------- STUDY SESSION ----------
+
+model StudySession {
+  id                     String         @id @default(uuid())
+  userId                 String
+  unitId                 String
+  tenantId               String?
+  sessionNumber          Int // 03
+  totalSessions          Int // 05
+  currentStep            Int            @default(1) // 1~5
+  startedAt              DateTime       @default(now())
+  endedAt                DateTime?
+  durationSec            Int            @default(0)
+  /// Session context (STUDY/EXAM/PRACTICE/DIAGNOSTIC). Used as a per-context weight in unit-balance analysis.
+  context                SessionContext @default(STUDY)
+  /// 'android' | 'ios' | 'web' — device dimension for per-unit study-time analysis.
+  deviceType             String?
+  /// 0~100. Focus indicator combining response-time stability, accuracy, hint usage, etc.
+  /// The spec's focusScore. Computed as post-processing on session end.
+  focusScore             Float?
+  /// 'low' | 'medium' | 'high' — 'high' when response time grows and accuracy drops in the latter half of the session.
+  /// The spec's fatigueSignal. Computed as post-processing on session end.
+  fatigueSignal          String?
+  /// Hour of day 0~23 — spec §1-1. Auto-filled from UTC hour at session start (user-local hour sent by the client takes priority).
+  timeOfDay              Int?
+  /// Session statistics (the spec's SessionService).
+  problemCount           Int            @default(0)
+  correctCount           Int            @default(0)
+  averageResponseTimeSec Int?
+
+  user     User      @relation(fields: [userId], references: [id])
+  unit     Unit      @relation(fields: [unitId], references: [id])
+  attempts Attempt[]
+
+  @@index([userId, endedAt])
+}
+
+// ---------- MOCK EXAM ----------
+
+model MockExam {
+  id            String       @id @default(uuid())
+  name          String // "October 2024 Academic Ability Test"
+  type          MockExamType
+  scheduledAt   DateTime?
+  totalProblems Int          @default(30)
+  totalMinutes  Int          @default(100)
+  createdAt     DateTime     @default(now())
+
+  results MockExamResult[]
+}
+
+model MockExamResult {
+  id          String   @id @default(uuid())
+  userId      String
+  mockExamId  String
+  score       Int
+  grade       Int // 1~9
+  percentile  Int // 0~100
+  durationMin Int
+  takenAt     DateTime @default(now())
+
+  user     User      @relation(fields: [userId], references: [id])
+  mockExam MockExam  @relation(fields: [mockExamId], references: [id])
+  attempts Attempt[]
+
+  @@index([userId, takenAt])
+}
+
+// ---------- DAILY ACTIVITY (heatmap + streak) ----------
+
+model DailyActivity {
+  id             String   @id @default(uuid())
+  userId         String
+  date           DateTime @db.Date
+  durationMin    Int      @default(0)
+  problemsSolved Int      @default(0)
+  accuracyPct    Float    @default(0) // 0~100
+  intensity      Int      @default(0) // 0~3 (heatmap)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+// ---------- MASTERY (per-unit mastery) ----------
+
+model MasterySnapshot {
+  id             String    @id @default(uuid())
+  userId         String
+  unitId         String
+  score          Float // 0~100
+  /// Cumulative attempt count used to compute score — for confidence gating.
+  samples        Int       @default(0)
+  /// Cumulative study time on this unit (minutes). Integral of StudySession.durationSec. Core to unit-balance analysis.
+  studyTimeMin   Int       @default(0)
+  /// Distribution of the most recent N ErrorType values — { CONCEPT_MISUNDERSTANDING: 3, CALCULATION_MISTAKE: 1, ... }
+  lastErrorTypes Json?
+  /// Time of last attempt — used to compute the recall (decay) curve. NULL = not yet attempted.
+  lastAttemptAt  DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  unit Unit @relation(fields: [unitId], references: [id])
+
+  @@unique([userId, unitId])
+}
+
+// ---------- DEVICE TOKEN (FCM Push) ----------
+// Mobile apps register an FCM token → used to send streak / SM-2-due notifications.
+
+model DeviceToken {
+  id         String    @id @default(uuid())
+  userId     String
+  token      String    @unique
+  platform   String // 'android' | 'ios' | 'web'
+  appVersion String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  /// Last successful send time (auto-cleanup inactive tokens when failures accumulate)
+  lastSentAt DateTime?
+  /// Set when the token has been invalidated (e.g., FCM NotRegistered response)
+  disabledAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, disabledAt])
+}
+
+// ---------- ANALYTICS EVENT ----------
+// User-behavior event log — all interactions besides answer submission (page view, CTA click, perspective change, modal open)
+// + automatic logging of authenticated API calls. Used for funnel / retention / engagement analysis during PoC.
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  userId    String? // null = unauthenticated (landing, signup, etc.)
+  eventType String // e.g., 'page.view' | 'cta.click' | 'api.call' | 'perspective.change'
+  payload   Json // free-form meta: path/button/exam_kind/perspective/...
+  sessionId String? // browser session UUID (assigned via sessionStorage)
+  userAgent String?  @db.Text
+  source    String? // 'frontend' | 'backend' (distinguishes auto-logged source)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+  @@index([sessionId])
+}
+
+// ---------- AUTH TOKENS (password reset / email verification) ----------
+// Email delivery will later be wired to SMTP/SendGrid. For now, console output + DB save (stub).
+// Only the hashed token is stored; the plaintext is only sent — preventing reuse even if the DB leaks.
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique // SHA-256(plaintext token)
+  expiresAt DateTime
+  usedAt    DateTime?
+  requestIp String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  email     String // email-change verification uses the same table (currently only used at signup)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+/// Admin-action audit log — who accessed / modified which user data, and when.
+/// For trace in disputes / regulatory response. Also includes email-allowlist change history.
+model AdminAccessLog {
+  id         String   @id @default(uuid())
+  adminEmail String // the email that passed the ADMIN_EMAILS allowlist at call time
+  method     String // GET / POST / PATCH / DELETE
+  path       String // /api/v1/admin/users/{id}
+  query      String?  @db.Text // JSON.stringify(query)
+  body       String?  @db.Text // JSON.stringify(body) — sensitive fields masked
+  statusCode Int
+  ip         String?
+  userAgent  String?  @db.Text
+  durationMs Int
+  createdAt  DateTime @default(now())
+
+  @@index([adminEmail, createdAt])
+  @@index([path, createdAt])
+}
+
+// ---------- CONCEPT LEARNING (concept lesson before problem solving) ----------
+//
+// A pre-learning module that operationalizes 6 cognitive-psychology principles as stages:
+//   1. Bruner — Concrete → Pictorial → Abstract (CPA) representation transitions
+//   2. Sweller — Cognitive Load Theory: worked example, low intrinsic-load entry
+//   3. Marton — Variation Theory: vary one key dimension at a time
+//   4. Ausubel — Advance Organizer (HOOK)
+//   5. Karpicke — Retrieval Practice (self-check)
+//   6. Misconception Cycle — exposing and correcting common misconceptions (conceptual change)
+//
+// One ConceptLesson = one NCERT chapter. Composed of a sequence of 5~8 ConceptStep entries.
+// Before a user can enter problem-solving / mock exam for a unit, they must pass through the RETRIEVAL stage to unlock it.
+
+model ConceptLesson {
+  id                String     @id @default(uuid())
+  /// NCERT class (India is first launch). The Korean grade is mapped secondarily via Unit.gradeLevels (through unitId).
+  ncertClass        NcertClass
+  /// NCERT chapter number (1~N within the class)
+  chapterNumber     Int
+  /// Stable identifier (e.g., C7-CH01-INTEGERS). Ensures identity across seed/migration.
+  chapterCode       String     @unique
+  titleKo           String // "정수"
+  titleEn           String // "Integers"
+  /// Hindi chapter title — first-launch language for India PoC. If missing, the service falls back to titleEn.
+  titleHi           String? // "पूर्णांक"
+  /// Big idea — the key insight the learner should take away from this lesson (1~2 sentences).
+  bigIdeaKo         String     @db.Text
+  bigIdeaEn         String     @db.Text
+  bigIdeaHi         String?    @db.Text
+  /// Expected study time (minutes). Default 15.
+  estimatedMin      Int        @default(15)
+  /// Study intensity 0~3 (cognitive-load estimate). 0=light, 3=killer chapter.
+  cognitiveLoad     Int        @default(1)
+  /// List of prerequisite chapterCodes (DAG dependency graph). Empty array = no prerequisites.
+  prerequisiteCodes String[]   @default([])
+  /// Mapping to Korean unit (optional). The bridge that connects to problem solving / wrong notes.
+  unitId            String?
+  subUnitId         String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  steps    ConceptStep[]
+  unit     Unit?             @relation(fields: [unitId], references: [id])
+  subUnit  SubUnit?          @relation(fields: [subUnitId], references: [id])
+  progress ConceptProgress[]
+  problems Problem[]
+  drafts   ContentDraft[]
+
+  @@index([ncertClass, chapterNumber])
+  @@index([unitId])
+}
+
+model ConceptStep {
+  id             String          @id @default(uuid())
+  lessonId       String
+  /// 1-based. Step order.
+  stepIndex      Int
+  kind           ConceptStepKind
+  titleKo        String
+  titleEn        String
+  titleHi        String? // India PoC. Falls back to titleEn if missing.
+  /// Body content (Markdown + LaTeX allowed)
+  bodyKo         String          @db.Text
+  bodyEn         String          @db.Text
+  bodyHi         String?         @db.Text
+  /// Visual asset — for Pictorial/Concrete stages. URL or SVG data.
+  visualType     String? // 'figure' | 'video' | 'manipulative' | 'graph' | 'svg'
+  visualUrl      String?
+  /// JSON parameters for dynamic graph rendering — used when visualType='graph'.
+  ///   { type: 'unit-circle', angle: 120 }
+  ///   { type: 'parabola', a: 1, b: 0, c: -3, range: [-3, 3] }
+  ///   { type: 'number-line', marks: [-3, 0, 5], highlight: 5 }
+  ///   { type: 'venn-2set', a: 18, b: 14, both: 6, labelA: 'Football', labelB: 'Basketball' }
+  ///   { type: 'sine-wave', amplitude: 1, period: 360, marked: [{x: 30, y: 0.5}] }
+  visualData     Json?
+  /// MISCONCEPTION stage payload:
+  ///   { wrong: "common wrong answer", why: "why it's confusing", correct: "correct thinking" }
+  misconception  Json?
+  /// WORKED_EXAMPLE stage payload:
+  ///   [{ step: 1, math: "...", narration: "..." }, ...]
+  workedSteps    Json?
+  /// RETRIEVAL / GUIDED_PRACTICE stage payload:
+  ///   { prompt: "...", accept: ["answer1", "answer2"], hint?: "...", explainKo?, explainEn? }
+  retrievalCheck Json?
+  /// REFLECT stage payload: { prompts: ["...", "..."] } — questions that elicit self-explanation / summary
+  reflectPrompts Json?
+
+  lesson ConceptLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, stepIndex])
+  @@index([lessonId])
+}
+
+model ConceptProgress {
+  id             String    @id @default(uuid())
+  userId         String
+  lessonId       String
+  /// Current in-progress step index (1-based).
+  currentStep    Int       @default(1)
+  /// Array of completed step indices.
+  completedSteps Int[]     @default([])
+  /// Time the most recent RETRIEVAL was passed. Must pass at least once to unlock problem-solving for the unit.
+  masteredAt     DateTime?
+  /// Most recent RETRIEVAL score (0~100).
+  retrievalScore Float?
+  /// Cumulative study seconds.
+  durationSec    Int       @default(0)
+  startedAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user   User          @relation(fields: [userId], references: [id])
+  lesson ConceptLesson @relation(fields: [lessonId], references: [id])
+
+  @@unique([userId, lessonId])
+  @@index([userId, masteredAt])
+}
+
+// ---------- WEEKLY REPORT ----------
+
+model WeeklyReport {
+  id             String    @id @default(uuid())
+  userId         String
+  isoWeek        String // "2024-W45"
+  weekStart      DateTime  @db.Date
+  weekEnd        DateTime? @db.Date // the spec's weekEndDate
+  totalHours     Float
+  problemsSolved Int
+  accuracyPct    Float
+  aiScore        Float // 0~10
+  mentorMessage  String    @db.Text
+  generatedAt    DateTime  @default(now())
+
+  // ---- Additional spec fields (separate summaries for student / parent / teacher) ----
+  tenantId                String?
+  studentSummary          String?  @db.Text
+  parentSummary           String?  @db.Text
+  teacherSummary          String?  @db.Text
+  topImprovedConcepts     String[] @default([]) // list of conceptId
+  weakConcepts            String[] @default([]) // list of conceptId
+  repeatedErrorPatterns   String[] @default([]) // list of ErrorPatternProfile ids
+  totalSessions           Int      @default(0)
+  totalAttempts           Int      @default(0)
+  averageStudyDurationSec Int      @default(0)
+  recommendedNextGoals    String[] @default([]) // next week's goals (1~3 free-form strings)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, isoWeek])
+  @@index([tenantId, weekStart])
+}
+
+// =============================================================
+//  AI Prescription System — new models (Phase 1.1)
+// =============================================================
+
+/// Academy / institution. The base unit of multi-tenant. For solo students, tenantId=null.
+model Tenant {
+  id           String   @id @default(uuid())
+  name         String // "Mathēma Academy"
+  /// Short code for URL / login (e.g., "mathema", "demo-academy").
+  code         String   @unique
+  /// Operator contact (optional).
+  contactEmail String?
+  /// 'active' | 'suspended' — tenant-level deactivation.
+  status       String   @default("active")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users User[]
+}
+
+/// Concept — the heart of the recommendation engine.
+/// A finer-grained unit than Unit (e.g., Unit "Calculus II" → Concept "Chain Rule").
+/// One Concept can be mapped to multiple Unit/SubUnit entries, so the N:M is handled via problemConcepts.
+model Concept {
+  id         String      @id @default(uuid())
+  /// Stable identifier — e.g., "chain_rule", "composite_function". Ensures seed/import consistency.
+  code       String      @unique
+  name       String // "Chain Rule"
+  /// Subject — 'math', 'physics', etc. First PoC is 'math' only.
+  subject    String      @default("math")
+  /// Grade level — used to filter Concept recommendations to the student's grade.
+  gradeLevel GradeLevel?
+
+  /// Parent Concept (e.g., 'chain_rule' → parent='differentiation'). Parent in the tree structure.
+  parentConceptId String?
+  parent          Concept?  @relation("ConceptParent", fields: [parentConceptId], references: [id])
+  children        Concept[] @relation("ConceptParent")
+
+  /// Array of prerequisite Concept IDs (DAG). chain_rule's prerequisites = [composite_function, derivative].
+  /// If the student can't solve chain_rule → the recommendation engine diagnoses prerequisites first.
+  prerequisiteConceptIds String[] @default([])
+  /// Related Concept IDs (weakly bidirectional). Used to diversify recommendations.
+  relatedConceptIds      String[] @default([])
+
+  /// Bridge to the Korean Unit (for compatibility during gradual migration).
+  unitId String?
+  unit   Unit?   @relation(fields: [unitId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  problems            ProblemConcept[]
+  masteryTrajectories MasteryTrajectory[]
+  masteryEvents       MasteryEvent[]
+  errorPatterns       ErrorPatternProfile[]
+
+  @@index([subject, gradeLevel])
+  @@index([parentConceptId])
+}
+
+/// Problem ↔ Concept many-to-many + weight (how strongly this problem measures this concept, 0~1).
+model ProblemConcept {
+  problemId String
+  conceptId String
+  /// 0~1. 1 = problem directly tests this concept. 0.3 = concept is only incidentally needed.
+  weight    Float  @default(1.0)
+
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@id([problemId, conceptId])
+  @@index([conceptId])
+}
+
+/// Current snapshot + trend of per-concept mastery (the spec's MasteryTrajectory).
+/// MasteryEvent is the time-series history; MasteryTrajectory is the resulting current value.
+/// The existing MasterySnapshot remains unit-scoped (for compatibility). The new MasteryTrajectory is concept-scoped.
+model MasteryTrajectory {
+  id        String  @id @default(uuid())
+  userId    String
+  conceptId String
+  tenantId  String?
+
+  /// 0~100. Not accuracy alone — combines response time, hints, confidence, recency, repeated errors.
+  masteryScore       Float        @default(0)
+  /// Confidence interval in the form mean±SE (optional). Wider when evidenceCount is small.
+  confidenceInterval Float?
+  trend              MasteryTrend @default(STABLE)
+
+  /// Cumulative attempt count — gates score reliability.
+  evidenceCount          Int   @default(0)
+  /// Accuracy over the most recent N attempts (0~1).
+  recentAccuracy         Float @default(0)
+  averageResponseTimeSec Int   @default(0)
+  hintUsageRate          Float @default(0)
+  /// Difference between self-confidence (selfConfidenceScore) and actual accuracy — diagnoses overconfidence.
+  confidenceGap          Float @default(0)
+
+  lastAttemptAt DateTime?
+  /// 'rule_based' | 'llm' | 'hybrid' | 'teacher_override' — who performed the update.
+  updatedBy     MasteryUpdateSource @default(RULE_BASED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId])
+  @@index([tenantId, masteryScore])
+  @@index([userId, lastAttemptAt])
+}
+
+/// Time-series history of MasteryTrajectory — for heatmaps / graphs.
+/// One row is created at the end of each Attempt. Tracks how masteryScore changes over time.
+model MasteryEvent {
+  id            String   @id @default(uuid())
+  userId        String
+  conceptId     String
+  tenantId      String?
+  attemptId     String?
+  /// Post-update score (0~100).
+  masteryScore  Float
+  /// Score change caused by this attempt (+5, -6, etc.).
+  delta         Float
+  evidenceCount Int
+  createdAt     DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@index([userId, conceptId, createdAt])
+}
+
+/// Cumulative statistics and status of recurring-mistake patterns.
+/// Surfaced in student UI as: "Recurring mistake patterns" / "Study-habit signals" / "Per-concept sticking points".
+model ErrorPatternProfile {
+  id        String    @id @default(uuid())
+  userId    String
+  conceptId String
+  tenantId  String?
+  errorCode ErrorCode
+
+  /// Cumulative occurrence count.
+  frequency       Int    @default(0)
+  /// Occurrence count within the most recent N(=5) attempts.
+  recentFrequency Int    @default(0)
+  severity        String @default("low") // 'low' | 'medium' | 'high'
+
+  firstDetectedAt DateTime @default(now())
+  lastDetectedAt  DateTime @default(now())
+
+  /// 1~2-sentence insight written by the LLM (the spec's llmSummary).
+  llmSummary         String?  @db.Text
+  /// List of supporting Attempt.id values (up to ~20).
+  evidenceAttemptIds String[] @default([])
+
+  status ErrorPatternStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId, errorCode])
+  @@index([tenantId, status])
+  @@index([userId, status])
+}
+
+/// Versioned log of LLM analysis output.
+/// Stores rawOutput / parsedOutput / promptVersion / inputHash all together →
+/// allows regression analysis of prompt v3 vs. v4 judgment differences later.
+model LLMAnalysisLog {
+  id        String  @id @default(uuid())
+  userId    String
+  attemptId String
+  problemId String
+  tenantId  String?
+
+  modelName     String // 'claude-opus-4-5' | 'gpt-4o'
+  promptVersion String // 'attempt-analyze@v1'
+  /// SHA-256 of canonical input — avoids duplicate calls / enables caching for the same input.
+  inputHash     String
+
+  rawOutput    Json
+  /// rawOutput normalized to our schema.
+  /// { errorCodes: ErrorCode[], conceptWeakness: string[],
+  ///   reasoningSummary: string, recommendedAction: string }
+  parsedOutput Json
+
+  confidenceScore  Float // LLM self-reported 0~1
+  validationStatus LLMValidationStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempt Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([attemptId])
+  @@index([promptVersion, modelName])
+}
+
+/// DB tracking for BullMQ LLM analysis jobs — persistent record separate from queue state.
+///   1 LLMAnalysisJob ↔ 0..1 LLMAnalysisLog (Log is created only on success)
+///   When retryCount > maxRetries → FAILED, kept permanently in dead-letter (admin reprocessing target).
+model LLMAnalysisJob {
+  id             String       @id @default(uuid())
+  attemptId      String       @unique           // 1:1 — prevents duplicate enqueue of the same attempt.
+  userId         String
+  problemId      String
+  tenantId       String?
+  status         LLMJobStatus @default(PENDING)
+  retryCount     Int          @default(0)
+  maxRetries     Int          @default(3)
+  /// BullMQ job id (result of queue.add). Used to query queue state.
+  bullJobId      String?
+  /// Last failure reason (truncated).
+  lastError      String?      @db.Text
+  /// Last worker-start time — used to detect stale jobs.
+  startedAt      DateTime?
+  /// Last state-change time.
+  lastChangedAt  DateTime     @default(now())
+  /// LLMAnalysisLog id created on success.
+  resultLogId    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([status, lastChangedAt])
+  @@index([userId, status])
+  @@index([tenantId, status])
+}
+
+/// Tracks whether an AI recommendation actually had an effect.
+/// Whether an attempt started from a recommendation — observed via accepted/solved/result.
+model RecommendationLog {
+  id        String  @id @default(uuid())
+  userId    String
+  sessionId String?
+  tenantId  String?
+
+  recommendedProblemId String
+  recommendationType   RecommendationType
+  /// One-line rationale shown to student / teacher / parent (the spec's reason).
+  reason               String             @db.Text
+
+  /// Concept / error code / expected difficulty the recommendation targets.
+  targetConceptId    String?
+  targetErrorCode    ErrorCode?
+  expectedDifficulty Int        @default(3)
+
+  accepted Boolean               @default(false)
+  solved   Boolean               @default(false)
+  result   RecommendationResult?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recommendedProblem Problem @relation("RecommendedProblem", fields: [recommendedProblemId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([tenantId, createdAt])
+  @@index([userId, accepted, solved])
+}
+
+/// History of teacher overrides of AI judgments.
+/// Records corrections like "this student does not lack the concept — they keep making sign mistakes during solving".
+model TeacherOverride {
+  id        String  @id @default(uuid())
+  /// Teacher's User.id.
+  teacherId String
+  /// Target student's User.id.
+  userId    String
+  tenantId  String?
+
+  targetType TeacherOverrideTargetType
+  /// Row id being modified (MasteryTrajectory.id / ErrorPatternProfile.id / RecommendationLog.id).
+  targetId   String
+
+  beforeValue Json
+  afterValue  Json
+  reason      String @db.Text
+
+  createdAt DateTime @default(now())
+
+  teacher User @relation("TeacherOverrider", fields: [teacherId], references: [id], onDelete: Cascade)
+  user    User @relation("StudentTarget", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([teacherId, createdAt])
+  @@index([tenantId, createdAt])
+}
+
+/// Ratings of AI output (student / teacher / parent / admin).
+/// Meaning differences are preserved by raterType.
+model Feedback {
+  id         String             @id @default(uuid())
+  targetType FeedbackTargetType
+  /// Target row id (LLMAnalysisLog / WeeklyReport / RecommendationLog / Problem.explanation, etc.).
+  targetId   String
+
+  raterType FeedbackRaterType
+  /// Rater's User.id (admin/teacher/parent are assumed to have separate accounts; for students it's their own user.id).
+  raterId   String
+
+  aiInsightRating Int // 1~5
+  comment         String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  rater User @relation(fields: [raterId], references: [id], onDelete: Cascade)
+
+  @@index([targetType, targetId])
+  @@index([raterId, createdAt])
+}
+
+// ============================================================
+//  CONTENT INGESTION — PDF / API / JSON → auto-extract → LLM draft → human review → publish as Problem
+//  Source-agnostic design: the SourceAdapter interface normalizes all sources into the same flow.
+//    PDF (NCERT, EBS) → text-extract → exercise-index → problem-extract → drafts
+//    HTTP_API (EBS API, public question banks) → fetch → normalize → drafts
+//    JSON_BULK / CSV (manually entered) → parse → drafts
+// ============================================================
+
+enum ContentSourceType {
+  PDF // file upload
+  HTTP_API // external REST API (EBS / public source)
+  JSON_BULK // pre-normalized array of problems
+  CSV // tabular format
+}
+
+enum ContentIngestStatus {
+  QUEUED // just uploaded / job registered
+  FETCHING // fetching from external source (API) — skipped for PDF
+  EXTRACTING // extracting text / payload
+  INDEXING // indexing class / chapter boundaries
+  DRAFTING // generating 3-step MC drafts via LLM
+  READY // drafts populated in ContentDraft, awaiting review
+  FAILED // processing failed
+}
+
+enum ContentDraftStatus {
+  PENDING // just generated by LLM
+  IN_REVIEW // someone has opened it and is working on it
+  APPROVED // reviewer approved — next step is publish
+  REJECTED // discarded
+  PUBLISHED // published as a Problem
+}
+
+/// One unit of content-ingestion work. Same model for both PDF upload and EBS API pull.
+/// Which source it is gets branched on sourceType; source-specific settings live in sourceConfigJson.
+model ContentIngestJob {
+  id           String              @id @default(uuid())
+  uploadedById String
+  uploadedBy   User                @relation("UploadedIngestJobs", fields: [uploadedById], references: [id])
+
+  /// What is being fetched
+  sourceType   ContentSourceType
+  /// Free-form per-adapter configuration — e.g.:
+  ///   PDF:      { fileName, fileSize, sha256, filePath }
+  ///   HTTP_API: { url, authRef, query, pagination, headersRef }
+  ///   JSON_BULK:{ filePath } / CSV: { filePath, delimiter }
+  sourceConfigJson Json
+
+  /// Prevents re-running the same source — PDF=sha256, API=hash of url+query, etc. Filled by the adapter.
+  sourceDigest String  @unique
+  /// UI label (e.g., "NCERT_Math_Class_7_to_12.pdf" or "EBS API · Suneung Special · 2026").
+  label        String
+
+  status          ContentIngestStatus @default(QUEUED)
+  /// Classes detected during processing (kept in their native notation — "CLASS_8", "G_HIGH_2", etc.).
+  detectedClasses String[]            @default([])
+
+  /// Progress metrics (each adapter populates as appropriate).
+  totalItems         Int? // PDF=page count, API=total records
+  extractedExercises Int?
+  extractedProblems  Int?
+  draftsCreated      Int?
+
+  errorMessage String? @db.Text
+  /// Intermediate index produced by the adapter (for replay / debugging).
+  indexJson    Json?
+
+  createdAt  DateTime  @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  drafts ContentDraft[]
+
+  @@index([uploadedById, createdAt])
+  @@index([status, createdAt])
+  @@index([sourceType, createdAt])
+}
+
+/// 3-step MC problem draft generated by the LLM. Review → approve → publish as a Problem.
+model ContentDraft {
+  id          String             @id @default(uuid())
+  ingestJobId String?
+  ingestJob   ContentIngestJob?  @relation(fields: [ingestJobId], references: [id], onDelete: SetNull)
+
+  /// Mapped ConceptLesson (auto-populated via class/chapter matching). If NULL, a human must map it manually.
+  conceptLessonId String?
+  conceptLesson   ConceptLesson? @relation(fields: [conceptLessonId], references: [id], onDelete: SetNull)
+
+  /// Source label — for debugging / UI display. e.g., "NCERT · CLASS_8 · Ch5 · Ex5.1 · Q1"
+  sourceLabel    String
+  /// Extracted NCERT original text (also used as LLM input).
+  originalText   String  @db.Text
+  /// Extracted page number (the raw text of that page can be retrieved from it).
+  sourcePage     Int?
+
+  /// Raw response (JSON) generated by the LLM — entire 3-step + choices + rationale.
+  aiModel        String?
+  aiPromptVer    String?
+  aiResponseJson Json?
+  aiTokensIn     Int?
+  aiTokensOut   Int?
+  aiCostUsd      Decimal? @db.Decimal(10, 6)
+
+  /// Reviewer-edited version — the human-edited final. If NULL, aiResponseJson is used.
+  editedJson     Json?
+
+  /// Proposed difficulty (based on LLM analysis).
+  proposedDifficulty      Difficulty @default(MIDDLE)
+  proposedDifficultyLevel Int        @default(3)
+
+  status         ContentDraftStatus @default(PENDING)
+  /// Reviewer
+  reviewedById   String?
+  reviewedBy     User?  @relation("ReviewedDrafts", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt     DateTime?
+  reviewerNote   String? @db.Text
+
+  /// On approval → publish: the resulting Problem id (back-reference).
+  publishedProblemId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([ingestJobId, status])
+  @@index([conceptLessonId, status])
+}

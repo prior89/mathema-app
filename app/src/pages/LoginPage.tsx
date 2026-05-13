@@ -1,0 +1,204 @@
+/* LoginPage — sage-themed mobile-app login.
+ * PoC: admin/admin → dev-login. Regular email/password also supported.
+ * Also re-exports AuthShell + Field for legacy ForgotPassword/ResetPassword/VerifyEmail pages.
+ */
+import { ReactNode } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { post, tokens, get } from '../lib/api';
+import type { Me } from '../lib/queries';
+import { Glyph } from '../components/onboarding/Glyph';
+import '../styles/onboarding.css';
+
+const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
+
+export default function LoginPage() {
+  const { login, loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('admin');
+  const [password, setPassword] = useState('admin');
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const gsiRef = useRef<HTMLDivElement | null>(null);
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setErr(null);
+    setBusy(true);
+    try {
+      // PoC: admin/admin → dev-login (no real account needed).
+      if (email.trim().toLowerCase() === 'admin' && password === 'admin') {
+        const tk = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
+        tokens.set(tk.accessToken, tk.refreshToken);
+        await get<Me>('/users/me');
+        navigate('/app');
+        return;
+      }
+      await login(email, password);
+      navigate('/app');
+    } catch (e: any) {
+      setErr(e?.response?.data?.error?.message ?? 'Login failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Google Identity Services — VITE_GOOGLE_CLIENT_ID 가 설정된 경우만 활성화.
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !gsiRef.current) return;
+    const init = () => {
+      const g = (window as any).google;
+      if (!g?.accounts?.id) return;
+      g.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async (resp: { credential: string }) => {
+          setErr(null);
+          setBusy(true);
+          try {
+            await loginWithGoogle(resp.credential);
+            navigate('/app');
+          } catch (e: any) {
+            setErr(e?.response?.data?.error?.message ?? 'Google sign-in failed');
+          } finally {
+            setBusy(false);
+          }
+        },
+      });
+      g.accounts.id.renderButton(gsiRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 280,
+        text: 'continue_with',
+      });
+    };
+    if ((window as any).google?.accounts?.id) {
+      init();
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.defer = true;
+    s.onload = init;
+    document.body.appendChild(s);
+  }, [loginWithGoogle, navigate]);
+
+  return (
+    <div className="mathema-app">
+      <div className="mathema-viewport">
+        <div className="mathema-phone">
+          <div className="screen">
+            <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Glyph.Logo accent="var(--p-ink)" />
+              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>NCERT · 7–12</span>
+            </div>
+
+            <div className="screen-body" style={{ gap: 24, paddingTop: 32 }}>
+              <div>
+                <span className="eyebrow">Welcome back</span>
+                <h1 className="display" style={{ marginTop: 10, fontSize: 36 }}>
+                  Sign in to<br /><em>Mathēma</em>.
+                </h1>
+                <p className="subtitle">Pick up where you left off — your progress and notes are saved.</p>
+              </div>
+
+              <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="field">
+                  <label>Email or username</label>
+                  <input
+                    type="text"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="username"
+                    placeholder="admin"
+                  />
+                </div>
+                <div className="field">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    placeholder="••••••"
+                  />
+                </div>
+                {err && (
+                  <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>
+                )}
+                <button className="btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>
+                  {busy ? 'Signing in…' : 'Sign in'}
+                  <Glyph.ChevronR />
+                </button>
+              </form>
+
+              {GOOGLE_CLIENT_ID && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
+                    <span className="caption" style={{ fontSize: 11 }}>OR</span>
+                    <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
+                  </div>
+                  <div ref={gsiRef} style={{ display: 'flex', justifyContent: 'center' }} />
+                </div>
+              )}
+
+              {import.meta.env.DEV && (
+                <div className="card" style={{ padding: 12, background: 'var(--p-surface-2)', borderColor: 'transparent', fontSize: 12, color: 'var(--p-ink-2)' }}>
+                  PoC dev login — type <strong style={{ color: 'var(--p-primary)' }}>admin / admin</strong> to enter without an account.
+                </div>
+              )}
+
+              <div style={{ flex: 1 }} />
+
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Link to="/onboarding" style={{ color: 'var(--p-primary)', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+                  Start the onboarding flow →
+                </Link>
+                <Link to="/forgot-password" style={{ color: 'var(--p-muted)', fontSize: 12, textDecoration: 'none' }}>
+                  Forgot your password?
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ───────── Legacy compat for ForgotPassword / ResetPassword / VerifyEmail pages ─────────
+// Minimal sage-styled shell + field. New pages should use Glyph + .mathema-app classes directly.
+export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+  return (
+    <div className="mathema-app">
+      <div className="mathema-viewport">
+        <div className="mathema-phone">
+          <div className="screen">
+            <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Glyph.Logo accent="var(--p-ink)" />
+              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>{subtitle}</span>
+            </div>
+            <div className="screen-body" style={{ gap: 24, paddingTop: 32 }}>
+              <div>
+                <span className="eyebrow">{subtitle}</span>
+                <h1 className="title" style={{ marginTop: 10, fontSize: 28 }}>{title}</h1>
+              </div>
+              {children}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function Field({ label, type = 'text', value, onChange }: { label: string; type?: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="field">
+      <label>{label}</label>
+      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}

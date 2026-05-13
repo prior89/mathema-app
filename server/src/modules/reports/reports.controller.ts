@@ -1,0 +1,63 @@
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { ReportsService } from './reports.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentLang, Lang } from '../../common/i18n/current-lang.decorator';
+import { WeeklyReportService } from './weekly-report.service';
+
+@UseGuards(JwtAuthGuard)
+@Controller('reports')
+export class ReportsController {
+  constructor(
+    private readonly service: ReportsService,
+    private readonly weekly: WeeklyReportService,
+  ) {}
+
+  /** 명세서 §5 — POST /weekly-reports/generate. 이번 주 (또는 주어진 weekStart) 리포트 upsert. */
+  @Post('weekly/generate')
+  generate(@CurrentUser('id') userId: string) {
+    return this.weekly.generate(userId);
+  }
+
+  /** 명세서 §5 — GET /students/:studentId/weekly-reports (목록). */
+  @Get('weekly')
+  weeklyList(@CurrentUser('id') userId: string) {
+    return this.service.listWeekly(userId);
+  }
+
+  /** 명세서 §5 — GET /weekly-reports/:reportId. */
+  @Get('weekly/by-id/:id')
+  weeklyById(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.service.weeklyById(userId, id);
+  }
+
+  // 헤더 4 stat: 주간 학습시간 / 푼 문제 / 정답률 / AI 종합 점수
+  @Get('weekly/current')
+  current(@CurrentUser('id') userId: string) { return this.service.current(userId); }
+
+  @Get('weekly/time-vs-accuracy')
+  timeVsAccuracy(@CurrentUser('id') userId: string, @Query('weeks') weeks = 8) {
+    return this.service.timeVsAccuracy(userId, +weeks);
+  }
+
+  @Get('weekly/next-focus')
+  nextFocus(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang) {
+    return this.service.nextFocus(userId, lang);
+  }
+
+  @Get('weekly/achievements')
+  achievements(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang) {
+    return this.service.achievements(userId, lang);
+  }
+
+  // 메타인지 캘리브레이션 — confidence vs 실제 정답률
+  @Get('calibration')
+  calibration(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang) {
+    return this.service.calibration(userId, lang);
+  }
+
+  @Get('weekly/:isoWeek')
+  byWeek(@CurrentUser('id') userId: string, @Param('isoWeek') week: string) {
+    return this.service.byWeek(userId, week);
+  }
+}

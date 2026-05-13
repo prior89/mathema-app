@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Mathēma · NCERT Math</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      /* Mathēma onboarding design tokens — sage palette (인도 PoC 회원가입/온보딩 톤).
+         참조: Downloads/App onboarding/styles.css 의 .pal-sage. */
+      :root {
+        --sage-bg: oklch(0.985 0.005 90);
+        --sage-surface: #ffffff;
+        --sage-surface-2: oklch(0.97 0.007 90);
+        --sage-ink: oklch(0.18 0.015 268);
+        --sage-ink-2: oklch(0.38 0.012 268);
+        --sage-muted: oklch(0.58 0.01 268);
+        --sage-border: oklch(0.92 0.006 90);
+        --sage-border-strong: oklch(0.86 0.008 90);
+        --sage-primary: oklch(0.45 0.08 175);
+        --sage-primary-fg: #ffffff;
+        --sage-primary-tint: oklch(0.95 0.022 175);
+        --sage-accent: oklch(0.72 0.13 75);
+        --sage-accent-tint: oklch(0.96 0.025 75);
+        --sage-success: oklch(0.62 0.13 155);
+        --sage-danger: oklch(0.6 0.18 25);
+        --sage-radius: 14px;
+        --sage-radius-sm: 8px;
+        --sage-radius-lg: 20px;
+        --sage-font-display: 'Instrument Serif', 'Source Serif Pro', Georgia, serif;
+        --sage-font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --sage-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      html, body { margin: 0; padding: 0; }
+      /* Onboarding scope — 회원가입/로그인 페이지에서만 sage 토큰 사용. */
+      .sage-scope {
+        background: var(--sage-bg);
+        color: var(--sage-ink);
+        font-family: var(--sage-font-ui);
+        font-size: 15px;
+        line-height: 1.5;
+        letter-spacing: -0.005em;
+        min-height: 100vh;
+      }
+      .sage-scope .eyebrow {
+        font-family: var(--sage-font-mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--sage-muted);
+        font-weight: 500;
+      }
+      .sage-scope .title {
+        font-family: var(--sage-font-display);
+        font-size: 30px;
+        line-height: 1.1;
+        font-weight: 400;
+        letter-spacing: -0.015em;
+        color: var(--sage-ink);
+        margin: 10px 0 0;
+      }
+      .sage-scope .title em { font-style: italic; color: var(--sage-primary); }
+      .sage-scope .subtitle {
+        font-size: 15px;
+        color: var(--sage-ink-2);
+        margin: 8px 0 0;
+        line-height: 1.45;
+      }
+      .sage-scope .caption {
+        font-size: 12.5px;
+        color: var(--sage-muted);
+        line-height: 1.45;
+      }
+      .sage-scope .btn {
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        width: 100%; height: 54px;
+        border-radius: var(--sage-radius);
+        border: 1px solid transparent;
+        background: var(--sage-primary); color: var(--sage-primary-fg);
+        font-family: inherit; font-size: 16px; font-weight: 600;
+        cursor: pointer; transition: transform .12s, opacity .12s;
+      }
+      .sage-scope .btn:hover { opacity: 0.95; }
+      .sage-scope .btn:active { transform: scale(0.99); }
+      .sage-scope .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .sage-scope .btn.outline {
+        background: var(--sage-surface); color: var(--sage-ink);
+        border-color: var(--sage-border-strong);
+      }
+      .sage-scope .btn.text {
+        background: none; border: none; color: var(--sage-ink-2);
+        height: 44px; font-weight: 500;
+      }
+      .sage-scope .field { display: flex; flex-direction: column; gap: 6px; }
+      .sage-scope .field label {
+        font-size: 12px; font-weight: 600; color: var(--sage-ink-2);
+        letter-spacing: -0.005em;
+      }
+      .sage-scope .field input, .sage-scope .field select {
+        width: 100%; height: 52px; padding: 0 16px;
+        border-radius: 12px;
+        border: 1px solid var(--sage-border-strong);
+        background: var(--sage-surface); color: var(--sage-ink);
+        font-family: inherit; font-size: 16px;
+        outline: none; transition: border-color .15s, box-shadow .15s;
+      }
+      .sage-scope .field input:focus, .sage-scope .field select:focus {
+        border-color: var(--sage-primary);
+        box-shadow: 0 0 0 4px var(--sage-primary-tint);
+      }
+      .sage-scope .option-card {
+        background: var(--sage-surface);
+        border: 1.5px solid var(--sage-border);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex; gap: 14px; align-items: flex-start;
+        cursor: pointer;
+        transition: border-color .15s, background .15s;
+      }
+      .sage-scope .option-card:hover { border-color: var(--sage-border-strong); }
+      .sage-scope .option-card.selected {
+        border-color: var(--sage-primary);
+        background: var(--sage-primary-tint);
+      }
+      .sage-scope .option-card .check {
+        width: 22px; height: 22px; border-radius: 50%;
+        border: 1.5px solid var(--sage-border-strong);
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        margin-top: 2px;
+      }
+      .sage-scope .option-card.selected .check {
+        background: var(--sage-primary);
+        border-color: var(--sage-primary);
+        color: var(--sage-primary-fg);
+      }
+      .sage-scope .chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 2px 8px; border-radius: 999px;
+        background: var(--sage-primary-tint);
+        color: var(--sage-primary);
+        font-size: 10.5px; font-weight: 600;
+        border: 1px solid transparent;
+      }
+      .sage-scope .grade-grid {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      }
+      .sage-scope .grade-pill {
+        height: 64px; border-radius: 14px;
+        border: 1.5px solid var(--sage-border);
+        background: var(--sage-surface);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        cursor: pointer; transition: all .15s ease;
+      }
+      .sage-scope .grade-pill .num {
+        font-family: var(--sage-font-display);
+        font-size: 24px; line-height: 1; color: var(--sage-ink);
+      }
+      .sage-scope .grade-pill .lbl {
+        font-size: 10.5px; color: var(--sage-muted);
+        margin-top: 4px; letter-spacing: 0.04em;
+      }
+      .sage-scope .grade-pill.selected {
+        border-color: var(--sage-primary);
+        background: var(--sage-primary-tint);
+      }
+      .sage-scope .grade-pill.selected .num,
+      .sage-scope .grade-pill.selected .lbl { color: var(--sage-primary); }
+      .sage-scope .steps {
+        display: flex; gap: 4px; padding: 0 0 14px;
+      }
+      .sage-scope .steps .dot {
+        flex: 1; height: 3px; border-radius: 2px; background: var(--sage-border);
+      }
+      .sage-scope .steps .dot.active { background: var(--sage-primary); }
+      .sage-scope .steps .dot.done { background: var(--sage-primary); opacity: 0.5; }
+      .sage-scope .ck {
+        width: 22px; height: 22px; border-radius: 7px;
+        border: 1.5px solid var(--sage-border-strong);
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        margin-top: 2px; cursor: pointer;
+      }
+      .sage-scope .ck.checked {
+        background: var(--sage-primary);
+        border-color: var(--sage-primary);
+        color: var(--sage-primary-fg);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

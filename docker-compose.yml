@@ -1,0 +1,36 @@
+# =============================================================
+#  Mathēma — local dev infra
+#  postgres + redis 만 컨테이너로. server·app 은 host 에서 `npm run dev`.
+#  prod-like (server·app 도 컨테이너) 는 별도 deploy 워크플로우에서 처리.
+# =============================================================
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mathema-postgres
+    environment:
+      POSTGRES_USER: mathema
+      POSTGRES_PASSWORD: mathema
+      POSTGRES_DB: mathema
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mathema -d mathema"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: mathema-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

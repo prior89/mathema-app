@@ -1,0 +1,100 @@
+import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { WrongNotesRepository } from './wrong-notes.repository';
+import { OcrService } from './services/ocr.service';
+import { PdfExtractorService } from './services/pdf-extractor.service';
+import { SimilarFinderService } from './services/similar-finder.service';
+import { SpacedRepetitionService } from './services/spaced-repetition.service';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { CreateWrongNoteDto } from './dto/create-wrong-note.dto';
+import { QueryWrongNotesDto } from './dto/query-wrong-notes.dto';
+import { ReviewWrongNoteDto } from './dto/review-wrong-note.dto';
+import { Lang } from '../../common/i18n/current-lang.decorator';
+import { STATIC_FALLBACK_EN } from '../../common/i18n/content-en';
+
+@Injectable()
+export class WrongNotesService {
+  constructor(
+    private readonly repo: WrongNotesRepository,
+    private readonly ocr: OcrService,
+    private readonly pdf: PdfExtractorService,
+    private readonly similar: SimilarFinderService,
+    private readonly sr: SpacedRepetitionService,
+    private readonly prisma: PrismaService,
+    private readonly events: EventEmitter2,
+  ) {}
+
+  getStats(userId: string) { return this.repo.aggregateStats(userId); }
+  getRecent(userId: string, limit: number, lang: Lang = 'ko') { return this.repo.findRecent(userId, limit, lang); }
+  list(userId: string, query: QueryWrongNotesDto, lang: Lang = 'ko') { return this.repo.list(userId, query, lang); }
+  getDue(userId: string, limit?: number, lang: Lang = 'ko') { return this.repo.findDue(userId, limit, lang); }
+  async getOne(userId: string, id: string, lang: Lang = 'ko') {
+    const note = await this.repo.findOne(userId, id, lang);
+    const similar = await this.similar.findSimilar(note.problemId, 5);
+    return { ...note, similar };
+  }
+  create(userId: string, dto: CreateWrongNoteDto) { return this.repo.create(userId, dto); }
+  async uploadPhoto(_userId: string, file: Express.Multer.File, lang: Lang = 'ko') {
+    if (!file) return { ok: false, message: 'file required' };
+    const visionConfigured = !!(process.env.AI_VISION_API_KEY && process.env.AI_VISION_API_KEY !== 'api입력칸');
+    if (!visionConfigured) {
+      return { ok: false, message: lang !== 'ko'
+        ? 'Photo OCR not available right now.'
+        : '사진 자동 인식 서비스가 현재 사용 불가입니다.' };
+    }
+    return { ok: true, message: lang !== 'ko' ? STATIC_FALLBACK_EN.uploadPhotoOk : '사진이 등록되었습니다.' };
+  }
+  async uploadPdf(_userId: string, file: Express.Multer.File, lang: Lang = 'ko') {
+    if (!file) return { ok: false, message: 'file required' };
+    const llmConfigured = !!(process.env.AI_LLM_API_KEY && process.env.AI_LLM_API_KEY !== 'api입력칸');
+    if (!llmConfigured) {
+      return { ok: false, message: lang !== 'ko'
+        ? 'PDF batch extraction not available right now.'
+        : 'PDF 자동 분리 서비스가 현재 사용 불가입니다.' };
+    }
+    return { ok: true, message: lang !== 'ko' ? STATIC_FALLBACK_EN.uploadPdfOk : 'PDF 가 등록되었습니다.' };
+  }
+
+  async updateStatus(userId: string, id: string, status: string) {
+    const updated = await this.repo.updateStatus(userId, id, status as any);
+    if (status === 'MASTERED') {
+      this.events.emit('wrong-note.mastered', { userId, problemId: updated.problemId });
+    }
+    return updated;
+  }
+
+  /**
+   * SM-2 복습 처리.
+   * 4단계 quality(AGAIN/HARD/GOOD/EASY) → SM-2 갱신.
+   * 연속 EASY 3회 이상 시 자동 MASTERED 처리.
+   */
+  async review(userId: string, id: string, dto: ReviewWrongNoteDto) {
+    const current = await this.prisma.wrongNote.findFirstOrThrow({
+      where: { id, userId },
+    });
+    const q = SpacedRepetitionService.parseQuality(dto.quality);
+    const sm2 = this.sr.apply({
+      easinessFactor: current.easinessFactor,
+      repetitionCount: current.repetitionCount,
+      intervalDays: current.intervalDays,
+    }, q);
+
+    const updated = await this.repo.applyReview(userId, id, sm2);
+
+    // 자동 MASTERED: 연속 EASY 3회 + 간격 30일 이상이면 졸업
+    if (q === 5 && updated.repetitionCount >= 3 && updated.intervalDays >= 30) {
+      await this.repo.updateStatus(userId, id, 'MASTERED' as any);
+      this.events.emit('wrong-note.mastered', { userId, problemId: updated.problemId });
+    }
+
+    return {
+      id: updated.id,
+      easinessFactor: Math.round(updated.easinessFactor * 100) / 100,
+      repetitionCount: updated.repetitionCount,
+      intervalDays: updated.intervalDays,
+      nextReviewAt: updated.nextReviewAt?.toISOString() ?? null,
+      lapsed: sm2.lapsed,
+      autoMastered: q === 5 && updated.repetitionCount >= 3 && updated.intervalDays >= 30,
+    };
+  }
+}

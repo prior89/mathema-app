@@ -1,0 +1,43 @@
+{
+  "name": "mathema-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .ts,.tsx",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npm run build && npx cap sync android",
+    "cap:open": "npx cap open android",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.3.3",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/cli": "^8.3.3",
+    "@capacitor/core": "^8.3.3",
+    "@capacitor/push-notifications": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
+    "@sentry/react": "^10.52.0",
+    "@tanstack/react-query": "^5.28.0",
+    "axios": "^1.6.7",
+    "katex": "^0.16.10",
+    "lucide-react": "^0.383.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0",
+    "recharts": "^2.12.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/katex": "^0.16.7",
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.4"
+  }
+}
