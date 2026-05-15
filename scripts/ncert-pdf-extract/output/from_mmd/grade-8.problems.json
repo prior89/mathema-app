@@ -1202,6 +1202,127 @@
       "questionType": "FREE_RESPONSE"
     },
     {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q1",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 1,
+      "text": "The shape of the top surface of a table is a trapezium. Find its area if its parallel sides are 1 m and 1.2 m and perpendicular distance between them is 0.8 m . ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-119.jpg?height=258&width=498&top_left_y=2215&top_left_x=1381)",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q2",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 2,
+      "text": "The area of a trapezium is \\(34 \\mathrm{~cm}^{2}\\) and the length of one of the parallel sides is ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-120.jpg?height=199&width=453&top_left_y=350&top_left_x=229) 10 cm and its height is 4 cm . Find the length of the other parallel side.",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q3",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 3,
+      "text": "Length of the fence of a trapezium shaped field ABCD is 120 m . If \\(\\mathrm{BC}=48 \\mathrm{~m}, \\mathrm{CD}=17 \\mathrm{~m}\\) and \\(\\mathrm{AD}=40 \\mathrm{~m}\\), find the area of this field. Side \\(A B\\) is perpendicular to the parallel sides \\(A D\\) and \\(B C\\).",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q4",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 4,
+      "text": "The diagonal of a quadrilateral shaped field is 24 m and the perpendiculars dropped on it from the remaining opposite vertices are 8 m and 13 m . Find the area of the field.",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q5",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 5,
+      "text": "The diagonals of a rhombus are 7.5 cm and 12 cm . Find its area. ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-120.jpg?height=276&width=405&top_left_y=556&top_left_x=1476)",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q6",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 6,
+      "text": "Find the area of a rhombus whose side is 5 cm and whose altitude is 4.8 cm . If one of its diagonals is 8 cm long, find the length of the other diagonal.",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q7",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 7,
+      "text": "The floor of a building consists of 3000 tiles which are rhombus shaped and each of its diagonals are 45 cm and 30 cm in length. Find the total cost of polishing the floor, if the cost per \\(\\mathrm{m}^{2}\\) is ₹ 4 .",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q8",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 8,
+      "text": "Mohan wants to buy a trapezium shaped field. Its side along the river is parallel to and twice the side along the road. If the area of this field is \\(10500 \\mathrm{~m}^{2}\\) and the perpendicular distance between the two parallel sides is 100 m , find the length of the side along the river. ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-120.jpg?height=340&width=541&top_left_y=1072&top_left_x=1342) ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-120.jpg?height=229&width=292&top_left_y=1344&top_left_x=226)",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q9",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 9,
+      "text": "Top surface of a raised platform is in the shape of a regular octagon as shown in the figure. Find the area of the octagonal surface.",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q10",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 10,
+      "text": "There is a pentagonal shaped park as shown in the figure.",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C8-CH09-EX9.1-Q11",
+      "ncertClass": "CLASS_8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exerciseId": "9.1",
+      "qIndex": 11,
+      "text": "Diagram of the adjacent picture frame has outer dimensions \\(=24 \\mathrm{~cm} \\times 28 \\mathrm{~cm}\\) and inner dimensions \\(16 \\mathrm{~cm} \\times 20 \\mathrm{~cm}\\). Find the area of each section of the frame, if the width of each section is same.",
+      "sourceRef": "mmd",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
       "problemKey": "NCERT-C8-CH09-EX9.2-Q1",
       "ncertClass": "CLASS_8",
       "chapterNumber": 9,

@@ -64,31 +64,40 @@ _MMD_HEADER_STOP_RE = re.compile(
 _WHAT_DISCUSSED_RE = re.compile(r"What\s+have\s+we\s+discussed", re.IGNORECASE)
 
 
-def detect_chapters_from_subsections(text: str) -> list[tuple[int, str, int]]:
-    """Infer chapter starts from the first subsection that begins with each chapter number.
+def detect_chapters_combined(text: str) -> list[tuple[int, str, int]]:
+    """Combined chapter detection.
 
-    Returns [(chapter_number, title, start_offset)] sorted by chapter number.
+    Many NCERT chapters open with \\section*{EXERCISE N.1} *before* the first
+    \\subsection*{N.1 Title} (e.g. Grade 11 Ch 1/3/6, Grade 12 Ch 6/11). If we
+    detect chapters only from subsections, the chapter's start cursor sits
+    *after* its first exercise, and the exercise is mis-attributed to chapter N-1.
+
+    Strategy: collect both subsection and EXERCISE offsets per chapter number,
+    take the earliest as chapter start, and prefer a subsection title when one
+    exists (otherwise fall back to "Chapter N").
     """
-    chapters: dict[int, tuple[str, int]] = {}
+    # chapter_number -> list of (offset, title_or_None)
+    candidates: dict[int, list[tuple[int, str | None]]] = {}
+
     for m in _MMD_NUMBERED_SUBSECTION_RE.finditer(text):
         major = int(m.group(1))
-        minor = int(m.group(2))
-        if major < 1 or major > 30:
+        if not (1 <= major <= 30):
             continue
-        if major not in chapters:
-            # Take the title from the first subsection — usually 'N.1 Introduction' or 'N.2 X'
-            chapters[major] = (m.group(3).strip(), m.start())
-    return [(n, chapters[n][0], chapters[n][1]) for n in sorted(chapters)]
+        candidates.setdefault(major, []).append((m.start(), m.group(3).strip()))
 
-
-def detect_chapters_fallback(text: str) -> list[tuple[int, str, int]]:
-    """Fallback: use EXERCISE N.M offsets to deduce chapter boundaries."""
-    chapters: dict[int, tuple[str, int]] = {}
     for m in _MMD_EXERCISE_SECTION_RE.finditer(text):
         major = int(m.group(1))
-        if major not in chapters:
-            chapters[major] = (f"Chapter {major}", m.start())
-    return [(n, chapters[n][0], chapters[n][1]) for n in sorted(chapters)]
+        if not (1 <= major <= 30):
+            continue
+        candidates.setdefault(major, []).append((m.start(), None))
+
+    chapters: list[tuple[int, str, int]] = []
+    for n in sorted(candidates):
+        entries = sorted(candidates[n])
+        start_offset = entries[0][0]
+        title = next((t for _, t in entries if t), f"Chapter {n}")
+        chapters.append((n, title, start_offset))
+    return chapters
 
 
 def extract_chapter_problems_old(
@@ -260,9 +269,7 @@ def extract_mmd(mmd_path: Path, grade: int, style: str | None = None) -> tuple[E
     if style is None:
         style = detect_style(text)
 
-    chapters_meta = detect_chapters_from_subsections(text)
-    if not chapters_meta:
-        chapters_meta = detect_chapters_fallback(text)
+    chapters_meta = detect_chapters_combined(text)
     if not chapters_meta:
         raise RuntimeError(f"Could not detect chapters in {mmd_path.name}")
 

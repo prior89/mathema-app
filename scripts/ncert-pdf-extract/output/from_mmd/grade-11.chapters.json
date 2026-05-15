@@ -8,7 +8,7 @@
       "pageStart": 0,
       "pageEnd": 0,
       "sections": [],
-      "problemCount": 25,
+      "problemCount": 31,
       "exampleCount": 23
     },
     {
@@ -28,7 +28,7 @@
       "pageStart": 0,
       "pageEnd": 0,
       "sections": [],
-      "problemCount": 34,
+      "problemCount": 41,
       "exampleCount": 18
     },
     {
@@ -58,8 +58,18 @@
       "pageStart": 0,
       "pageEnd": 0,
       "sections": [],
-      "problemCount": 24,
+      "problemCount": 30,
       "exampleCount": 28
+    },
+    {
+      "chapterNumber": 7,
+      "title": "Chapter 7",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 8,
+      "exampleCount": 0
     },
     {
       "chapterNumber": 8,
