@@ -10,8 +10,9 @@ Monorepo:
 > against a real backend, and the admin content-ingestion pipeline (PDF / HTTP
 > API → LLM draft → review → publish) is functional. Production hosting is
 > not yet set up — see [Production deployment](#production-deployment-tbd).
-> The Class 9 NCERT PDF was missing from the original source, so 11 chapters
-> are currently empty in the seed data.
+> All 6 NCERT Math PDFs (Class 7–12, NCF-SE 2023 syllabus) have been extracted
+> into **2,169 NormalizedProblem entries** and are ready for bulk import via
+> `npm run import:ncert` — see [NCERT content ingestion](#ncert-content-ingestion-pipeline) below.
 
 ---
 
@@ -119,17 +120,158 @@ npm run cap:open       # open Android Studio
 PDF / HTTP_API / JSON_BULK / CSV
       │
       ▼  SourceAdapter (one per type)
-NormalizedProblem[]  ← { ncertClass, chapter, exerciseId, text, sourceRef }
+NormalizedProblem[]  ← { ncertClass, chapter, exerciseId, text, sourceRef, ... 13 enrichment fields }
       │
-      ▼  LlmDraftService (Anthropic)
+      ▼  LlmDraftService (OpenAI or Anthropic, JSON-mode, 5-way parallel)
 ContentDraft (PENDING) — strict JSON schema (3 steps × 5 choices, exactly 1 correct each)
       │
       ▼  Admin web UI (/app/admin/drafts/:id)
-APPROVED  →  DraftPublisher (transaction)
+APPROVED  →  DraftPublisher (transaction, attribution-enforced)
       │
       ▼
 Problem + 3 ProblemStep + 15 ProblemChoice  → live to students
 ```
+
+The `NormalizedProblem` shape carries 13 optional enrichment fields
+(`correctAnswer`, `acceptedAnswers`, `difficultyLevel`, `conceptCodes`,
+`requiredSkills`, `expectedSolutionSteps`, `hints`, `commonErrorCodes`,
+`distractors`, `solutionFinalAnswer`, `solutionSteps`, `solutionExplanation`,
+`chapterCode`/`topicCode`) absorbed from the Karvy curriculum format so
+adapters with rich source data can preserve their distractor-with-errorCode
+mappings instead of having the LLM re-invent them.
+
+---
+
+## NCERT content ingestion pipeline
+
+NCERT publishes Class 7–12 Maths textbooks as PDFs. The pipeline below turns
+those into student-ready 3-step MC problems — fully offline-capable except
+for the LLM draft step.
+
+```
+NCERT PDF (6 files, ~2,099 pages)
+      │
+      │  scripts/ncert-pdf-extract/mathpix_pdf.py
+      ▼   (MathPix OCR · LaTeX-preserving · ~$0.005/page after free quota)
+*.mmd  (Mathpix Markdown — \( … \) inline, \[ … \] display)
+      │
+      │  scripts/ncert-pdf-extract/extract_from_mmd.py
+      ▼   (regex section/exercise detection — no LLM)
+grade-N.problems.json  (NormalizedProblem[] — 2,031 problems across grades 7/8/10/11/12)
+      │
+      │  Grade 9 alone uses extract_grade9_llm.py
+      ▼   (narrative-style textbook — needs LLM to spot inline questions: 138 problems)
+grade-9.problems.json (from_mmd_llm, 138 problems, $0.022 via gpt-4o-mini)
+      │
+      │  server/scripts/import-ncert.ts (npm run import:ncert)
+      ▼   (1 JSON_BULK job per grade, sequential)
+ContentIngestJob → JsonBulkSourceAdapter → LlmDraftService (concurrency=5)
+      │
+      ▼
+ContentDraft (PENDING) — awaiting reviewer in /app/admin/drafts
+```
+
+### Extraction summary (snapshot, 2026-05-15)
+
+| Grade | Source PDF                | Chapters | Problems | Examples | Extractor          |
+|-------|---------------------------|---------:|---------:|---------:|--------------------|
+| 7     | Ganita Prakash            |        8 |      498 |       79 | MMD regex          |
+| 8     | Math VIII                 |       13 |      195 |      107 | MMD regex          |
+| 9     | Ganita Manjari (narrative)|        8 |      138 |       75 | MMD + LLM          |
+| 10    | Math X                    |       14 |      263 |      136 | MMD regex          |
+| 11    | Math XI (Part I)          |       14 |      378 |      234 | MMD regex          |
+| 12    | Math XII (Part I)         |       13 |      697 |      311 | MMD regex          |
+| **Σ** |                           |   **70** | **2,169**|  **942** |                    |
+
+See [`scripts/ncert-pdf-extract/README.md`](./scripts/ncert-pdf-extract/README.md)
+for the full extraction workflow (env vars, costs, troubleshooting).
+
+### Local import CLI
+
+Once the 6 PDFs have been converted (artifacts are already committed under
+`scripts/ncert-pdf-extract/output/`), bulk-import everything into a local
+Postgres in one command:
+
+```bash
+cd server
+docker compose up -d                              # postgres + redis
+npx prisma migrate deploy
+npm run db:seed                                    # creates admin user (polopot123@gmail.com by default)
+
+# .env must contain at minimum:
+#   AI_LLM_PROVIDER=openai      (or "anthropic")
+#   AI_LLM_API_KEY=sk-...
+#   AI_LLM_MODEL=gpt-4o-mini    (recommended for cost)
+#   LLM_DRAFT_CONCURRENCY=5     (optional — defaults to 5)
+#   ADMIN_EMAILS=polopot123@gmail.com
+
+npm run import:ncert                               # creates 6 JSON_BULK jobs, sequential
+```
+
+The CLI:
+- bootstraps the NestJS application context (no HTTP server)
+- creates one `ContentIngestJob(JSON_BULK)` per grade and waits for it to
+  reach `READY` or `FAILED` before moving on (rate-limit friendly)
+- reports `draftsCreated / totalItems` for each grade
+- is idempotent — re-running is blocked by `sourceDigest` uniqueness on
+  `ContentIngestJob` (delete the row first to re-import)
+
+**Cost estimate at `gpt-4o-mini` ($0.15 in / $0.60 out per Mtok):**
+2,169 problems × ~2,800 tokens each ≈ **$2.30 total** for a complete run.
+
+### License-safe attribution
+
+NCERT textbooks are copyright-protected — derivative works (NCERT problem →
+3-step MC with our own distractors) are accepted but only with attribution
+preserved. The `DraftPublisher` refuses to publish any `Problem` without a
+valid `source` string:
+
+```
+NCERT Class 8 Mathematics, Ch.1 Ex.1.1 Q.3 (derived for Mathēma, Reprint 2024-25)
+```
+
+Two paths to a valid attribution:
+1. **Automatic** — the auto-extract `sourceLabel`
+   (e.g. `AUTO · CLASS_8 · Ch1 · Ex1.1 · Q3`) is parsed by
+   `buildNcertAttribution()` and a canonical attribution is generated.
+2. **Manual override** — the reviewer writes
+   `SOURCE: NCERT Class N Mathematics, Ch.X Ex.Y Q.Z (derived for Mathēma, Reprint 2024-25)`
+   at the start of `reviewerNote`. Used for cases where the auto label is
+   incomplete (e.g. Ganita Prakash "Figure it Out" blocks with no canonical
+   exercise number).
+
+Both paths must pass `isAcceptableAttribution()` — checks for a textbook
+brand (`NCERT|EBS|CBSE|ICSE`) and a `(derived ...)` tail. See
+`server/src/modules/content-ingest/attribution.helper.ts`.
+
+---
+
+## Karvy code absorbed
+
+The `feat/karvy-absorb-ncert` branch absorbed the math-checking and
+content-shape pieces from the standalone Karvy NCERT prototype so they live
+inside the main monorepo:
+
+- **`server/src/infrastructure/math/deterministic-check.service.ts`** —
+  TypeScript port (875 LoC) of the Python deterministic checker. Nine
+  domain-specific checkers (Remainder Theorem, polynomial substitution,
+  coordinate geometry, quadratic roots, linear equations, percentage, ratio
+  & proportion, simplification, arithmetic) run in priority order and return
+  a `{ method: 'deterministic', answer, confidence, checker, concepts,
+  steps }` result whenever a question's structure is recognised — feeding
+  the LLM-analysis fallback path with verified answers. Uses `fraction.js`
+  for exact rational arithmetic. **35 unit tests + 24 edge-case specs + a
+  2-test micro-benchmark** under `server/src/infrastructure/math/`.
+
+- **`server/src/modules/content-ingest/types.ts`** — `NormalizedProblem`
+  extended with the 13 Karvy enrichment fields listed above so adapters
+  carrying rich source data (curated distractors with error codes, concept
+  codes, expected solution steps) can hand them straight through to the
+  draft step without a round-trip through the LLM.
+
+No Karvy database schema was absorbed — the existing Prisma schema already
+covers the published-Problem shape, and no migrations were generated for
+this branch (verify with `prisma migrate status`).
 
 ---
 
