@@ -8,6 +8,12 @@ export interface LlmRequest {
   system?: string;
   maxTokens?: number;
   temperature?: number;
+  /**
+   * Force JSON output. On OpenAI this maps to response_format={type:"json_object"}
+   * (provider-side guarantee that completion is parseable JSON). On Anthropic
+   * it's a hint only — the system prompt is still the primary contract.
+   */
+  jsonObject?: boolean;
 }
 
 export interface LlmResponse {
@@ -80,6 +86,7 @@ export class LlmProvider {
         max_completion_tokens: req.maxTokens ?? 1024,
         temperature: req.temperature ?? 0.4,
         messages,
+        ...(req.jsonObject ? { response_format: { type: 'json_object' as const } } : {}),
       });
       const choice = res.choices?.[0];
       return {
