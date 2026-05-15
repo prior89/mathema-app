@@ -76,7 +76,7 @@ async function waitForJob(
     if (!j) throw new Error(`Job ${jobId} disappeared`);
     if (j.status === 'READY' || j.status === 'FAILED') {
       if (j.errorMessage) logger.error(`Job ${jobId} error: ${j.errorMessage}`);
-      return { status: j.status, drafted: j.draftsCreated, total: j.totalItems };
+      return { status: j.status, drafted: j.draftsCreated ?? 0, total: j.totalItems ?? 0 };
     }
     const report = `${j.status} ${j.draftsCreated}/${j.totalItems}`;
     if (report !== lastReport) {
