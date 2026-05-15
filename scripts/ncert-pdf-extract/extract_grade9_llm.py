@@ -233,7 +233,7 @@ def main() -> int:
             {
                 "version": f"ncert-grade-{args.grade}-llm@{time.strftime('%Y-%m')}",
                 "ncertClass": ncert_class,
-                "extractedBy": f"haiku-llm ({args.model})",
+                "extractedBy": f"{args.provider}/{args.model}",
                 "problems": all_problems,
             },
             indent=2,
