@@ -12,12 +12,23 @@ Output: NormalizedProblem JSON identical in shape to extract.py /
 extract_from_mmd.py output. Feeds the standard JSON_BULK -> ContentIngestJob
 -> LLM Draft pipeline downstream.
 
-Cost estimate: ~$0.30-0.60 for Grade 9 (8 chapters, ~95K input tokens,
-~20K output tokens) on Anthropic Haiku 4.5 with no caching.
+Cost estimate (Grade 9, 8 chapters, ~95K input + ~20K output tokens, no caching):
+  - openai gpt-4o-mini: $0.026   (cheapest)
+  - openai gpt-5-mini:  $0.064
+  - anthropic claude-haiku-4-5: $0.195
 
-Run:
+Run (OpenAI, recommended for cost):
+  set OPENAI_API_KEY=<your_openai_key>
+  python scripts/ncert-pdf-extract/extract_grade9_llm.py \\
+    --provider openai --model gpt-4o-mini \\
+    --mmd scripts/ncert-pdf-extract/output/mmd/Grade_9_Mathematics_Latest.mmd \\
+    --grade 9 \\
+    --output scripts/ncert-pdf-extract/output/from_mmd_llm
+
+Run (Anthropic):
   set ANTHROPIC_API_KEY=<your_anthropic_key>
   python scripts/ncert-pdf-extract/extract_grade9_llm.py \\
+    --provider anthropic \\
     --mmd scripts/ncert-pdf-extract/output/mmd/Grade_9_Mathematics_Latest.mmd \\
     --grade 9 \\
     --output scripts/ncert-pdf-extract/output/from_mmd_llm
@@ -32,11 +43,20 @@ import sys
 import time
 from pathlib import Path
 
-from anthropic import Anthropic
-
 sys.path.insert(0, str(Path(__file__).parent))
 from extract import GRADE_TO_NCERT_CLASS, chapter_number_to_class_int  # type: ignore
 from extract_from_mmd import detect_chapters_combined  # type: ignore
+
+# May 2026 pricing (USD per 1M tokens).
+PRICING = {
+    "claude-haiku-4-5-20251001": (1.0, 5.0),
+    "claude-haiku-4-5":          (1.0, 5.0),
+    "claude-sonnet-4-6":         (3.0, 15.0),
+    "gpt-4o-mini":               (0.15, 0.60),
+    "gpt-5-mini":                (0.25, 2.00),
+    "gpt-5":                     (1.25, 10.00),
+    "gpt-4o":                    (2.50, 10.00),
+}
 
 
 SYSTEM_PROMPT = """You are extracting student-evaluatable mathematics questions from an NCERT mathematics textbook (NCF-SE 2023 syllabus — Ganita Prakash / Ganita Manjari series).
@@ -81,28 +101,45 @@ If the chapter contains ZERO student-facing questions (extremely unusual), retur
 """
 
 
-def call_llm(client: Anthropic, chapter_text: str, chapter_n: int, model: str) -> tuple[list[dict], int, int]:
+def _parse_json_response(raw: str) -> list[dict]:
+    """Robust JSON extractor: strip markdown fence, fall back to first {...} block."""
+    m = re.search(r"```(?:json)?\s*([\s\S]+?)\s*```", raw)
+    if m:
+        raw = m.group(1)
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        m2 = re.search(r"\{[\s\S]+\}", raw)
+        if not m2:
+            raise RuntimeError(f"LLM returned non-JSON: {raw[:300]}")
+        parsed = json.loads(m2.group())
+    return parsed.get("problems", []) if isinstance(parsed, dict) else []
+
+
+def call_anthropic(client, chapter_text: str, chapter_n: int, model: str) -> tuple[list[dict], int, int]:
     response = client.messages.create(
         model=model,
         max_tokens=8000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": f"Chapter {chapter_n} text:\n\n{chapter_text}"}],
     )
-    raw = response.content[0].text
-    # Strip optional markdown code fence
-    m = re.search(r"```(?:json)?\s*([\s\S]+?)\s*```", raw)
-    if m:
-        raw = m.group(1)
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError as e:
-        # last-ditch — find first {...} block
-        m2 = re.search(r"\{[\s\S]+\}", raw)
-        if not m2:
-            raise RuntimeError(f"LLM returned non-JSON: {raw[:300]}") from e
-        parsed = json.loads(m2.group())
-    problems = parsed.get("problems", []) if isinstance(parsed, dict) else []
+    problems = _parse_json_response(response.content[0].text)
     return problems, response.usage.input_tokens, response.usage.output_tokens
+
+
+def call_openai(client, chapter_text: str, chapter_n: int, model: str) -> tuple[list[dict], int, int]:
+    response = client.chat.completions.create(
+        model=model,
+        max_tokens=8000,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": f"Chapter {chapter_n} text:\n\n{chapter_text}"},
+        ],
+    )
+    problems = _parse_json_response(response.choices[0].message.content or "")
+    usage = response.usage
+    return problems, usage.prompt_tokens, usage.completion_tokens
 
 
 def main() -> int:
@@ -110,14 +147,23 @@ def main() -> int:
     parser.add_argument("--mmd", required=True, type=Path)
     parser.add_argument("--grade", required=True, type=int)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--model", default="claude-haiku-4-5-20251001")
+    parser.add_argument("--provider", choices=["anthropic", "openai"], default="openai")
+    parser.add_argument("--model", default=None, help="Default: gpt-4o-mini (openai) / claude-haiku-4-5-20251001 (anthropic)")
     parser.add_argument("--max-chapter-chars", type=int, default=80_000, help="Cap per-chapter input to keep context bounded")
     args = parser.parse_args()
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if args.model is None:
+        args.model = "gpt-4o-mini" if args.provider == "openai" else "claude-haiku-4-5-20251001"
+
+    if args.provider == "anthropic":
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        env_var = "ANTHROPIC_API_KEY"
+    else:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        env_var = "OPENAI_API_KEY"
     if not api_key:
-        print("Missing ANTHROPIC_API_KEY env var.", file=sys.stderr)
-        print('Set via:  set ANTHROPIC_API_KEY=sk-ant-...', file=sys.stderr)
+        print(f"Missing {env_var} env var.", file=sys.stderr)
+        print(f'Set via:  set {env_var}=sk-...', file=sys.stderr)
         return 2
 
     if args.grade not in GRADE_TO_NCERT_CLASS:
@@ -136,7 +182,15 @@ def main() -> int:
         print(f"No chapters detected in {args.mmd}", file=sys.stderr)
         return 1
 
-    client = Anthropic(api_key=api_key)
+    if args.provider == "anthropic":
+        from anthropic import Anthropic
+        client: object = Anthropic(api_key=api_key)
+        call_fn = call_anthropic
+    else:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+        call_fn = call_openai
+
     all_problems: list[dict] = []
     total_in = 0
     total_out = 0
@@ -151,7 +205,7 @@ def main() -> int:
         print(f"Ch {n} ({title[:40]}): {len(chapter_text):,} chars{truncated}", flush=True)
         t0 = time.time()
         try:
-            problems, in_t, out_t = call_llm(client, chapter_text, n, args.model)
+            problems, in_t, out_t = call_fn(client, chapter_text, n, args.model)
         except Exception as e:
             print(f"  FAIL: {type(e).__name__}: {str(e)[:200]}", file=sys.stderr)
             continue
@@ -188,13 +242,15 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    cost_in = (total_in / 1_000_000) * 1.0
-    cost_out = (total_out / 1_000_000) * 5.0
+    in_rate, out_rate = PRICING.get(args.model, (1.0, 5.0))
+    cost_in = (total_in / 1_000_000) * in_rate
+    cost_out = (total_out / 1_000_000) * out_rate
     total_cost = cost_in + cost_out
     print()
     print(f"Done. {len(all_problems)} problems written to {out_path}")
+    print(f"Model:  {args.provider}/{args.model}  (in ${in_rate}/Mtok, out ${out_rate}/Mtok)")
     print(f"Tokens: in={total_in:,}  out={total_out:,}")
-    print(f"Cost:   ${total_cost:.4f}  (in=${cost_in:.4f}, out=${cost_out:.4f})  at Haiku 4.5 pricing")
+    print(f"Cost:   ${total_cost:.4f}  (in=${cost_in:.4f}, out=${cost_out:.4f})")
     return 0
 
 
