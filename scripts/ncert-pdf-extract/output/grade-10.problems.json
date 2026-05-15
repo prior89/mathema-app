@@ -97,7 +97,7 @@
       "chapterTitleHint": "",
       "exerciseId": "2.2",
       "qIndex": 6,
-      "text": "If , ,  are the zeroes of the cubic polynomial ax3 + bx2 + cx + d, then b a   , c a  , and d a   . Reprint 2026-27",
+      "text": "If , ,  are the zeroes of the cubic polynomial ax3 + bx2 + cx + d, then b a   , c a  , and d a   .",
       "sourceRef": "page=69",
       "questionType": "FREE_RESPONSE"
     },
@@ -108,7 +108,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.1",
       "qIndex": 1,
-      "text": "Form the pair of linear equations in the following problems, and find their solutions graphically. (i) 10 students of Class X took part in a Mathematics quiz. If the number of girls is 4 more than the number of boys, find the number of boys and girls who took part in the quiz. Fig. 3.2 Reprint 2026-27",
+      "text": "Form the pair of linear equations in the following problems, and find their solutions graphically. (i) 10 students of Class X took part in a Mathematics quiz. If the number of girls is 4 more than the number of boys, find the number of boys and girls who took part in the quiz. Fig. 3.2",
       "sourceRef": "page=74",
       "questionType": "FREE_RESPONSE"
     },
@@ -174,19 +174,8 @@
       "chapterTitleHint": "",
       "exerciseId": "3.1",
       "qIndex": 7,
-      "text": "Draw the graphs of the equations x – y + 1 = 0 and 3x + 2y – 12 = 0. Determine the coordinates of the vertices of the triangle formed by these lines and the x-axis, and shade the triangular region. Reprint 2026-27",
+      "text": "Draw the graphs of the equations x – y + 1 = 0 and 3x + 2y – 12 = 0. Determine the coordinates of the vertices of the triangle formed by these lines and the x-axis, and shade the triangular region.",
       "sourceRef": "page=75",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C10-CH03-EX3.1-Q29",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 3,
-      "chapterTitleHint": "",
-      "exerciseId": "3.1",
-      "qIndex": 29,
-      "text": "Reprint 2026-27",
-      "sourceRef": "page=76",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -223,24 +212,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C10-CH03-EX3.2-Q6",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 3,
-      "chapterTitleHint": "",
-      "exerciseId": "3.2",
-      "qIndex": 6,
-      "text": "Find the fraction. Reprint 2026-27",
-      "sourceRef": "page=79",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C10-CH03-EX3.2-Q1",
       "ncertClass": "CLASS_10",
       "chapterNumber": 3,
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 1,
-      "text": "The method used in solving the example above is called the elimination method, because we eliminate one variable first, to get a linear equation in one variable. Reprint 2026-27",
+      "text": "The method used in solving the example above is called the elimination method, because we eliminate one variable first, to get a linear equation in one variable.",
       "sourceRef": "page=80",
       "questionType": "FREE_RESPONSE"
     },
@@ -273,7 +251,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 2,
-      "text": "Form the pair of linear equations in the following problems, and find their solutions (if they exist) by the elimination method : (i) If we add 1 to the numerator and subtract 1 from the denominator, a fraction reduces to 1. It becomes 1 2 if we only add 1 to the denominator. What is the fraction? (ii) Five years ago, Nuri was thrice as old as Sonu. Ten years later, Nuri will be twice as old as Sonu. How old are Nuri and Sonu? (iii) The sum of the digits of a two-digit number is 9. Also, nine times this number is twice the number obtained by reversing the order of the digits. Find the number. Reprint 2026-27",
+      "text": "Form the pair of linear equations in the following problems, and find their solutions (if they exist) by the elimination method : (i) If we add 1 to the numerator and subtract 1 from the denominator, a fraction reduces to 1. It becomes 1 2 if we only add 1 to the denominator. What is the fraction? (ii) Five years ago, Nuri was thrice as old as Sonu. Ten years later, Nuri will be twice as old as Sonu. How old are Nuri and Sonu? (iii) The sum of the digits of a two-digit number is 9. Also, nine times this number is twice the number obtained by reversing the order of the digits. Find the number.",
       "sourceRef": "page=82",
       "questionType": "FREE_RESPONSE"
     },
@@ -328,7 +306,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 5,
-      "text": "There are several situations which can be mathematically represented by two equations that are not linear to start with. But we alter them so that they are reduced to a pair of linear equations. Reprint 2026-27",
+      "text": "There are several situations which can be mathematically represented by two equations that are not linear to start with. But we alter them so that they are reduced to a pair of linear equations.",
       "sourceRef": "page=83",
       "questionType": "FREE_RESPONSE"
     },
@@ -350,7 +328,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.1",
       "qIndex": 2,
-      "text": "Represent the following situations in the form of quadratic equations : (i) The area of a rectangular plot is 528 m2. The length of the plot (in metres) is one more than twice its breadth. We need to find the length and breadth of the plot. Reprint 2026-27",
+      "text": "Represent the following situations in the form of quadratic equations : (i) The area of a rectangular plot is 528 m2. The length of the plot (in metres) is one more than twice its breadth. We need to find the length and breadth of the plot.",
       "sourceRef": "page=87",
       "questionType": "FREE_RESPONSE"
     },
@@ -362,17 +340,6 @@
       "exerciseId": "4.1",
       "qIndex": 1,
       "text": "and – 3 2 We verify the roots, by checking that 2 1 and 3 2  satisfy 6x2 – x – 2 = 0.",
-      "sourceRef": "page=89",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C10-CH04-EX4.1-Q3",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.1",
-      "qIndex": 3,
-      "text": "Reprint 2026-27",
       "sourceRef": "page=89",
       "questionType": "FREE_RESPONSE"
     },
@@ -548,7 +515,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.3",
       "qIndex": 5,
-      "text": "A quadratic equation ax2 + bx + c = 0 has (i) two distinct real roots, if b2 – 4ac > 0, (ii) two equal roots (i.e., coincident roots), if b2 – 4ac = 0, and (iii) no real roots, if b2 – 4ac < 0. Reprint 2026-27",
+      "text": "A quadratic equation ax2 + bx + c = 0 has (i) two distinct real roots, if b2 – 4ac > 0, (ii) two equal roots (i.e., coincident roots), if b2 – 4ac = 0, and (iii) no real roots, if b2 – 4ac < 0.",
       "sourceRef": "page=93",
       "questionType": "FREE_RESPONSE"
     },
@@ -614,7 +581,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.1",
       "qIndex": 2,
-      "text": ". . (iii) – 1.2, – 3.2, – 5.2, – 7.2, . . . (iv) – 10, – 6, – 2, 2, . . . (v) 3, 3 2  , 3 2 2  , 3 3 2 ,  . . . (vi) 0.2, 0.22, 0.222, 0.2222, . . . (vii) 0, – 4, – 8, –12, . . . (viii) – 1 2 , – 1 2 , – 1 2 , – 1 2 , . . . Reprint 2026-27",
+      "text": ". . (iii) – 1.2, – 3.2, – 5.2, – 7.2, . . . (iv) – 10, – 6, – 2, 2, . . . (v) 3, 3 2  , 3 2 2  , 3 3 2 ,  . . . (vi) 0.2, 0.22, 0.222, 0.2222, . . . (vii) 0, – 4, – 8, –12, . . . (viii) – 1 2 , – 1 2 , – 1 2 , – 1 2 , . . .",
       "sourceRef": "page=101",
       "questionType": "FREE_RESPONSE"
     },
@@ -801,7 +768,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.2",
       "qIndex": 16,
-      "text": "Determine the AP whose third term is 16 and the 7th term exceeds the 5th term by 12. Reprint 2026-27",
+      "text": "Determine the AP whose third term is 16 and the 7th term exceeds the 5th term by 12.",
       "sourceRef": "page=108",
       "questionType": "FREE_RESPONSE"
     },
@@ -911,7 +878,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.3",
       "qIndex": 3,
-      "text": "In an AP: (i) given a = 5, d = 3, an = 50, find n and Sn. (ii) given a = 7, a13 = 35, find d and S13. (iii) given a12 = 37, d = 3, find a and S12. (iv) given a3 = 15, S10 = 125, find d and a10. (v) given d = 5, S9 = 75, find a and a9. (vi) given a = 2, d = 8, Sn = 90, find n and an. (vii) given a = 8, an = 62, Sn = 210, find n and d. (viii) given an = 4, d = 2, Sn = –14, find n and a. (ix) given a = 3, n = 8, S = 192, find d. (x) given l = 28, S = 144, and there are total 9 terms. Find a. Reprint 2026-27",
+      "text": "In an AP: (i) given a = 5, d = 3, an = 50, find n and Sn. (ii) given a = 7, a13 = 35, find d and S13. (iii) given a12 = 37, d = 3, find a and S12. (iv) given a3 = 15, S10 = 125, find d and a10. (v) given d = 5, S9 = 75, find a and a9. (vi) given a = 2, d = 8, Sn = 90, find n and an. (vii) given a = 8, an = 62, Sn = 210, find n and d. (viii) given an = 4, d = 2, Sn = –14, find n and a. (ix) given a = 3, n = 8, S = 192, find d. (x) given l = 28, S = 144, and there are total 9 terms. Find a.",
       "sourceRef": "page=114",
       "questionType": "FREE_RESPONSE"
     },
@@ -1076,7 +1043,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.3",
       "qIndex": 18,
-      "text": "A spiral is made up of successive semicircles, with centres alternately at A and B, starting with centre at A, of radii 0.5 cm, 1.0 cm, 1.5 cm, 2.0 cm, . . . as shown in Fig. 5.4. What is the total length of such a spiral made up of thirteen consecutive semicircles? (Take  = 22 7 ) Reprint 2026-27",
+      "text": "A spiral is made up of successive semicircles, with centres alternately at A and B, starting with centre at A, of radii 0.5 cm, 1.0 cm, 1.5 cm, 2.0 cm, . . . as shown in Fig. 5.4. What is the total length of such a spiral made up of thirteen consecutive semicircles? (Take  = 22 7 )",
       "sourceRef": "page=115",
       "questionType": "FREE_RESPONSE"
     },
@@ -1098,7 +1065,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.3",
       "qIndex": 20,
-      "text": "In a potato race, a bucket is placed at the starting point, which is 5 m from the first potato, and the other potatoes are placed 3 m apart in a straight line. There are ten potatoes in the line (see Fig. 5.6). Fig. 5.6 A competitor starts from the bucket, picks up the nearest potato, runs back with it, drops it in the bucket, runs back to pick up the next potato, runs to the bucket to drop it in, and she continues in the same way until all the potatoes are in the bucket. What is the total distance the competitor has to run? [Hint : To pick up the first potato and the second potato, the total distance (in metres) run by a competitor is 2 × 5 + 2 × (5 + 3)] Reprint 2026-27",
+      "text": "In a potato race, a bucket is placed at the starting point, which is 5 m from the first potato, and the other potatoes are placed 3 m apart in a straight line. There are ten potatoes in the line (see Fig. 5.6). Fig. 5.6 A competitor starts from the bucket, picks up the nearest potato, runs back with it, drops it in the bucket, runs back to pick up the next potato, runs to the bucket to drop it in, and she continues in the same way until all the potatoes are in the bucket. What is the total distance the competitor has to run? [Hint : To pick up the first potato and the second potato, the total distance (in metres) run by a competitor is 2 × 5 + 2 × (5 + 3)]",
       "sourceRef": "page=116",
       "questionType": "FREE_RESPONSE"
     },
@@ -1153,7 +1120,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.4",
       "qIndex": 5,
-      "text": "A small terrace at a football ground comprises of 15 steps each of which is 50 m long and built of solid concrete. Each step has a rise of 1 4 m and a tread of 1 2 m. (see Fig. 5.8). Calculate the total volume of concrete required to build the terrace. [Hint : Volume of concrete required to build the first step = 3 1 1 50 m 4 2   ] Fig. 5.8 Fig. 5.7 * These exercises are not from the examination point of view. Reprint 2026-27",
+      "text": "A small terrace at a football ground comprises of 15 steps each of which is 50 m long and built of solid concrete. Each step has a rise of 1 4 m and a tread of 1 2 m. (see Fig. 5.8). Calculate the total volume of concrete required to build the terrace. [Hint : Volume of concrete required to build the first step = 3 1 1 50 m 4 2   ] Fig. 5.8 Fig. 5.7 * These exercises are not from the examination point of view.",
       "sourceRef": "page=117",
       "questionType": "FREE_RESPONSE"
     },
@@ -1208,7 +1175,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.4",
       "qIndex": 5,
-      "text": "If l is the last term of the finite AP, say the nth term, then the sum of all terms of the AP is given by : S = ( ) 2 n a l  A NOTE TO THE READER If a, b, c are in AP, then b = 2 a c  and b is called the arithmetic mean of a and c. Reprint 2026-27",
+      "text": "If l is the last term of the finite AP, say the nth term, then the sum of all terms of the AP is given by : S = ( ) 2 n a l  A NOTE TO THE READER If a, b, c are in AP, then b = 2 a c  and b is called the arithmetic mean of a and c.",
       "sourceRef": "page=118",
       "questionType": "FREE_RESPONSE"
     },
@@ -1241,7 +1208,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.1",
       "qIndex": 3,
-      "text": "State whether the following quadrilaterals are similar or not: Fig. 6.8 Reprint 2026-27",
+      "text": "State whether the following quadrilaterals are similar or not: Fig. 6.8",
       "sourceRef": "page=124",
       "questionType": "FREE_RESPONSE"
     },
@@ -1252,7 +1219,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.1",
       "qIndex": 2,
-      "text": "Thus, you can see that in  ABC, DE || BC and AD AE DB EC  . Is it a coincidence? No, it is due to the following theorem (known as the Basic Proportionality Theorem): Thales (640 – 546 B.C.) Fig. 6.9 Reprint 2026-27",
+      "text": "Thus, you can see that in  ABC, DE || BC and AD AE DB EC  . Is it a coincidence? No, it is due to the following theorem (known as the Basic Proportionality Theorem): Thales (640 – 546 B.C.) Fig. 6.9",
       "sourceRef": "page=125",
       "questionType": "FREE_RESPONSE"
     },
@@ -1296,7 +1263,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.2",
       "qIndex": 4,
-      "text": "In Fig. 6.19, DE || AC and DF || AE. Prove that BF BE FE EC   Fig. 6.18 Fig. 6.19 Reprint 2026-27",
+      "text": "In Fig. 6.19, DE || AC and DF || AE. Prove that BF BE FE EC   Fig. 6.18 Fig. 6.19",
       "sourceRef": "page=130",
       "questionType": "FREE_RESPONSE"
     },
@@ -1373,7 +1340,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 1,
-      "text": "State which pairs of triangles in Fig. 6.34 are similar. Write the similarity criterion used by you for answering the question and also write the pairs of similar triangles in the symbolic form : Reprint 2026-27",
+      "text": "State which pairs of triangles in Fig. 6.34 are similar. Write the similarity criterion used by you for answering the question and also write the pairs of similar triangles in the symbolic form :",
       "sourceRef": "page=140",
       "questionType": "FREE_RESPONSE"
     },
@@ -1395,7 +1362,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 3,
-      "text": "Diagonals AC and BD of a trapezium ABCD with AB || DC intersect each other at the point O. Using a similarity criterion for two triangles, show that OA OB OC OD   Fig. 6.35 Reprint 2026-27",
+      "text": "Diagonals AC and BD of a trapezium ABCD with AB || DC intersect each other at the point O. Using a similarity criterion for two triangles, show that OA OB OC OD   Fig. 6.35",
       "sourceRef": "page=141",
       "questionType": "FREE_RESPONSE"
     },
@@ -1472,7 +1439,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 10,
-      "text": "CD and GH are respectively the bisectors of  ACB and  EGF such that D and H lie on sides AB and FE of  ABC and  EFG respectively. If  ABC ~  FEG, show that: (i) CD AC GH FG  (ii)  DCB ~  HGE (iii)  DCA ~  HGF Fig. 6.36 Fig. 6.37 Fig. 6.38 Fig. 6.39 Reprint 2026-27",
+      "text": "CD and GH are respectively the bisectors of  ACB and  EGF such that D and H lie on sides AB and FE of  ABC and  EFG respectively. If  ABC ~  FEG, show that: (i) CD AC GH FG  (ii)  DCB ~  HGE (iii)  DCA ~  HGF Fig. 6.36 Fig. 6.37 Fig. 6.38 Fig. 6.39",
       "sourceRef": "page=142",
       "questionType": "FREE_RESPONSE"
     },
@@ -1615,7 +1582,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 7,
-      "text": "If in two triangles, two angles of one triangle are respectively equal to the two angles of the other triangle, then the two triangles are similar (AA similarity criterion). Fig. 6.40 Fig. 6.41 Reprint 2026-27",
+      "text": "If in two triangles, two angles of one triangle are respectively equal to the two angles of the other triangle, then the two triangles are similar (AA similarity criterion). Fig. 6.40 Fig. 6.41",
       "sourceRef": "page=143",
       "questionType": "FREE_RESPONSE"
     },
@@ -1637,7 +1604,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 9,
-      "text": "If one angle of a triangle is equal to one angle of another triangle and the sides including these angles are in the same ratio (proportional), then the triangles are similar (SAS similarity criterion). A NOTE TO THE READER If in two right triangles, hypotenuse and one side of one triangle are proportional to the hypotenuse and one side of the other triangle, then the two triangles are similar. This may be referred to as the RHS Similarity Criterion. If you use this criterion in Example 2, Chapter 8, the proof will become simpler. Reprint 2026-27",
+      "text": "If one angle of a triangle is equal to one angle of another triangle and the sides including these angles are in the same ratio (proportional), then the triangles are similar (SAS similarity criterion). A NOTE TO THE READER If in two right triangles, hypotenuse and one side of one triangle are proportional to the hypotenuse and one side of the other triangle, then the two triangles are similar. This may be referred to as the RHS Similarity Criterion. If you use this criterion in Example 2, Chapter 8, the proof will become simpler.",
       "sourceRef": "page=144",
       "questionType": "FREE_RESPONSE"
     },
@@ -1725,7 +1692,7 @@
       "chapterTitleHint": "",
       "exerciseId": "7.1",
       "qIndex": 8,
-      "text": "Find the values of y for which the distance between the points P(2, – 3) and Q(10, y) is 10 units. Reprint 2026-27",
+      "text": "Find the values of y for which the distance between the points P(2, – 3) and Q(10, y) is 10 units.",
       "sourceRef": "page=151",
       "questionType": "FREE_RESPONSE"
     },
@@ -1857,7 +1824,7 @@
       "chapterTitleHint": "",
       "exerciseId": "7.2",
       "qIndex": 10,
-      "text": "Find the area of a rhombus if its vertices are (3, 0), (4, 5), (– 1, 4) and (– 2, – 1) taken in order. [Hint : Area of a rhombus = 1 2 (product of its diagonals)] Fig. 7.12 Reprint 2026-27",
+      "text": "Find the area of a rhombus if its vertices are (3, 0), (4, 5), (– 1, 4) and (– 2, – 1) taken in order. [Hint : Area of a rhombus = 1 2 (product of its diagonals)] Fig. 7.12",
       "sourceRef": "page=157",
       "questionType": "FREE_RESPONSE"
     },
@@ -1901,7 +1868,7 @@
       "chapterTitleHint": "",
       "exerciseId": "7.2",
       "qIndex": 4,
-      "text": "The mid-point of the line segment joining the points P(x1, y1) and Q(x2, y2) is 1 2 1 2 , 2 2 x x y y        . A NOTE TO THE READER Section 7.3 discusses the Section Formula for the coordinates (x, y) of a point P which divides internally the line segment joining the points A(x1, y1) and B(x2, y2) in the ratio m1 : m2 as follows : x = 1 2 2 1 1 2 m x m x m m   , y = 1 2 2 1 1 2 m y m y m m   Note that, here, PA : PB = m1 : m2. However, if P does not lie between A and B but lies on the line AB, outside the line segment AB, and PA : PB = m1 : m2, we say that P divides externally the line segment joining the points A and B. You will study Section Formula for such case in higher classes. Reprint 2026-27",
+      "text": "The mid-point of the line segment joining the points P(x1, y1) and Q(x2, y2) is 1 2 1 2 , 2 2 x x y y        . A NOTE TO THE READER Section 7.3 discusses the Section Formula for the coordinates (x, y) of a point P which divides internally the line segment joining the points A(x1, y1) and B(x2, y2) in the ratio m1 : m2 as follows : x = 1 2 2 1 1 2 m x m x m m   , y = 1 2 2 1 1 2 m y m y m m   Note that, here, PA : PB = m1 : m2. However, if P does not lie between A and B but lies on the line AB, outside the line segment AB, and PA : PB = m1 : m2, we say that P divides externally the line segment joining the points A and B. You will study Section Formula for such case in higher classes.",
       "sourceRef": "page=158",
       "questionType": "FREE_RESPONSE"
     },
@@ -2066,7 +2033,7 @@
       "chapterTitleHint": "",
       "exerciseId": "8.2",
       "qIndex": 4,
-      "text": "State whether the following are true or false. Justify your answer. (i) sin (A + B) = sin A + sin B. (ii) The value of sin  increases as  increases. (iii) The value of cos  increases as  increases. (iv) sin  = cos  for all values of . (v) cot A is not defined for A = 0°. Reprint 2026-27",
+      "text": "State whether the following are true or false. Justify your answer. (i) sin (A + B) = sin A + sin B. (ii) The value of sin  increases as  increases. (iii) The value of cos  increases as  increases. (iv) sin  = cos  for all values of . (v) cot A is not defined for A = 0°.",
       "sourceRef": "page=173",
       "questionType": "FREE_RESPONSE"
     },
@@ -2121,7 +2088,7 @@
       "chapterTitleHint": "",
       "exerciseId": "8.3",
       "qIndex": 4,
-      "text": "Prove the following identities, where the angles involved are acute angles for which the expressions are defined. (i) (cosec  – cot )2 = 1 cos 1 cos     (ii) cos A 1 sin A 2 sec A 1 + sin A cos A    (iii) tan cot 1 sec cosec 1 cot 1 tan            [Hint : Write the expression in terms of sin  and cos ] (iv) 2 1 sec A sin A sec A 1 – cos A   [Hint : Simplify LHS and RHS separately] (v) cos A – sin A + 1 cosec A + cot A, cos A + sin A – 1  using the identity cosec2 A = 1 + cot2 A. (vi) 1 sin A sec A + tan A 1 – sin A   (vii) 3 3 sin 2 sin tan 2 cos cos      (viii) (sin A + cosec A)2 + (cos A + sec A)2 = 7 + tan2 A + cot2 A Reprint 2026-27",
+      "text": "Prove the following identities, where the angles involved are acute angles for which the expressions are defined. (i) (cosec  – cot )2 = 1 cos 1 cos     (ii) cos A 1 sin A 2 sec A 1 + sin A cos A    (iii) tan cot 1 sec cosec 1 cot 1 tan            [Hint : Write the expression in terms of sin  and cos ] (iv) 2 1 sec A sin A sec A 1 – cos A   [Hint : Simplify LHS and RHS separately] (v) cos A – sin A + 1 cosec A + cot A, cos A + sin A – 1  using the identity cosec2 A = 1 + cot2 A. (vi) 1 sin A sec A + tan A 1 – sin A   (vii) 3 3 sin 2 sin tan 2 cos cos      (viii) (sin A + cosec A)2 + (cos A + sec A)2 = 7 + tan2 A + cot2 A",
       "sourceRef": "page=177",
       "questionType": "FREE_RESPONSE"
     },
@@ -2187,7 +2154,7 @@
       "chapterTitleHint": "",
       "exerciseId": "8.3",
       "qIndex": 6,
-      "text": "sin2 A + cos2 A = 1, sec2 A – tan2 A = 1 for 0° £ A < 90°, cosec2 A = 1 + cot2 A for 0° < A £ 90º. Reprint 2026-27",
+      "text": "sin2 A + cos2 A = 1, sec2 A – tan2 A = 1 for 0° £ A < 90°, cosec2 A = 1 + cot2 A for 0° < A £ 90º.",
       "sourceRef": "page=178",
       "questionType": "FREE_RESPONSE"
     },
@@ -2264,7 +2231,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.1",
       "qIndex": 7,
-      "text": "From a point on the ground, the angles of elevation of the bottom and the top of a transmission tower fixed at the top of a 20 m high building are 45° and 60° respectively. Find the height of the tower. Fig. 9.11 Reprint 2026-27",
+      "text": "From a point on the ground, the angles of elevation of the bottom and the top of a transmission tower fixed at the top of a 20 m high building are 45° and 60° respectively. Find the height of the tower. Fig. 9.11",
       "sourceRef": "page=187",
       "questionType": "FREE_RESPONSE"
     },
@@ -2352,7 +2319,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.1",
       "qIndex": 15,
-      "text": "A straight highway leads to the foot of a tower. A man standing at the top of the tower observes a car at an angle of depression of 30°, which is approaching the foot of the Fig. 9.12 Fig. 9.13 Reprint 2026-27",
+      "text": "A straight highway leads to the foot of a tower. A man standing at the top of the tower observes a car at an angle of depression of 30°, which is approaching the foot of the Fig. 9.12 Fig. 9.13",
       "sourceRef": "page=188",
       "questionType": "FREE_RESPONSE"
     },
@@ -2374,7 +2341,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.1",
       "qIndex": 2,
-      "text": "The height or length of an object or the distance between two distant objects can be determined with the help of trigonometric ratios. Reprint 2026-27",
+      "text": "The height or length of an object or the distance between two distant objects can be determined with the help of trigonometric ratios.",
       "sourceRef": "page=189",
       "questionType": "FREE_RESPONSE"
     },
@@ -2473,7 +2440,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.2",
       "qIndex": 3,
-      "text": "If tangents PA and PB from a point P to a circle with centre O are inclined to each other at angle of 80°, then  POA is equal to (A) 50° (B) 60° (C) 70° (D) 80° Fig. 10.11 Reprint 2026-27",
+      "text": "If tangents PA and PB from a point P to a circle with centre O are inclined to each other at angle of 80°, then  POA is equal to (A) 50° (B) 60° (C) 70° (D) 80° Fig. 10.11",
       "sourceRef": "page=197",
       "questionType": "MCQ"
     },
@@ -2583,7 +2550,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.2",
       "qIndex": 13,
-      "text": "Prove that opposite sides of a quadrilateral circumscribing a circle subtend supplementary angles at the centre of the circle. Fig. 10.14 Reprint 2026-27",
+      "text": "Prove that opposite sides of a quadrilateral circumscribing a circle subtend supplementary angles at the centre of the circle. Fig. 10.14",
       "sourceRef": "page=198",
       "questionType": "FREE_RESPONSE"
     },
@@ -2616,7 +2583,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.2",
       "qIndex": 3,
-      "text": "The lengths of the two tangents from an external point to a circle are equal. Reprint 2026-27",
+      "text": "The lengths of the two tangents from an external point to a circle are equal.",
       "sourceRef": "page=199",
       "questionType": "FREE_RESPONSE"
     },
@@ -2704,7 +2671,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.1",
       "qIndex": 8,
-      "text": "A horse is tied to a peg at one corner of a square shaped grass field of side 15 m by means of a 5 m long rope (see Fig. 11.8). Find Fig. 11.8 Reprint 2026-27",
+      "text": "A horse is tied to a peg at one corner of a square shaped grass field of side 15 m by means of a 5 m long rope (see Fig. 11.8). Find Fig. 11.8",
       "sourceRef": "page=204",
       "questionType": "FREE_RESPONSE"
     },
@@ -2770,7 +2737,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.1",
       "qIndex": 14,
-      "text": "Tick the correct answer in the following : Area of a sector of angle p (in degrees) of a circle with radius R is (A) 2 R 180 p   (B) 2 R 180 p  (C) 2 R 360 p   (D) 2 2 R 720 p   Fig. 11.9 Fig. 11.10 Fig. 11.11 Reprint 2026-27",
+      "text": "Tick the correct answer in the following : Area of a sector of angle p (in degrees) of a circle with radius R is (A) 2 R 180 p   (B) 2 R 180 p  (C) 2 R 360 p   (D) 2 2 R 720 p   Fig. 11.9 Fig. 11.10 Fig. 11.11",
       "sourceRef": "page=205",
       "questionType": "MCQ"
     },
@@ -2803,7 +2770,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.1",
       "qIndex": 3,
-      "text": "Area of segment of a circle = Area of the corresponding sector – Area of the corresponding triangle. Reprint 2026-27",
+      "text": "Area of segment of a circle = Area of the corresponding sector – Area of the corresponding triangle.",
       "sourceRef": "page=206",
       "questionType": "FREE_RESPONSE"
     },
@@ -2869,7 +2836,7 @@
       "chapterTitleHint": "",
       "exerciseId": "12.1",
       "qIndex": 6,
-      "text": "A medicine capsule is in the shape of a cylinder with two hemispheres stuck to each of its ends (see Fig. 12.10). The length of the entire capsule is 14 mm and the diameter of the capsule is 5 mm. Find its surface area. Fig. 12.10 Fig. 12.9 Reprint 2026-27",
+      "text": "A medicine capsule is in the shape of a cylinder with two hemispheres stuck to each of its ends (see Fig. 12.10). The length of the entire capsule is 14 mm and the diameter of the capsule is 5 mm. Find its surface area. Fig. 12.10 Fig. 12.9",
       "sourceRef": "page=212",
       "questionType": "FREE_RESPONSE"
     },
@@ -2924,7 +2891,7 @@
       "chapterTitleHint": "",
       "exerciseId": "12.2",
       "qIndex": 2,
-      "text": "Rachel, an engineering student, was asked to make a model shaped like a cylinder with two cones attached at its two ends by using a thin aluminium sheet. The diameter of the model is 3 cm and its length is 12 cm. If each cone has a height of 2 cm, find the volume of air contained in the model that Rachel made. (Assume the outer and inner dimensions of the model to be nearly the same.) Fig. 12.14 Reprint 2026-27",
+      "text": "Rachel, an engineering student, was asked to make a model shaped like a cylinder with two cones attached at its two ends by using a thin aluminium sheet. The diameter of the model is 3 cm and its length is 12 cm. If each cone has a height of 2 cm, find the volume of air contained in the model that Rachel made. (Assume the outer and inner dimensions of the model to be nearly the same.) Fig. 12.14",
       "sourceRef": "page=215",
       "questionType": "FREE_RESPONSE"
     },
@@ -3012,7 +2979,7 @@
       "chapterTitleHint": "",
       "exerciseId": "12.2",
       "qIndex": 2,
-      "text": "To find the volume of objects formed by combining any two of a cuboid, cone, cylinder, sphere and hemisphere. Fig. 12.16 Fig. 12.15 Reprint 2026-27",
+      "text": "To find the volume of objects formed by combining any two of a cuboid, cone, cylinder, sphere and hemisphere. Fig. 12.16 Fig. 12.15",
       "sourceRef": "page=216",
       "questionType": "FREE_RESPONSE"
     },
@@ -3045,7 +3012,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.1",
       "qIndex": 3,
-      "text": "The following distribution shows the daily pocket allowance of children of a locality. The mean pocket allowance is Rs 18. Find the missing frequency f. Daily pocket 11 - 13 13 - 15 15 - 17 17 - 19 19 - 21 21 - 23 23 - 25 allowance (in `) Number of children 7 6 9 13 f 5 4 Reprint 2026-27",
+      "text": "The following distribution shows the daily pocket allowance of children of a locality. The mean pocket allowance is Rs 18. Find the missing frequency f. Daily pocket 11 - 13 13 - 15 15 - 17 17 - 19 19 - 21 21 - 23 23 - 25 allowance (in `) Number of children 7 6 9 13 f 5",
       "sourceRef": "page=227",
       "questionType": "FREE_RESPONSE"
     },
@@ -3133,7 +3100,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.1",
       "qIndex": 2,
-      "text": "It depends upon the demand of the situation whether we are interested in finding the average marks obtained by the students or the average of the marks obtained by most Reprint 2026-27",
+      "text": "It depends upon the demand of the situation whether we are interested in finding the average marks obtained by the students or the average of the marks obtained by most",
       "sourceRef": "page=231",
       "questionType": "FREE_RESPONSE"
     },
@@ -3166,7 +3133,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.2",
       "qIndex": 3,
-      "text": "The following data gives the distribution of total monthly household expenditure of 200 families of a village. Find the modal monthly expenditure of the families. Also, find the mean monthly expenditure : Expenditure (in `) Number of families 1000 - 1500 24 1500 - 2000 40 2000 - 2500 33 2500 - 3000 28 3000 - 3500 30 3500 - 4000 22 4000 - 4500 16 4500 - 5000 7 Reprint 2026-27",
+      "text": "The following data gives the distribution of total monthly household expenditure of 200 families of a village. Find the modal monthly expenditure of the families. Also, find the mean monthly expenditure : Expenditure (in `) Number of families 1000 - 1500 24 1500 - 2000 40 2000 - 2500 33 2500 - 3000 28 3000 - 3500 30 3500 - 4000 22 4000 - 4500 16 4500 - 5000",
       "sourceRef": "page=232",
       "questionType": "FREE_RESPONSE"
     },
@@ -3199,7 +3166,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.2",
       "qIndex": 6,
-      "text": "A student noted the number of cars passing through a spot on a road for 100 periods each of 3 minutes and summarised it in the table given below. Find the mode of the data : Number of cars 0 - 10 10 - 20 20 - 30 30 - 40 40 - 50 50 - 60 60 - 70 70 - 80 Frequency 7 14 13 12 20 11 15 8 Reprint 2026-27",
+      "text": "A student noted the number of cars passing through a spot on a road for 100 periods each of 3 minutes and summarised it in the table given below. Find the mode of the data : Number of cars 0 - 10 10 - 20 20 - 30 30 - 40 40 - 50 50 - 60 60 - 70 70 - 80 Frequency 7 14 13 12 20 11 15",
       "sourceRef": "page=233",
       "questionType": "FREE_RESPONSE"
     },
@@ -3210,7 +3177,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.2",
       "qIndex": 0,
-      "text": "Since there are 5 students scoring marks in the interval 0 - 10, this means that there are 53 – 5 = 48 students getting more than or equal to 10 marks. Continuing in the same manner, we get the number of students scoring 20 or above as 48 – 3 = 45, 30 or above as 45 – 4 = 41, and so on, as shown in Table 13.14. Reprint 2026-27",
+      "text": "Since there are 5 students scoring marks in the interval 0 - 10, this means that there are 53 – 5 = 48 students getting more than or equal to 10 marks. Continuing in the same manner, we get the number of students scoring 20 or above as 48 – 3 = 45, 30 or above as 45 – 4 = 41, and so on, as shown in Table 13.14.",
       "sourceRef": "page=237",
       "questionType": "FREE_RESPONSE"
     },
@@ -3232,7 +3199,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.2",
       "qIndex": 2,
-      "text": "The median of grouped data with unequal class sizes can also be calculated. However, we shall not discuss it here. Reprint 2026-27",
+      "text": "The median of grouped data with unequal class sizes can also be calculated. However, we shall not discuss it here.",
       "sourceRef": "page=243",
       "questionType": "FREE_RESPONSE"
     },
@@ -3265,7 +3232,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.3",
       "qIndex": 3,
-      "text": "A life insurance agent found the following data for distribution of ages of 100 policy holders. Calculate the median age, if policies are given only to persons having age 18 years onwards but less than 60 year. Reprint 2026-27",
+      "text": "A life insurance agent found the following data for distribution of ages of 100 policy holders. Calculate the median age, if policies are given only to persons having age 18 years onwards but less than 60 year.",
       "sourceRef": "page=244",
       "questionType": "FREE_RESPONSE"
     },
@@ -3276,7 +3243,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.3",
       "qIndex": 4,
-      "text": "The lengths of 40 leaves of a plant are measured correct to the nearest millimetre, and the data obtained is represented in the following table : Length (in mm) Number of leaves 118 - 126 3 127 - 135 5 136 - 144 9 145 - 153 12 154 - 162 5 163 - 171 4 172 - 180 2 Find the median length of the leaves. (Hint : The data needs to be converted to continuous classes for finding the median, since the formula assumes continuous classes. The classes then change to 117.5 - 126.5, 126.5 - 135.5, . . ., 171.5 - 180.5.) Reprint 2026-27",
+      "text": "The lengths of 40 leaves of a plant are measured correct to the nearest millimetre, and the data obtained is represented in the following table : Length (in mm) Number of leaves 118 - 126 3 127 - 135 5 136 - 144 9 145 - 153 12 154 - 162 5 163 - 171 4 172 - 180 2 Find the median length of the leaves. (Hint : The data needs to be converted to continuous classes for finding the median, since the formula assumes continuous classes. The classes then change to 117.5 - 126.5, 126.5 - 135.5, . . ., 171.5 - 180.5.)",
       "sourceRef": "page=245",
       "questionType": "FREE_RESPONSE"
     },
@@ -3320,7 +3287,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.3",
       "qIndex": 1,
-      "text": "The mean for grouped data can be found by : (i) the direct method : i i i f x x f Σ = Σ (ii) the assumed mean method : i i i f d x a f Σ = + Σ Reprint 2026-27",
+      "text": "The mean for grouped data can be found by : (i) the direct method : i i i f x x f Σ = Σ (ii) the assumed mean method : i i i f d x a f Σ = + Σ",
       "sourceRef": "page=246",
       "questionType": "FREE_RESPONSE"
     },
@@ -3353,7 +3320,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.3",
       "qIndex": 4,
-      "text": "The median for grouped data is formed by using the formula: Median = cf 2 n l h f                , where symbols have their usual meanings. A NOTE TO THE READER For calculating mode and median for grouped data, it should be ensured that the class intervals are continuous before applying the formulae. Same condition also apply for construction of an ogive. Further, in case of ogives, the scale may not be the same on both the axes. Reprint 2026-27",
+      "text": "The median for grouped data is formed by using the formula: Median = cf 2 n l h f                , where symbols have their usual meanings. A NOTE TO THE READER For calculating mode and median for grouped data, it should be ensured that the class intervals are continuous before applying the formulae. Same condition also apply for construction of an ogive. Further, in case of ogives, the scale may not be the same on both the axes.",
       "sourceRef": "page=247",
       "questionType": "FREE_RESPONSE"
     },
@@ -3452,7 +3419,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.1",
       "qIndex": 9,
-      "text": "A box contains 5 red marbles, 8 white marbles and 4 green marbles. One marble is taken out of the box at random. What is the probability that the marble taken out will be (i) red ? (ii) white ? (iii) not green? Reprint 2026-27",
+      "text": "A box contains 5 red marbles, 8 white marbles and 4 green marbles. One marble is taken out of the box at random. What is the probability that the marble taken out will be (i) red ? (ii) white ? (iii) not green?",
       "sourceRef": "page=260",
       "questionType": "FREE_RESPONSE"
     },
@@ -3551,7 +3518,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.1",
       "qIndex": 18,
-      "text": "A box contains 90 discs which are numbered from 1 to 90. If one disc is drawn at random from the box, find the probability that it bears (i) a two-digit number (ii) a perfect square number (iii) a number divisible by 5. Fig. 14.4 Fig. 14.5 Reprint 2026-27",
+      "text": "A box contains 90 discs which are numbered from 1 to 90. If one disc is drawn at random from the box, find the probability that it bears (i) a two-digit number (ii) a perfect square number (iii) a number divisible by 5. Fig. 14.4 Fig. 14.5",
       "sourceRef": "page=261",
       "questionType": "FREE_RESPONSE"
     },
@@ -3628,7 +3595,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.1",
       "qIndex": 24,
-      "text": "A die is thrown twice. What is the probability that (i) 5 will not come up either time? (ii) 5 will come up at least once? [Hint : Throwing a die twice and throwing two dice simultaneously are treated as the same experiment] * Not from the examination point of view. 3 m 2 m Reprint 2026-27",
+      "text": "A die is thrown twice. What is the probability that (i) 5 will not come up either time? (ii) 5 will come up at least once? [Hint : Throwing a die twice and throwing two dice simultaneously are treated as the same experiment] * Not from the examination point of view. 3 m 2 m",
       "sourceRef": "page=262",
       "questionType": "FREE_RESPONSE"
     },
@@ -3716,7 +3683,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.1",
       "qIndex": 6,
-      "text": "For any event E, P (E) + P ( E ) = 1, where E stands for ‘not E’. E and E are called complementary events. Reprint 2026-27",
+      "text": "For any event E, P (E) + P ( E ) = 1, where E stands for ‘not E’. E and E are called complementary events.",
       "sourceRef": "page=263",
       "questionType": "FREE_RESPONSE"
     },
@@ -3754,28 +3721,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q6",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 6,
-      "text": "(i) 0 (ii)",
-      "sourceRef": "page=273",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q8",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 8,
-      "text": "(i) 3 8 (ii) 5",
-      "sourceRef": "page=273",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C10-CH14-EX14.1-Q9",
       "ncertClass": "CLASS_10",
       "chapterNumber": 14,
@@ -3783,17 +3728,6 @@
       "exerciseId": "14.1",
       "qIndex": 9,
       "text": "(i) 5 17 (ii) 8 17 (iii) 13",
-      "sourceRef": "page=273",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q10",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 10,
-      "text": "(i) 5 9 (ii) 17 18 Reprint 2026-27",
       "sourceRef": "page=273",
       "questionType": "FREE_RESPONSE"
     },
@@ -3809,17 +3743,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q13",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 13,
-      "text": "(i) 1 2 (ii) 1 2 (iii) 1",
-      "sourceRef": "page=274",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C10-CH14-EX14.1-Q14",
       "ncertClass": "CLASS_10",
       "chapterNumber": 14,
@@ -3831,28 +3754,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q15",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 15,
-      "text": "(i) 1 5 (ii) (a) 1 4 (b)",
-      "sourceRef": "page=274",
-      "questionType": "MCQ"
-    },
-    {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q17",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 17,
-      "text": "(i) 1 5 (ii) 15",
-      "sourceRef": "page=274",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C10-CH14-EX14.1-Q18",
       "ncertClass": "CLASS_10",
       "chapterNumber": 14,
@@ -3860,28 +3761,6 @@
       "exerciseId": "14.1",
       "qIndex": 18,
       "text": "(i) 9 10 (ii) 1 10 (iii) 1",
-      "sourceRef": "page=274",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q19",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 19,
-      "text": "(i) 1 3 (ii) 1",
-      "sourceRef": "page=274",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q21",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 21,
-      "text": "(i) 31 36 (ii) 5",
       "sourceRef": "page=274",
       "questionType": "FREE_RESPONSE"
     },
@@ -3908,24 +3787,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q24",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 24,
-      "text": "(i) 25 36 (ii) 11",
-      "sourceRef": "page=274",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C10-CH14-EX14.1-Q25",
       "ncertClass": "CLASS_10",
       "chapterNumber": 14,
       "chapterTitleHint": "",
       "exerciseId": "14.1",
       "qIndex": 25,
-      "text": "(i) Incorrect. We can classify the outcomes like this but they are not then ‘equally likely’. Reason is that ‘one of each’ can result in two ways — from a head on first coin and tail on the second coin or from a tail on the first coin and head on the second coin. This makes it twicely as likely as two heads (or two tails). (ii) Correct. The two outcomes considered in the question are equally likely. Reprint 2026-27",
+      "text": "(i) Incorrect. We can classify the outcomes like this but they are not then ‘equally likely’. Reason is that ‘one of each’ can result in two ways — from a head on first coin and tail on the second coin or from a tail on the first coin and head on the second coin. This makes it twicely as likely as two heads (or two tails). (ii) Correct. The two outcomes considered in the question are equally likely.",
       "sourceRef": "page=274",
       "questionType": "ASSERTION_REASON"
     },
@@ -3952,17 +3820,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q3",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 3,
-      "text": "Only (ii) is true.",
-      "sourceRef": "page=275",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C10-CH14-EX14.1-Q4",
       "ncertClass": "CLASS_10",
       "chapterNumber": 14,
@@ -3970,28 +3827,6 @@
       "exerciseId": "14.1",
       "qIndex": 4,
       "text": "(i) If a > 0 and a2 > b2, then a > b. (ii) If xy > 0 and x2 = y2, then x = y. (iii) If (x + y)2 = x2 + y2 and y ≠ 0, then x = 0. (iv) The diagonals of a parallelogram bisect each other.",
-      "sourceRef": "page=275",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q1",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 1,
-      "text": "A is mortal",
-      "sourceRef": "page=275",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q2",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 2,
-      "text": "ab is rational",
       "sourceRef": "page=275",
       "questionType": "FREE_RESPONSE"
     },
@@ -4014,17 +3849,6 @@
       "exerciseId": "14.1",
       "qIndex": 5,
       "text": "∠ A = 100°, ∠ C = 100°, ∠ D = 180°",
-      "sourceRef": "page=275",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q6",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 6,
-      "text": "PQRS is a rectangle.",
       "sourceRef": "page=275",
       "questionType": "FREE_RESPONSE"
     },
@@ -4057,7 +3881,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.1",
       "qIndex": 1,
-      "text": "(i) Man is not mortal. (ii) Line l is not parallel to line m. (iii) The chapter does not have many exercises. (iv) Not all integers are rational numbers. (v) All prime numbers are not odd. (vi) Some students are lazy. (vii) All cats are black. (viii) There is at least one real number x, such that x = – 1. Reprint 2026-27",
+      "text": "(i) Man is not mortal. (ii) Line l is not parallel to line m. (iii) The chapter does not have many exercises. (iv) Not all integers are rational numbers. (v) All prime numbers are not odd. (vi) Some students are lazy. (vii) All cats are black. (viii) There is at least one real number x, such that x = – 1.",
       "sourceRef": "page=275",
       "questionType": "FREE_RESPONSE"
     },
@@ -4128,17 +3952,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C10-CH14-EX14.1-Q1",
-      "ncertClass": "CLASS_10",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.1",
-      "qIndex": 1,
-      "text": "(i) 1 5 (ii)",
-      "sourceRef": "page=276",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C10-CH14-EX14.1-Q2",
       "ncertClass": "CLASS_10",
       "chapterNumber": 14,
@@ -4167,7 +3980,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.1",
       "qIndex": 1,
-      "text": "Students find their own answers. Reprint 2026-27",
+      "text": "Students find their own answers.",
       "sourceRef": "page=276",
       "questionType": "FREE_RESPONSE"
     }

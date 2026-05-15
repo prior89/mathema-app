@@ -85,7 +85,10 @@ class ExtractionReport:
     chaptersFound: int
     problemsFound: int
     examplesFound: int
-    extractedAt: str
+    rejectedTooShort: int = 0
+    rejectedPureNoise: int = 0
+    rejectedNoLetters: int = 0
+    extractedAt: str = ""
 
 
 def detect_chapters_from_toc(doc: fitz.Document) -> list[tuple[int, str, int]]:
@@ -218,6 +221,7 @@ def extract_exercises_and_problems(
     chapter_number: int,
     chapter_title: str,
     ncert_class: str,
+    reject_counters: dict[str, int] | None = None,
 ) -> list[ExtractedProblem]:
     """Find EXERCISE blocks and split into numbered problems."""
     problems: list[ExtractedProblem] = []
@@ -242,6 +246,12 @@ def extract_exercises_and_problems(
             # filter out fragments shorter than 8 chars (likely false matches like "1. End")
             if len(body_raw) < 8:
                 continue
+            normalized = normalize_problem_text(body_raw)
+            valid, reason = is_valid_problem_text(normalized)
+            if not valid:
+                if reject_counters is not None and reason:
+                    reject_counters[reason] = reject_counters.get(reason, 0) + 1
+                continue
             absolute_offset = block_start + pm.start()
             page = page_at_offset(page_ranges, absolute_offset)
             problems.append(
@@ -252,9 +262,9 @@ def extract_exercises_and_problems(
                     chapterTitleHint=chapter_title,
                     exerciseId=f"{major}.{minor}",
                     qIndex=q_idx,
-                    text=normalize_problem_text(body_raw),
+                    text=normalized,
                     sourceRef=f"page={page + 1}",
-                    questionType=infer_question_type(body_raw),
+                    questionType=infer_question_type(normalized),
                 )
             )
     return problems
@@ -265,11 +275,40 @@ def chapter_number_to_class_int(ncert_class: str) -> int:
     return int(m.group(1)) if m else 0
 
 
+_TRAILING_FOOTER_RE = re.compile(
+    r"\s*(?:Reprint\s+20\d\d(?:-\d\d)?|Page\s*No\.?\s*\d+|\.docx)\s*$",
+    re.IGNORECASE,
+)
+_PURE_NOISE_RE = re.compile(
+    r"^(?:\s*(?:Reprint\s+20\d\d(?:-\d\d)?|Page\s*No\.?\s*\d*|\.docx|Fig\.?\s*\d+(?:\.\d+)?|Solution\s*[:.\-]?)\s*)+$",
+    re.IGNORECASE,
+)
+_MIN_PROBLEM_CHARS = 25
+
+
 def normalize_problem_text(t: str) -> str:
     t = re.sub(r"\s+", " ", t).strip()
-    # remove trailing page-number debris
+    # iteratively strip trailing footers (some pages have multiple)
+    for _ in range(3):
+        new = _TRAILING_FOOTER_RE.sub("", t).strip()
+        if new == t:
+            break
+        t = new
+    # remove standalone trailing page number debris
     t = re.sub(r"\s+\d{1,3}\s*$", "", t)
-    return t
+    return t.strip()
+
+
+def is_valid_problem_text(t: str) -> tuple[bool, str | None]:
+    """Return (keep, reject_reason). Run after normalize_problem_text."""
+    if len(t) < _MIN_PROBLEM_CHARS:
+        return False, "too_short"
+    if _PURE_NOISE_RE.match(t):
+        return False, "pure_noise"
+    # Reject text that is only digits/punctuation (no letters at all)
+    if not re.search(r"[A-Za-z]", t):
+        return False, "no_letters"
+    return True, None
 
 
 def infer_question_type(body: str) -> str | None:
@@ -288,6 +327,7 @@ def extract_new_textbook_problems(
     chapter_number: int,
     chapter_title: str,
     ncert_class: str,
+    reject_counters: dict[str, int] | None = None,
 ) -> list[ExtractedProblem]:
     """Extract problems from NEP 2020 NCF-SE textbooks (Ganita Prakash / Ganita Manjari).
 
@@ -320,6 +360,12 @@ def extract_new_textbook_problems(
             body_raw = pm.group(2).strip()
             if len(body_raw) < 8:
                 continue
+            normalized = normalize_problem_text(body_raw)
+            valid, reason = is_valid_problem_text(normalized)
+            if not valid:
+                if reject_counters is not None and reason:
+                    reject_counters[reason] = reject_counters.get(reason, 0) + 1
+                continue
             absolute_offset = start + pm.start()
             page = page_at_offset(page_ranges, absolute_offset)
             box_id = f"FIO-{fio_count}" if kind == "FIO" else f"{kind}-{i + 1}"
@@ -331,9 +377,9 @@ def extract_new_textbook_problems(
                     chapterTitleHint=chapter_title,
                     exerciseId=box_id,
                     qIndex=q_idx,
-                    text=normalize_problem_text(body_raw),
+                    text=normalized,
                     sourceRef=f"page={page + 1}",
-                    questionType=infer_question_type(body_raw),
+                    questionType=infer_question_type(normalized),
                 )
             )
     return problems
@@ -428,13 +474,14 @@ def extract_pdf(pdf_path: Path, grade: int, output_dir: Path, style: str | None 
             chapter_ranges.append((n, title, pstart, pend))
 
         extracted_chapters: list[ExtractedChapter] = []
+        reject_counters: dict[str, int] = {}
         for n, title, pstart, pend in chapter_ranges:
             ch_text, page_ranges = gather_chapter_text(doc, pstart, pend)
             sections = extract_sections(ch_text, n)
             if style == "new":
-                problems = extract_new_textbook_problems(ch_text, page_ranges, n, title, ncert_class)
+                problems = extract_new_textbook_problems(ch_text, page_ranges, n, title, ncert_class, reject_counters)
             else:
-                problems = extract_exercises_and_problems(ch_text, page_ranges, n, title, ncert_class)
+                problems = extract_exercises_and_problems(ch_text, page_ranges, n, title, ncert_class, reject_counters)
             examples = extract_examples(ch_text, page_ranges, n, title)
             extracted_chapters.append(
                 ExtractedChapter(
@@ -458,6 +505,9 @@ def extract_pdf(pdf_path: Path, grade: int, output_dir: Path, style: str | None 
             chaptersFound=len(extracted_chapters),
             problemsFound=sum(len(c.problems) for c in extracted_chapters),
             examplesFound=sum(len(c.examples) for c in extracted_chapters),
+            rejectedTooShort=reject_counters.get("too_short", 0),
+            rejectedPureNoise=reject_counters.get("pure_noise", 0),
+            rejectedNoLetters=reject_counters.get("no_letters", 0),
             extractedAt=datetime.now(timezone.utc).isoformat(),
         )
         return report, extracted_chapters

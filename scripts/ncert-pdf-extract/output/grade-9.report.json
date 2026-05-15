@@ -6,5 +6,8 @@
   "chaptersFound": 8,
   "problemsFound": 6,
   "examplesFound": 75,
-  "extractedAt": "2026-05-15T03:26:14.010839+00:00"
+  "rejectedTooShort": 0,
+  "rejectedPureNoise": 0,
+  "rejectedNoLetters": 0,
+  "extractedAt": "2026-05-15T03:58:52.222358+00:00"
 }

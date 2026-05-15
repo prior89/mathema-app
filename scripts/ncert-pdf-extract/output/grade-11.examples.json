@@ -44,7 +44,7 @@
       "chapterTitleHint": "",
       "exampleNumber": 5,
       "body": "If , α β are the roots of the equation 2 0 x px q − + = , prove that ( ) ( ) 2 2 3 3 2 2 3 log 1 ... 2 3 e px qx x x x α + β α + β + + = α + β − + −",
-      "solution": "Right hand side = 2 2 3 3 2 2 3 3 ... ... 2 3 2 3 x x x x x x     α α β β α − + − + β − + −         = ( ) ( ) log 1 log 1 e x x + α + +β = ( ) ( ) 2 log 1 e x x + α+ β + αβ = ( ) 2 log 1 e px qx + + = Left hand side. Here, we have used the facts α+ β = p and q αβ = . We know this from the given roots of the quadratic equation. We have also assumed that both | | x α < 1 and | | x β < 1. — v — Reprint 2026-27",
+      "solution": "Right hand side = 2 2 3 3 2 2 3 3 ... ... 2 3 2 3 x x x x x x     α α β β α − + − + β − + −         = ( ) ( ) log 1 log 1 e x x + α + +β = ( ) ( ) 2 log 1 e x x + α+ β + αβ = ( ) 2 log 1 e px qx + + = Left hand side. Here, we have used the facts α+ β = p and q αβ = . We know this from the given roots of the quadratic equation. We have also assumed that both | | x α < 1 and | | x β < 1. — v —",
       "sourceRef": "page=21"
     },
     {

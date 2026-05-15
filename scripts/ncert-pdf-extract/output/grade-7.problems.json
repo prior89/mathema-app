@@ -240,7 +240,7 @@
       "chapterTitleHint": "Large numbers around us.docx",
       "exerciseId": "FIO-10",
       "qIndex": 4,
-      "text": "In each of the sets of expressions below, identify those that have the same value. Do not evaluate them, but rather use your understanding of terms. Reprint 2026-27",
+      "text": "In each of the sets of expressions below, identify those that have the same value. Do not evaluate them, but rather use your understanding of terms.",
       "sourceRef": "page=70",
       "questionType": "FREE_RESPONSE"
     },
@@ -262,7 +262,7 @@
       "chapterTitleHint": "Large numbers around us.docx",
       "exerciseId": "FIO-12",
       "qIndex": 1,
-      "text": "Read the situations given below. Write appropriate expressions for each of them and find their values. (a) The district market in Begur operates on all seven days of a week. Rahim supplies 9 kg of mangoes each day from his orchard and Shyam supplies 11 kg of mangoes each day from his orchard to this market. Find the amount of mangoes supplied by them in a week to the local district market. Reprint 2026-27",
+      "text": "Read the situations given below. Write appropriate expressions for each of them and find their values. (a) The district market in Begur operates on all seven days of a week. Rahim supplies 9 kg of mangoes each day from his orchard and Shyam supplies 11 kg of mangoes each day from his orchard to this market. Find the amount of mangoes supplied by them in a week to the local district market.",
       "sourceRef": "page=75",
       "questionType": "MCQ"
     },
@@ -320,17 +320,6 @@
       "text": "= 38 + 9 – 4 (c) 24 – (6 + 4) = 24 6 – 4 (d) 24 – 6 – 4 = 24 – 6 4 (e) 27 – (8 + 3) = 27 – 8 – 3 (f) 27 – (8",
       "sourceRef": "page=87",
       "questionType": "MCQ"
-    },
-    {
-      "problemKey": "NCERT-C7-CH02-FIO-3-Q3",
-      "ncertClass": "CLASS_7",
-      "chapterNumber": 2,
-      "chapterTitleHint": "Arithmetic Expressions",
-      "exerciseId": "FIO-3",
-      "qIndex": 3,
-      "text": "= 27 – 8 +",
-      "sourceRef": "page=87",
-      "questionType": "FREE_RESPONSE"
     },
     {
       "problemKey": "NCERT-C7-CH02-FIO-3-Q2",
@@ -461,17 +450,6 @@
       "exerciseId": "FIO-5",
       "qIndex": 6,
       "text": "Choose a number and create ten different expressions having that value. Ans: Let’s choose the number 26. Here are ten different expressions with the value 26:",
-      "sourceRef": "page=96",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C7-CH02-FIO-5-Q5",
-      "ncertClass": "CLASS_7",
-      "chapterNumber": 2,
-      "chapterTitleHint": "Arithmetic Expressions",
-      "exerciseId": "FIO-5",
-      "qIndex": 5,
-      "text": "5 + (3 × 7)",
       "sourceRef": "page=96",
       "questionType": "FREE_RESPONSE"
     },
@@ -658,7 +636,7 @@
       "chapterTitleHint": "Arithmetic Expressions",
       "exerciseId": "MT-20",
       "qIndex": 13,
-      "text": "Which is greater? (a) 10 1000 or 1 10 ? 79 Reprint 2026-27",
+      "text": "Which is greater? (a) 10 1000 or 1 10 ?",
       "sourceRef": "page=130",
       "questionType": "MCQ"
     },
@@ -812,7 +790,7 @@
       "chapterTitleHint": "A Peek Beyond the Point",
       "exerciseId": "FIO-4",
       "qIndex": 5,
-      "text": "Write algebraic expressions using letters of your choice. (a) 5 more than a number (b) 4 less than a number 84 Reprint 2026-27",
+      "text": "Write algebraic expressions using letters of your choice. (a) 5 more than a number (b) 4 less than a number",
       "sourceRef": "page=155",
       "questionType": "MCQ"
     },
@@ -988,7 +966,7 @@
       "chapterTitleHint": "Expressions Using Letter–Numbers",
       "exerciseId": "FIO-5",
       "qIndex": 3,
-      "text": "In the dot paper following, draw different sets of parallel lines. The line segments can be of different lengths but should have dots as endpoints. 113 Reprint 2026-27",
+      "text": "In the dot paper following, draw different sets of parallel lines. The line segments can be of different lengths but should have dots as endpoints.",
       "sourceRef": "page=200",
       "questionType": "FREE_RESPONSE"
     },
@@ -1197,7 +1175,7 @@
       "chapterTitleHint": "Parallel and Intersecting Lines",
       "exerciseId": "FIO-9",
       "qIndex": 1,
-      "text": "A light bulb is ON. Dorjee toggles its switch 77 times. Will the bulb be on or off? Why? K2 + K2 HMM 143 Reprint 2026-27",
+      "text": "A light bulb is ON. Dorjee toggles its switch 77 times. Will the bulb be on or off? Why? K2 + K2 HMM",
       "sourceRef": "page=243",
       "questionType": "FREE_RESPONSE"
     },
@@ -1384,7 +1362,7 @@
       "chapterTitleHint": "Number Play",
       "exerciseId": "FIO-6",
       "qIndex": 1,
-      "text": "Use the points on the circle and/or the centre to form isosceles triangles. A B C 150 Reprint 2026-27",
+      "text": "Use the points on the circle and/or the centre to form isosceles triangles. A B C",
       "sourceRef": "page=263",
       "questionType": "FREE_RESPONSE"
     },
@@ -1472,7 +1450,7 @@
       "chapterTitleHint": "Number Play",
       "exerciseId": "FIO-9",
       "qIndex": 3,
-      "text": "For each of the following, give at least 5 possible values for the third length so there exists a triangle having these as sidelengths (decimal values could also be chosen): (a) 1, 100 (b) 5, 5 (c) 3, 7 159 Reprint 2026-27",
+      "text": "For each of the following, give at least 5 possible values for the third length so there exists a triangle having these as sidelengths (decimal values could also be chosen): (a) 1, 100 (b) 5, 5 (c) 3, 7",
       "sourceRef": "page=272",
       "questionType": "MCQ"
     },
@@ -1793,17 +1771,6 @@
       "qIndex": 2,
       "text": "The government has taken 1 6 of Somu’s land to build a road. What part of the land remains with Somu now? She gives half of",
       "sourceRef": "page=303",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C7-CH07-FIO-10-Q1",
-      "ncertClass": "CLASS_7",
-      "chapterNumber": 7,
-      "chapterTitleHint": "A Tale of Three Intersecting Lines",
-      "exerciseId": "FIO-10",
-      "qIndex": 1,
-      "text": "Evaluate the following:",
-      "sourceRef": "page=316",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -2566,17 +2533,6 @@
       "questionType": "MCQ"
     },
     {
-      "problemKey": "NCERT-C7-CH08-FIO-22-Q5",
-      "ncertClass": "CLASS_7",
-      "chapterNumber": 8,
-      "chapterTitleHint": "Working with Fractions",
-      "exerciseId": "FIO-22",
-      "qIndex": 5,
-      "text": "0.06 (0 . 0 1 2 0 00 00 06 5 10 10",
-      "sourceRef": "page=432",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C7-CH08-FIO-23-Q1",
       "ncertClass": "CLASS_7",
       "chapterNumber": 8,
@@ -2937,28 +2893,6 @@
       "qIndex": 1,
       "text": "Construct the following figures:",
       "sourceRef": "page=503",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C7-CH08-FIO-37-Q1",
-      "ncertClass": "CLASS_7",
-      "chapterNumber": 8,
-      "chapterTitleHint": "Working with Fractions",
-      "exerciseId": "FIO-37",
-      "qIndex": 1,
-      "text": "Region to be tiled Tile",
-      "sourceRef": "page=509",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C7-CH08-FIO-37-Q2",
-      "ncertClass": "CLASS_7",
-      "chapterNumber": 8,
-      "chapterTitleHint": "Working with Fractions",
-      "exerciseId": "FIO-37",
-      "qIndex": 2,
-      "text": "Region to be tiled Tile",
-      "sourceRef": "page=509",
       "questionType": "FREE_RESPONSE"
     },
     {

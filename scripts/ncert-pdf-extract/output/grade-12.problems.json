@@ -3,17 +3,6 @@
   "ncertClass": "CLASS_12",
   "problems": [
     {
-      "problemKey": "NCERT-C12-CH02-EX2.1-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 1,
-      "text": "sin–1 1 2   −    ",
-      "sourceRef": "page=59",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH02-EX2.1-Q2",
       "ncertClass": "CLASS_12",
       "chapterNumber": 2,
@@ -22,83 +11,6 @@
       "qIndex": 2,
       "text": "cos–1 3 2        ",
       "sourceRef": "page=59",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH02-EX2.1-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 3,
-      "text": "cosec–1 (2)",
-      "sourceRef": "page=59",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH02-EX2.1-Q4",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 4,
-      "text": "tan–1 ( 3) −",
-      "sourceRef": "page=59",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH02-EX2.1-Q5",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 5,
-      "text": "cos–1 1 2   −    ",
-      "sourceRef": "page=59",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH02-EX2.1-Q6",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 6,
-      "text": "tan–1 (–1) Reprint 2026-27",
-      "sourceRef": "page=59",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH02-EX2.1-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 7,
-      "text": "sec–1 2 3      ",
-      "sourceRef": "page=60",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH02-EX2.1-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 8,
-      "text": "cot–1 ( 3)",
-      "sourceRef": "page=60",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH02-EX2.1-Q9",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 9,
-      "text": "cos–1 1 2   −    ",
-      "sourceRef": "page=60",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -120,17 +32,6 @@
       "exerciseId": "2.1",
       "qIndex": 11,
       "text": "tan–1(1) + cos–1 1 2 − + sin–1 1 2 −",
-      "sourceRef": "page=60",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH02-EX2.1-Q12",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 12,
-      "text": "cos–1 1 2 + 2 sin–1 1",
       "sourceRef": "page=60",
       "questionType": "FREE_RESPONSE"
     },
@@ -251,7 +152,7 @@
       "chapterTitleHint": "",
       "exerciseId": "2.2",
       "qIndex": 9,
-      "text": "2 –1 –1 2 2 1 2 1 tan sin cos 2 1 1 x y x y   − +   + +   , |x | < 1, y > 0 and xy < 1 Reprint 2026-27",
+      "text": "2 –1 –1 2 2 1 2 1 tan sin cos 2 1 1 x y x y   − +   + +   , |x | < 1, y > 0 and xy <",
       "sourceRef": "page=62",
       "questionType": "FREE_RESPONSE"
     },
@@ -471,7 +372,7 @@
       "chapterTitleHint": "",
       "exerciseId": "2.2",
       "qIndex": 14,
-      "text": "sin–1 (1 – x) – 2 sin–1 x = 2 π , then x is equal to (A) 0, 1 2 (B) 1, 1 2 (C) 0 (D) 1 2 Reprint 2026-27",
+      "text": "sin–1 (1 – x) – 2 sin–1 x = 2 π , then x is equal to (A) 0, 1 2 (B) 1, 1 2 (C) 0 (D) 1",
       "sourceRef": "page=64",
       "questionType": "MCQ"
     },
@@ -548,7 +449,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.1",
       "qIndex": 7,
-      "text": "Find the value of a, b, c and d from the equation: 2 1 5 2 3 0 13 a b a c a b c d − + −     =     − +     Reprint 2026-27",
+      "text": "Find the value of a, b, c and d from the equation: 2 1 5 2 3 0 13 a b a c a b c d − + −     =     − +    ",
       "sourceRef": "page=75",
       "questionType": "FREE_RESPONSE"
     },
@@ -614,7 +515,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.1",
       "qIndex": 2,
-      "text": ". . k k nk b b b               , then cik = ai1 b1k + ai2 b2k + ai3 b3k + ... + ain bnk = 1 n ij jk j a b =∑ . The matrix C = [cik]m × p is the product of A and B. For example, if 1 1 2 C 0 3 4 −   =     and 2 7 1 D 1 5 4     = −     −   , then the product CD is defined Reprint 2026-27",
+      "text": ". . k k nk b b b               , then cik = ai1 b1k + ai2 b2k + ai3 b3k + ... + ain bnk = 1 n ij jk j a b =∑ . The matrix C = [cik]m × p is the product of A and B. For example, if 1 1 2 C 0 3 4 −   =     and 2 7 1 D 1 5 4     = −     −   , then the product CD is defined",
       "sourceRef": "page=84",
       "questionType": "FREE_RESPONSE"
     },
@@ -680,7 +581,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 3,
-      "text": "Compute the indicated products. (i) a b a b b a b a −       −   (ii) 1 2 3      [2 3 4] (iii) 1 2 1 2 3 2 3 2 3 1 −          (iv) 2 3 4 1 3 5 3 4 5 0 2 4 4 5 6 3 0 5 −                (v) 2 1 1 0 1 3 2 1 2 1 1 1        −    −  (vi) 2 3 3 1 3 1 0 1 0 2 3 1 −   −       −     Reprint 2026-27",
+      "text": "Compute the indicated products. (i) a b a b b a b a −       −   (ii) 1 2 3      [2 3 4] (iii) 1 2 1 2 3 2 3 2 3 1 −          (iv) 2 3 4 1 3 5 3 4 5 0 2 4 4 5 6 3 0 5 −                (v) 2 1 1 0 1 3 2 1 2 1 1 1        −    −  (vi) 2 3 3 1 3 1 0 1 0 2 3 1 −   −       −    ",
       "sourceRef": "page=91",
       "questionType": "FREE_RESPONSE"
     },
@@ -779,7 +680,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 12,
-      "text": "Given 6 4 3 1 2 3 x y x x y z w w z w +       = +       − +       , find the values of x, y, z and w. Reprint 2026-27",
+      "text": "Given 6 4 3 1 2 3 x y x x y z w w z w +       = +       − +       , find the values of x, y, z and w.",
       "sourceRef": "page=92",
       "questionType": "FREE_RESPONSE"
     },
@@ -856,7 +757,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 19,
-      "text": "A trust fund has ` 30,000 that must be invested in two different types of bonds. The first bond pays 5% interest per year, and the second bond pays 7% interest per year. Using matrix multiplication, determine how to divide ` 30,000 among the two types of bonds. If the trust fund must obtain an annual total interest of: (a) ` 1800 (b) ` 2000 Reprint 2026-27",
+      "text": "A trust fund has ` 30,000 that must be invested in two different types of bonds. The first bond pays 5% interest per year, and the second bond pays 7% interest per year. Using matrix multiplication, determine how to divide ` 30,000 among the two types of bonds. If the trust fund must obtain an annual total interest of: (a) ` 1800 (b) ` 2000",
       "sourceRef": "page=93",
       "questionType": "MCQ"
     },
@@ -922,7 +823,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 3,
-      "text": "If 3 4 1 2 1 A 1 2 and B 1 2 3 0 1   −     ′ = − =           , then verify that (i) (A + B)′ = A′ + B′ (ii) (A – B)′ = A′ – B′ Reprint 2026-27",
+      "text": "If 3 4 1 2 1 A 1 2 and B 1 2 3 0 1   −     ′ = − =           , then verify that (i) (A + B)′ = A′ + B′ (ii) (A – B)′ = A′ – B′",
       "sourceRef": "page=99",
       "questionType": "FREE_RESPONSE"
     },
@@ -999,7 +900,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 10,
-      "text": "Express the following matrices as the sum of a symmetric and a skew symmetric matrix: Reprint 2026-27",
+      "text": "Express the following matrices as the sum of a symmetric and a skew symmetric matrix:",
       "sourceRef": "page=100",
       "questionType": "FREE_RESPONSE"
     },
@@ -1131,7 +1032,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.4",
       "qIndex": 7,
-      "text": "A manufacturer produces three products x, y, z which he sells in two markets. Annual sales are indicated below: Market Products I 10,000 2,000 18,000 II 6,000 20,000 8,000 Reprint 2026-27",
+      "text": "A manufacturer produces three products x, y, z which he sells in two markets. Annual sales are indicated below: Market Products I 10,000 2,000 18,000 II 6,000 20,000 8,000",
       "sourceRef": "page=105",
       "questionType": "FREE_RESPONSE"
     },
@@ -1175,20 +1076,9 @@
       "chapterTitleHint": "",
       "exerciseId": "3.4",
       "qIndex": 11,
-      "text": "If A is square matrix such that A2 = A, then (I + A)³ – 7 A is equal to (A) A (B) I – A (C) I (D) 3A Summary ® A matrix is an ordered rectangular array of numbers or functions. ® A matrix having m rows and n columns is called a matrix of order m × n. ® [aij]m × 1 is a column matrix. ® [aij]1 × n is a row matrix. ® An m × n matrix is a square matrix if m = n. ® A = [aij]m × m is a diagonal matrix if aij = 0, when i ≠ j. ® A = [aij]n × n is a scalar matrix if aij = 0, when i ≠ j, aij = k, (k is some constant), when i = j. ® A = [aij]n × n is an identity matrix, if aij = 1, when i = j, aij = 0, when i ≠ j. ® A zero matrix has all its elements as zero. ® A = [aij] = [bij] = B if (i) A and B are of same order, (ii) aij = bij for all possible values of i and j. α β γ α −     Reprint 2026-27",
+      "text": "If A is square matrix such that A2 = A, then (I + A)³ – 7 A is equal to (A) A (B) I – A (C) I (D) 3A Summary ® A matrix is an ordered rectangular array of numbers or functions. ® A matrix having m rows and n columns is called a matrix of order m × n. ® [aij]m × 1 is a column matrix. ® [aij]1 × n is a row matrix. ® An m × n matrix is a square matrix if m = n. ® A = [aij]m × m is a diagonal matrix if aij = 0, when i ≠ j. ® A = [aij]n × n is a scalar matrix if aij = 0, when i ≠ j, aij = k, (k is some constant), when i = j. ® A = [aij]n × n is an identity matrix, if aij = 1, when i = j, aij = 0, when i ≠ j. ® A zero matrix has all its elements as zero. ® A = [aij] = [bij] = B if (i) A and B are of same order, (ii) aij = bij for all possible values of i and j. α β γ α −    ",
       "sourceRef": "page=106",
       "questionType": "MCQ"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.1-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.1",
-      "qIndex": 1,
-      "text": "2 4 –5 –1",
-      "sourceRef": "page=114",
-      "questionType": "FREE_RESPONSE"
     },
     {
       "problemKey": "NCERT-C12-CH04-EX4.1-Q2",
@@ -1230,7 +1120,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.1",
       "qIndex": 5,
-      "text": "Evaluate the determinants (i) 3 –1 –2 0 0 –1 3 –5 0 (ii) 3 – 4 5 1 1 –2 2 3 1 Reprint 2026-27",
+      "text": "Evaluate the determinants (i) 3 –1 –2 0 0 –1 3 –5 0 (ii) 3 – 4 5 1 1 –2 2 3",
       "sourceRef": "page=114",
       "questionType": "FREE_RESPONSE"
     },
@@ -1318,7 +1208,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.2",
       "qIndex": 5,
-      "text": "If area of triangle is 35 sq units with vertices (2, – 6), (5, 4) and (k, 4). Then k is (A) 12 (B) –2 (C) –12, –2 (D) 12, –2 Reprint 2026-27",
+      "text": "If area of triangle is 35 sq units with vertices (2, – 6), (5, 4) and (k, 4). Then k is (A) 12 (B) –2 (C) –12, –2 (D) 12, –2",
       "sourceRef": "page=116",
       "questionType": "MCQ"
     },
@@ -1378,17 +1268,6 @@
       "questionType": "MCQ"
     },
     {
-      "problemKey": "NCERT-C12-CH04-EX4.4-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.4",
-      "qIndex": 1,
-      "text": "1 2 3 4    ",
-      "sourceRef": "page=125",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH04-EX4.4-Q2",
       "ncertClass": "CLASS_12",
       "chapterNumber": 4,
@@ -1396,17 +1275,6 @@
       "exerciseId": "4.4",
       "qIndex": 2,
       "text": "1 1 2 2 3 5 2 0 1 − −           Verify A (adj A) = (adj A) A = |A| I in Exercises 3 and",
-      "sourceRef": "page=125",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.4-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.4",
-      "qIndex": 3,
-      "text": "2 3 4 6 − −    ",
       "sourceRef": "page=125",
       "questionType": "FREE_RESPONSE"
     },
@@ -1419,72 +1287,6 @@
       "qIndex": 4,
       "text": "1 1 2 3 0 2 1 0 3 − −           Find the inverse of each of the matrices (if it exists) given in Exercises 5 to 11.",
       "sourceRef": "page=125",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.4-Q5",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.4",
-      "qIndex": 5,
-      "text": "2 2 4 3 −    ",
-      "sourceRef": "page=125",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.4-Q6",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.4",
-      "qIndex": 6,
-      "text": "− −     1 5 3",
-      "sourceRef": "page=125",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.4-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.4",
-      "qIndex": 7,
-      "text": "1 2 3 0 2 4 0 0 5           Reprint 2026-27",
-      "sourceRef": "page=125",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.4-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.4",
-      "qIndex": 8,
-      "text": "1 0 0 3 3 0 5 2 1 −          ",
-      "sourceRef": "page=126",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.4-Q9",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.4",
-      "qIndex": 9,
-      "text": "2 1 3 4 1 0 7 2 1 − −          ",
-      "sourceRef": "page=126",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.4-Q10",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.4",
-      "qIndex": 10,
-      "text": "1 1 2 0 2 3 3 2 4 − − −          ",
-      "sourceRef": "page=126",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -1576,28 +1378,6 @@
       "questionType": "MCQ"
     },
     {
-      "problemKey": "NCERT-C12-CH04-EX4.5-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.5",
-      "qIndex": 1,
-      "text": "x + 2y =",
-      "sourceRef": "page=130",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.5-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.5",
-      "qIndex": 2,
-      "text": "2x – y =",
-      "sourceRef": "page=130",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH04-EX4.5-Q3",
       "ncertClass": "CLASS_12",
       "chapterNumber": 4,
@@ -1605,28 +1385,6 @@
       "exerciseId": "4.5",
       "qIndex": 3,
       "text": "x + 3y = 5 2x + 3y = 3 x + y = 4 2x + 6y =",
-      "sourceRef": "page=130",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.5-Q4",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.5",
-      "qIndex": 4,
-      "text": "x + y + z =",
-      "sourceRef": "page=130",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.5-Q5",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.5",
-      "qIndex": 5,
-      "text": "3x–y – 2z =",
       "sourceRef": "page=130",
       "questionType": "FREE_RESPONSE"
     },
@@ -1642,28 +1400,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH04-EX4.5-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.5",
-      "qIndex": 7,
-      "text": "5x + 2y =",
-      "sourceRef": "page=130",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.5-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.5",
-      "qIndex": 8,
-      "text": "2x – y = –2",
-      "sourceRef": "page=130",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH04-EX4.5-Q9",
       "ncertClass": "CLASS_12",
       "chapterNumber": 4,
@@ -1671,28 +1407,6 @@
       "exerciseId": "4.5",
       "qIndex": 9,
       "text": "4x – 3y = 3 7x + 3y = 5 3x + 4y = 3 3x – 5y =",
-      "sourceRef": "page=130",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.5-Q10",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.5",
-      "qIndex": 10,
-      "text": "5x + 2y =",
-      "sourceRef": "page=130",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH04-EX4.5-Q11",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.5",
-      "qIndex": 11,
-      "text": "2x + y + z =",
       "sourceRef": "page=130",
       "questionType": "FREE_RESPONSE"
     },
@@ -1708,24 +1422,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH04-EX4.5-Q13",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.5",
-      "qIndex": 13,
-      "text": "2x + 3y +3 z =",
-      "sourceRef": "page=130",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH04-EX4.5-Q14",
       "ncertClass": "CLASS_12",
       "chapterNumber": 4,
       "chapterTitleHint": "",
       "exerciseId": "4.5",
       "qIndex": 14,
-      "text": "x – y + 2z = 7 x – 2y + z = – 4 3x + 4y – 5z = – 5 3x – y – 2z = 3 2x – y + 3z = 12 Reprint 2026-27",
+      "text": "x – y + 2z = 7 x – 2y + z = – 4 3x + 4y – 5z = – 5 3x – y – 2z = 3 2x – y + 3z =",
       "sourceRef": "page=130",
       "questionType": "FREE_RESPONSE"
     },
@@ -1813,7 +1516,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.5",
       "qIndex": 6,
-      "text": "Evaluate 1 1 1 x y x y y x x+ y + Reprint 2026-27",
+      "text": "Evaluate 1 1 1 x y x y y x x+ y +",
       "sourceRef": "page=132",
       "questionType": "FREE_RESPONSE"
     },
@@ -1846,7 +1549,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.5",
       "qIndex": 9,
-      "text": "Let A = 1 sin 1 sin 1 sin 1 sin 1 θ     − θ θ     − − θ   , where 0 ≤ θ ≤ 2π. Then (A) Det (A) = 0 (B) Det (A) ∈ (2, ∞) (C) Det (A) ∈ (2, 4) (D) Det (A) ∈ [2, 4] Reprint 2026-27",
+      "text": "Let A = 1 sin 1 sin 1 sin 1 sin 1 θ     − θ θ     − − θ   , where 0 ≤ θ ≤ 2π. Then (A) Det (A) = 0 (B) Det (A) ∈ (2, ∞) (C) Det (A) ∈ (2, 4) (D) Det (A) ∈ [2, 4]",
       "sourceRef": "page=133",
       "questionType": "MCQ"
     },
@@ -1989,7 +1692,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.1",
       "qIndex": 13,
-      "text": "Is the function defined by 5, if 1 ( ) 5, if 1 x x f x x x + ≤  = − >  a continuous function? Reprint 2026-27",
+      "text": "Is the function defined by 5, if 1 ( ) 5, if 1 x x f x x x + ≤  = − >  a continuous function?",
       "sourceRef": "page=149",
       "questionType": "FREE_RESPONSE"
     },
@@ -2110,7 +1813,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.1",
       "qIndex": 24,
-      "text": "Determine if f defined by 2 1 sin , if 0 ( ) 0, if 0 x x f x x x  ≠  =   =  is a continuous function? Reprint 2026-27",
+      "text": "Determine if f defined by 2 1 sin , if 0 ( ) 0, if 0 x x f x x x  ≠  =   =  is a continuous function?",
       "sourceRef": "page=150",
       "questionType": "FREE_RESPONSE"
     },
@@ -2225,50 +1928,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH05-EX5.2-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.2",
-      "qIndex": 1,
-      "text": "sin (x2 + 5)",
-      "sourceRef": "page=155",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.2-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.2",
-      "qIndex": 2,
-      "text": "cos (sin x)",
-      "sourceRef": "page=155",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.2-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.2",
-      "qIndex": 3,
-      "text": "sin (ax + b)",
-      "sourceRef": "page=155",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.2-Q4",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.2",
-      "qIndex": 4,
-      "text": "sec (tan ( x ))",
-      "sourceRef": "page=155",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH05-EX5.2-Q5",
       "ncertClass": "CLASS_12",
       "chapterNumber": 5,
@@ -2276,39 +1935,6 @@
       "exerciseId": "5.2",
       "qIndex": 5,
       "text": "sin ( ) cos ( ) ax b cx d + +",
-      "sourceRef": "page=155",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.2-Q6",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.2",
-      "qIndex": 6,
-      "text": "cos x3 . sin2 (x5)",
-      "sourceRef": "page=155",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.2-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.2",
-      "qIndex": 7,
-      "text": "( ) 2 2 cot x",
-      "sourceRef": "page=155",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.2-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.2",
-      "qIndex": 8,
-      "text": "( ) cos x",
       "sourceRef": "page=155",
       "questionType": "FREE_RESPONSE"
     },
@@ -2332,94 +1958,6 @@
       "qIndex": 10,
       "text": "Prove that the greatest integer function defined by f (x) = [x], 0 < x < 3 is not differentiable at x = 1 and x = 2.",
       "sourceRef": "page=155",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.3-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.3",
-      "qIndex": 1,
-      "text": "2x + 3y = sin x",
-      "sourceRef": "page=158",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.3-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.3",
-      "qIndex": 2,
-      "text": "2x + 3y = sin y",
-      "sourceRef": "page=158",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.3-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.3",
-      "qIndex": 3,
-      "text": "ax + by2 = cos y",
-      "sourceRef": "page=158",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.3-Q4",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.3",
-      "qIndex": 4,
-      "text": "xy + y2 = tan x + y",
-      "sourceRef": "page=158",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.3-Q5",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.3",
-      "qIndex": 5,
-      "text": "x2 + xy + y2 =",
-      "sourceRef": "page=158",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.3-Q6",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.3",
-      "qIndex": 6,
-      "text": "x3 + x2y + xy2 + y3 =",
-      "sourceRef": "page=158",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.3-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.3",
-      "qIndex": 7,
-      "text": "sin2 y + cos xy = κ",
-      "sourceRef": "page=158",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.3-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.3",
-      "qIndex": 8,
-      "text": "sin2 x + cos2 y =",
-      "sourceRef": "page=158",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -2506,107 +2044,8 @@
       "chapterTitleHint": "",
       "exerciseId": "5.4",
       "qIndex": 1,
-      "text": "sin xe x",
-      "sourceRef": "page=163",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.4-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.4",
-      "qIndex": 2,
-      "text": "1 sin x e −",
-      "sourceRef": "page=163",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.4-Q4",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.4",
-      "qIndex": 4,
-      "text": "sin (tan–1 e–x)",
-      "sourceRef": "page=163",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.4-Q5",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.4",
-      "qIndex": 5,
-      "text": "log (cos ex)",
-      "sourceRef": "page=163",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.4-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.4",
-      "qIndex": 7,
-      "text": ", 0 x e x >",
-      "sourceRef": "page=163",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.4-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.4",
-      "qIndex": 8,
-      "text": "log (log x), x >",
-      "sourceRef": "page=163",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.4-Q9",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.4",
-      "qIndex": 9,
-      "text": "cos , 0 log x x x >",
-      "sourceRef": "page=163",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.4-Q10",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.4",
-      "qIndex": 10,
-      "text": "cos (log x + ex), x >",
-      "sourceRef": "page=163",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.4-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.4",
-      "qIndex": 1,
       "text": "dy y dx = sin (log ) log (sin ) d d x x x x dx dx + or 1 dy y dx = 1 (sin ) log cos x x x x + or dy dx = sin cos log x y x x x   +     = sin sin cos log x x x x x x   +     = sin 1 sin sin cos log x x x x x x x −⋅ + ⋅",
       "sourceRef": "page=165",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.5-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.5",
-      "qIndex": 1,
-      "text": "cos x . cos 2x . cos 3x",
-      "sourceRef": "page=167",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -2617,28 +2056,6 @@
       "exerciseId": "5.5",
       "qIndex": 2,
       "text": "( 1) ( 2) ( 3) ( 4) ( 5) x x x x x − − − − −",
-      "sourceRef": "page=167",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.5-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.5",
-      "qIndex": 3,
-      "text": "(log x)cos x",
-      "sourceRef": "page=167",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.5-Q4",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.5",
-      "qIndex": 4,
-      "text": "xx – 2sin x",
       "sourceRef": "page=167",
       "questionType": "FREE_RESPONSE"
     },
@@ -2665,39 +2082,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH05-EX5.5-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.5",
-      "qIndex": 7,
-      "text": "(log x)x + xlog x",
-      "sourceRef": "page=167",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.5-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.5",
-      "qIndex": 8,
-      "text": "(sin x)x + sin–1 x",
-      "sourceRef": "page=167",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.5-Q9",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.5",
-      "qIndex": 9,
-      "text": "xsin x + (sin x)cos x",
-      "sourceRef": "page=167",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH05-EX5.5-Q10",
       "ncertClass": "CLASS_12",
       "chapterNumber": 5,
@@ -2716,39 +2100,6 @@
       "exerciseId": "5.5",
       "qIndex": 11,
       "text": "(x cos x)x + 1 ( sin ) x x x Find dy dx of the functions given in Exercises 12 to 15.",
-      "sourceRef": "page=167",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.5-Q12",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.5",
-      "qIndex": 12,
-      "text": "xy + yx =",
-      "sourceRef": "page=167",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.5-Q14",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.5",
-      "qIndex": 14,
-      "text": "(cos x)y = (cos y)x",
-      "sourceRef": "page=167",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.5-Q15",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.5",
-      "qIndex": 15,
-      "text": "xy = e(x – y)",
       "sourceRef": "page=167",
       "questionType": "FREE_RESPONSE"
     },
@@ -2783,50 +2134,6 @@
       "qIndex": 18,
       "text": "If u, v and w are functions of x, then show that d dx (u. v. w) = du dx v. w + u . dv dx . w + u . v dw dx in two ways - first by repeated application of product rule, second by logarithmic differentiation.",
       "sourceRef": "page=167",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.6-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.6",
-      "qIndex": 1,
-      "text": "x = 2at2, y = at4",
-      "sourceRef": "page=170",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.6-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.6",
-      "qIndex": 2,
-      "text": "x = a cos θ, y = b cos θ",
-      "sourceRef": "page=170",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.6-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.6",
-      "qIndex": 3,
-      "text": "x = sin t, y = cos 2t",
-      "sourceRef": "page=170",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.6-Q4",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.6",
-      "qIndex": 4,
-      "text": "x = 4t, y = 4 t",
-      "sourceRef": "page=170",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -2874,17 +2181,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH05-EX5.6-Q9",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.6",
-      "qIndex": 9,
-      "text": "x = a sec θ, y = b tan θ",
-      "sourceRef": "page=170",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH05-EX5.6-Q10",
       "ncertClass": "CLASS_12",
       "chapterNumber": 5,
@@ -2907,90 +2203,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 1,
-      "text": "x2 + 3x +",
-      "sourceRef": "page=172",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 3,
-      "text": "x . cos x",
-      "sourceRef": "page=172",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q5",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 5,
-      "text": "x3 log x",
-      "sourceRef": "page=172",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q6",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 6,
-      "text": "ex sin 5x",
-      "sourceRef": "page=172",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 7,
-      "text": "e6x cos 3x",
-      "sourceRef": "page=172",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q9",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 9,
-      "text": "log (log x)",
-      "sourceRef": "page=172",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q10",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 10,
-      "text": "sin (log x)",
-      "sourceRef": "page=172",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH05-EX5.7-Q11",
       "ncertClass": "CLASS_12",
       "chapterNumber": 5,
       "chapterTitleHint": "",
       "exerciseId": "5.7",
       "qIndex": 11,
-      "text": "If y = 5 cos x – 3 sin x, prove that 2 2 0 d y y dx + = Reprint 2026-27",
+      "text": "If y = 5 cos x – 3 sin x, prove that 2 2 0 d y y dx + =",
       "sourceRef": "page=172",
       "questionType": "FREE_RESPONSE"
     },
@@ -3061,50 +2280,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 1,
-      "text": "(3x2 – 9x + 5)9",
-      "sourceRef": "page=177",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 2,
-      "text": "sin3 x + cos6 x",
-      "sourceRef": "page=177",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 3,
-      "text": "(5x)3 cos 2x",
-      "sourceRef": "page=177",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q4",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 4,
-      "text": "sin–1(x x ), 0 ≤ x ≤",
-      "sourceRef": "page=177",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH05-EX5.7-Q5",
       "ncertClass": "CLASS_12",
       "chapterNumber": 5,
@@ -3123,17 +2298,6 @@
       "exerciseId": "5.7",
       "qIndex": 6,
       "text": "1 1 sin 1 sin cot 1 sin 1 sin x x x x −  + + −   + − −  , 0 < x < 2 π",
-      "sourceRef": "page=177",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH05-EX5.7-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.7",
-      "qIndex": 7,
-      "text": "(log x)log x, x >",
       "sourceRef": "page=177",
       "questionType": "FREE_RESPONSE"
     },
@@ -3166,7 +2330,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.7",
       "qIndex": 10,
-      "text": "xx + xa + ax + aa, for some fixed a > 0 and x > 0 Reprint 2026-27",
+      "text": "xx + xa + ax + aa, for some fixed a > 0 and x >",
       "sourceRef": "page=177",
       "questionType": "FREE_RESPONSE"
     },
@@ -3298,7 +2462,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.7",
       "qIndex": 22,
-      "text": "If y = 1 cos a x e − , – 1 ≤ x ≤ 1, show that ( ) 2 2 2 2 1 0 d y dy x x a y dx dx − − − = . Reprint 2026-27",
+      "text": "If y = 1 cos a x e − , – 1 ≤ x ≤ 1, show that ( ) 2 2 2 2 1 0 d y dy x x a y dx dx − − − = .",
       "sourceRef": "page=178",
       "questionType": "FREE_RESPONSE"
     },
@@ -3353,7 +2517,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.1",
       "qIndex": 5,
-      "text": "A stone is dropped into a quiet lake and waves move in circles at the speed of 5 cm/s. At the instant when the radius of the circular wave is 8 cm, how fast is the enclosed area increasing? Reprint 2026-27",
+      "text": "A stone is dropped into a quiet lake and waves move in circles at the speed of 5 cm/s. At the instant when the radius of the circular wave is 8 cm, how fast is the enclosed area increasing?",
       "sourceRef": "page=183",
       "questionType": "FREE_RESPONSE"
     },
@@ -3485,7 +2649,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.1",
       "qIndex": 17,
-      "text": "The rate of change of the area of a circle with respect to its radius r at r = 6 cm is (A) 10π (B) 12π (C) 8π (D) 11π Reprint 2026-27",
+      "text": "The rate of change of the area of a circle with respect to its radius r at r = 6 cm is (A) 10π (B) 12π (C) 8π (D) 11π",
       "sourceRef": "page=184",
       "questionType": "MCQ"
     },
@@ -3595,7 +2759,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.2",
       "qIndex": 9,
-      "text": "Prove that 4sin (2 cos ) y θ = −θ + θ is an increasing function of θ in 0 2 , π    . Reprint 2026-27",
+      "text": "Prove that 4sin (2 cos ) y θ = −θ + θ is an increasing function of θ in 0 2 , π    .",
       "sourceRef": "page=191",
       "questionType": "FREE_RESPONSE"
     },
@@ -3716,7 +2880,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 1,
-      "text": "Find the maximum and minimum values, if any, of the following functions given by (i) f (x) = (2x – 1)2 + 3 (ii) f (x) = 9x2 + 12x + 2 (iii) f (x) = – (x – 1)2 + 10 (iv) g(x) = x3 + 1 Reprint 2026-27",
+      "text": "Find the maximum and minimum values, if any, of the following functions given by (i) f (x) = (2x – 1)2 + 3 (ii) f (x) = 9x2 + 12x + 2 (iii) f (x) = – (x – 1)2 + 10 (iv) g(x) = x3 +",
       "sourceRef": "page=207",
       "questionType": "FREE_RESPONSE"
     },
@@ -3815,7 +2979,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 10,
-      "text": "Find the maximum value of 2x3 – 24x + 107 in the interval [1, 3]. Find the maximum value of the same function in [–3, –1]. Reprint 2026-27",
+      "text": "Find the maximum value of 2x3 – 24x + 107 in the interval [1, 3]. Find the maximum value of the same function in [–3, –1].",
       "sourceRef": "page=208",
       "questionType": "FREE_RESPONSE"
     },
@@ -3996,17 +3160,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 3,
-      "text": "Reprint 2026-27",
-      "sourceRef": "page=209",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH06-EX6.3-Q27",
       "ncertClass": "CLASS_12",
       "chapterNumber": 6,
@@ -4046,7 +3199,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 88,
-      "text": "Example 32 A man of height 2 metres walks at a uniform speed of 5 km/h away from a lamp post which is 6 metres high. Find the rate at which the length of his shadow increases. Fig 6.20 Reprint 2026-27",
+      "text": "Example 32 A man of height 2 metres walks at a uniform speed of 5 km/h away from a lamp post which is 6 metres high. Find the rate at which the length of his shadow increases. Fig 6.20",
       "sourceRef": "page=211",
       "questionType": "FREE_RESPONSE"
     },
@@ -4090,7 +3243,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 4,
-      "text": "Find the intervals in which the function f given by 3 3 1 ( ) , 0 f x x x x = + ≠ is (i) increasing (ii) decreasing. Reprint 2026-27",
+      "text": "Find the intervals in which the function f given by 3 3 1 ( ) , 0 f x x x x = + ≠ is (i) increasing (ii) decreasing.",
       "sourceRef": "page=216",
       "questionType": "FREE_RESPONSE"
     },
@@ -4222,7 +3375,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 15,
-      "text": "Show that height of the cylinder of greatest volume which can be inscribed in a right circular cone of height h and semi vertical angle α is one-third that of the cone and the greatest volume of cylinder is 3 2 4 tan 27 h π α . Reprint 2026-27",
+      "text": "Show that height of the cylinder of greatest volume which can be inscribed in a right circular cone of height h and semi vertical angle α is one-third that of the cone and the greatest volume of cylinder is 3 2 4 tan 27 h π α .",
       "sourceRef": "page=217",
       "questionType": "FREE_RESPONSE"
     },
@@ -4233,7 +3386,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 16,
-      "text": "A cylindrical tank of radius 10 m is being filled with wheat at the rate of 314 cubic metre per hour. Then the depth of the wheat is increasing at the rate of (A) 1 m/h (B) 0.1 m/h (C) 1.1 m/h (D) 0.5 m/h Summary ® If a quantity y varies with another quantity x, satisfying some rule ( ) y f x = , then dy dx (or ( ) f x ′ ) represents the rate of change of y with respect to x and 0 x x dy dx = (or 0 ( ) f x ′ ) represents the rate of change of y with respect to x at 0 x x = . ® If two variables x and y are varying with respect to another variable t, i.e., if ( ) x f t = and ( ) y g t = , then by Chain Rule dy dy dx dt dt dx = , if 0 dx dt ≠ . ® A function f is said to be (a) increasing on an interval (a, b) if x1 < x2 in (a, b) ⇒ f (x1) < f (x2) for all x1, x2 ∈ (a, b). Alternatively, if f ′(x) ≥ 0 for each x in (a, b) (b) decreasing on (a,b) if x1 < x2 in (a, b) ⇒ f (x1) > f (x2) for all x1, x2 ∈ (a, b). (c) constant in (a, b), if f (x) = c for all x ∈ (a, b), where c is a constant. ® A point c in the domain of a function f at which either f ′(c) = 0 or f is not differentiable is called a critical point of f. ® First Derivative Test Let f be a function defined on an open interval I. Let f be continuous at a critical point c in I. Then (i) If f ′(x) changes sign from positive to negative as x increases through c, i.e., if f ′(x) > 0 at every point sufficiently close to and to the left of c, and f ′(x) < 0 at every point sufficiently close to and to the right of c, then c is a point of local maxima. Reprint 2026-27",
+      "text": "A cylindrical tank of radius 10 m is being filled with wheat at the rate of 314 cubic metre per hour. Then the depth of the wheat is increasing at the rate of (A) 1 m/h (B) 0.1 m/h (C) 1.1 m/h (D) 0.5 m/h Summary ® If a quantity y varies with another quantity x, satisfying some rule ( ) y f x = , then dy dx (or ( ) f x ′ ) represents the rate of change of y with respect to x and 0 x x dy dx = (or 0 ( ) f x ′ ) represents the rate of change of y with respect to x at 0 x x = . ® If two variables x and y are varying with respect to another variable t, i.e., if ( ) x f t = and ( ) y g t = , then by Chain Rule dy dy dx dt dt dx = , if 0 dx dt ≠ . ® A function f is said to be (a) increasing on an interval (a, b) if x1 < x2 in (a, b) ⇒ f (x1) < f (x2) for all x1, x2 ∈ (a, b). Alternatively, if f ′(x) ≥ 0 for each x in (a, b) (b) decreasing on (a,b) if x1 < x2 in (a, b) ⇒ f (x1) > f (x2) for all x1, x2 ∈ (a, b). (c) constant in (a, b), if f (x) = c for all x ∈ (a, b), where c is a constant. ® A point c in the domain of a function f at which either f ′(c) = 0 or f is not differentiable is called a critical point of f. ® First Derivative Test Let f be a function defined on an open interval I. Let f be continuous at a critical point c in I. Then (i) If f ′(x) changes sign from positive to negative as x increases through c, i.e., if f ′(x) > 0 at every point sufficiently close to and to the left of c, and f ′(x) < 0 at every point sufficiently close to and to the right of c, then c is a point of local maxima.",
       "sourceRef": "page=218",
       "questionType": "MCQ"
     },
@@ -4249,61 +3402,6 @@
       "questionType": "MCQ"
     },
     {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 2,
-      "text": "8 3 cm2/s",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 3,
-      "text": "60π cm2/s",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q4",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 4,
-      "text": "900 cm3/s",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q5",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 5,
-      "text": "80π cm2/s",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q6",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 6,
-      "text": "1.4π cm/s",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH06-EX6.1-Q7",
       "ncertClass": "CLASS_12",
       "chapterNumber": 6,
@@ -4315,39 +3413,6 @@
       "questionType": "MCQ"
     },
     {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 8,
-      "text": "1 π cm/s",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q9",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 9,
-      "text": "400π cm3/cm",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q10",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 10,
-      "text": "8 3 cm/s",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH06-EX6.1-Q11",
       "ncertClass": "CLASS_12",
       "chapterNumber": 6,
@@ -4355,50 +3420,6 @@
       "exerciseId": "6.1",
       "qIndex": 11,
       "text": "(4, 11) and 31 4, 3 −   −    ",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q12",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 12,
-      "text": "2π cm3/s",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q13",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 13,
-      "text": "2 27 (2 1) 8 x π +",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q14",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 14,
-      "text": "1 48π cm/s",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.1-Q15",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.1",
-      "qIndex": 15,
-      "text": "` 20.967",
       "sourceRef": "page=231",
       "questionType": "FREE_RESPONSE"
     },
@@ -4436,28 +3457,6 @@
       "questionType": "MCQ"
     },
     {
-      "problemKey": "NCERT-C12-CH06-EX6.2-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.2",
-      "qIndex": 8,
-      "text": "0 < x < 1 and x >",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.2-Q19",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.2",
-      "qIndex": 19,
-      "text": "D Reprint 2026-27",
-      "sourceRef": "page=231",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH06-EX6.3-Q1",
       "ncertClass": "CLASS_12",
       "chapterNumber": 6,
@@ -4486,7 +3485,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 3,
-      "text": "(i) local minimum at x = 0, local minimum value = 0 (ii) local minimum at x = 1, local minimum value = – 2 local maximum at x = – 1, local maximum value = 2 (iii) local maximum at 4 x π = , local maximum value = 2 (iv) local maximum at 4 x 3π = , local maximum value = 2 local minimum at 7 4 x π = , local minimum value = – 2 (v) local maximum at x = 1, local maximum value = 19 local minimum at x = 3, local minimum value = 15 (vi) local minimum at x = 2, local minimum value = 2 (vii) local maximum at x = 0, local maximum value = 1 2 (viii) local maximum at 2 3 x = , local maximum value = 2 3 9 Reprint 2026-27",
+      "text": "(i) local minimum at x = 0, local minimum value = 0 (ii) local minimum at x = 1, local minimum value = – 2 local maximum at x = – 1, local maximum value = 2 (iii) local maximum at 4 x π = , local maximum value = 2 (iv) local maximum at 4 x 3π = , local maximum value = 2 local minimum at 7 4 x π = , local minimum value = – 2 (v) local maximum at x = 1, local maximum value = 19 local minimum at x = 3, local minimum value = 15 (vi) local minimum at x = 2, local minimum value = 2 (vii) local maximum at x = 0, local maximum value = 1 2 (viii) local maximum at 2 3 x = , local maximum value = 2 3",
       "sourceRef": "page=232",
       "questionType": "FREE_RESPONSE"
     },
@@ -4524,28 +3523,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 8,
-      "text": "At 5 and 4 4 x π π =",
-      "sourceRef": "page=233",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q9",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 9,
-      "text": "Maximum value =",
-      "sourceRef": "page=233",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH06-EX6.3-Q10",
       "ncertClass": "CLASS_12",
       "chapterNumber": 6,
@@ -4564,17 +3541,6 @@
       "exerciseId": "6.3",
       "qIndex": 12,
       "text": "Maximum at x = 2π, maximum value = 2π; Minimum at x = 0, minimum value =",
-      "sourceRef": "page=233",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q18",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 18,
-      "text": "x = 5 cm",
       "sourceRef": "page=233",
       "questionType": "FREE_RESPONSE"
     },
@@ -4612,17 +3578,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 2,
-      "text": "3 b cm2/s",
-      "sourceRef": "page=233",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH06-EX6.3-Q3",
       "ncertClass": "CLASS_12",
       "chapterNumber": 6,
@@ -4640,19 +3595,8 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 4,
-      "text": "(i) x < –1 and x > 1 (ii) – 1 < x < 1 —v— Reprint 2026-27",
+      "text": "(i) x < –1 and x > 1 (ii) – 1 < x < 1 —v—",
       "sourceRef": "page=233",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q5",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 5,
-      "text": "3 3 4 ab",
-      "sourceRef": "page=234",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -4689,72 +3633,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q14",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 14,
-      "text": "3 4 R 3 3 π",
-      "sourceRef": "page=234",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q16",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 16,
-      "text": "A —v— Reprint 2026-27",
-      "sourceRef": "page=234",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q7",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 7,
-      "text": "Integrals",
-      "sourceRef": "page=249",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q8",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 8,
-      "text": "Application of Integrals",
-      "sourceRef": "page=249",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q9",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 9,
-      "text": "Differential Equations",
-      "sourceRef": "page=249",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q10",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 10,
-      "text": "Vector Algebra",
-      "sourceRef": "page=249",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH06-EX6.3-Q11",
       "ncertClass": "CLASS_12",
       "chapterNumber": 6,
@@ -4763,28 +3641,6 @@
       "qIndex": 11,
       "text": "Three Dimensional Geometry",
       "sourceRef": "page=249",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q12",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 12,
-      "text": "Linear Programming",
-      "sourceRef": "page=250",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH06-EX6.3-Q13",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.3",
-      "qIndex": 13,
-      "text": "Probability",
-      "sourceRef": "page=250",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -4926,7 +3782,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.2",
       "qIndex": 8,
-      "text": "Find the angle between the following pairs of lines: (i) ˆ ˆ ˆ ˆ ˆ ˆ 2 5 (3 2 6 ) = − + + λ + + rr i j k i j k and ˆ ˆ ˆ ˆ ˆ 7 6 ( 2 2 ) = − + µ + + rr i k i j k Reprint 2026-27",
+      "text": "Find the angle between the following pairs of lines: (i) ˆ ˆ ˆ ˆ ˆ ˆ 2 5 (3 2 6 ) = − + + λ + + rr i j k i j k and ˆ ˆ ˆ ˆ ˆ 7 6 ( 2 2 ) = − + µ + + rr i k i j k",
       "sourceRef": "page=415",
       "questionType": "FREE_RESPONSE"
     },
@@ -5025,7 +3881,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.2",
       "qIndex": 2,
-      "text": "Find the equation of a line parallel to x-axis and passing through the origin. Reprint 2026-27",
+      "text": "Find the equation of a line parallel to x-axis and passing through the origin.",
       "sourceRef": "page=416",
       "questionType": "FREE_RESPONSE"
     },
@@ -5058,7 +3914,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.2",
       "qIndex": 5,
-      "text": "Find the vector equation of the line passing through the point (1, 2, – 4) and perpendicular to the two lines: 7 10 16 19 3 8 − = − + = − z y x and 15 3 x − = 29 5 8 5 y z − − = − . Summary ® Direction cosines of a line are the cosines of the angles made by the line with the positive directions of the coordinate axes. ® If l, m, n are the direction cosines of a line, then l2 + m2 + n2 = 1. ® Direction cosines of a line joining two points P(x1, y1, z1) and Q(x2, y2, z2) are 2 1 2 1 2 1 , , PQ PQ PQ x x y y z z − − − where PQ = ( ) 2 1 2 2 1 2 2 1 2 ) ( ) ( z z y y x x − + − + − ® Direction ratios of a line are the numbers which are proportional to the direction cosines of a line. ® If l, m, n are the direction cosines and a, b, c are the direction ratios of a line then l = 2 2 2 c b a a + + ; m = 2 2 2 c b a b + + ; n = 2 2 2 c b a c + + ® Skew lines are lines in space which are neither parallel nor intersecting. They lie in different planes. ® Angle between skew lines is the angle between two intersecting lines drawn from any point (preferably through the origin) parallel to each of the skew lines. ® If l1, m1, n1 and l2, m2, n2 are the direction cosines of two lines; and θ is the acute angle between the two lines; then cosθ = |l1l2 + m1m2 + n1n2| Reprint 2026-27",
+      "text": "Find the vector equation of the line passing through the point (1, 2, – 4) and perpendicular to the two lines: 7 10 16 19 3 8 − = − + = − z y x and 15 3 x − = 29 5 8 5 y z − − = − . Summary ® Direction cosines of a line are the cosines of the angles made by the line with the positive directions of the coordinate axes. ® If l, m, n are the direction cosines of a line, then l2 + m2 + n2 = 1. ® Direction cosines of a line joining two points P(x1, y1, z1) and Q(x2, y2, z2) are 2 1 2 1 2 1 , , PQ PQ PQ x x y y z z − − − where PQ = ( ) 2 1 2 2 1 2 2 1 2 ) ( ) ( z z y y x x − + − + − ® Direction ratios of a line are the numbers which are proportional to the direction cosines of a line. ® If l, m, n are the direction cosines and a, b, c are the direction ratios of a line then l = 2 2 2 c b a a + + ; m = 2 2 2 c b a b + + ; n = 2 2 2 c b a c + + ® Skew lines are lines in space which are neither parallel nor intersecting. They lie in different planes. ® Angle between skew lines is the angle between two intersecting lines drawn from any point (preferably through the origin) parallel to each of the skew lines. ® If l1, m1, n1 and l2, m2, n2 are the direction cosines of two lines; and θ is the acute angle between the two lines; then cosθ = |l1l2 + m1m2 + n1n2|",
       "sourceRef": "page=417",
       "questionType": "FREE_RESPONSE"
     },
@@ -5107,39 +3963,6 @@
       "questionType": "MCQ"
     },
     {
-      "problemKey": "NCERT-C12-CH11-EX11.1-Q1",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 11,
-      "chapterTitleHint": "",
-      "exerciseId": "11.1",
-      "qIndex": 1,
-      "text": "1 1 0, , 2 2 −",
-      "sourceRef": "page=479",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH11-EX11.1-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 11,
-      "chapterTitleHint": "",
-      "exerciseId": "11.1",
-      "qIndex": 2,
-      "text": "1 1 1 , , 3 3 3 ± ± ±",
-      "sourceRef": "page=479",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH11-EX11.1-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 11,
-      "chapterTitleHint": "",
-      "exerciseId": "11.1",
-      "qIndex": 3,
-      "text": "5. 2 2 3 2 3 2 4 5 1 , , ; , , ; , , 17 17 17 17 17 17 42 42 42 − − − − − −",
-      "sourceRef": "page=479",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH11-EX11.2-Q4",
       "ncertClass": "CLASS_12",
       "chapterNumber": 11,
@@ -5157,7 +3980,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.2",
       "qIndex": 5,
-      "text": "and cartesian form is 1 4 2 1 1 2 − − = + = − z y x Reprint 2026-27",
+      "text": "and cartesian form is 1 4 2 1 1 2 − − = + = − z y x",
       "sourceRef": "page=479",
       "questionType": "FREE_RESPONSE"
     },
@@ -5206,17 +4029,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C12-CH11-EX11.2-Q10",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 11,
-      "chapterTitleHint": "",
-      "exerciseId": "11.2",
-      "qIndex": 10,
-      "text": "70 11 p =",
-      "sourceRef": "page=480",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C12-CH11-EX11.2-Q15",
       "ncertClass": "CLASS_12",
       "chapterNumber": 11,
@@ -5224,28 +4036,6 @@
       "exerciseId": "11.2",
       "qIndex": 15,
       "text": "29 8 Miscellaneous Exercise on Chapter",
-      "sourceRef": "page=480",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH11-EX11.2-Q2",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 11,
-      "chapterTitleHint": "",
-      "exerciseId": "11.2",
-      "qIndex": 2,
-      "text": "1 0 0 x y z = =",
-      "sourceRef": "page=480",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C12-CH11-EX11.2-Q3",
-      "ncertClass": "CLASS_12",
-      "chapterNumber": 11,
-      "chapterTitleHint": "",
-      "exerciseId": "11.2",
-      "qIndex": 3,
-      "text": "10 7 k − =",
       "sourceRef": "page=480",
       "questionType": "FREE_RESPONSE"
     }

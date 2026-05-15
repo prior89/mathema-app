@@ -21,9 +21,9 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 OUTPUT_DIR = Path(__file__).parent / "output"
 GRADES = [7, 8, 9, 10, 11, 12]
 
-# Anthropic Claude Haiku 4.5 (Jan 2026 pricing).
-HAIKU_INPUT_PER_MTOK_USD = 0.8
-HAIKU_OUTPUT_PER_MTOK_USD = 4.0
+# Anthropic Claude Haiku 4.5 (2026 pricing, verified via web search 2026-05-15).
+HAIKU_INPUT_PER_MTOK_USD = 1.0
+HAIKU_OUTPUT_PER_MTOK_USD = 5.0
 USD_TO_INR = 84
 
 SYSTEM_PROMPT_TOKENS = 1100

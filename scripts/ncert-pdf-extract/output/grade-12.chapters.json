@@ -31,7 +31,7 @@
           "title": "Properties of Inverse Trigonometric Functions"
         }
       ],
-      "problemCount": 43,
+      "problemCount": 34,
       "exampleCount": 45
     },
     {
@@ -101,7 +101,7 @@
           "title": "Applications of Determinants and Matrices"
         }
       ],
-      "problemCount": 61,
+      "problemCount": 43,
       "exampleCount": 20
     },
     {
@@ -132,7 +132,7 @@
           "title": "Second Order Derivative"
         }
       ],
-      "problemCount": 132,
+      "problemCount": 83,
       "exampleCount": 48
     },
     {
@@ -159,7 +159,7 @@
           "title": "Maxima and Minima"
         }
       ],
-      "problemCount": 135,
+      "problemCount": 107,
       "exampleCount": 159
     },
     {
@@ -200,7 +200,7 @@
           "title": "Shortest Distance between Two Lines"
         }
       ],
-      "problemCount": 42,
+      "problemCount": 36,
       "exampleCount": 39
     }
   ]

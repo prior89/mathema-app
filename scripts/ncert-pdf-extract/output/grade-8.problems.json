@@ -31,7 +31,7 @@
       "chapterTitleHint": "",
       "exerciseId": "1.1",
       "qIndex": 3,
-      "text": "The product of two rational numbers is always a ___. And 3 5 4 6 − − × = 5 8 Therefore −×    + −× −     3 4 2 3 3 4 5 6 = 1 5 1 2 8 8 −+ = Thus, −× + −   3 4 2 3 5 6 = −×    + −× −     3 4 2 3 3 4 5 6 Distributivity of Multiplication over Addition and Subtraction. For all rational numbers a, b and c, a (b + c) = ab + ac a (b – c) = ab – ac TRY THESE Find using distributivity. (i) 7 5 3 12 7 5 5 12 × −         + ×   (ii) 9 16 4 12 9 16 3 9 ×   + × −   Reprint 2024-25",
+      "text": "The product of two rational numbers is always a ___. And 3 5 4 6 − − × = 5 8 Therefore −×    + −× −     3 4 2 3 3 4 5 6 = 1 5 1 2 8 8 −+ = Thus, −× + −   3 4 2 3 5 6 = −×    + −× −     3 4 2 3 3 4 5 6 Distributivity of Multiplication over Addition and Subtraction. For all rational numbers a, b and c, a (b + c) = ab + ac a (b – c) = ab – ac TRY THESE Find using distributivity. (i) 7 5 3 12 7 5 5 12 × −         + ×   (ii) 9 16 4 12 9 16 3 9 ×   + × −  ",
       "sourceRef": "page=26",
       "questionType": "FREE_RESPONSE"
     },
@@ -102,123 +102,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q1",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 1,
-      "text": "3x = 2x +",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C8-CH02-EX2.1-Q2",
       "ncertClass": "CLASS_8",
       "chapterNumber": 2,
       "chapterTitleHint": "",
       "exerciseId": "2.1",
       "qIndex": 2,
-      "text": "5t – 3 = 3t –",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q3",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 3,
-      "text": "5x + 9 = 5 + 3x",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q4",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 4,
-      "text": "4z + 3 = 6 + 2z",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q5",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 5,
-      "text": "2x – 1 = 14 – x",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q6",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 6,
-      "text": "8x + 4 = 3 (x – 1) +",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q7",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 7,
-      "text": "x = 4 5 (x + 10)",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q8",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 8,
-      "text": "2 3 x + 1 = 7 3 15 x +",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q9",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 9,
-      "text": "2y + 5 3 = 26 3 y −",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q10",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 10,
-      "text": "3m = 5 m – 8",
-      "sourceRef": "page=31",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH02-EX2.1-Q2",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 2,
-      "chapterTitleHint": "",
-      "exerciseId": "2.1",
-      "qIndex": 2,
-      "text": "Check: LHS = = 25 25 25 2(5 7) 2( 2) 4 2 2 2 − − = − − = + = 25 8 33 2 2 + = RHS = = 26 7 33 2 2 + = = LHS. (as required) Did you observe how we simplified the form of the given equation? Here, we had to multiply both sides of the equation by the LCM of the denominators of the terms in the expressions of the equation. Note, in this example we brought the equation to a simpler form by opening brackets and combining like terms on both sides of the equation. Reprint 2024-25",
+      "text": "Check: LHS = = 25 25 25 2(5 7) 2( 2) 4 2 2 2 − − = − − = + = 25 8 33 2 2 + = RHS = = 26 7 33 2 2 + = = LHS. (as required) Did you observe how we simplified the form of the given equation? Here, we had to multiply both sides of the equation by the LCM of the denominators of the terms in the expressions of the equation. Note, in this example we brought the equation to a simpler form by opening brackets and combining like terms on both sides of the equation.",
       "sourceRef": "page=32",
       "questionType": "FREE_RESPONSE"
     },
@@ -240,7 +130,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.1",
       "qIndex": 2,
-      "text": "What is a regular polygon? State the name of a regular polygon of (i) 3 sides (ii) 4 sides (iii) 6 sides Regular polygons Polygons that are not regular Reprint 2024-25",
+      "text": "What is a regular polygon? State the name of a regular polygon of (i) 3 sides (ii) 4 sides (iii) 6 sides Regular polygons Polygons that are not regular",
       "sourceRef": "page=36",
       "questionType": "FREE_RESPONSE"
     },
@@ -361,7 +251,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 1,
-      "text": "Take identical cut-outs of congruent triangles of sides 3 cm, 4 cm, 5 cm. Arrange them as shown (Fig 3.5). Fig 3.5 DO THIS Reprint 2024-25",
+      "text": "Take identical cut-outs of congruent triangles of sides 3 cm, 4 cm, 5 cm. Arrange them as shown (Fig 3.5). Fig 3.5 DO THIS",
       "sourceRef": "page=38",
       "questionType": "FREE_RESPONSE"
     },
@@ -383,7 +273,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 1,
-      "text": "Given a parallelogram ABCD. Complete each statement along with the definition or property used. (i) AD = ...... (ii) ∠ DCB = ...... (iii) OC = ...... (iv) m ∠DAB + m ∠CDA = ...... Fig 3.25 Fig 3.23 THINK, DISCUSS AND WRITE Fig 3.24 Reprint 2024-25",
+      "text": "Given a parallelogram ABCD. Complete each statement along with the definition or property used. (i) AD = ...... (ii) ∠ DCB = ...... (iii) OC = ...... (iv) m ∠DAB + m ∠CDA = ...... Fig 3.25 Fig 3.23 THINK, DISCUSS AND WRITE Fig 3.24",
       "sourceRef": "page=44",
       "questionType": "FREE_RESPONSE"
     },
@@ -471,7 +361,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 9,
-      "text": "In the above figure both RISK and CLUE are parallelograms. Find the value of x. (i) (ii) Reprint 2024-25",
+      "text": "In the above figure both RISK and CLUE are parallelograms. Find the value of x. (i) (ii)",
       "sourceRef": "page=45",
       "questionType": "FREE_RESPONSE"
     },
@@ -570,7 +460,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.4",
       "qIndex": 6,
-      "text": "ABC is a right-angled triangle and O is the mid point of the side opposite to the right angle. Explain why O is equidistant from A, B and C. (The dotted lines are drawn additionally to help you). Fig 3.36 Fig 3.37 Reprint 2024-25",
+      "text": "ABC is a right-angled triangle and O is the mid point of the side opposite to the right angle. Explain why O is equidistant from A, B and C. (The dotted lines are drawn additionally to help you). Fig 3.36 Fig 3.37",
       "sourceRef": "page=49",
       "questionType": "FREE_RESPONSE"
     },
@@ -647,7 +537,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.1",
       "qIndex": 4,
-      "text": "The adjoining pie chart gives the marks scored in an examination by a student in Hindi, English, Mathematics, Social Science and Science. If the total marks obtained by the students were 540, answer the following questions. (i) In which subject did the student score 105 marks? (Hint: for 540 marks, the central angle = 360°. So, for 105 marks, what is the central angle?) (ii) How many more marks were obtained by the student in Mathematics than in Hindi? (iii) Examine whether the sum of the marks obtained in Social Science and Mathematics is more than that in Science and Hindi. (Hint: Just study the central angles). Find the proportion of each sector. For example, Blue is 18 1 36 2 = ; Green is 9 1 36 4 = and so on. Use this to find the corresponding angles. Season No. of votes Summer 90 Rainy 120 Winter 150 Reprint 2024-25",
+      "text": "The adjoining pie chart gives the marks scored in an examination by a student in Hindi, English, Mathematics, Social Science and Science. If the total marks obtained by the students were 540, answer the following questions. (i) In which subject did the student score 105 marks? (Hint: for 540 marks, the central angle = 360°. So, for 105 marks, what is the central angle?) (ii) How many more marks were obtained by the student in Mathematics than in Hindi? (iii) Examine whether the sum of the marks obtained in Social Science and Mathematics is more than that in Science and Hindi. (Hint: Just study the central angles). Find the proportion of each sector. For example, Blue is 18 1 36 2 = ; Green is 9 1 36 4 = and so on. Use this to find the corresponding angles. Season No. of votes Summer 90 Rainy 120 Winter",
       "sourceRef": "page=58",
       "questionType": "FREE_RESPONSE"
     },
@@ -680,7 +570,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.1",
       "qIndex": 2,
-      "text": "When a die is thrown, what are the six possible outcomes? Oh! my raincoat. Reprint 2024-25",
+      "text": "When a die is thrown, what are the six possible outcomes? Oh! my raincoat.",
       "sourceRef": "page=59",
       "questionType": "FREE_RESPONSE"
     },
@@ -779,7 +669,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.1",
       "qIndex": 1,
-      "text": "To find characteristics of a large group by using a small part of the group. For example, during elections ‘an exit poll’ is taken. This involves asking the people whom they have voted for, when they come out after voting at the centres which are chosen off hand and distributed over the whole area. This gives an idea of chance of winning of each candidate and predictions are made based on it accordingly. ← Number of outcomes that make the event ← Total number of outcomes of the experiment. 3 6 Fig 4.8 Reprint 2024-25",
+      "text": "To find characteristics of a large group by using a small part of the group. For example, during elections ‘an exit poll’ is taken. This involves asking the people whom they have voted for, when they come out after voting at the centres which are chosen off hand and distributed over the whole area. This gives an idea of chance of winning of each candidate and predictions are made based on it accordingly. ← Number of outcomes that make the event ← Total number of outcomes of the experiment. 3 6 Fig 4.8",
       "sourceRef": "page=62",
       "questionType": "FREE_RESPONSE"
     },
@@ -955,7 +845,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.1",
       "qIndex": 9,
-      "text": "How many numbers lie between squares of the following numbers? (i) 12 and 13 (ii) 25 and 26 (iii) 99 and 100 To find pattern Third number is related to first and second number. How? Fourth number is related to third number. How? Reprint 2024-25",
+      "text": "How many numbers lie between squares of the following numbers? (i) 12 and 13 (ii) 25 and 26 (iii) 99 and 100 To find pattern Third number is related to first and second number. How? Fourth number is related to third number. How?",
       "sourceRef": "page=72",
       "questionType": "FREE_RESPONSE"
     },
@@ -1054,7 +944,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.3",
       "qIndex": 7,
-      "text": "The students of Class VIII of a school donated  2401 in all, for Prime Minister’s National Relief Fund. Each student donated as many rupees as the number of students in the class. Find the number of students in the class. 2 6, 9, 15 3 3, 9, 15 3 1, 3, 5 5 1, 1, 5 1, 1, 1 Reprint 2024-25",
+      "text": "The students of Class VIII of a school donated  2401 in all, for Prime Minister’s National Relief Fund. Each student donated as many rupees as the number of students in the class. Find the number of students in the class. 2 6, 9, 15 3 3, 9, 15 3 1, 3, 5 5 1, 1, 5 1, 1,",
       "sourceRef": "page=78",
       "questionType": "FREE_RESPONSE"
     },
@@ -1186,7 +1076,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.4",
       "qIndex": 9,
-      "text": "There are 500 children in a school. For a P.T. drill they have to stand in such a manner that the number of rows is equal to number of columns. How many children would be left out in this arrangement. 49 4 2401 –16 89 801 801 0 Reprint 2024-25",
+      "text": "There are 500 children in a school. For a P.T. drill they have to stand in such a manner that the number of rows is equal to number of columns. How many children would be left out in this arrangement. 49 4 2401 –16 89 801 801",
       "sourceRef": "page=83",
       "questionType": "FREE_RESPONSE"
     },
@@ -1307,7 +1197,7 @@
       "chapterTitleHint": "",
       "exerciseId": "7.1",
       "qIndex": 5,
-      "text": "If Chameli had  600 left after spending 75% of her money, how much did she have in the beginning? Reprint 2024-25",
+      "text": "If Chameli had  600 left after spending 75% of her money, how much did she have in the beginning?",
       "sourceRef": "page=95",
       "questionType": "FREE_RESPONSE"
     },
@@ -1395,7 +1285,7 @@
       "chapterTitleHint": "",
       "exerciseId": "7.1",
       "qIndex": 2,
-      "text": "By what per cent is  2,000 less than  2,400? Is it the same as the per cent by which  2,400 is more than  2,000? Reprint 2024-25",
+      "text": "By what per cent is  2,000 less than  2,400? Is it the same as the per cent by which  2,400 is more than  2,000?",
       "sourceRef": "page=98",
       "questionType": "FREE_RESPONSE"
     },
@@ -1494,7 +1384,7 @@
       "chapterTitleHint": "",
       "exerciseId": "7.2",
       "qIndex": 4,
-      "text": "Find the amount which has to be paid or received at the end of second year. Amount at the end of 2nd year = P2 + SI2 =  21600 +  1728 =  23328 Total interest given =  1600 +  1728 =  3328 Reeta asked whether the amount would be different for simple interest. The teacher told her to find the interest for two years and see for herself. SI for 2 years =  20000 8 2 100 × × =  3200 Reeta said that when compound interest was used Heena would pay  128 more. Let us look at the difference between simple interest and compound interest. We start with  100. Try completing the chart. Reprint 2024-25",
+      "text": "Find the amount which has to be paid or received at the end of second year. Amount at the end of 2nd year = P2 + SI2 =  21600 +  1728 =  23328 Total interest given =  1600 +  1728 =  3328 Reeta asked whether the amount would be different for simple interest. The teacher told her to find the interest for two years and see for herself. SI for 2 years =  20000 8 2 100 × × =  3200 Reeta said that when compound interest was used Heena would pay  128 more. Let us look at the difference between simple interest and compound interest. We start with  100. Try completing the chart.",
       "sourceRef": "page=100",
       "questionType": "FREE_RESPONSE"
     },
@@ -1505,7 +1395,7 @@
       "chapterTitleHint": "",
       "exerciseId": "7.2",
       "qIndex": 1,
-      "text": "SI1 =  5000 5 1 100 × × or SI1 =  1P R 1 100 × × so, A1 =  5000 + 5000 5 1 100 × × or A1 = P1 + SI1 = 1 1 P R P 100 + =  5000 1 5 100 +     = P2 = P R P 1 2 1 100 +    = Reprint 2024-25",
+      "text": "SI1 =  5000 5 1 100 × × or SI1 =  1P R 1 100 × × so, A1 =  5000 + 5000 5 1 100 × × or A1 = P1 + SI1 = 1 1 P R P 100 + =  5000 1 5 100 +     = P2 = P R P 1 2 1 100 +    =",
       "sourceRef": "page=101",
       "questionType": "FREE_RESPONSE"
     },
@@ -1527,7 +1417,7 @@
       "chapterTitleHint": "",
       "exerciseId": "7.2",
       "qIndex": 1,
-      "text": "Find CI on a sum of  8000 for 2 years at 5% per annum compounded annually. Treat as the Principal for the 2nd year. Treat as the Principal for the 3rd year. Increase at 5% = 5 20000 1000 100 × = Population in 1999 = 20000 + 1000 = 21000 Increase at 5% = 5 21000 1050 100 × = Population in 2000 = 21000 + 1050 = 22050 Increase at 5% = 5 22050 100 × = 1102.5 At the end of 2000 the population = 22050 + 1102.5 = 23152.5 or, Population at the end of 2000 = 20000 1 5 100 3 +     = 21 21 21 20000 20 20 20 × × × = 23152.5 So, the estimated population = 23153. Reprint 2024-25",
+      "text": "Find CI on a sum of  8000 for 2 years at 5% per annum compounded annually. Treat as the Principal for the 2nd year. Treat as the Principal for the 3rd year. Increase at 5% = 5 20000 1000 100 × = Population in 1999 = 20000 + 1000 = 21000 Increase at 5% = 5 21000 1050 100 × = Population in 2000 = 21000 + 1050 = 22050 Increase at 5% = 5 22050 100 × = 1102.5 At the end of 2000 the population = 22050 + 1102.5 = 23152.5 or, Population at the end of 2000 = 20000 1 5 100 3 +     = 21 21 21 20000 20 20 20 × × × = 23152.5 So, the estimated population = 23153.",
       "sourceRef": "page=103",
       "questionType": "FREE_RESPONSE"
     },
@@ -1582,7 +1472,7 @@
       "chapterTitleHint": "",
       "exerciseId": "7.3",
       "qIndex": 3,
-      "text": "A scooter was bought at  42,000. Its value depreciated at the rate of 8% per annum. Find its value after one year. Reprint 2024-25",
+      "text": "A scooter was bought at  42,000. Its value depreciated at the rate of 8% per annum. Find its value after one year.",
       "sourceRef": "page=104",
       "questionType": "FREE_RESPONSE"
     },
@@ -1626,7 +1516,7 @@
       "chapterTitleHint": "",
       "exerciseId": "8.2",
       "qIndex": 2,
-      "text": "Find the areas of rectangles with the following pairs of monomials as their lengths and breadths respectively. (p, q); (10m, 5n); (20x2, 5y2); (4x, 3x2); (3mn, 4np) We can find the product in other way also. 4xy × 5x2y2 × 6x3 y3 = (4 × 5 × 6) × (x × x2 × x3) × (y × y2 × y3) = 120 x6y6 Reprint 2024-25",
+      "text": "Find the areas of rectangles with the following pairs of monomials as their lengths and breadths respectively. (p, q); (10m, 5n); (20x2, 5y2); (4x, 3x2); (3mn, 4np) We can find the product in other way also. 4xy × 5x2y2 × 6x3 y3 = (4 × 5 × 6) × (x × x2 × x3) × (y × y2 × y3) = 120 x6y6",
       "sourceRef": "page=111",
       "questionType": "FREE_RESPONSE"
     },
@@ -1769,7 +1659,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.1",
       "qIndex": 1,
-      "text": "The shape of the top surface of a table is a trapezium. Find its area if its parallel sides are 1 m and 1.2 m and perpendicular distance between them is 0.8 m. Fig 9.9 Fig 9.8 Aman’s method Ridhima’s method Reprint 2024-25",
+      "text": "The shape of the top surface of a table is a trapezium. Find its area if its parallel sides are 1 m and 1.2 m and perpendicular distance between them is 0.8 m. Fig 9.9 Fig 9.8 Aman’s method Ridhima’s method",
       "sourceRef": "page=119",
       "questionType": "FREE_RESPONSE"
     },
@@ -1901,7 +1791,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.1",
       "qIndex": 2,
-      "text": "If we interchange the lengths of the base and the height of a cuboid (Fig 9.19(i)) to get another cuboid (Fig 9.19(ii)), will its lateral surface area change? (i) Fig 9.19 Reprint 2024-25",
+      "text": "If we interchange the lengths of the base and the height of a cuboid (Fig 9.19(i)) to get another cuboid (Fig 9.19(ii)), will its lateral surface area change? (i) Fig 9.19",
       "sourceRef": "page=123",
       "questionType": "FREE_RESPONSE"
     },
@@ -2011,7 +1901,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.2",
       "qIndex": 10,
-      "text": "A company packages its milk powder in cylindrical container whose base has a diameter of 14 cm and height 20 cm. Company places a label around the surface of the container (as shown in the figure). If the label is placed 2 cm from top and bottom, what is the area of the label. Reprint 2024-25",
+      "text": "A company packages its milk powder in cylindrical container whose base has a diameter of 14 cm and height 20 cm. Company places a label around the surface of the container (as shown in the figure). If the label is placed 2 cm from top and bottom, what is the area of the label.",
       "sourceRef": "page=128",
       "questionType": "FREE_RESPONSE"
     },
@@ -2088,7 +1978,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.3",
       "qIndex": 7,
-      "text": "If each edge of a cube is doubled, (i) how many times will its surface area increase? (ii) how many times will its volume increase? A B Reprint 2024-25",
+      "text": "If each edge of a cube is doubled, (i) how many times will its surface area increase? (ii) how many times will its volume increase? A B",
       "sourceRef": "page=133",
       "questionType": "FREE_RESPONSE"
     },
@@ -2132,7 +2022,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.1",
       "qIndex": 3,
-      "text": "Find the value of. (i) (3° + 4– 1) × 22 (ii) (2– 1 × 4– 1) ÷ 2– 2 (iii) 1 2 1 3 1 4 2 2 2    +    +    − − − 2 3 2 3 3 2 3 2 2 2 2 2 2 2    = = =    − − − In general, a b b a m m     =     − an = 1 only if n = 0. This will work for any a. For a = 1, 11 = 12 = 13 = 1– 2 = ... = 1 or (1)n = 1 for infinitely many n. For a = –1, (–1)0 = (–1)2 = (–1)4 = (–1)–2 = ... = 1 or (–1) p = 1 for any even integer p. Reprint 2024-25",
+      "text": "Find the value of. (i) (3° + 4– 1) × 22 (ii) (2– 1 × 4– 1) ÷ 2– 2 (iii) 1 2 1 3 1 4 2 2 2    +    +    − − − 2 3 2 3 3 2 3 2 2 2 2 2 2 2    = = =    − − − In general, a b b a m m     =     − an = 1 only if n = 0. This will work for any a. For a = 1, 11 = 12 = 13 = 1– 2 = ... = 1 or (1)n = 1 for infinitely many n. For a = –1, (–1)0 = (–1)2 = (–1)4 = (–1)–2 = ... = 1 or (–1) p = 1 for any even integer p.",
       "sourceRef": "page=139",
       "questionType": "FREE_RESPONSE"
     },
@@ -2495,7 +2385,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.1",
       "qIndex": 1,
-      "text": "On a squared paper, draw five squares of different sides. Write the following information in a tabular form. Square-1 Square-2 Square-3 Square-4 Square-5 Length of a side (L) Perimeter (P) L P Reprint 2024-25",
+      "text": "On a squared paper, draw five squares of different sides. Write the following information in a tabular form. Square-1 Square-2 Square-3 Square-4 Square-5 Length of a side (L) Perimeter (P) L P",
       "sourceRef": "page=150",
       "questionType": "FREE_RESPONSE"
     },
@@ -2550,7 +2440,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.2",
       "qIndex": 3,
-      "text": "Rehman is making a wheel using spokes. He wants to fix equal spokes in such a way that the angles between any pair of consecutive spokes are equal. Help him by completing the following table. Number of spokes 4 6 8 10 12 Angle between a pair of consecutive 90° 60° ... ... ... spokes Reprint 2024-25",
+      "text": "Rehman is making a wheel using spokes. He wants to fix equal spokes in such a way that the angles between any pair of consecutive spokes are equal. Help him by completing the following table. Number of spokes 4 6 8 10 12 Angle between a pair of consecutive 90° 60° ... ... ... spokes",
       "sourceRef": "page=155",
       "questionType": "FREE_RESPONSE"
     },
@@ -2638,7 +2528,7 @@
       "chapterTitleHint": "",
       "exerciseId": "11.2",
       "qIndex": 11,
-      "text": "A school has 8 periods a day each of 45 minutes duration. How long would each period be, if the school has 9 periods a day, assuming the number of school hours to be the same? Reprint 2024-25",
+      "text": "A school has 8 periods a day each of 45 minutes duration. How long would each period be, if the school has 9 periods a day, assuming the number of school hours to be the same?",
       "sourceRef": "page=156",
       "questionType": "FREE_RESPONSE"
     },
@@ -2693,7 +2583,7 @@
       "chapterTitleHint": "",
       "exerciseId": "12.1",
       "qIndex": 3,
-      "text": "Factorise. (i) x2 + x y + 8x + 8y (ii) 15 xy – 6x + 5y – 2 Reprint 2024-25",
+      "text": "Factorise. (i) x2 + x y + 8x + 8y (ii) 15 xy – 6x + 5y –",
       "sourceRef": "page=162",
       "questionType": "FREE_RESPONSE"
     },
@@ -2726,7 +2616,7 @@
       "chapterTitleHint": "",
       "exerciseId": "12.2",
       "qIndex": 3,
-      "text": "Factorise the expressions. (i) ax2 + bx (ii) 7p2 + 21q2 (iii) 2x3 + 2xy2 + 2xz2 (iv) am2 + bm2 + bn2 + an2 (v) (lm + l) + m + 1 (vi) y (y + z) + 9 (y + z) (vii) 5y2 – 20y – 8z + 2yz (viii) 10ab + 4a + 5b + 2 (ix) 6xy – 4y + 6 – 9x Reprint 2024-25",
+      "text": "Factorise the expressions. (i) ax2 + bx (ii) 7p2 + 21q2 (iii) 2x3 + 2xy2 + 2xz2 (iv) am2 + bm2 + bn2 + an2 (v) (lm + l) + m + 1 (vi) y (y + z) + 9 (y + z) (vii) 5y2 – 20y – 8z + 2yz (viii) 10ab + 4a + 5b + 2 (ix) 6xy – 4y + 6 – 9x",
       "sourceRef": "page=165",
       "questionType": "FREE_RESPONSE"
     },
@@ -2814,7 +2704,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.1",
       "qIndex": 1,
-      "text": "The following graph shows the temperature of a patient in a hospital, recorded every hour. (a) What was the patient’s temperature at 1 p.m. ? (b) When was the patient’s temperature 38.5° C? Reprint 2024-25",
+      "text": "The following graph shows the temperature of a patient in a hospital, recorded every hour. (a) What was the patient’s temperature at 1 p.m. ? (b) When was the patient’s temperature 38.5° C?",
       "sourceRef": "page=174",
       "questionType": "MCQ"
     },
@@ -2836,7 +2726,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.1",
       "qIndex": 3,
-      "text": "For an experiment in Botany, two different plants, plant A and plant B were grown under similar laboratory conditions. Their heights were measured at the end of each week for 3 weeks. The results are shown by the following graph. Reprint 2024-25",
+      "text": "For an experiment in Botany, two different plants, plant A and plant B were grown under similar laboratory conditions. Their heights were measured at the end of each week for 3 weeks. The results are shown by the following graph.",
       "sourceRef": "page=175",
       "questionType": "FREE_RESPONSE"
     },
@@ -2880,7 +2770,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.1",
       "qIndex": 7,
-      "text": "Can there be a time-temperature graph as follows? Justify your answer. (i) (ii) (iii) (iv) Reprint 2024-25",
+      "text": "Can there be a time-temperature graph as follows? Justify your answer. (i) (ii) (iii) (iv)",
       "sourceRef": "page=177",
       "questionType": "FREE_RESPONSE"
     },
@@ -2903,39 +2793,6 @@
       "exerciseId": "13.1",
       "qIndex": 2,
       "text": "Decide the quantities to be taken on x-axis and on y-axis.",
-      "sourceRef": "page=179",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH13-EX13.1-Q3",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 13,
-      "chapterTitleHint": "",
-      "exerciseId": "13.1",
-      "qIndex": 3,
-      "text": "Choose a scale.",
-      "sourceRef": "page=179",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH13-EX13.1-Q4",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 13,
-      "chapterTitleHint": "",
-      "exerciseId": "13.1",
-      "qIndex": 4,
-      "text": "Plot points.",
-      "sourceRef": "page=179",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C8-CH13-EX13.1-Q5",
-      "ncertClass": "CLASS_8",
-      "chapterNumber": 13,
-      "chapterTitleHint": "",
-      "exerciseId": "13.1",
-      "qIndex": 5,
-      "text": "Join the points. Reprint 2024-25",
       "sourceRef": "page=179",
       "questionType": "FREE_RESPONSE"
     },

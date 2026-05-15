@@ -97,7 +97,7 @@
       "chapterTitleHint": "",
       "exerciseId": "2.1",
       "qIndex": 9,
-      "text": "Let A and B be two sets such that n(A) = 3 and n(B) = 2. If (x, 1), (y, 2), (z, 1) are in A × B, find A and B, where x, y and z are distinct elements. Reprint 2026-27",
+      "text": "Let A and B be two sets such that n(A) = 3 and n(B) = 2. If (x, 1), (y, 2), (z, 1) are in A × B, find A and B, where x, y and z are distinct elements.",
       "sourceRef": "page=60",
       "questionType": "MCQ"
     },
@@ -119,7 +119,7 @@
       "chapterTitleHint": "",
       "exerciseId": "2.2",
       "qIndex": 1,
-      "text": "Let A = {1, 2, 3,...,14}. Define a relation R from A to A by R = {(x, y) : 3x – y = 0, where x, y ∈ A}. Write down its domain, codomain and range. Fig 2.5 Fig 2.6 Reprint 2026-27",
+      "text": "Let A = {1, 2, 3,...,14}. Define a relation R from A to A by R = {(x, y) : 3x – y = 0, where x, y ∈ A}. Write down its domain, codomain and range. Fig 2.5 Fig 2.6",
       "sourceRef": "page=62",
       "questionType": "FREE_RESPONSE"
     },
@@ -372,7 +372,7 @@
       "chapterTitleHint": "",
       "exerciseId": "2.3",
       "qIndex": 10,
-      "text": "Let A ={1,2,3,4}, B = {1,5,9,11,15,16} and f = {(1,5), (2,9), (3,1), (4,5), (2,11)} Are the following true? (i) f is a relation from A to B (ii) f is a function from A to B. Justify your answer in each case. Reprint 2026-27",
+      "text": "Let A ={1,2,3,4}, B = {1,5,9,11,15,16} and f = {(1,5), (2,9), (3,1), (4,5), (2,11)} Are the following true? (i) f is a relation from A to B (ii) f is a function from A to B. Justify your answer in each case.",
       "sourceRef": "page=73",
       "questionType": "FREE_RESPONSE"
     },
@@ -394,7 +394,7 @@
       "chapterTitleHint": "",
       "exerciseId": "2.3",
       "qIndex": 12,
-      "text": "Let A = {9,10,11,12,13} and let f : A→N be defined by f (n) = the highest prime factor of n. Find the range of f. Summary In this Chapter, we studied about relations and functions.The main features of this Chapter are as follows: ® Ordered pair A pair of elements grouped together in a particular order. ® Cartesian product A × B of two sets A and B is given by A × B = {(a, b): a ∈ A, b ∈ B} In particular R × R = {(x, y): x, y ∈ R} and R × R × R = {(x, y, z): x, y, z ∈ R} ® If (a, b) = (x, y), then a = x and b = y. ® If n(A) = p and n(B) = q, then n(A × B) = pq. ® A × φ = φ ® In general, A × B ≠ B × A. ® Relation A relation R from a set A to a set B is a subset of the cartesian product A × B obtained by describing a relationship between the first element x and the second element y of the ordered pairs in A × B. ® The image of an element x under a relation R is given by y, where (x, y) ∈ R, ® The domain of R is the set of all first elements of the ordered pairs in a relation R. ® The range of the relation R is the set of all second elements of the ordered pairs in a relation R. ® Function A function f from a set A to a set B is a specific type of relation for which every element x of set A has one and only one image y in set B. We write f: A→B, where f(x) = y. ® A is the domain and B is the codomain of f. Reprint 2026-27",
+      "text": "Let A = {9,10,11,12,13} and let f : A→N be defined by f (n) = the highest prime factor of n. Find the range of f. Summary In this Chapter, we studied about relations and functions.The main features of this Chapter are as follows: ® Ordered pair A pair of elements grouped together in a particular order. ® Cartesian product A × B of two sets A and B is given by A × B = {(a, b): a ∈ A, b ∈ B} In particular R × R = {(x, y): x, y ∈ R} and R × R × R = {(x, y, z): x, y, z ∈ R} ® If (a, b) = (x, y), then a = x and b = y. ® If n(A) = p and n(B) = q, then n(A × B) = pq. ® A × φ = φ ® In general, A × B ≠ B × A. ® Relation A relation R from a set A to a set B is a subset of the cartesian product A × B obtained by describing a relationship between the first element x and the second element y of the ordered pairs in A × B. ® The image of an element x under a relation R is given by y, where (x, y) ∈ R, ® The domain of R is the set of all first elements of the ordered pairs in a relation R. ® The range of the relation R is the set of all second elements of the ordered pairs in a relation R. ® Function A function f from a set A to a set B is a specific type of relation for which every element x of set A has one and only one image y in set B. We write f: A→B, where f(x) = y. ® A is the domain and B is the codomain of f.",
       "sourceRef": "page=74",
       "questionType": "MCQ"
     },
@@ -405,7 +405,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.1",
       "qIndex": 1,
-      "text": "Find the radian measures corresponding to the following degree measures: (i) 25° (ii) – 47°30′ (iii) 240° (iv) 520° Reprint 2026-27",
+      "text": "Find the radian measures corresponding to the following degree measures: (i) 25° (ii) – 47°30′ (iii) 240° (iv) 520°",
       "sourceRef": "page=81",
       "questionType": "FREE_RESPONSE"
     },
@@ -493,7 +493,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.1",
       "qIndex": 2,
-      "text": "Thus sin x = 0 implies x = nπ, π, π, π, π, where n is any integer cos x = 0 implies x = (2n + 1) π 2 , where n is any integer. We now define other trigonometric functions in terms of sine and cosine functions: cosec x = 1 sin x , x ≠ nπ, where n is any integer. sec x = 1 cosx , x ≠ (2n + 1) π 2 , where n is any integer. tan x = sin cos x x , x ≠ (2n +1) π 2 , where n is any integer. cot x = cos sin x x , x ≠ n π, where n is any integer. Reprint 2026-27",
+      "text": "Thus sin x = 0 implies x = nπ, π, π, π, π, where n is any integer cos x = 0 implies x = (2n + 1) π 2 , where n is any integer. We now define other trigonometric functions in terms of sine and cosine functions: cosec x = 1 sin x , x ≠ nπ, where n is any integer. sec x = 1 cosx , x ≠ (2n + 1) π 2 , where n is any integer. tan x = sin cos x x , x ≠ (2n +1) π 2 , where n is any integer. cot x = cos sin x x , x ≠ n π, where n is any integer.",
       "sourceRef": "page=83",
       "questionType": "FREE_RESPONSE"
     },
@@ -504,7 +504,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.1",
       "qIndex": 2,
-      "text": "Similarly, to say that cosec x decreases from –1 to – ∞ (minus infinity) in the fourth quadrant means that cosec x decreases for x ∈ ( 3π 2 , 2π) and assumes arbitrarily large negative values as x approaches to 2π. The symbols ∞ and – ∞ simply specify certain types of behaviour of functions and variables. We have already seen that values of sin x and cos x repeats after an interval of 2π. Hence, values of cosec x and sec x will also repeat after an interval of 2π. We Reprint 2026-27",
+      "text": "Similarly, to say that cosec x decreases from –1 to – ∞ (minus infinity) in the fourth quadrant means that cosec x decreases for x ∈ ( 3π 2 , 2π) and assumes arbitrarily large negative values as x approaches to 2π. The symbols ∞ and – ∞ simply specify certain types of behaviour of functions and variables. We have already seen that values of sin x and cos x repeats after an interval of 2π. Hence, values of cosec x and sec x will also repeat after an interval of 2π. We",
       "sourceRef": "page=87",
       "questionType": "FREE_RESPONSE"
     },
@@ -538,17 +538,6 @@
       "exerciseId": "3.1",
       "qIndex": 3,
       "text": "Solution We know that values of sin x repeats after an interval of 2π. Therefore sin 31π 3 = sin (10π + π 3 ) = sin π 3 =",
-      "sourceRef": "page=89",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH03-EX3.1-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 3,
-      "chapterTitleHint": "",
-      "exerciseId": "3.1",
-      "qIndex": 2,
-      "text": "Reprint 2026-27",
       "sourceRef": "page=89",
       "questionType": "FREE_RESPONSE"
     },
@@ -608,79 +597,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH03-EX3.2-Q6",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 3,
-      "chapterTitleHint": "",
-      "exerciseId": "3.2",
-      "qIndex": 6,
-      "text": "sin 765°",
-      "sourceRef": "page=90",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH03-EX3.2-Q7",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 3,
-      "chapterTitleHint": "",
-      "exerciseId": "3.2",
-      "qIndex": 7,
-      "text": "cosec (– 1410°)",
-      "sourceRef": "page=90",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH03-EX3.2-Q8",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 3,
-      "chapterTitleHint": "",
-      "exerciseId": "3.2",
-      "qIndex": 8,
-      "text": "tan 19π",
-      "sourceRef": "page=90",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH03-EX3.2-Q9",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 3,
-      "chapterTitleHint": "",
-      "exerciseId": "3.2",
-      "qIndex": 9,
-      "text": "sin (– 11π 3 )",
-      "sourceRef": "page=90",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH03-EX3.2-Q10",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 3,
-      "chapterTitleHint": "",
-      "exerciseId": "3.2",
-      "qIndex": 10,
-      "text": "cot (– 15π 4 )",
-      "sourceRef": "page=90",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH03-EX3.2-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 3,
-      "chapterTitleHint": "",
-      "exerciseId": "3.2",
-      "qIndex": 1,
-      "text": "sin (– x) = – sin x",
-      "sourceRef": "page=90",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH03-EX3.2-Q2",
       "ncertClass": "CLASS_11",
       "chapterNumber": 3,
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 2,
-      "text": "cos (– x) = cos x We shall now prove some more results: Reprint 2026-27",
+      "text": "cos (– x) = cos x We shall now prove some more results:",
       "sourceRef": "page=90",
       "questionType": "FREE_RESPONSE"
     },
@@ -691,7 +614,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 3,
-      "text": "cos (x + y) = cos x cos y – sin x sin y Consider the unit circle with centre at the origin. Letx be the angle P4OP1and y be the angle P1OP2. Then (x + y) is the angle P4OP2. Also let (– y) be the angle P4OP3. Therefore, P1, P2, P3 and P4 will have the coordinates P1(cos x, sin x), P2 [cos (x + y), sin (x + y)], P3 [cos (– y), sin (– y)] and P4 (1, 0) (Fig 3.14). Consider the triangles P1OP3 and P2OP4. They are congruent (Why?). Therefore, P1P3 and P2P4 are equal. By using distance formula, we get P1P3 2 = [cos x – cos (– y)]2 + [sin x – sin(–y]2 = (cos x – cos y)2 + (sin x + sin y)2 = cos2 x + cos2 y – 2 cos x cos y + sin2 x + sin2 y + 2sin x sin y = 2 – 2 (cos x cos y – sin x sin y) (Why?) Also, P2P4 2 = [1 – cos (x + y)] 2 + [0 – sin (x + y)]2 = 1 – 2cos (x + y) + cos2 (x + y) + sin2 (x + y) = 2 – 2 cos (x + y) Fig 3.14 Reprint 2026-27",
+      "text": "cos (x + y) = cos x cos y – sin x sin y Consider the unit circle with centre at the origin. Letx be the angle P4OP1and y be the angle P1OP2. Then (x + y) is the angle P4OP2. Also let (– y) be the angle P4OP3. Therefore, P1, P2, P3 and P4 will have the coordinates P1(cos x, sin x), P2 [cos (x + y), sin (x + y)], P3 [cos (– y), sin (– y)] and P4 (1, 0) (Fig 3.14). Consider the triangles P1OP3 and P2OP4. They are congruent (Why?). Therefore, P1P3 and P2P4 are equal. By using distance formula, we get P1P3 2 = [cos x – cos (– y)]2 + [sin x – sin(–y]2 = (cos x – cos y)2 + (sin x + sin y)2 = cos2 x + cos2 y – 2 cos x cos y + sin2 x + sin2 y + 2sin x sin y = 2 – 2 (cos x cos y – sin x sin y) (Why?) Also, P2P4 2 = [1 – cos (x + y)] 2 + [0 – sin (x + y)]2 = 1 – 2cos (x + y) + cos2 (x + y) + sin2 (x + y) = 2 – 2 cos (x + y) Fig 3.14",
       "sourceRef": "page=91",
       "questionType": "FREE_RESPONSE"
     },
@@ -768,7 +691,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 9,
-      "text": "By taking suitable values of x and y in the identities 3, 4, 7 and 8, we get the following results: cos x π ( + ) 2 = – sin x sin x π ( + ) 2 = cos x cos (π – x) = – cos x sin (π – x) = sin x Reprint 2026-27",
+      "text": "By taking suitable values of x and y in the identities 3, 4, 7 and 8, we get the following results: cos x π ( + ) 2 = – sin x sin x π ( + ) 2 = cos x cos (π – x) = – cos x sin (π – x) = sin x",
       "sourceRef": "page=92",
       "questionType": "FREE_RESPONSE"
     },
@@ -801,7 +724,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 12,
-      "text": "If none of the angles x, y and (x + y) is a multiple of π, then cot ( x + y) = x y y x cot cot – 1 cot +cot Reprint 2026-27",
+      "text": "If none of the angles x, y and (x + y) is a multiple of π, then cot ( x + y) = x y y x cot cot – 1 cot +cot",
       "sourceRef": "page=93",
       "questionType": "FREE_RESPONSE"
     },
@@ -834,7 +757,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 15,
-      "text": "sin 2x = 2 sinx cos x = x x 2 2tan 1 + tan π π 2 ≠ + x n , where n is an integer We have sin (x + y) = sin x cos y + cos x sin y Replacing y by x, we get sin 2x = 2 sin x cos x. Again sin 2x = 2 2 2sin cos cos sin x x x x + Reprint 2026-27",
+      "text": "sin 2x = 2 sinx cos x = x x 2 2tan 1 + tan π π 2 ≠ + x n , where n is an integer We have sin (x + y) = sin x cos y + cos x sin y Replacing y by x, we get sin 2x = 2 sin x cos x. Again sin 2x = 2 2 2sin cos cos sin x x x x +",
       "sourceRef": "page=94",
       "questionType": "FREE_RESPONSE"
     },
@@ -878,7 +801,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 19,
-      "text": "= x x x x 3 2 3 tan –tan tan3 1– 3tan if π 3 π 2 ≠ + x n , where n is an integer We have tan 3x =tan (2x + x) = tan 2 tan 1 tan 2 tan x x – x x + 2 2 2tan tan 1 tan 2tan tan 1 1 tan x x – x x . x – – x + = Reprint 2026-27",
+      "text": "= x x x x 3 2 3 tan –tan tan3 1– 3tan if π 3 π 2 ≠ + x n , where n is an integer We have tan 3x =tan (2x + x) = tan 2 tan 1 tan 2 tan x x – x x + 2 2 2tan tan 1 tan 2tan tan 1 1 tan x x – x x . x – – x + =",
       "sourceRef": "page=95",
       "questionType": "FREE_RESPONSE"
     },
@@ -889,7 +812,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.2",
       "qIndex": 20,
-      "text": "(i) cos x + cos y = x y x y + – 2cos cos 2 2 (ii) cos x – cos y = – x y x y + – 2sin sin 2 2 (iii) sin x + sin y = x y x y + – 2sin cos 2 2 (iv) sin x – sin y = x y x y + – 2cos sin 2 2 We know that cos (x + y) = cos x cos y – sin x sin y ... (1) and cos (x – y) = cos x cos y + sin x sin y ... (2) Adding and subtracting (1) and (2), we get cos (x + y) + cos(x – y) = 2 cos x cos y ... (3) and cos (x + y) – cos (x – y) = – 2 sin x sin y ... (4) Further sin (x + y) = sin x cos y + cos x sin y ... (5) and sin (x – y) = sin x cos y – cos x sin y ... (6) Adding and subtracting (5) and (6), we get sin (x + y) + sin (x – y) = 2 sin x cos y ... (7) sin (x + y) – sin (x – y) = 2cos x sin y ... (8) Let x + y = θ and x – y = φ. Therefore θ θ and 2 2 x y +φ −φ     = =         Substituting the values of x and y in (3), (4), (7) and (8), we get cos θ + cos φ = 2 cos θ θ cos 2 2 +φ −φ             cos θ – cos φ = – 2 sin θ θ sin 2 – + φ φ         2     sin θ + sin φ = 2 sin θ θ cos 2 2 +φ −φ             Reprint 2026-27",
+      "text": "(i) cos x + cos y = x y x y + – 2cos cos 2 2 (ii) cos x – cos y = – x y x y + – 2sin sin 2 2 (iii) sin x + sin y = x y x y + – 2sin cos 2 2 (iv) sin x – sin y = x y x y + – 2cos sin 2 2 We know that cos (x + y) = cos x cos y – sin x sin y ... (1) and cos (x – y) = cos x cos y + sin x sin y ... (2) Adding and subtracting (1) and (2), we get cos (x + y) + cos(x – y) = 2 cos x cos y ... (3) and cos (x + y) – cos (x – y) = – 2 sin x sin y ... (4) Further sin (x + y) = sin x cos y + cos x sin y ... (5) and sin (x – y) = sin x cos y – cos x sin y ... (6) Adding and subtracting (5) and (6), we get sin (x + y) + sin (x – y) = 2 sin x cos y ... (7) sin (x + y) – sin (x – y) = 2cos x sin y ... (8) Let x + y = θ and x – y = φ. Therefore θ θ and 2 2 x y +φ −φ     = =         Substituting the values of x and y in (3), (4), (7) and (8), we get cos θ + cos φ = 2 cos θ θ cos 2 2 +φ −φ             cos θ – cos φ = – 2 sin θ θ sin 2 – + φ φ         2     sin θ + sin φ = 2 sin θ θ cos 2 2 +φ −φ            ",
       "sourceRef": "page=96",
       "questionType": "FREE_RESPONSE"
     },
@@ -1131,7 +1054,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 21,
-      "text": "cos cos cos sin sin sin cot 4 3 2 4 3 2 3 x x x x x x x + + + + = Reprint 2026-27",
+      "text": "cos cos cos sin sin sin cot 4 3 2 4 3 2 3 x x x x x x x + + + + =",
       "sourceRef": "page=100",
       "questionType": "FREE_RESPONSE"
     },
@@ -1230,7 +1153,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 8,
-      "text": "Then 1 = 2 1 2 y y − or y2 + 2y – 1 = 0 Therefore y = −± = −± 2 2 2 2 1 2 Reprint 2026-27",
+      "text": "Then 1 = 2 1 2 y y − or y2 + 2y – 1 = 0 Therefore y = −± = −± 2 2 2 2 1",
       "sourceRef": "page=102",
       "questionType": "FREE_RESPONSE"
     },
@@ -1241,7 +1164,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 2,
-      "text": "Solution Since 3π π 2 x < < , cosx is negative. Also π 3π 2 2 4 x < < . Therefore, sin x 2 is positive and cos x 2 is negative. Now sec2 x = 1 + tan2 x = 1 9 16 25 16 + = Therefore cos2 x = 16 25 or cos x = 4 5 – (Why?) Now 2 2 2 sin x = 1 – cos x = 1 4 5 9 5 + = . Therefore sin2 x 2 = 9 10 or sin x 2 = 3 10 (Why?) Again 2cos2 x 2 = 1+ cos x = 1 4 5 1 5 − = Therefore cos2 x 2 = 1 10 or cos x 2 = − 1 10 (Why?) Reprint 2026-27",
+      "text": "Solution Since 3π π 2 x < < , cosx is negative. Also π 3π 2 2 4 x < < . Therefore, sin x 2 is positive and cos x 2 is negative. Now sec2 x = 1 + tan2 x = 1 9 16 25 16 + = Therefore cos2 x = 16 25 or cos x = 4 5 – (Why?) Now 2 2 2 sin x = 1 – cos x = 1 4 5 9 5 + = . Therefore sin2 x 2 = 9 10 or sin x 2 = 3 10 (Why?) Again 2cos2 x 2 = 1+ cos x = 1 4 5 1 5 − = Therefore cos2 x 2 = 1 10 or cos x 2 = − 1 10 (Why?)",
       "sourceRef": "page=103",
       "questionType": "FREE_RESPONSE"
     },
@@ -1274,7 +1197,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 3,
-      "text": "(cos x + cos y)2 + (sin x – sin y)2 = 4 cos2 2 x y + Reprint 2026-27",
+      "text": "(cos x + cos y)2 + (sin x – sin y)2 = 4 cos2 2 x y +",
       "sourceRef": "page=104",
       "questionType": "FREE_RESPONSE"
     },
@@ -1351,7 +1274,7 @@
       "chapterTitleHint": "",
       "exerciseId": "3.3",
       "qIndex": 10,
-      "text": "sinx = 4 1 , x in quadrant II Summary ®If in a circle of radius r, an arc of length l subtends an angle of θ radians, then l = r θ ®Radian measure = π 180 × Degree measure ®Degree measure = 180 π × Radian measure ®cos2 x + sin2 x = 1 ®1 + tan2 x = sec2 x ®1 + cot2 x = cosec2 x ®cos (2nπ + x) = cos x ®sin (2nπ + x) = sin x ®sin (– x) = – sin x ®cos (– x) = cos x ®cos (x + y) = cos x cos y – sin x sin y ®cos (x – y) = cos x cos y + sin x sin y ®cos ( π 2 x − ) = sin x Reprint 2026-27",
+      "text": "sinx = 4 1 , x in quadrant II Summary ®If in a circle of radius r, an arc of length l subtends an angle of θ radians, then l = r θ ®Radian measure = π 180 × Degree measure ®Degree measure = 180 π × Radian measure ®cos2 x + sin2 x = 1 ®1 + tan2 x = sec2 x ®1 + cot2 x = cosec2 x ®cos (2nπ + x) = cos x ®sin (2nπ + x) = sin x ®sin (– x) = – sin x ®cos (– x) = cos x ®cos (x + y) = cos x cos y – sin x sin y ®cos (x – y) = cos x cos y + sin x sin y ®cos ( π 2 x − ) = sin x",
       "sourceRef": "page=105",
       "questionType": "FREE_RESPONSE"
     },
@@ -1364,50 +1287,6 @@
       "qIndex": 1,
       "text": "( ) 3 5 5 i i   −    ",
       "sourceRef": "page=115",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH04-EX4.1-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.1",
-      "qIndex": 2,
-      "text": "i i 9 19 +",
-      "sourceRef": "page=115",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH04-EX4.1-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.1",
-      "qIndex": 3,
-      "text": "i −39 Reprint 2026-27",
-      "sourceRef": "page=115",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH04-EX4.1-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.1",
-      "qIndex": 4,
-      "text": "3(7 + i7) + i (7 + i7)",
-      "sourceRef": "page=116",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH04-EX4.1-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.1",
-      "qIndex": 5,
-      "text": "(1 – i) – ( –1 + i6)",
-      "sourceRef": "page=116",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -1429,28 +1308,6 @@
       "exerciseId": "4.1",
       "qIndex": 7,
       "text": "1 7 1 4 4 3 3 3 3 i i i         + + + −− +                ",
-      "sourceRef": "page=116",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH04-EX4.1-Q8",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.1",
-      "qIndex": 8,
-      "text": "(1 – i)4",
-      "sourceRef": "page=116",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH04-EX4.1-Q9",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 4,
-      "chapterTitleHint": "",
-      "exerciseId": "4.1",
-      "qIndex": 9,
-      "text": "3 1 3 3 i   +    ",
       "sourceRef": "page=116",
       "questionType": "FREE_RESPONSE"
     },
@@ -1494,7 +1351,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.1",
       "qIndex": 2,
-      "text": "For any two complex numbers z1 and z2, prove that Re (z1 z2) = Re z1 Re z2 – Imz1 Imz2 . Reprint 2026-27",
+      "text": "For any two complex numbers z1 and z2, prove that Re (z1 z2) = Re z1 Re z2 – Imz1 Imz2 .",
       "sourceRef": "page=118",
       "questionType": "FREE_RESPONSE"
     },
@@ -1626,7 +1483,7 @@
       "chapterTitleHint": "",
       "exerciseId": "4.1",
       "qIndex": 14,
-      "text": "If 1 1 1 m i – i   + =     , then find the least positive integral value of m. Reprint 2026-27",
+      "text": "If 1 1 1 m i – i   + =     , then find the least positive integral value of m.",
       "sourceRef": "page=119",
       "questionType": "FREE_RESPONSE"
     },
@@ -1671,72 +1528,6 @@
       "exerciseId": "5.1",
       "qIndex": 4,
       "text": "Solve 3x + 8 >2, when (i) x is an integer. (ii) x is a real number. Solve the inequalities in Exercises 5 to 16 for real x.",
-      "sourceRef": "page=128",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 5,
-      "text": "4x + 3 < 5x +",
-      "sourceRef": "page=128",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q6",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 6,
-      "text": "3x – 7 > 5x –",
-      "sourceRef": "page=128",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q7",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 7,
-      "text": "3(x – 1) ≤ 2 (x – 3)",
-      "sourceRef": "page=128",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q8",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 8,
-      "text": "3 (2 – x) ≥ 2 (1 – x)",
-      "sourceRef": "page=128",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q9",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 9,
-      "text": "11 2 3 x x x + + <",
-      "sourceRef": "page=128",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q10",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 10,
-      "text": "1 3 2 x x > +",
       "sourceRef": "page=128",
       "questionType": "FREE_RESPONSE"
     },
@@ -1807,39 +1598,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q17",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 17,
-      "text": "3x – 2 < 2x +",
-      "sourceRef": "page=128",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q18",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 18,
-      "text": "5x – 3 > 3x –",
-      "sourceRef": "page=128",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q19",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 19,
-      "text": "3 (1 – x) < 2 (x + 4)",
-      "sourceRef": "page=128",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH05-EX5.1-Q20",
       "ncertClass": "CLASS_11",
       "chapterNumber": 5,
@@ -1890,7 +1648,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.1",
       "qIndex": 24,
-      "text": "Find all pairs of consecutive even positive integers, both of which are larger than 5 such that their sum is less than 23. Reprint 2026-27",
+      "text": "Find all pairs of consecutive even positive integers, both of which are larger than 5 such that their sum is less than 23.",
       "sourceRef": "page=128",
       "questionType": "FREE_RESPONSE"
     },
@@ -1917,61 +1675,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 1,
-      "text": "2 ≤ 3x – 4 ≤",
-      "sourceRef": "page=131",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 2,
-      "text": "6 ≤ – 3 (2x – 4) <",
-      "sourceRef": "page=131",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 3,
-      "text": "7 3 4 18 2 x – ≤ − ≤",
-      "sourceRef": "page=131",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 4,
-      "text": "3 2 15 0 5 ( x ) − − < ≤",
-      "sourceRef": "page=131",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 5,
-      "text": "3 12 4 2 5 x − < − ≤ −",
-      "sourceRef": "page=131",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH05-EX5.1-Q6",
       "ncertClass": "CLASS_11",
       "chapterNumber": 5,
@@ -1979,17 +1682,6 @@
       "exerciseId": "5.1",
       "qIndex": 6,
       "text": "3 11 7 11 2 ( x ) + ≤ ≤ . Solve the inequalities in Exercises 7 to 10 and represent the solution graphically on number line.",
-      "sourceRef": "page=131",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH05-EX5.1-Q7",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 5,
-      "chapterTitleHint": "",
-      "exerciseId": "5.1",
-      "qIndex": 7,
-      "text": "5x + 1 > – 24, 5x – 1 <",
       "sourceRef": "page=131",
       "questionType": "FREE_RESPONSE"
     },
@@ -2044,7 +1736,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.1",
       "qIndex": 12,
-      "text": "A solution of 8% boric acid is to be diluted by adding a 2% boric acid solution to it. The resulting mixture is to be more than 4% but less than 6% boric acid. If we have 640 litres of the 8% solution, how many litres of the 2% solution will have to be added? Reprint 2026-27",
+      "text": "A solution of 8% boric acid is to be diluted by adding a 2% boric acid solution to it. The resulting mixture is to be more than 4% but less than 6% boric acid. If we have 640 litres of the 8% solution, how many litres of the 2% solution will have to be added?",
       "sourceRef": "page=131",
       "questionType": "FREE_RESPONSE"
     },
@@ -2066,7 +1758,7 @@
       "chapterTitleHint": "",
       "exerciseId": "5.1",
       "qIndex": 14,
-      "text": "IQ of a person is given by the formula IQ = MA CA × 100, where MA is mental age and CA is chronological age. If 80 ≤ IQ ≤ 140 for a group of 12 years old children, find the range of their mental age. Summary ®Two real numbers or two algebraic expressions related by the symbols <, >, ≤ or ≥ form an inequality. ®Equal numbers may be added to (or subtracted from ) both sides of an inequality. ®Both sides of an inequality can be multiplied (or divided ) by the same positive number. But when both sides are multiplied (or divided) by a negative number, then the inequality is reversed. ®The values of x, which make an inequality a true statement, are called solutions of the inequality. ®To represent x < a (or x > a) on a number line, put a circle on the number a and dark line to the left (or right) of the number a. ®To represent x ≤ a (or x ≥ a) on a number line, put a dark circle on the number a and dark the line to the left (or right) of the number x. Reprint 2026-27",
+      "text": "IQ of a person is given by the formula IQ = MA CA × 100, where MA is mental age and CA is chronological age. If 80 ≤ IQ ≤ 140 for a group of 12 years old children, find the range of their mental age. Summary ®Two real numbers or two algebraic expressions related by the symbols <, >, ≤ or ≥ form an inequality. ®Equal numbers may be added to (or subtracted from ) both sides of an inequality. ®Both sides of an inequality can be multiplied (or divided ) by the same positive number. But when both sides are multiplied (or divided) by a negative number, then the inequality is reversed. ®The values of x, which make an inequality a true statement, are called solutions of the inequality. ®To represent x < a (or x > a) on a number line, put a circle on the number a and dark line to the left (or right) of the number a. ®To represent x ≤ a (or x ≥ a) on a number line, put a dark circle on the number a and dark the line to the left (or right) of the number x.",
       "sourceRef": "page=132",
       "questionType": "FREE_RESPONSE"
     },
@@ -2143,30 +1835,8 @@
       "chapterTitleHint": "",
       "exerciseId": "6.2",
       "qIndex": 1,
-      "text": "Evaluate (i) 8 ! (ii) 4 ! – 3 ! Reprint 2026-27",
+      "text": "Evaluate (i) 8 ! (ii) 4 ! – 3 !",
       "sourceRef": "page=139",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH06-EX6.2-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.2",
-      "qIndex": 2,
-      "text": "Is 3 ! + 4 ! = 7 ! ?",
-      "sourceRef": "page=140",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH06-EX6.2-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.2",
-      "qIndex": 3,
-      "text": "Compute 8! 6! 2! ×",
-      "sourceRef": "page=140",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -2341,7 +2011,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.3",
       "qIndex": 4,
-      "text": "( ) ( ) ( ) ! C ! ! n n r n n r n n r −= − − − = ( ) ! ! ! n n r r − = C n r , Reprint 2026-27",
+      "text": "( ) ( ) ( ) ! C ! ! n n r n n r n n r −= − − − = ( ) ! ! ! n n r r − = C n r ,",
       "sourceRef": "page=149",
       "questionType": "FREE_RESPONSE"
     },
@@ -2354,17 +2024,6 @@
       "qIndex": 5,
       "text": "nCa = nCb ⇒ a = b or a = n – b, i.e., n = a + b Theorem 6 1 1 C C C n n n r r r + − + = Proof We have ( ) ( ) ( ) 1 ! ! C C ! ! 1 ! 1 ! n n r r n n r n r r n r − + = + − − − + = ( ) ( ) ! 1 ! ! n r r n r × − − + ( ) ( ) ( ) ! 1 ! 1 ! n r n r n r − − + − = ( ) ( ) ! 1 ! ! n r n r − − 1 1 1 r n r   +   − +   = ( ) ( ) ( ) ! 1 1 ! ! 1 n n r r r n r r n r − + + × − − − + = ( ) ( ) 1 1 ! C ! 1 ! n r n r n r + + = + −",
       "sourceRef": "page=150",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH06-EX6.4-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 6,
-      "chapterTitleHint": "",
-      "exerciseId": "6.4",
-      "qIndex": 1,
-      "text": "If nC8 = nC2, find nC2.",
-      "sourceRef": "page=152",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -2462,7 +2121,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.4",
       "qIndex": 7,
-      "text": "Therefore, the numbers to be counted will be 7-digit only. Also, the numbers have to be greater than 1000000, so they can begin either with 1, 2 or 4. The number of numbers beginning with 1 = 6! 4 5 6 3! 2! 2 × × = = 60, as when 1 is fixed at the extreme left position, the remaining digits to be rearranged will be 0, 2, 2, 2, 4, 4, in which there are 3, 2s and 2, 4s. Total numbers begining with 2 = 6! 3 4 5 6 2! 2! 2 × × × = = 180 and total numbers begining with 4 6! 4 5 6 3! = = × × = 120 Reprint 2026-27",
+      "text": "Therefore, the numbers to be counted will be 7-digit only. Also, the numbers have to be greater than 1000000, so they can begin either with 1, 2 or 4. The number of numbers beginning with 1 = 6! 4 5 6 3! 2! 2 × × = = 60, as when 1 is fixed at the extreme left position, the remaining digits to be rearranged will be 0, 2, 2, 2, 4, 4, in which there are 3, 2s and 2, 4s. Total numbers begining with 2 = 6! 3 4 5 6 2! 2! 2 × × × = = 180 and total numbers begining with 4 6! 4 5 6 3! = = × × =",
       "sourceRef": "page=154",
       "questionType": "FREE_RESPONSE"
     },
@@ -2506,7 +2165,7 @@
       "chapterTitleHint": "",
       "exerciseId": "6.4",
       "qIndex": 4,
-      "text": "If the different permutations of all the letter of the word EXAMINATION are Reprint 2026-27",
+      "text": "If the different permutations of all the letter of the word EXAMINATION are",
       "sourceRef": "page=155",
       "questionType": "FREE_RESPONSE"
     },
@@ -2583,41 +2242,8 @@
       "chapterTitleHint": "",
       "exerciseId": "6.4",
       "qIndex": 11,
-      "text": "In how many ways can the letters of the word ASSASSINATION be arranged so that all the S’s are together ? Summary ®Fundamental principle of counting If an event can occur in m different ways, following which another event can occur in n different ways, then the total number of occurrence of the events in the given order is m × n. ®The number of permutations of n different things taken r at a time, where repetition is not allowed, is denoted by nPr and is given by nPr = ! ( )! n n r − , where 0 ≤ r ≤ n. ®n! = 1 × 2 × 3 × ...×n ®n! = n × (n – 1) ! ®The number of permutations of n different things, taken r at a time, where repeatition is allowed, is nr. ®The number of permutations of n objects taken all at a time, where p1 objects Reprint 2026-27",
+      "text": "In how many ways can the letters of the word ASSASSINATION be arranged so that all the S’s are together ? Summary ®Fundamental principle of counting If an event can occur in m different ways, following which another event can occur in n different ways, then the total number of occurrence of the events in the given order is m × n. ®The number of permutations of n different things taken r at a time, where repetition is not allowed, is denoted by nPr and is given by nPr = ! ( )! n n r − , where 0 ≤ r ≤ n. ®n! = 1 × 2 × 3 × ...×n ®n! = n × (n – 1) ! ®The number of permutations of n different things, taken r at a time, where repeatition is allowed, is nr. ®The number of permutations of n objects taken all at a time, where p1 objects",
       "sourceRef": "page=156",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH07-EX7.1-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 7,
-      "chapterTitleHint": "",
-      "exerciseId": "7.1",
-      "qIndex": 2,
-      "text": "5 2 2 x – x      ",
-      "sourceRef": "page=165",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH07-EX7.1-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 7,
-      "chapterTitleHint": "",
-      "exerciseId": "7.1",
-      "qIndex": 3,
-      "text": "(2x – 3)6 Reprint 2026-27",
-      "sourceRef": "page=165",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH07-EX7.1-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 7,
-      "chapterTitleHint": "",
-      "exerciseId": "7.1",
-      "qIndex": 4,
-      "text": "5 1 3 x x   +    ",
-      "sourceRef": "page=166",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -2759,52 +2385,8 @@
       "chapterTitleHint": "",
       "exerciseId": "7.1",
       "qIndex": 6,
-      "text": "Find the expansion of (3x2 – 2ax + 3a2)3 using binomial theorem. Summary ®The expansion of a binomial for any positive integral n is given by Binomial Theorem, which is (a + b)n = nC0an + nC1an – 1b + nC2an – 2b2 + ...+ nCn – 1a.bn – 1 + nCnbn. ®The coefficients of the expansions are arranged in an array. This array is called Pascal’s triangle. Reprint 2026-27",
+      "text": "Find the expansion of (3x2 – 2ax + 3a2)3 using binomial theorem. Summary ®The expansion of a binomial for any positive integral n is given by Binomial Theorem, which is (a + b)n = nC0an + nC1an – 1b + nC2an – 2b2 + ...+ nCn – 1a.bn – 1 + nCnbn. ®The coefficients of the expansions are arranged in an array. This array is called Pascal’s triangle.",
       "sourceRef": "page=166",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH08-EX8.1-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 8,
-      "chapterTitleHint": "",
-      "exerciseId": "8.1",
-      "qIndex": 1,
-      "text": "an = n (n + 2)",
-      "sourceRef": "page=171",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH08-EX8.1-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 8,
-      "chapterTitleHint": "",
-      "exerciseId": "8.1",
-      "qIndex": 2,
-      "text": "an = 1 n n+",
-      "sourceRef": "page=171",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH08-EX8.1-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 8,
-      "chapterTitleHint": "",
-      "exerciseId": "8.1",
-      "qIndex": 4,
-      "text": "an = 2 3 6 n −",
-      "sourceRef": "page=171",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH08-EX8.1-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 8,
-      "chapterTitleHint": "",
-      "exerciseId": "8.1",
-      "qIndex": 5,
-      "text": "an = (–1)n–1 5n+1",
-      "sourceRef": "page=171",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -2819,46 +2401,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH08-EX8.1-Q7",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 8,
-      "chapterTitleHint": "",
-      "exerciseId": "8.1",
-      "qIndex": 7,
-      "text": "an = 4n – 3; a17, a24",
-      "sourceRef": "page=171",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH08-EX8.1-Q8",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 8,
-      "chapterTitleHint": "",
-      "exerciseId": "8.1",
-      "qIndex": 8,
-      "text": "an = 2 7 ; 2n n a",
-      "sourceRef": "page=171",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH08-EX8.1-Q9",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 8,
-      "chapterTitleHint": "",
-      "exerciseId": "8.1",
-      "qIndex": 9,
-      "text": "an = (–1)n – 1n3; a9",
-      "sourceRef": "page=171",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH08-EX8.1-Q10",
       "ncertClass": "CLASS_11",
       "chapterNumber": 8,
       "chapterTitleHint": "",
       "exerciseId": "8.1",
       "qIndex": 10,
-      "text": "20 ( – 2) ; 3 n n n a a n = + . Reprint 2026-27",
+      "text": "20 ( – 2) ; 3 n n n a a n = + .",
       "sourceRef": "page=171",
       "questionType": "FREE_RESPONSE"
     },
@@ -2924,7 +2473,7 @@
       "chapterTitleHint": "",
       "exerciseId": "8.1",
       "qIndex": 81,
-      "text": "Example 8 How many terms of the G.P. 3 3 3 2 4 , , ,... are needed to give the sum 3069 512 ? Solution Let n be the number of terms needed. Given that a = 3, r = 1 2 and 3069 S 512 n = Since (1 ) S 1 n n a – r r = − Reprint 2026-27",
+      "text": "Example 8 How many terms of the G.P. 3 3 3 2 4 , , ,... are needed to give the sum 3069 512 ? Solution Let n be the number of terms needed. Given that a = 3, r = 1 2 and 3069 S 512 n = Since (1 ) S 1 n n a – r r = −",
       "sourceRef": "page=174",
       "questionType": "FREE_RESPONSE"
     },
@@ -3089,7 +2638,7 @@
       "chapterTitleHint": "",
       "exerciseId": "8.2",
       "qIndex": 15,
-      "text": "Given a G.P. with a = 729 and 7th term 64, determine S7. Reprint 2026-27",
+      "text": "Given a G.P. with a = 729 and 7th term 64, determine S7.",
       "sourceRef": "page=178",
       "questionType": "FREE_RESPONSE"
     },
@@ -3254,7 +2803,7 @@
       "chapterTitleHint": "",
       "exerciseId": "8.2",
       "qIndex": 30,
-      "text": "The number of bacteria in a certain culture doubles every hour. If there were 30 bacteria present in the culture originally, how many bacteria will be present at the end of 2nd hour, 4th hour and nth hour ? Reprint 2026-27",
+      "text": "The number of bacteria in a certain culture doubles every hour. If there were 30 bacteria present in the culture originally, how many bacteria will be present at the end of 2nd hour, 4th hour and nth hour ?",
       "sourceRef": "page=179",
       "questionType": "FREE_RESPONSE"
     },
@@ -3331,7 +2880,7 @@
       "chapterTitleHint": "",
       "exerciseId": "8.2",
       "qIndex": 5,
-      "text": "A G.P. consists of an even number of terms. If the sum of all the terms is 5 times the sum of terms occupying odd places, then find its common ratio. Reprint 2026-27",
+      "text": "A G.P. consists of an even number of terms. If the sum of all the terms is 5 times the sum of terms occupying odd places, then find its common ratio.",
       "sourceRef": "page=180",
       "questionType": "FREE_RESPONSE"
     },
@@ -3474,7 +3023,7 @@
       "chapterTitleHint": "",
       "exerciseId": "8.2",
       "qIndex": 18,
-      "text": "150 workers were engaged to finish a job in a certain number of days. 4 workers dropped out on second day, 4 more workers dropped out on third day and so on. It took 8 more days to finish the work. Find the number of days in which the work was completed. Reprint 2026-27",
+      "text": "150 workers were engaged to finish a job in a certain number of days. 4 workers dropped out on second day, 4 more workers dropped out on third day and so on. It took 8 more days to finish the work. Find the number of days in which the work was completed.",
       "sourceRef": "page=181",
       "questionType": "FREE_RESPONSE"
     },
@@ -3496,7 +3045,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.1",
       "qIndex": 2,
-      "text": "The base of an equilateral triangle with side 2a lies along the y-axis such that the mid-point of the base is at the origin. Find vertices of the triangle. Reprint 2026-27",
+      "text": "The base of an equilateral triangle with side 2a lies along the y-axis such that the mid-point of the base is at the origin. Find vertices of the triangle.",
       "sourceRef": "page=191",
       "questionType": "FREE_RESPONSE"
     },
@@ -3606,7 +3155,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.1",
       "qIndex": 3,
-      "text": "Therefore, by slope-intercept form (3) above, the equation of the line is 0 3 2 or 2 3 2 1 = + − − = x y x y , which is the required equation. (ii) Here, we have m = tan θ = 2 1 and d = 4. Therefore, by slope-intercept form (4) above, the equation of the line is 0 4 2 or ) 4 ( 2 1 = + − − = x y x y , which is the required equation. Reprint 2026-27",
+      "text": "Therefore, by slope-intercept form (3) above, the equation of the line is 0 3 2 or 2 3 2 1 = + − − = x y x y , which is the required equation. (ii) Here, we have m = tan θ = 2 1 and d = 4. Therefore, by slope-intercept form (4) above, the equation of the line is 0 4 2 or ) 4 ( 2 1 = + − − = x y x y , which is the required equation.",
       "sourceRef": "page=195",
       "questionType": "FREE_RESPONSE"
     },
@@ -3672,7 +3221,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.2",
       "qIndex": 6,
-      "text": "Intersecting the y-axis at a distance of 2 units above the origin and making an angle of 30o with positive direction of the x-axis. Fig 9.13 Reprint 2026-27",
+      "text": "Intersecting the y-axis at a distance of 2 units above the origin and making an angle of 30o with positive direction of the x-axis. Fig 9.13",
       "sourceRef": "page=196",
       "questionType": "FREE_RESPONSE"
     },
@@ -3831,17 +3380,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH09-EX9.2-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 9,
-      "chapterTitleHint": "",
-      "exerciseId": "9.2",
-      "qIndex": 2,
-      "text": "5 3 4 – d – = = +",
-      "sourceRef": "page=200",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH09-EX9.3-Q1",
       "ncertClass": "CLASS_11",
       "chapterNumber": 9,
@@ -3936,7 +3474,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.3",
       "qIndex": 9,
-      "text": "The line through the points (h, 3) and (4, 1) intersects the line7 9 19 0 x y . − − = at right angle. Find the value of h. Reprint 2026-27",
+      "text": "The line through the points (h, 3) and (4, 1) intersects the line7 9 19 0 x y . − − = at right angle. Find the value of h.",
       "sourceRef": "page=200",
       "questionType": "FREE_RESPONSE"
     },
@@ -4068,7 +3606,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.3",
       "qIndex": 2,
-      "text": "Find the equations of the lines, which cut-off intercepts on the axes whose sum and product are 1 and – 6, respectively. Reprint 2026-27",
+      "text": "Find the equations of the lines, which cut-off intercepts on the axes whose sum and product are 1 and – 6, respectively.",
       "sourceRef": "page=205",
       "questionType": "FREE_RESPONSE"
     },
@@ -4255,7 +3793,7 @@
       "chapterTitleHint": "",
       "exerciseId": "9.3",
       "qIndex": 19,
-      "text": "If sum of the perpendicular distances of a variable point P (x, y) from the lines x + y – 5 = 0 and 3x – 2y +7 = 0 is always 10. Show that P must move on a line. Reprint 2026-27",
+      "text": "If sum of the perpendicular distances of a variable point P (x, y) from the lines x + y – 5 = 0 and 3x – 2y +7 = 0 is always 10. Show that P must move on a line.",
       "sourceRef": "page=206",
       "questionType": "FREE_RESPONSE"
     },
@@ -4299,30 +3837,8 @@
       "chapterTitleHint": "",
       "exerciseId": "9.3",
       "qIndex": 23,
-      "text": "A person standing at the junction (crossing) of two straight paths represented by the equations 2x – 3y + 4 = 0 and 3x + 4y – 5 = 0 wants to reach the path whose equation is 6x – 7y + 8 = 0 in the least time. Find equation of the path that he should follow. Summary ®Slope (m) of a non-vertical line passing through the points (x1, y1) and (x2, y2) is given by 2 1 1 2 1 2 2 1 1 2 y y y y m x x , . x x x x − − = = ≠ − − ® If a line makes an angle á with the positive direction of x-axis, then the slope of the line is given by m = tan α, α ≠ 90°. ®Slope of horizontal line is zero and slope of vertical line is undefined. ® An acute angle (say θ) between lines L1 and L2 with slopes m1 and m2 is given by 2 1 1 2 1 2 tanθ 1 0 1 m – m , m m m m = + ≠ + . ®Two lines are parallel if and only if their slopes are equal. ®Two lines are perpendicular if and only if product of their slopes is –1. ®Three points A, B and C are collinear, if and only if slope of AB = slope of BC. ®Equation of the horizontal line having distance a from the x-axis is either y = a or y = – a. ®Equation of the vertical line having distance b from the y-axis is either x = b or x = – b. ®The point (x, y) lies on the line with slope m and through the fixed point (xo, yo), if and only if its coordinates satisfy the equation y – yo = m (x – xo). ® Equation of the line passing through the points (x1, y1) and (x2, y2) is given by ). ( 1 1 2 1 2 1 x x x x y y y y − − − = − Reprint 2026-27",
+      "text": "A person standing at the junction (crossing) of two straight paths represented by the equations 2x – 3y + 4 = 0 and 3x + 4y – 5 = 0 wants to reach the path whose equation is 6x – 7y + 8 = 0 in the least time. Find equation of the path that he should follow. Summary ®Slope (m) of a non-vertical line passing through the points (x1, y1) and (x2, y2) is given by 2 1 1 2 1 2 2 1 1 2 y y y y m x x , . x x x x − − = = ≠ − − ® If a line makes an angle á with the positive direction of x-axis, then the slope of the line is given by m = tan α, α ≠ 90°. ®Slope of horizontal line is zero and slope of vertical line is undefined. ® An acute angle (say θ) between lines L1 and L2 with slopes m1 and m2 is given by 2 1 1 2 1 2 tanθ 1 0 1 m – m , m m m m = + ≠ + . ®Two lines are parallel if and only if their slopes are equal. ®Two lines are perpendicular if and only if product of their slopes is –1. ®Three points A, B and C are collinear, if and only if slope of AB = slope of BC. ®Equation of the horizontal line having distance a from the x-axis is either y = a or y = – a. ®Equation of the vertical line having distance b from the y-axis is either x = b or x = – b. ®The point (x, y) lies on the line with slope m and through the fixed point (xo, yo), if and only if its coordinates satisfy the equation y – yo = m (x – xo). ® Equation of the line passing through the points (x1, y1) and (x2, y2) is given by ). ( 1 1 2 1 2 1 x x x x y y y y − − − = −",
       "sourceRef": "page=207",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.1-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.1",
-      "qIndex": 1,
-      "text": "centre (0,2) and radius",
-      "sourceRef": "page=214",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.1-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.1",
-      "qIndex": 2,
-      "text": "centre (–2,3) and radius",
-      "sourceRef": "page=214",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -4333,17 +3849,6 @@
       "exerciseId": "10.1",
       "qIndex": 3,
       "text": "centre ( 4 1 , 2 1 ) and radius 12",
-      "sourceRef": "page=214",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.1-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.1",
-      "qIndex": 4,
-      "text": "centre (1,1) and radius",
       "sourceRef": "page=214",
       "questionType": "FREE_RESPONSE"
     },
@@ -4359,28 +3864,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH10-EX10.1-Q6",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.1",
-      "qIndex": 6,
-      "text": "(x + 5)2 + (y – 3)2 =",
-      "sourceRef": "page=214",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.1-Q7",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.1",
-      "qIndex": 7,
-      "text": "x2 + y2 – 4x – 8y – 45 =",
-      "sourceRef": "page=214",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH10-EX10.1-Q8",
       "ncertClass": "CLASS_11",
       "chapterNumber": 10,
@@ -4388,17 +3871,6 @@
       "exerciseId": "10.1",
       "qIndex": 8,
       "text": "x2 + y2 – 8x + 10y – 12 =",
-      "sourceRef": "page=214",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.1-Q9",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.1",
-      "qIndex": 9,
-      "text": "2x2 + 2y2 – x =",
       "sourceRef": "page=214",
       "questionType": "FREE_RESPONSE"
     },
@@ -4464,7 +3936,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.1",
       "qIndex": 15,
-      "text": "Does the point (–2.5, 3.5) lie inside, outside or on the circle x2 + y2 = 25? Reprint 2026-27",
+      "text": "Does the point (–2.5, 3.5) lie inside, outside or on the circle x2 + y2 = 25?",
       "sourceRef": "page=214",
       "questionType": "FREE_RESPONSE"
     },
@@ -4497,53 +3969,9 @@
       "chapterTitleHint": "",
       "exerciseId": "10.1",
       "qIndex": 3,
-      "text": "When the axis of symmetry is along the y-axis the parabola opens (c) upwards if the coefficient of y is positive. (d) downwards if the coefficient of y is negative. Reprint 2026-27",
+      "text": "When the axis of symmetry is along the y-axis the parabola opens (c) upwards if the coefficient of y is positive. (d) downwards if the coefficient of y is negative.",
       "sourceRef": "page=217",
       "questionType": "MCQ"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.2-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.2",
-      "qIndex": 1,
-      "text": "y2 = 12x",
-      "sourceRef": "page=219",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.2-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.2",
-      "qIndex": 3,
-      "text": "y2 = – 8x",
-      "sourceRef": "page=219",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.2-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.2",
-      "qIndex": 4,
-      "text": "x2 = – 16y",
-      "sourceRef": "page=219",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.2-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.2",
-      "qIndex": 5,
-      "text": "y2 = 10x",
-      "sourceRef": "page=219",
-      "questionType": "FREE_RESPONSE"
     },
     {
       "problemKey": "NCERT-C11-CH10-EX10.2-Q6",
@@ -4552,7 +3980,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.2",
       "qIndex": 6,
-      "text": "x2 = – 9y In each of the Exercises 7 to 12, find the equation of the parabola that satisfies the given conditions: Reprint 2026-27",
+      "text": "x2 = – 9y In each of the Exercises 7 to 12, find the equation of the parabola that satisfies the given conditions:",
       "sourceRef": "page=219",
       "questionType": "FREE_RESPONSE"
     },
@@ -4629,7 +4057,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.2",
       "qIndex": 10,
-      "text": "5 Ellipse Definition 4 An ellipse is the set of all points in a plane, the sum of whose distances from two fixed points in the plane is a constant. The two fixed points are called the foci (plural of ‘focus’) of the ellipse (Fig10.20). ANote The constant which is the sum of the distances of a point on the ellipse from the two fixed points is always greater than the distance between the two fixed points. The mid point of the line segment joining the foci is called the centre of the ellipse. The line segment through the foci of the ellipse is called the major axis and the line segment through the centre and perpendicular to the major axis is called the minor axis. The end points of the major axis are called the vertices of the ellipse(Fig 10.21). Reprint 2026-27",
+      "text": "5 Ellipse Definition 4 An ellipse is the set of all points in a plane, the sum of whose distances from two fixed points in the plane is a constant. The two fixed points are called the foci (plural of ‘focus’) of the ellipse (Fig10.20). ANote The constant which is the sum of the distances of a point on the ellipse from the two fixed points is always greater than the distance between the two fixed points. The mid point of the line segment joining the foci is called the centre of the ellipse. The line segment through the foci of the ellipse is called the major axis and the line segment through the centre and perpendicular to the major axis is called the minor axis. The end points of the major axis are called the vertices of the ellipse(Fig 10.21).",
       "sourceRef": "page=220",
       "questionType": "FREE_RESPONSE"
     },
@@ -4651,7 +4079,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.2",
       "qIndex": 2,
-      "text": "The foci always lie on the major axis. The major axis can be determined by finding the intercepts on the axes of symmetry. That is, major axis is along the x-axis if the coefficient of x2 has the larger denominator and it is along the y-axis if the coefficient of y2 has the larger denominator. Reprint 2026-27",
+      "text": "The foci always lie on the major axis. The major axis can be determined by finding the intercepts on the axes of symmetry. That is, major axis is along the x-axis if the coefficient of x2 has the larger denominator and it is along the y-axis if the coefficient of y2 has the larger denominator.",
       "sourceRef": "page=224",
       "questionType": "FREE_RESPONSE"
     },
@@ -4662,96 +4090,8 @@
       "chapterTitleHint": "",
       "exerciseId": "10.2",
       "qIndex": 3,
-      "text": "Example 11 Find the equation of the ellipse whose vertices are (± 13, 0) and foci are (± 5, 0). Solution Since the vertices are on x-axis, the equation will be of the form 2 2 2 2 1 x y a b + = , where a is the semi-major axis. Reprint 2026-27",
+      "text": "Example 11 Find the equation of the ellipse whose vertices are (± 13, 0) and foci are (± 5, 0). Solution Since the vertices are on x-axis, the equation will be of the form 2 2 2 2 1 x y a b + = , where a is the semi-major axis.",
       "sourceRef": "page=226",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.3-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.3",
-      "qIndex": 1,
-      "text": "2 2 1 36 16 x y + =",
-      "sourceRef": "page=228",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.3-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.3",
-      "qIndex": 2,
-      "text": "2 2 1 4 25 x y + =",
-      "sourceRef": "page=228",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.3-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.3",
-      "qIndex": 3,
-      "text": "2 2 1 16 9 x y + =",
-      "sourceRef": "page=228",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.3-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.3",
-      "qIndex": 4,
-      "text": "2 2 1 25 100 x y + =",
-      "sourceRef": "page=228",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.3-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.3",
-      "qIndex": 5,
-      "text": "2 2 1 49 36 x y + =",
-      "sourceRef": "page=228",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.3-Q6",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.3",
-      "qIndex": 6,
-      "text": "400 100 2 2 y x + =",
-      "sourceRef": "page=228",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.3-Q7",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.3",
-      "qIndex": 7,
-      "text": "36x2 + 4y2 =",
-      "sourceRef": "page=228",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.3-Q8",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.3",
-      "qIndex": 8,
-      "text": "16x2 + y2 =",
-      "sourceRef": "page=228",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -4843,17 +4183,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH10-EX10.3-Q17",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.3",
-      "qIndex": 17,
-      "text": "Foci (± 3, 0), a =",
-      "sourceRef": "page=228",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH10-EX10.3-Q18",
       "ncertClass": "CLASS_11",
       "chapterNumber": 10,
@@ -4893,7 +4222,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.3",
       "qIndex": 1,
-      "text": "Hyperbola is symmetric with respect to both the axes, since if (x, y) is a point on the hyperbola, then (– x, y), (x, – y) and (– x, – y) are also points on the hyperbola. Reprint 2026-27",
+      "text": "Hyperbola is symmetric with respect to both the axes, since if (x, y) is a point on the hyperbola, then (– x, y), (x, – y) and (– x, – y) are also points on the hyperbola.",
       "sourceRef": "page=232",
       "questionType": "FREE_RESPONSE"
     },
@@ -4917,61 +4246,6 @@
       "qIndex": 4,
       "text": "Therefore, the equation of the hyperbola is 2 2 11 25 4 4 y x –             = 1, i.e., 100 y2 – 44 x2 = 275.",
       "sourceRef": "page=234",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.4-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.4",
-      "qIndex": 1,
-      "text": "2 2 1 16 9 x y – =",
-      "sourceRef": "page=235",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.4-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.4",
-      "qIndex": 2,
-      "text": "2 2 1 9 27 y x – =",
-      "sourceRef": "page=235",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.4-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.4",
-      "qIndex": 3,
-      "text": "9y2 – 4x2 =",
-      "sourceRef": "page=235",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.4-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.4",
-      "qIndex": 4,
-      "text": "16x2 – 9y2 =",
-      "sourceRef": "page=235",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.4-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.4",
-      "qIndex": 5,
-      "text": "5y2 – 9x2 =",
-      "sourceRef": "page=235",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -5059,17 +4333,6 @@
       "exerciseId": "10.4",
       "qIndex": 13,
       "text": "Foci (± 4, 0), the latus rectum is of length",
-      "sourceRef": "page=235",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH10-EX10.4-Q14",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 10,
-      "chapterTitleHint": "",
-      "exerciseId": "10.4",
-      "qIndex": 14,
-      "text": "vertices (± 7,0), e =",
       "sourceRef": "page=235",
       "questionType": "FREE_RESPONSE"
     },
@@ -5168,7 +4431,7 @@
       "chapterTitleHint": "",
       "exerciseId": "10.4",
       "qIndex": 8,
-      "text": "An equilateral triangle is inscribed in the parabola y2 = 4 ax, where one vertex is at the vertex of the parabola. Find the length of the side of the triangle. Reprint 2026-27",
+      "text": "An equilateral triangle is inscribed in the parabola y2 = 4 ax, where one vertex is at the vertex of the parabola. Find the length of the side of the triangle.",
       "sourceRef": "page=237",
       "questionType": "FREE_RESPONSE"
     },
@@ -5311,19 +4574,8 @@
       "chapterTitleHint": "",
       "exerciseId": "11.2",
       "qIndex": 4,
-      "text": "If A and B be the points (3, 4, 5) and (–1, 3, –7), respectively, find the equation of the set of points P such that PA2 + PB2 = k2, where k is a constant. Summary ®In three dimensions, the coordinate axes of a rectangular Cartesian coordi- nate system are three mutually perpendicular lines. The axes are called the x, y and z-axes. ®The three planes determined by the pair of axes are the coordinate planes, called XY, YZ and ZX-planes. ®The three coordinate planes divide the space into eight parts known as octants. ®The coordinates of a point P in three dimensional geometry is always written in the form of triplet like (x, y, z). Here x, y and z are the distances from the YZ, ZX and XY-planes. ® (i) Any point on x-axis is of the form (x, 0, 0) (ii) Any point on y-axis is of the form (0, y, 0) (iii) Any point on z-axis is of the form (0, 0, z). ®Distance between two points P(x1, y1, z1) and Q (x2, y2, z2) is given by 2 2 2 2 1 2 1 2 1 PQ ( x x ) ( y y ) ( z z ) = − + − + − Reprint 2026-27",
+      "text": "If A and B be the points (3, 4, 5) and (–1, 3, –7), respectively, find the equation of the set of points P such that PA2 + PB2 = k2, where k is a constant. Summary ®In three dimensions, the coordinate axes of a rectangular Cartesian coordi- nate system are three mutually perpendicular lines. The axes are called the x, y and z-axes. ®The three planes determined by the pair of axes are the coordinate planes, called XY, YZ and ZX-planes. ®The three coordinate planes divide the space into eight parts known as octants. ®The coordinates of a point P in three dimensional geometry is always written in the form of triplet like (x, y, z). Here x, y and z are the distances from the YZ, ZX and XY-planes. ® (i) Any point on x-axis is of the form (x, 0, 0) (ii) Any point on y-axis is of the form (0, y, 0) (iii) Any point on z-axis is of the form (0, 0, z). ®Distance between two points P(x1, y1, z1) and Q (x2, y2, z2) is given by 2 2 2 2 1 2 1 2 1 PQ ( x x ) ( y y ) ( z z ) = − + − + −",
       "sourceRef": "page=248",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.1-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.1",
-      "qIndex": 1,
-      "text": "3 lim 3 x x → +",
-      "sourceRef": "page=270",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -5334,28 +4586,6 @@
       "exerciseId": "12.1",
       "qIndex": 2,
       "text": "π 22 lim 7 x x →   −    ",
-      "sourceRef": "page=270",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.1-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.1",
-      "qIndex": 3,
-      "text": "2 1 limπ r r →",
-      "sourceRef": "page=270",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.1-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.1",
-      "qIndex": 4,
-      "text": "4 4 3 lim 2 x x x → + −",
       "sourceRef": "page=270",
       "questionType": "FREE_RESPONSE"
     },
@@ -5404,17 +4634,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH12-EX12.1-Q9",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.1",
-      "qIndex": 9,
-      "text": "0 lim 1 x ax b cx → + +",
-      "sourceRef": "page=270",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH12-EX12.1-Q10",
       "ncertClass": "CLASS_11",
       "chapterNumber": 12,
@@ -5448,24 +4667,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH12-EX12.1-Q13",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.1",
-      "qIndex": 13,
-      "text": "0 sin lim x ax bx →",
-      "sourceRef": "page=270",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH12-EX12.1-Q14",
       "ncertClass": "CLASS_11",
       "chapterNumber": 12,
       "chapterTitleHint": "",
       "exerciseId": "12.1",
       "qIndex": 14,
-      "text": "0 sin lim , , 0 sin x ax a b bx → ≠ Reprint 2026-27",
+      "text": "0 sin lim , , 0 sin x ax a b bx → ≠",
       "sourceRef": "page=270",
       "questionType": "FREE_RESPONSE"
     },
@@ -5477,17 +4685,6 @@
       "exerciseId": "12.1",
       "qIndex": 15,
       "text": "( ) ( ) π sin π lim π π x x x → − −",
-      "sourceRef": "page=271",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.1-Q16",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.1",
-      "qIndex": 16,
-      "text": "0 cos lim π x x x → −",
       "sourceRef": "page=271",
       "questionType": "FREE_RESPONSE"
     },
@@ -5510,17 +4707,6 @@
       "exerciseId": "12.1",
       "qIndex": 18,
       "text": "0 cos lim sin x ax x x b x → +",
-      "sourceRef": "page=271",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.1-Q19",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.1",
-      "qIndex": 19,
-      "text": "0 lim sec x x x →",
       "sourceRef": "page=271",
       "questionType": "FREE_RESPONSE"
     },
@@ -5619,7 +4805,7 @@
       "chapterTitleHint": "",
       "exerciseId": "12.1",
       "qIndex": 28,
-      "text": "Suppose ( ) , 1 4, 1 , 1 a bx x f x x b ax x + <   = =  − >  and if 1 lim x→f (x) = f (1) what are possible values of a and b? Reprint 2026-27",
+      "text": "Suppose ( ) , 1 4, 1 , 1 a bx x f x x b ax x + <   = =  − >  and if 1 lim x→f (x) = f (1) what are possible values of a and b?",
       "sourceRef": "page=271",
       "questionType": "FREE_RESPONSE"
     },
@@ -5674,7 +4860,7 @@
       "chapterTitleHint": "",
       "exerciseId": "12.1",
       "qIndex": 0,
-      "text": "10.1 10 x uv u v uv x ′ ′ ′ ′ = = + = + = On similar lines the derivative of f(x) = x2 may be evaluated. We have f(x) = x2 = x .x and hence df dx = ( ) ( ) ( ) . . . d d d x x x x x x dx dx dx = + = 1. .1 2 x x x + = . More generally, we have the following theorem. Theorem 6 Derivative of f(x) = xn is nxn – 1 for any positive integer n. Proof By definition of the derivative function, we have ( ) ( ) ( ) 0 ' lim h f x h f x f x h → + − = = ( ) 0 lim n n h x h x h → + − . Reprint 2026-27",
+      "text": "10.1 10 x uv u v uv x ′ ′ ′ ′ = = + = + = On similar lines the derivative of f(x) = x2 may be evaluated. We have f(x) = x2 = x .x and hence df dx = ( ) ( ) ( ) . . . d d d x x x x x x dx dx dx = + = 1. .1 2 x x x + = . More generally, we have the following theorem. Theorem 6 Derivative of f(x) = xn is nxn – 1 for any positive integer n. Proof By definition of the derivative function, we have ( ) ( ) ( ) 0 ' lim h f x h f x f x h → + − = = ( ) 0 lim n n h x h x h → + − .",
       "sourceRef": "page=278",
       "questionType": "FREE_RESPONSE"
     },
@@ -5709,17 +4895,6 @@
       "qIndex": 1,
       "text": ". 1 n n x x n x − − + − (by induction hypothesis) = ( ) 1 1 1 1 n n n x n x nx − − − + − = . Remark The above theorem is true for all powers of x, i.e., n can be any real number (but we will not prove it here).",
       "sourceRef": "page=279",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.1-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.1",
-      "qIndex": 1,
-      "text": "sec cos x x = .",
-      "sourceRef": "page=281",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -5767,24 +4942,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 5,
-      "text": "For the function ( ) 100",
-      "sourceRef": "page=281",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH12-EX12.2-Q2",
       "ncertClass": "CLASS_11",
       "chapterNumber": 12,
       "chapterTitleHint": "",
       "exerciseId": "12.2",
       "qIndex": 2,
-      "text": ". . 1 100 99 2 x x x f x x = + + + + + . Reprint 2026-27",
+      "text": ". . 1 100 99 2 x x x f x x = + + + + + .",
       "sourceRef": "page=281",
       "questionType": "FREE_RESPONSE"
     },
@@ -5888,94 +5052,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 4,
-      "text": "( )( ) 2 ax b cx d + +",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 5,
-      "text": "ax b cx d + +",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q6",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 6,
-      "text": "1 1 1 1 x x + −",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q7",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 7,
-      "text": "2 1 ax bx c + +",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q8",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 8,
-      "text": "2 ax b px qx r + + +",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q9",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 9,
-      "text": "2 px qx r ax b + + +",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q10",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 10,
-      "text": "4 2 cos a b x x x − +",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q12",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 12,
-      "text": "( )n ax b +",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH12-EX12.2-Q13",
       "ncertClass": "CLASS_11",
       "chapterNumber": 12,
@@ -5987,39 +5063,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q14",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 14,
-      "text": "sin (x + a)",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q15",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 15,
-      "text": "cosec x cot x",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q16",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 16,
-      "text": "cos 1 sin x x + Reprint 2026-27",
-      "sourceRef": "page=286",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH12-EX12.2-Q17",
       "ncertClass": "CLASS_11",
       "chapterNumber": 12,
@@ -6027,61 +5070,6 @@
       "exerciseId": "12.2",
       "qIndex": 17,
       "text": "sin cos sin cos x x x x + −",
-      "sourceRef": "page=287",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q18",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 18,
-      "text": "sec 1 sec 1 x x − +",
-      "sourceRef": "page=287",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q20",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 20,
-      "text": "sin cos a b x c d x + +",
-      "sourceRef": "page=287",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q21",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 21,
-      "text": "sin( ) cos x a x +",
-      "sourceRef": "page=287",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q22",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 22,
-      "text": "4(5sin 3cos ) x x x −",
-      "sourceRef": "page=287",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q23",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 23,
-      "text": "( ) 2 1 cos x x +",
       "sourceRef": "page=287",
       "questionType": "FREE_RESPONSE"
     },
@@ -6130,17 +5118,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH12-EX12.2-Q28",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 12,
-      "chapterTitleHint": "",
-      "exerciseId": "12.2",
-      "qIndex": 28,
-      "text": "1 tan x x +",
-      "sourceRef": "page=287",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH12-EX12.2-Q29",
       "ncertClass": "CLASS_11",
       "chapterNumber": 12,
@@ -6158,20 +5135,9 @@
       "chapterTitleHint": "",
       "exerciseId": "12.2",
       "qIndex": 30,
-      "text": "sinn x x Summary ®The expected value of the function as dictated by the points to the left of a point defines the left hand limit of the function at that point. Similarly the right hand limit. ®Limit of a function at a point is the common value of the left and right hand limits, if they coincide. ®For a function f and a real number a, lim x a → f(x) and f (a) may not be same (In fact, one may be defined and not the other one). ®For functions f and g the following holds: [ ] lim ( ) ( ) lim ( ) lim ( ) x a x a x a f x g x f x g x → → → ± = ± [ ] lim ( ). ( ) lim ( ).lim ( ) x a x a x a f x g x f x g x → → → = lim ( ) ( ) lim ( ) lim ( ) x a x a x a f x f x g x g x → → →  =     ®Following are some of the standard limits 1 lim n n n x a x a na x a − → − = − Reprint 2026-27",
+      "text": "sinn x x Summary ®The expected value of the function as dictated by the points to the left of a point defines the left hand limit of the function at that point. Similarly the right hand limit. ®Limit of a function at a point is the common value of the left and right hand limits, if they coincide. ®For a function f and a real number a, lim x a → f(x) and f (a) may not be same (In fact, one may be defined and not the other one). ®For functions f and g the following holds: [ ] lim ( ) ( ) lim ( ) lim ( ) x a x a x a f x g x f x g x → → → ± = ± [ ] lim ( ). ( ) lim ( ).lim ( ) x a x a x a f x g x f x g x → → → = lim ( ) ( ) lim ( ) lim ( ) x a x a x a f x f x g x g x → → →  =     ®Following are some of the standard limits 1 lim n n n x a x a na x a − → − = −",
       "sourceRef": "page=287",
       "questionType": "MCQ"
-    },
-    {
-      "problemKey": "NCERT-C11-CH13-EX13.1-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 13,
-      "chapterTitleHint": "",
-      "exerciseId": "13.1",
-      "qIndex": 1,
-      "text": "4, 7, 8, 9, 10, 12, 13,",
-      "sourceRef": "page=303",
-      "questionType": "FREE_RESPONSE"
     },
     {
       "problemKey": "NCERT-C11-CH13-EX13.1-Q2",
@@ -6181,17 +5147,6 @@
       "exerciseId": "13.1",
       "qIndex": 2,
       "text": "38, 70, 48, 40, 42, 55, 63, 46, 54, 44 Find the mean deviation about the median for the data in Exercises 3 and 4.",
-      "sourceRef": "page=303",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH13-EX13.1-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 13,
-      "chapterTitleHint": "",
-      "exerciseId": "13.1",
-      "qIndex": 3,
-      "text": "13, 17, 16, 14, 11, 13, 10, 16, 11, 18, 12,",
       "sourceRef": "page=303",
       "questionType": "FREE_RESPONSE"
     },
@@ -6246,7 +5201,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.1",
       "qIndex": 8,
-      "text": "xi 15 21 27 30 35 f i 3 5 6 7 8 Reprint 2026-27",
+      "text": "xi 15 21 27 30 35 f i 3 5 6 7",
       "sourceRef": "page=303",
       "questionType": "FREE_RESPONSE"
     },
@@ -6301,19 +5256,8 @@
       "chapterTitleHint": "",
       "exerciseId": "13.1",
       "qIndex": 1,
-      "text": "In case of the set A, we have 1 Mean 6 = × 1750 = 291.67 and in case of the set B, it is 1 31× 2480 = 80. This indicates that the scatter or dispersion is more in set A than the scatter or dispersion in set B, which confirms with the geometrical representation of the two sets. Thus, we can take ∑ − 2) ( 1 x x n i as a quantity which leads to a proper measure of dispersion. This number, i.e., mean of the squares of the deviations from mean is called the variance and is denoted by 2 σ (read as sigma square). Therefore, the variance of n observations x1, x2,..., xn is given by Fig 13.5 Fig 13.6 Reprint 2026-27",
+      "text": "In case of the set A, we have 1 Mean 6 = × 1750 = 291.67 and in case of the set B, it is 1 31× 2480 = 80. This indicates that the scatter or dispersion is more in set A than the scatter or dispersion in set B, which confirms with the geometrical representation of the two sets. Thus, we can take ∑ − 2) ( 1 x x n i as a quantity which leads to a proper measure of dispersion. This number, i.e., mean of the squares of the deviations from mean is called the variance and is denoted by 2 σ (read as sigma square). Therefore, the variance of n observations x1, x2,..., xn is given by Fig 13.5 Fig 13.6",
       "sourceRef": "page=306",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH13-EX13.1-Q8",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 13,
-      "chapterTitleHint": "",
-      "exerciseId": "13.1",
-      "qIndex": 8,
-      "text": "45 ) ( = σ = 6.77",
-      "sourceRef": "page=309",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -6336,39 +5280,6 @@
       "qIndex": 48,
       "text": "× = 6.12 Therefore, Standard deviation (σ ) = 6.12",
       "sourceRef": "page=312",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH13-EX13.2-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 13,
-      "chapterTitleHint": "",
-      "exerciseId": "13.2",
-      "qIndex": 1,
-      "text": "6, 7, 10, 12, 13, 4, 8,",
-      "sourceRef": "page=314",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH13-EX13.2-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 13,
-      "chapterTitleHint": "",
-      "exerciseId": "13.2",
-      "qIndex": 2,
-      "text": "First n natural numbers",
-      "sourceRef": "page=314",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH13-EX13.2-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 13,
-      "chapterTitleHint": "",
-      "exerciseId": "13.2",
-      "qIndex": 3,
-      "text": "First 10 multiples of",
-      "sourceRef": "page=314",
       "questionType": "FREE_RESPONSE"
     },
     {
@@ -6411,7 +5322,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.2",
       "qIndex": 7,
-      "text": "Classes 0-30 30-60 60-90 90-120 120-150 150-180 180-210 Frequencies 2 3 5 10 3 5 2 Reprint 2026-27",
+      "text": "Classes 0-30 30-60 60-90 90-120 120-150 150-180 180-210 Frequencies 2 3 5 10 3 5",
       "sourceRef": "page=314",
       "questionType": "FREE_RESPONSE"
     },
@@ -6455,7 +5366,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.2",
       "qIndex": 5,
-      "text": ". . x y . x y .   + + + + −× + + ×   or 41.20 = 11.56 + 5.76 + 2.56 + x2 + y2 –8.8 × 13 + 38.72 Therefore x2 + y2 = 97 ... (2) But from (1), we have x2 + y2 + 2xy = 169 ... (3) From (2) and (3), we have 2xy = 72 ... (4) Subtracting (4) from (2), we get Reprint 2026-27",
+      "text": ". . x y . x y .   + + + + −× + + ×   or 41.20 = 11.56 + 5.76 + 2.56 + x2 + y2 –8.8 × 13 + 38.72 Therefore x2 + y2 = 97 ... (2) But from (1), we have x2 + y2 + 2xy = 169 ... (3) From (2) and (3), we have 2xy = 72 ... (4) Subtracting (4) from (2), we get",
       "sourceRef": "page=316",
       "questionType": "FREE_RESPONSE"
     },
@@ -6521,7 +5432,7 @@
       "chapterTitleHint": "",
       "exerciseId": "13.2",
       "qIndex": 6,
-      "text": "The mean and standard deviation of a group of 100 observations were found to be 20 and 3, respectively. Later on it was found that three observations were incorrect, which were recorded as 21, 21 and 18. Find the mean and standard deviation if the incorrect observations are omitted. Summary ®Measures of dispersion Range, Quartile deviation, mean deviation, variance, standard deviation are measures of dispersion. Range = Maximum Value – Minimum Value ®Mean deviation for ungrouped data M M.D. ( ) M.D. (M) i i x – x x – x , n n = = ∑ ∑ Reprint 2026-27",
+      "text": "The mean and standard deviation of a group of 100 observations were found to be 20 and 3, respectively. Later on it was found that three observations were incorrect, which were recorded as 21, 21 and 18. Find the mean and standard deviation if the incorrect observations are omitted. Summary ®Measures of dispersion Range, Quartile deviation, mean deviation, variance, standard deviation are measures of dispersion. Range = Maximum Value – Minimum Value ®Mean deviation for ungrouped data M M.D. ( ) M.D. (M) i i x – x x – x , n n = = ∑ ∑",
       "sourceRef": "page=319",
       "questionType": "FREE_RESPONSE"
     },
@@ -6543,7 +5454,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.1",
       "qIndex": 2,
-      "text": "A die is thrown. Describe the following events: (i) A: a number less than 7 (ii) B: a number greater than 7 (iii) C: a multiple of 3 (iv) D: a number less than 4 (v) E: an even number greater than 4 (vi) F: a number not less than 3 Also find A ∪ B, A ∩ B, B ∪ C, E ∩ F, D ∩ E, A – C, D – E, E ∩ F′, F′ Reprint 2026-27",
+      "text": "A die is thrown. Describe the following events: (i) A: a number less than 7 (ii) B: a number greater than 7 (iii) C: a multiple of 3 (iv) D: a number less than 4 (v) E: an even number greater than 4 (vi) F: a number not less than 3 Also find A ∪ B, A ∩ B, B ∪ C, E ∩ F, D ∩ E, A – C, D – E, E ∩ F′, F′",
       "sourceRef": "page=327",
       "questionType": "FREE_RESPONSE"
     },
@@ -6631,7 +5542,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.2",
       "qIndex": 1,
-      "text": "Which of the following can not be valid assignment of probabilities for outcomes of sample Space S = { } 1 2 3 4 5 6 7 , , , , , , ω ω ω ω ω ω ω Reprint 2026-27",
+      "text": "Which of the following can not be valid assignment of probabilities for outcomes of sample Space S = { } 1 2 3 4 5 6 7 , , , , , , ω ω ω ω ω ω ω",
       "sourceRef": "page=338",
       "questionType": "FREE_RESPONSE"
     },
@@ -6730,7 +5641,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.2",
       "qIndex": 10,
-      "text": "A letter is chosen at random from the word ‘ASSASSINATION’. Find the probability that letter is (i) a vowel (ii) a consonant Reprint 2026-27",
+      "text": "A letter is chosen at random from the word ‘ASSASSINATION’. Find the probability that letter is (i) a vowel (ii) a consonant",
       "sourceRef": "page=339",
       "questionType": "FREE_RESPONSE"
     },
@@ -6766,17 +5677,6 @@
       "text": "Fill in the blanks in following table: P(A) P(B) P(A ∩B) P(A ∪B) (i) 1 3 1 5",
       "sourceRef": "page=340",
       "questionType": "MCQ"
-    },
-    {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q15",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 15,
-      "text": ". . (ii)",
-      "sourceRef": "page=340",
-      "questionType": "FREE_RESPONSE"
     },
     {
       "problemKey": "NCERT-C11-CH14-EX14.2-Q14",
@@ -6862,7 +5762,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.2",
       "qIndex": 20,
-      "text": "The probability that a student will pass the final examination in both English and Hindi is 0.5 and the probability of passing neither is 0.1. If the probability of passing the English examination is 0.75, what is the probability of passing the Hindi examination? Reprint 2026-27",
+      "text": "The probability that a student will pass the final examination in both English and Hindi is 0.5 and the probability of passing neither is 0.1. If the probability of passing the English examination is 0.75, what is the probability of passing the Hindi examination?",
       "sourceRef": "page=340",
       "questionType": "FREE_RESPONSE"
     },
@@ -6917,7 +5817,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.2",
       "qIndex": 2,
-      "text": "4 cards are drawn from a well – shuffled deck of 52 cards. What is the probability of obtaining 3 diamonds and one spade? Reprint 2026-27",
+      "text": "4 cards are drawn from a well – shuffled deck of 52 cards. What is the probability of obtaining 3 diamonds and one spade?",
       "sourceRef": "page=343",
       "questionType": "FREE_RESPONSE"
     },
@@ -6988,50 +5888,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q1",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 1,
-      "text": "Harish M",
-      "sourceRef": "page=344",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 2,
-      "text": "Rohan M",
-      "sourceRef": "page=344",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 3,
-      "text": "Sheetal F",
-      "sourceRef": "page=344",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q4",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 4,
-      "text": "Alis F",
-      "sourceRef": "page=344",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH14-EX14.2-Q5",
       "ncertClass": "CLASS_11",
       "chapterNumber": 14,
@@ -7060,7 +5916,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.2",
       "qIndex": 10,
-      "text": "The number lock of a suitcase has 4 wheels, each labelled with ten digits i.e., from 0 to 9. The lock opens with a sequence of four digits with no repeats. What is the probability of a person getting the right sequence to open the suitcase? Reprint 2026-27",
+      "text": "The number lock of a suitcase has 4 wheels, each labelled with ten digits i.e., from 0 to 9. The lock opens with a sequence of four digits with no repeats. What is the probability of a person getting the right sequence to open the suitcase?",
       "sourceRef": "page=344",
       "questionType": "FREE_RESPONSE"
     },
@@ -7072,17 +5928,6 @@
       "exerciseId": "14.2",
       "qIndex": 0,
       "text": "3 n n   →∞ →     Consequently, we find that the sum of infinitely many terms is given by S",
-      "sourceRef": "page=347",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 3,
-      "text": "∞= Reprint 2026-27",
       "sourceRef": "page=347",
       "questionType": "FREE_RESPONSE"
     },
@@ -7148,7 +5993,7 @@
       "chapterTitleHint": "",
       "exerciseId": "14.1",
       "qIndex": 6,
-      "text": "A = {(2, 1), (2,2), (2,3), (2,4), (2,5), (2,6), (4,1), (4,2), (4,3), (4,4), (4,5), (4,6), (6,1), (6,2), (6,3), (6,4), (6,5), (6,6)} B = {(1, 1), (1,2), (1,3), (1,4), (1,5), (1,6), (3,1), (3,2), (3,3), (3,4), (3,5), (3,6), (5,1), (5,2), (5,3), (5,4), (5,5), (5,6)} C = {(1, 1), (1,2), (1,3), (1,4), (2,1), (2,2), (2,3), (3,1), (3,2), (4,1)} (i) A′ = {(1,1), (1,2), (1,3), (1,4), (1,5), (1,6), (3,1), (3,2), (3,3), (3,4), (3,5), (3,6), (5,1), (5,2), (5,3), (5,4), (5,5), (5,6)} = B (ii) B′ = {(2,1), (2,2), (2,3), (2,4), (2,5), (2,6), (4,1), (4,2), (4,3), (4,4), (4,5), (4,6), (6,1), (6,2), (6,3), (6,4), (6,5), (6,6)} = A (iii) A∪B = {(1,1), (1,2), (1,3), (1,4), (1,5), (1,6), (3,1), (3,2), (3,3), (3,4), (3,5), (3,6), (5,1), (5,2), (5,3), (5,4), (5,5), (5,6), (2,1), (2,2), (2,3), (2,5), (2,6), (4,1), (4,2), (4,3), (4,4), (4,5), (4,6), (6,1), (6,2), (6,3), (6,4), (6,5), (6,6)} = S Reprint 2026-27",
+      "text": "A = {(2, 1), (2,2), (2,3), (2,4), (2,5), (2,6), (4,1), (4,2), (4,3), (4,4), (4,5), (4,6), (6,1), (6,2), (6,3), (6,4), (6,5), (6,6)} B = {(1, 1), (1,2), (1,3), (1,4), (1,5), (1,6), (3,1), (3,2), (3,3), (3,4), (3,5), (3,6), (5,1), (5,2), (5,3), (5,4), (5,5), (5,6)} C = {(1, 1), (1,2), (1,3), (1,4), (2,1), (2,2), (2,3), (3,1), (3,2), (4,1)} (i) A′ = {(1,1), (1,2), (1,3), (1,4), (1,5), (1,6), (3,1), (3,2), (3,3), (3,4), (3,5), (3,6), (5,1), (5,2), (5,3), (5,4), (5,5), (5,6)} = B (ii) B′ = {(2,1), (2,2), (2,3), (2,4), (2,5), (2,6), (4,1), (4,2), (4,3), (4,4), (4,5), (4,6), (6,1), (6,2), (6,3), (6,4), (6,5), (6,6)} = A (iii) A∪B = {(1,1), (1,2), (1,3), (1,4), (1,5), (1,6), (3,1), (3,2), (3,3), (3,4), (3,5), (3,6), (5,1), (5,2), (5,3), (5,4), (5,5), (5,6), (2,1), (2,2), (2,3), (2,5), (2,6), (4,1), (4,2), (4,3), (4,4), (4,5), (4,6), (6,1), (6,2), (6,3), (6,4), (6,5), (6,6)} = S",
       "sourceRef": "page=374",
       "questionType": "FREE_RESPONSE"
     },
@@ -7197,17 +6042,6 @@
       "questionType": "MCQ"
     },
     {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 5,
-      "text": "1 1 (i) (ii) 12",
-      "sourceRef": "page=375",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH14-EX14.2-Q7",
       "ncertClass": "CLASS_11",
       "chapterNumber": 14,
@@ -7226,17 +6060,6 @@
       "exerciseId": "14.2",
       "qIndex": 8,
       "text": "(i) 1 8 (ii) 3 8 (iii) 1 2 (iv) 7 8 (v) 1 8 (vi) 1 8 (vii) 3 8 (viii) 1 8 (ix) 7",
-      "sourceRef": "page=375",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q10",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 10,
-      "text": "6 7 (i) (ii) 13",
       "sourceRef": "page=375",
       "questionType": "FREE_RESPONSE"
     },
@@ -7263,24 +6086,13 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q15",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 15,
-      "text": "5 3 (i) (ii) 8",
-      "sourceRef": "page=375",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH14-EX14.2-Q17",
       "ncertClass": "CLASS_11",
       "chapterNumber": 14,
       "chapterTitleHint": "",
       "exerciseId": "14.2",
       "qIndex": 17,
-      "text": "(i) 0.58 (ii) 0.52 (iii) 0.74 Reprint 2026-27",
+      "text": "(i) 0.58 (ii) 0.52 (iii) 0.74",
       "sourceRef": "page=375",
       "questionType": "FREE_RESPONSE"
     },
@@ -7307,28 +6119,6 @@
       "questionType": "FREE_RESPONSE"
     },
     {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q2",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 2,
-      "text": "13 13 3 1 52 4 C . C C",
-      "sourceRef": "page=376",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q3",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 3,
-      "text": "1 1 5 (i) (ii) (iii) 2 2",
-      "sourceRef": "page=376",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
       "problemKey": "NCERT-C11-CH14-EX14.2-Q4",
       "ncertClass": "CLASS_11",
       "chapterNumber": 14,
@@ -7340,17 +6130,6 @@
       "questionType": "MCQ"
     },
     {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q5",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 5,
-      "text": "17 16 (a) (b) 33",
-      "sourceRef": "page=376",
-      "questionType": "MCQ"
-    },
-    {
       "problemKey": "NCERT-C11-CH14-EX14.2-Q7",
       "ncertClass": "CLASS_11",
       "chapterNumber": 14,
@@ -7358,28 +6137,6 @@
       "exerciseId": "14.2",
       "qIndex": 7,
       "text": "(i) 0.88 (ii) 0.12 (iii) 0.19 (iv) 0.34",
-      "sourceRef": "page=376",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q9",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 9,
-      "text": "33 3 (i) (ii) 83",
-      "sourceRef": "page=376",
-      "questionType": "FREE_RESPONSE"
-    },
-    {
-      "problemKey": "NCERT-C11-CH14-EX14.2-Q10",
-      "ncertClass": "CLASS_11",
-      "chapterNumber": 14,
-      "chapterTitleHint": "",
-      "exerciseId": "14.2",
-      "qIndex": 10,
-      "text": "1 5040 Reprint 2026-27",
       "sourceRef": "page=376",
       "questionType": "FREE_RESPONSE"
     }

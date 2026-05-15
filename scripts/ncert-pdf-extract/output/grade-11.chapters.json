@@ -62,7 +62,7 @@
           "title": "Trigonometric Functions of Sum and Difference of Two Angles"
         }
       ],
-      "problemCount": 87,
+      "problemCount": 80,
       "exampleCount": 22
     },
     {
@@ -93,7 +93,7 @@
           "title": "Argand Plane and Polar Representation"
         }
       ],
-      "problemCount": 25,
+      "problemCount": 19,
       "exampleCount": 8
     },
     {
@@ -116,7 +116,7 @@
           "title": "Algebraic Solutions of Linear Inequalities in One Variable and their"
         }
       ],
-      "problemCount": 40,
+      "problemCount": 25,
       "exampleCount": 13
     },
     {
@@ -143,7 +143,7 @@
           "title": "Combinations"
         }
       ],
-      "problemCount": 47,
+      "problemCount": 44,
       "exampleCount": 28
     },
     {
@@ -162,7 +162,7 @@
           "title": "Binomial Theorem for Positive Integral Indices"
         }
       ],
-      "problemCount": 16,
+      "problemCount": 13,
       "exampleCount": 4
     },
     {
@@ -193,7 +193,7 @@
           "title": "Relationship Between A.M. and G.M."
         }
       ],
-      "problemCount": 65,
+      "problemCount": 58,
       "exampleCount": 12
     },
     {
@@ -220,7 +220,7 @@
           "title": "Distance of a Point From a Line"
         }
       ],
-      "problemCount": 75,
+      "problemCount": 74,
       "exampleCount": 16
     },
     {
@@ -251,7 +251,7 @@
           "title": "Hyperbola"
         }
       ],
-      "problemCount": 79,
+      "problemCount": 54,
       "exampleCount": 19
     },
     {
@@ -309,7 +309,7 @@
           "title": "Derivatives"
         }
       ],
-      "problemCount": 77,
+      "problemCount": 51,
       "exampleCount": 23
     },
     {
@@ -340,7 +340,7 @@
           "title": "Variance and Standard Deviation"
         }
       ],
-      "problemCount": 33,
+      "problemCount": 27,
       "exampleCount": 16
     },
     {
@@ -359,7 +359,7 @@
           "title": "Axiomatic Approach to Probability"
         }
       ],
-      "problemCount": 78,
+      "problemCount": 64,
       "exampleCount": 15
     }
   ]

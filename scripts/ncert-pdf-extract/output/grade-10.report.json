@@ -4,7 +4,10 @@
   "ncertClass": "CLASS_10",
   "totalPages": 276,
   "chaptersFound": 14,
-  "problemsFound": 379,
+  "problemsFound": 362,
   "examplesFound": 156,
-  "extractedAt": "2026-05-15T03:22:59.670949+00:00"
+  "rejectedTooShort": 17,
+  "rejectedPureNoise": 0,
+  "rejectedNoLetters": 0,
+  "extractedAt": "2026-05-15T03:58:52.925203+00:00"
 }
