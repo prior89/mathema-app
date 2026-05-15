@@ -18,6 +18,7 @@ import { RedisModule } from './infrastructure/redis/redis.module';
 import { AiModule } from './infrastructure/ai/ai.module';
 import { StorageModule } from './infrastructure/storage/storage.module';
 import { MailModule } from './infrastructure/mail/mail.module';
+import { MathModule } from './infrastructure/math/math.module';
 
 // 도메인 모듈 — UI 화면별 1:1
 import { AuthModule } from './modules/auth/auth.module';
@@ -62,6 +63,7 @@ import { ContentIngestModule } from './modules/content-ingest/content-ingest.mod
     AiModule,
     StorageModule,
     MailModule,
+    MathModule,
 
     // 도메인 (의존성 방향: 위 → 아래)
     AuthModule,

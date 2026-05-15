@@ -1,0 +1,72 @@
+{
+  "version": "ncert-grade-9-problems@2026-05",
+  "ncertClass": "CLASS_9",
+  "problems": [
+    {
+      "problemKey": "NCERT-C9-CH06-TRY-1-Q1",
+      "ncertClass": "CLASS_9",
+      "chapterNumber": 6,
+      "chapterTitleHint": "",
+      "exerciseId": "TRY-1",
+      "qIndex": 1,
+      "text": "A square and non-square rectangle with equal area,",
+      "sourceRef": "page=154",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C9-CH06-TRY-1-Q2",
+      "ncertClass": "CLASS_9",
+      "chapterNumber": 6,
+      "chapterTitleHint": "",
+      "exerciseId": "TRY-1",
+      "qIndex": 2,
+      "text": "Two triangles with different shapes but equal area,",
+      "sourceRef": "page=154",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C9-CH06-TRY-1-Q3",
+      "ncertClass": "CLASS_9",
+      "chapterNumber": 6,
+      "chapterTitleHint": "",
+      "exerciseId": "TRY-1",
+      "qIndex": 3,
+      "text": "\u0007A triangle and a square with equal area. Formulate a conjecture of your own about this. Think of various rectangles with perimeter 40 units (the sides do not have to be integers).",
+      "sourceRef": "page=154",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C9-CH06-TRY-1-Q1",
+      "ncertClass": "CLASS_9",
+      "chapterNumber": 6,
+      "chapterTitleHint": "",
+      "exerciseId": "TRY-1",
+      "qIndex": 1,
+      "text": "How many such rectangles are there?",
+      "sourceRef": "page=154",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C9-CH06-TRY-1-Q2",
+      "ncertClass": "CLASS_9",
+      "chapterNumber": 6,
+      "chapterTitleHint": "",
+      "exerciseId": "TRY-1",
+      "qIndex": 2,
+      "text": "\u0007Among them, is there one whose area is the largest? What are its dimensions?",
+      "sourceRef": "page=154",
+      "questionType": "FREE_RESPONSE"
+    },
+    {
+      "problemKey": "NCERT-C9-CH06-TRY-1-Q3",
+      "ncertClass": "CLASS_9",
+      "chapterNumber": 6,
+      "chapterTitleHint": "",
+      "exerciseId": "TRY-1",
+      "qIndex": 3,
+      "text": "\u0007Among all these rectangles, is there one whose area is the smallest? What are its dimensions? Do either of these answers come as a surprise to you? 6.8.1 Heron’s formula You already know a formula for the area of a triangle (half base times height). Are there other formulas for the area of a triangle? There are several. For now we mention Heron’s formula, discovered by the Greek mathematics and inventor, Heron. He taught at the Museum in Alexandria, a city in ancient Egypt located on the banks",
+      "sourceRef": "page=154",
+      "questionType": "FREE_RESPONSE"
+    }
+  ]
+}

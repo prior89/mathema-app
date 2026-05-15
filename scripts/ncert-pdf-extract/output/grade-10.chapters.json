@@ -1,0 +1,358 @@
+{
+  "version": "ncert-grade-10@2026-05",
+  "chapters": [
+    {
+      "chapterNumber": 1,
+      "title": "Chapter 1",
+      "ncertClass": "CLASS_10",
+      "pageStart": 15,
+      "pageEnd": 35,
+      "sections": [],
+      "problemCount": 0,
+      "exampleCount": 18
+    },
+    {
+      "chapterNumber": 2,
+      "title": "Chapter 2",
+      "ncertClass": "CLASS_10",
+      "pageStart": 36,
+      "pageEnd": 69,
+      "sections": [
+        {
+          "code": "2.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "2.2",
+          "title": "Geometrical Meaning of the Zeroes of a Polynomial"
+        },
+        {
+          "code": "2.3",
+          "title": "Relationship between Zeroes and Coefficients of a Polynomial"
+        },
+        {
+          "code": "2.4",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 9,
+      "exampleCount": 15
+    },
+    {
+      "chapterNumber": 3,
+      "title": "Chapter 3",
+      "ncertClass": "CLASS_10",
+      "pageStart": 70,
+      "pageEnd": 83,
+      "sections": [
+        {
+          "code": "3.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "3.2",
+          "title": "Graphical Method of Solution of a Pair of Linear Equations"
+        },
+        {
+          "code": "3.3",
+          "title": "Algebraic Methods of Solving a Pair of Linear Equations"
+        },
+        {
+          "code": "3.4",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 21,
+      "exampleCount": 10
+    },
+    {
+      "chapterNumber": 4,
+      "title": "Chapter 4",
+      "ncertClass": "CLASS_10",
+      "pageStart": 84,
+      "pageEnd": 94,
+      "sections": [
+        {
+          "code": "4.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "4.2",
+          "title": "Quadratic Equations"
+        },
+        {
+          "code": "4.3",
+          "title": "Solution of a Quadratic Equation by Factorisation"
+        },
+        {
+          "code": "4.4",
+          "title": "Nature of Roots"
+        },
+        {
+          "code": "4.5",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 20,
+      "exampleCount": 10
+    },
+    {
+      "chapterNumber": 5,
+      "title": "Chapter 5",
+      "ncertClass": "CLASS_10",
+      "pageStart": 95,
+      "pageEnd": 118,
+      "sections": [
+        {
+          "code": "5.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "5.2",
+          "title": "Arithmetic Progressions"
+        },
+        {
+          "code": "5.4",
+          "title": "Sum of First n Terms of an AP"
+        },
+        {
+          "code": "5.5",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 60,
+      "exampleCount": 16
+    },
+    {
+      "chapterNumber": 6,
+      "title": "Chapter 6",
+      "ncertClass": "CLASS_10",
+      "pageStart": 119,
+      "pageEnd": 144,
+      "sections": [
+        {
+          "code": "6.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "6.2",
+          "title": "Similar Figures"
+        },
+        {
+          "code": "6.3",
+          "title": "Similarity of Triangles"
+        },
+        {
+          "code": "6.4",
+          "title": "Criteria for Similarity of Triangles"
+        },
+        {
+          "code": "6.5",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 39,
+      "exampleCount": 10
+    },
+    {
+      "chapterNumber": 7,
+      "title": "Chapter 7",
+      "ncertClass": "CLASS_10",
+      "pageStart": 145,
+      "pageEnd": 158,
+      "sections": [
+        {
+          "code": "7.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "7.2",
+          "title": "Distance Formula"
+        },
+        {
+          "code": "7.3",
+          "title": "Section Formula"
+        },
+        {
+          "code": "7.4",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 24,
+      "exampleCount": 10
+    },
+    {
+      "chapterNumber": 8,
+      "title": "Chapter 8",
+      "ncertClass": "CLASS_10",
+      "pageStart": 159,
+      "pageEnd": 178,
+      "sections": [
+        {
+          "code": "8.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "8.2",
+          "title": "Trigonometric Ratios"
+        },
+        {
+          "code": "8.3",
+          "title": "Trigonometric Ratios of Some Specific Angles"
+        },
+        {
+          "code": "8.4",
+          "title": "Trigonometric Identities"
+        },
+        {
+          "code": "8.5",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 26,
+      "exampleCount": 12
+    },
+    {
+      "chapterNumber": 9,
+      "title": "Chapter 9",
+      "ncertClass": "CLASS_10",
+      "pageStart": 179,
+      "pageEnd": 189,
+      "sections": [
+        {
+          "code": "9.1",
+          "title": "Heights and Distances"
+        },
+        {
+          "code": "9.2",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 17,
+      "exampleCount": 7
+    },
+    {
+      "chapterNumber": 10,
+      "title": "Chapter 10",
+      "ncertClass": "CLASS_10",
+      "pageStart": 190,
+      "pageEnd": 199,
+      "sections": [
+        {
+          "code": "10.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "10.2",
+          "title": "Tangent to a Circle"
+        },
+        {
+          "code": "10.3",
+          "title": "Number of Tangents from a Point on a Circle"
+        },
+        {
+          "code": "10.4",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 22,
+      "exampleCount": 3
+    },
+    {
+      "chapterNumber": 11,
+      "title": "Chapter 11",
+      "ncertClass": "CLASS_10",
+      "pageStart": 200,
+      "pageEnd": 206,
+      "sections": [
+        {
+          "code": "11.1",
+          "title": "Areas of Sector and Segment of a Circle"
+        },
+        {
+          "code": "11.2",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 17,
+      "exampleCount": 2
+    },
+    {
+      "chapterNumber": 12,
+      "title": "Chapter 12",
+      "ncertClass": "CLASS_10",
+      "pageStart": 207,
+      "pageEnd": 216,
+      "sections": [
+        {
+          "code": "12.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "12.2",
+          "title": "Surface Area of a Combination of Solids"
+        },
+        {
+          "code": "12.3",
+          "title": "Volume of a Combination of Solids"
+        },
+        {
+          "code": "12.4",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 19,
+      "exampleCount": 7
+    },
+    {
+      "chapterNumber": 13,
+      "title": "Chapter 13",
+      "ncertClass": "CLASS_10",
+      "pageStart": 217,
+      "pageEnd": 247,
+      "sections": [
+        {
+          "code": "13.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "13.2",
+          "title": "Mean of Grouped Data"
+        },
+        {
+          "code": "13.3",
+          "title": "Mode of Grouped Data"
+        },
+        {
+          "code": "13.4",
+          "title": "Median of Grouped Data"
+        },
+        {
+          "code": "13.5",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 31,
+      "exampleCount": 14
+    },
+    {
+      "chapterNumber": 14,
+      "title": "Chapter 14",
+      "ncertClass": "CLASS_10",
+      "pageStart": 248,
+      "pageEnd": 276,
+      "sections": [
+        {
+          "code": "14.1",
+          "title": "Probability — A Theoretical Approach"
+        },
+        {
+          "code": "14.2",
+          "title": "Summary"
+        }
+      ],
+      "problemCount": 74,
+      "exampleCount": 22
+    }
+  ]
+}
