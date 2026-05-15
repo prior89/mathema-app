@@ -1,0 +1,969 @@
+{
+  "version": "ncert-grade-8-examples@2026-05",
+  "ncertClass": "CLASS_8",
+  "examples": [
+    {
+      "exampleKey": "NCERT-CH01-EX-1",
+      "chapterNumber": 1,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Find \\(\\frac{3}{7}+\\left(\\frac{-6}{11}\\right)+\\left(\\frac{-8}{21}\\right)+\\left(\\frac{5}{22}\\right)\\)",
+      "solution": "\\(\\frac{3}{7}+\\left(\\frac{-6}{11}\\right)+\\left(\\frac{-8}{21}\\right)+\\left(\\frac{5}{22}\\right)\\) \\(=\\frac{198}{462}+\\left(\\frac{-252}{462}\\right)+\\left(\\frac{-176}{462}\\right)+\\left(\\frac{105}{462}\\right)\\) (Note that 462 is the LCM of 7, 11, 21 and 22) \\(=\\frac{198-252-176+105}{462}=\\frac{-125}{462}\\) We can also solve it as. \\[\\begin{aligned} & \\frac{3}{7}+\\left(\\frac{-6}{11}\\right)+\\left(\\frac{-8}{21}\\right)+\\frac{5}{22} \\\\ & =\\left[\\frac{3}{7}+\\left(\\frac{-8}{21}\\right)\\right]+\\left[\\frac{-6}{11}+\\frac{5}{22}\\right] \\quad \\text { (by using commutativity and associativity) } \\\\ & =\\left[\\frac{9+(-8)}{21}\\right]+\\left[\\frac{-12+5}{22}\\right] \\quad(\\text { LCM of } 7 \\text { and } 21 \\text { is } 21 ; \\text { LCM of } 11 \\text { and } 22 \\text { is } 22) \\\\ & =\\frac{1}{21}+\\left(\\frac{-7}{22}\\right)=\\frac{22-147}{462}=\\frac{-125}{462} \\end{aligned}\\] Do you think the properties of commutativity and associativity made the calculations easier?",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH01-EX-2",
+      "chapterNumber": 1,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Find \\(\\frac{-4}{5} \\times \\frac{3}{7} \\times \\frac{15}{16} \\times\\left(\\frac{-14}{9}\\right)\\)",
+      "solution": "We have \\[\\begin{aligned} \\frac{-4}{5} & \\times \\frac{3}{7} \\times \\frac{15}{16} \\times\\left(\\frac{-14}{9}\\right) \\\\ & =\\left(-\\frac{4 \\times 3}{5 \\times 7}\\right) \\times\\left(\\frac{15 \\times(-14)}{16 \\times 9}\\right) \\\\ & =\\frac{-12}{35} \\times\\left(\\frac{-35}{24}\\right)=\\frac{-12 \\times(-35)}{35 \\times 24}=\\frac{1}{2} \\end{aligned}\\] ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-024.jpg?height=430&width=388&top_left_y=1136&top_left_x=1479) We can also do it as. \\[\\begin{aligned} \\frac{-4}{5} & \\times \\frac{3}{7} \\times \\frac{15}{16} \\times\\left(\\frac{-14}{9}\\right) \\\\ & =\\left(\\frac{-4}{5} \\times \\frac{15}{16}\\right) \\times\\left[\\frac{3}{7} \\times\\left(\\frac{-14}{9}\\right)\\right] \\text { (Using commutativity and associativity) } \\\\ & =\\frac{-3}{4} \\times\\left(\\frac{-2}{3}\\right)=\\frac{1}{2} \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH01-EX-3",
+      "chapterNumber": 1,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "Find \\(\\frac{2}{5} \\times \\frac{-3}{7}-\\frac{1}{14}-\\frac{3}{7} \\times \\frac{3}{5}\\)",
+      "solution": "\\[\\begin{aligned} \\frac{2}{5} \\times \\frac{-3}{7}-\\frac{1}{14}-\\frac{3}{7} \\times \\frac{3}{5} & =\\frac{2}{5} \\times \\frac{-3}{7}-\\frac{3}{7} \\times \\frac{3}{5}-\\frac{1}{14} \\quad \\text { (by commutativity) } \\\\ & =\\frac{2}{5} \\times \\frac{-3}{7}+\\left(\\frac{-3}{7}\\right) \\times \\frac{3}{5}-\\frac{1}{14} \\\\ & =\\frac{-3}{7}\\left(\\frac{2}{5}+\\frac{3}{5}\\right)-\\frac{1}{14} \\quad \\text { (by distributivity) } \\\\ & =\\frac{-3}{7} \\times 1-\\frac{1}{14}=\\frac{-6-1}{14}=\\frac{-1}{2} \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH02-EX-1",
+      "chapterNumber": 2,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Solve \\(2 x-3=x+2\\)",
+      "solution": "We have or or or \\[\\begin{aligned} 2 x & =x+2+3 \\\\ 2 x & =x+5 \\\\ 2 x-x & =x+5-x \\quad \\text { (subtracting } x \\text { from both sides) } \\\\ x & =5 \\end{aligned}\\] Here we subtracted from both sides of the equation, not a number (constant), but a term involving the variable. We can do this as variables are also numbers. Also, note that subtracting \\(x\\) from both sides amounts to transposing \\(x\\) to LHS.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH02-EX-2",
+      "chapterNumber": 2,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Solve \\(5 x+\\frac{7}{2}=\\frac{3}{2} x-14\\)",
+      "solution": "Multiply both sides of the equation by 2 . We get \\[2 \\times\\left(5 x+\\frac{7}{2}\\right)=2 \\times\\left(\\frac{3}{2} x-14\\right)\\] \\[(2 \\times 5 x)+\\left(2 \\times \\frac{7}{2}\\right)=\\left(2 \\times \\frac{3}{2} x\\right)-(2 \\times 14)\\] or \\[10 x+7=3 x-28\\] or \\[10 x-3 x+7=-28\\] (transposing \\(3 x\\) to LHS) or \\[7 x+7=-28\\] or \\[\\begin{aligned} & 7 x=-28-7 \\\\ & 7 x=-35 \\end{aligned}\\] or or or \\[x=\\frac{-35}{7}\\] or \\[x=-5\\] (solution)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH02-EX-16",
+      "chapterNumber": 2,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 16,
+      "body": "Solve \\(\\frac{6 x+1}{3}+1=\\frac{x-3}{6}\\)",
+      "solution": "Multiplying both sides of the equation by 6, Why 6? Because it is the smallest multiple (or LCM) of the given denominators. \\[\\frac{6(6 x+1)}{3}+6 \\times 1=\\frac{6(x-3)}{6}\\] or \\[2(6 x+1)+6=x-3\\] or \\[12 x+2+6=x-3\\] (opening the brackets) or \\[12 x+8=x-3\\] or \\[12 x-x+8=-3\\] or \\[11 x+8=-3\\] or \\[11 x=-3-8\\] or \\[11 x=-11\\] or \\[x=-1\\] (required solution) Check: LHS \\(=\\frac{6(-1)+1}{3}+1=\\frac{-6+1}{3}+1=\\frac{-5}{3}+\\frac{3}{3}=\\frac{-5+3}{3}=\\frac{-2}{3}\\) \\[\\mathrm{RHS}=\\frac{(-1)-3}{6}=\\frac{-4}{6}=\\frac{-2}{3}\\] \\[\\mathrm{LHS}=\\mathrm{RHS} . \\quad(\\text { as required })\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH02-EX-17",
+      "chapterNumber": 2,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 17,
+      "body": "Solve \\(5 x-2(2 x-7)=2(3 x-1)+\\frac{7}{2}\\)",
+      "solution": "Let us open the brackets, \\[\\begin{aligned} \\mathrm{LHS} & =5 x-4 x+14=x+14 \\\\ \\mathrm{RHS} & =6 x-2+\\frac{7}{2}=6 x-\\frac{4}{2}+\\frac{7}{2}=6 x+\\frac{3}{2} \\end{aligned}\\] The equation is \\(x+14=6 x+\\frac{3}{2}\\) or \\[14=6 x-x+\\frac{3}{2}\\] or \\[14=5 x+\\frac{3}{2}\\] or \\[14-\\frac{3}{2}=5 x\\] (transposing \\(\\frac{3}{2}\\) ) or \\[\\frac{28-3}{2}=5 x\\] or \\[\\frac{25}{2}=5 x\\] or \\[x=\\frac{25}{2} \\times \\frac{1}{5}=\\frac{5 \\times 5}{2 \\times 5}=\\frac{5}{2}\\] Therefore, required solution is \\(x=\\frac{5}{2}\\). ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-032.jpg?height=438&width=584&top_left_y=1500&top_left_x=1297) Check: LHS \\(=5 \\times \\frac{5}{2}-2\\left(\\frac{5}{2} \\times 2-7\\right)\\) \\[=\\frac{25}{2}-2(5-7)=\\frac{25}{2}-2(-2)=\\frac{25}{2}+4=\\frac{25+8}{2}=\\frac{33}{2}\\] \\[\\begin{aligned} \\text { RHS } & =2\\left(\\frac{5}{2} \\times 3-1\\right)+\\frac{7}{2}=2\\left(\\frac{15}{2}-\\frac{2}{2}\\right)+\\frac{7}{2}=\\frac{2 \\times 13}{2}+\\frac{7}{2} \\\\ & =\\frac{26+7}{2}=\\frac{33}{2}=\\text { LHS. }(\\text { as required }) \\end{aligned}\\] ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-032.jpg?height=365&width=513&top_left_y=2039&top_left_x=1370)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-1",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Find measure \\(x\\) in Fig 3.3.}",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-2",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Find the number of sides of a regular polygon whose each exterior angle has a measure of \\(45^{\\circ}\\).",
+      "solution": "Total measure of all exterior angles \\(=360^{\\circ}\\) Measure of each exterior angle \\(=45^{\\circ}\\) Therefore, the number of exterior angles \\(=\\frac{360}{45}=8\\) The polygon has 8 sides. ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-038.jpg?height=307&width=278&top_left_y=289&top_left_x=230)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-3",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "Find the perimeter of the parallelogram PQRS (Fig 3.16).",
+      "solution": "In a parallelogram, the opposite sides have same length. Therefore, \\(\\mathrm{PQ}=\\mathrm{SR}=12 \\mathrm{~cm}\\) and \\(\\mathrm{QR}=\\mathrm{PS}=7 \\mathrm{~cm}\\) So, Perimeter \\(=\\mathrm{PQ}+\\mathrm{QR}+\\mathrm{RS}+\\mathrm{SP}\\) \\[=12 \\mathrm{~cm}+7 \\mathrm{~cm}+12 \\mathrm{~cm}+7 \\mathrm{~cm}=38 \\mathrm{~cm}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-4",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "In Fig 3.20, BEST is a parallelogram. Find the values \\(x, y\\) and \\(z\\).",
+      "solution": "S is opposite to B. So, \\[\\begin{aligned} & x=100^{\\circ}(\\text { opposite angles property }) \\\\ & y=100^{\\circ}(\\text { measure of angle corresponding to } \\angle x) \\\\ & z=80^{\\circ}(\\text { since } \\angle y, \\angle z \\text { is a linear pair }) \\end{aligned}\\] We now turn our attention to adjacent angles of a parallelogram. In parallelogram ABCD , (Fig 3.21). \\(\\angle \\mathrm{A}\\) and \\(\\angle \\mathrm{D}\\) are supplementary since \\(\\overline{\\mathrm{DC}} \\| \\overline{\\mathrm{AB}}\\) and with transversal \\(\\overline{\\mathrm{DA}}\\), these two angles are interior opposite. \\(\\angle \\mathrm{A}\\) and \\(\\angle \\mathrm{B}\\) are also supplementary. Can you say 'why'? ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-043.jpg?height=452&width=462&top_left_y=1065&top_left_x=1440) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-043.jpg?height=213&width=565&top_left_y=1463&top_left_x=1002} \\captionsetup{labelformat=empty} \\caption{Fig 3.21} \\end{figure} \\(\\overline{\\mathrm{AD}} \\| \\overline{\\mathrm{BC}}\\) and \\(\\overline{\\mathrm{BA}}\\) is a transversal, making \\(\\angle \\mathrm{A}\\) and \\(\\angle \\mathrm{B}\\) interior opposite. Identify two more pairs of supplementary angles from the figure. Property: The adjacent angles in a parallelogram are supplementary.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-5",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "In a parallelogram RING, (Fig 3.22) if \\(m \\angle \\mathrm{R}=70^{\\circ}\\), find all the other angles.",
+      "solution": "Given \\(m \\angle \\mathrm{R}=70^{\\circ}\\) Then \\(\\quad m \\angle \\mathrm{~N}=70^{\\circ}\\) because \\(\\angle \\mathrm{R}\\) and \\(\\angle \\mathrm{N}\\) are opposite angles of a parallelogram. Since \\(\\angle \\mathrm{R}\\) and \\(\\angle \\mathrm{I}\\) are supplementary, \\[m \\angle \\mathrm{I}=180^{\\circ}-70^{\\circ}=110^{\\circ}\\] \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-043.jpg?height=249&width=556&top_left_y=2069&top_left_x=1321} \\captionsetup{labelformat=empty} \\caption{Fig 3.22} \\end{figure} Also, \\(m \\angle \\mathrm{G}=110^{\\circ}\\) since \\(\\angle \\mathrm{G}\\) is opposite to \\(\\angle \\mathrm{I}\\) Thus, \\[m \\angle \\mathrm{R}=m \\angle \\mathrm{~N}=70^{\\circ} \\text { and } m \\angle \\mathrm{I}=m \\angle \\mathrm{G}=110^{\\circ}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-6",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 6,
+      "body": "In Fig 3.25 HELP is a parallelogram. (Lengths are in cms). Given that \\(\\mathrm{OE}=4\\) and HL is 5 more than PE ? Find OH .",
+      "solution": "If \\(\\mathrm{OE}=4\\) then OP also is 4 (Why?) So \\(\\mathrm{PE}=8\\), Therefore \\[\\mathrm{HL}=8+5=13\\] (Why?) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-044.jpg?height=210&width=560&top_left_y=1738&top_left_x=1321} \\captionsetup{labelformat=empty} \\caption{Fig 3.25} \\end{figure} Hence \\(\\quad \\mathrm{OH}=\\frac{1}{2} \\times 13=6.5(\\mathrm{cms})\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-7",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 7,
+      "body": "} RICE is a rhombus (Fig 3.30). Find \\(x, y, z\\). Justify your findings.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-8",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 8,
+      "body": "RENT is a rectangle (Fig 3.35). Its diagonals meet at O . Find \\(x\\), if \\(\\mathrm{OR}=2 x+4\\) and \\(\\mathrm{OT}=3 x+1\\).",
+      "solution": "\\(\\overline{\\mathrm{OT}}\\) is half of the diagonal \\(\\overline{\\mathrm{TE}}\\), \\(\\overline{\\mathrm{OR}}\\) is half of the diagonal \\(\\overline{\\mathrm{RN}}\\). Diagonals are equal here. (Why?) So, their halves are also equal. Therefore or \\[\\begin{aligned} 3 x+1 & =2 x+4 \\\\ x & =3 \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-1",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Circle Graph or Pie Chart",
+      "exampleNumber": 1,
+      "body": "Adjoining pie chart (Fig 4.4) gives the expenditure (in percentage) on various items and savings of a family during a month. (i) On which item, the expenditure was maximum? (ii) Expenditure on which item is equal to the total savings of the family? (iii) If the monthly savings of the family is ₹ 3000 , what is the monthly expenditure on clothes?",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-2",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Circle Graph or Pie Chart",
+      "exampleNumber": 2,
+      "body": "On a particular day, the sales (in rupees) of different items of a baker's shop are given below. \\begin{tabular}{|rl|} \\hline ordinary bread & \\(: 320\\) \\\\ fruit bread & \\(: 80\\) \\\\ cakes and pastries & \\(: 160\\) \\\\ biscuits & \\(: 120\\) \\\\ others & \\(: 40\\) \\\\ \\cline { 2 - 2 } Total & \\(: \\mathbf{7 2 0}\\) \\\\ \\hline \\end{tabular} Draw a pie chart for this data.",
+      "solution": "We find the central angle of each sector. Here the total sale = ₹ 720. We thus have this table. \\begin{tabular}{|l|l|l|l|} \\hline Item & Sales (in ₹) & In Fraction & Central Angle \\\\ \\hline Ordinary Bread & 320 & \\(\\frac{320}{720}=\\frac{4}{9}\\) & \\(\\frac{4}{9} \\times 360^{\\circ}=160^{\\circ}\\) \\\\ \\hline Biscuits & 120 & \\(\\frac{120}{720}=\\frac{1}{6}\\) & \\(\\frac{1}{6} \\times 360^{\\circ}=60^{\\circ}\\) \\\\ \\hline Cakes and pastries & 160 & \\(\\frac{160}{720}=\\frac{2}{9}\\) & \\(\\frac{2}{9} \\times 360^{\\circ}=80^{\\circ}\\) \\\\ \\hline Fruit Bread & 80 & \\(\\frac{80}{720}=\\frac{1}{9}\\) & \\(\\frac{1}{9} \\times 360^{\\circ}=40^{\\circ}\\) \\\\ \\hline Others & 40 & \\(\\frac{40}{720}=\\frac{1}{18}\\) & \\(\\frac{1}{18} \\times 360^{\\circ}=20^{\\circ}\\) \\\\ \\hline \\end{tabular} \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-056.jpg?height=505&width=473&top_left_y=1972&top_left_x=796} \\captionsetup{labelformat=empty} \\caption{Fig 4.5} \\end{figure}",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-3",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Circle Graph or Pie Chart",
+      "exampleNumber": 3,
+      "body": "A bag has 4 red balls and 2 yellow balls. (The balls are identical in all respects other than colour). A ball is drawn from the bag without looking into the bag. What is probability of getting a red ball? Is it more or less than getting a yellow ball?",
+      "solution": "There are in all \\((4+2=) 6\\) outcomes of the event. Getting a red ball consists of 4 outcomes. (Why?) Therefore, the probability of getting a red ball is \\(\\frac{4}{6}=\\frac{2}{3}\\). In the same way the probability of getting a yellow ball \\(=\\frac{2}{6}=\\frac{1}{3}\\) (Why?). Therefore, the probability of getting a red ball is more than that of getting a yellow ball. ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-062.jpg?height=333&width=262&top_left_y=1032&top_left_x=221)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-1",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Find the square of the following numbers without actual multiplication. (i) 39 (ii)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-2",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Write a Pythagorean triplet whose smallest member is 8.",
+      "solution": "We can get Pythagorean triplets by using general form \\(2 m, m^{2}-1, m^{2}+1\\). Let us first take So, which gives Therefore, \\(m^{2}-1=8\\) \\(m^{2}=8+1=9\\) \\(m=3\\) \\(2 m=6\\) and \\(m^{2}+1=10\\) The triplet is thus \\(6,8,10\\). But 8 is not the smallest member of this. So, let us try then We get and \\(2 m=8\\) \\(m=4\\) \\[\\begin{aligned} & m^{2}-1=16-1=15 \\\\ & m^{2}+1=16+1=17 \\end{aligned}\\] The triplet is \\(8,15,17\\) with 8 as the smallest member.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-3",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "Find a Pythagorean triplet in which one member is 12.",
+      "solution": "If we take Then, \\[\\begin{aligned} m^{2}-1 & =12 \\\\ m^{2} & =12+1=13 \\end{aligned}\\] Then the value of \\(m\\) will not be an integer. So, we try to take \\(m^{2}+1=12\\). Again \\(m^{2}=11\\) will not give an integer value for \\(m\\). So, let us take then Thus, \\[\\begin{aligned} 2 m & =12 \\\\ m & =6 \\\\ m^{2}-1=36-1 & =35 \\text { and } m^{2}+1=36+1=37 \\end{aligned}\\] Therefore, the required triplet is \\(12,35,37\\). Note: All Pythagorean triplets may not be obtained using this form. For example another triplet \\(5,12,13\\) also has 12 as a member.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-4",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "Find the square root of 6400.",
+      "solution": "Write \\(6400=\\underline{2 \\times 2} \\times \\underline{2 \\times 2} \\times \\underline{2 \\times 2} \\times \\underline{2 \\times 2} \\times \\underline{5 \\times 5}\\) Therefore \\(\\quad \\sqrt{6400}=2 \\times 2 \\times 2 \\times 2 \\times 5=80\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-5",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "Is 90 a perfect square?",
+      "solution": "We have \\(90=2 \\times 3 \\times 3 \\times 5\\) \\begin{tabular}{l|l} 2 & 90 \\\\ \\cline { 2 - 2 } 3 & 45 \\\\ \\cline { 2 - 2 } 3 & 15 \\\\ \\cline { 2 - 2 } & 5 \\end{tabular} \\begin{tabular}{l|l} 2 & 6400 \\\\ \\cline { 2 - 2 } 2 & 3200 \\\\ \\cline { 2 - 2 } 2 & 1600 \\\\ \\cline { 2 - 2 } 2 & 800 \\\\ \\cline { 2 - 2 } 2 & 400 \\\\ \\cline { 2 - 2 } 2 & 200 \\\\ \\cline { 2 - 2 } 2 & 100 \\\\ \\cline { 2 - 2 } 2 & 50 \\\\ \\cline { 2 - 2 } 5 & 25 \\\\ \\cline { 2 - 2 } & 5 \\end{tabular} The prime factors 2 and 5 do not occur in pairs. Therefore, 90 is not a perfect square. That 90 is not a perfect square can also be seen from the fact that it has only one zero.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-6",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 6,
+      "body": "Is 2352 a perfect square? If not, find the smallest multiple of 2352 which is a perfect square. Find the square root of the new number.",
+      "solution": "We have \\(2352=\\underline{2 \\times 2} \\times \\underline{2 \\times 2} \\times 3 \\times \\underline{7 \\times 7}\\) As the prime factor 3 has no pair, 2352 is not a perfect square. If 3 gets a pair then the number will become perfect square. So, we multiply 2352 by 3 to get, \\[2352 \\times 3=2 \\times 2 \\times 2 \\times 2 \\times 3 \\times 3 \\times 7 \\times 7\\] Now each prime factor is in a pair. Therefore, \\(2352 \\times 3=7056\\) is a perfect square. \\begin{tabular}{l|l} 2 & 2352 \\\\ \\cline { 2 - 2 } 2 & 1176 \\\\ \\cline { 2 - 2 } 2 & 588 \\\\ \\cline { 2 - 2 } 2 & 294 \\\\ \\cline { 2 - 2 } 3 & 147 \\\\ \\cline { 2 - 2 } 7 & 49 \\\\ \\cline { 2 - 2 } & 7 \\end{tabular} Thus the required smallest multiple of 2352 is 7056 which is a perfect square. And, \\[\\sqrt{7056}=2 \\times 2 \\times 3 \\times 7=84\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-7",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 7,
+      "body": "Find the smallest number by which 9408 must be divided so that the quotient is a perfect square. Find the square root of the quotient.",
+      "solution": "We have, \\(9408=\\underline{2 \\times 2} \\times \\underline{2 \\times 2} \\times \\underline{2 \\times 2} \\times 3 \\times \\underline{7 \\times 7}\\) If we divide 9408 by the factor 3 , then \\(9408 \\div 3=3136=\\underline{2 \\times 2} \\times \\underline{2 \\times 2} \\times \\underline{2 \\times 2} \\times \\underline{7 \\times 7}\\) which is a perfect square. (Why?) Therefore, the required smallest number is 3 . And, \\[\\sqrt{3136}=2 \\times 2 \\times 2 \\times 7=56 .\\] \\begin{tabular}{l|l} 2 & \\(6,9,15\\) \\\\ \\cline { 2 - 2 } 3 & \\(3,9,15\\) \\\\ \\cline { 2 - 2 } 3 & \\(1,3,5\\) \\\\ \\cline { 2 - 2 } 5 & \\(1,1,5\\) \\\\ \\cline { 2 - 2 } & \\(1,1,1\\) \\end{tabular}",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-8",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 8,
+      "body": "Find the smallest square number which is divisible by each of the numbers 6, 9 and 15.",
+      "solution": "This has to be done in two steps. First find the smallest common multiple and then find the square number needed. The least number divisible by each one of 6,9 and 15 is their LCM. The LCM of 6,9 and 15 is \\(2 \\times 3 \\times 3 \\times 5=90\\). Prime factorisation of 90 is \\(90=2 \\times \\underline{3 \\times 3 \\times 5}\\). We see that prime factors 2 and 5 are not in pairs. Therefore 90 is not a perfect square. In order to get a perfect square, each factor of 90 must be paired. So we need to make pairs of 2 and 5 . Therefore, 90 should be multiplied by \\(2 \\times 5\\), i.e., 10 . Hence, the required square number is \\(90 \\times 10=900\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-9",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 9,
+      "body": "Find the square root of : (i) 729 \\\\ (ii) 1296}",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-10",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 10,
+      "body": "Find the least number that must be subtracted from 5607 so as to get a perfect square. Also find the square root of the perfect square.",
+      "solution": "Let us try to find \\(\\sqrt{5607}\\) by long division method. We get the remainder 131. It shows that \\(74^{2}\\) is less than 5607 by 131 . This means if we subtract the remainder from the number, we get a perfect square. Therefore, the required perfect square is \\(5607-131=5476\\). And, \\(\\sqrt{5476}=74\\). \\begin{tabular}{l|c} \\cline { 2 - 2 } 7 & \\begin{tabular}{c} 74 \\\\ \\(\\overline{56} \\overline{07}\\) \\\\ -49 \\end{tabular} \\\\ \\hline \\(14 \\underline{44}\\) & 707 \\\\ & -576 \\\\ \\hline & 131 \\end{tabular}",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-11",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 11,
+      "body": "Find the greatest 4-digit number which is a perfect square.",
+      "solution": "Greatest number of 4-digits \\(=9999\\). We find \\(\\sqrt{9999}\\) by long division method. The remainder is 198. This shows \\(99^{2}\\) is less than 9999 by 198. This means if we subtract the remainder from the number, we get a perfect square. Therefore, the required perfect square is \\(9999-198=9801\\). And, \\(\\sqrt{9801}=99\\) \\begin{tabular}{l|l} \\cline { 2 - 2 } & \\multicolumn{1}{c}{99} \\\\ \\cline { 2 - 2 } & \\(\\overline{99} \\overline{99}\\) \\\\ & -81 \\\\ \\hline 189 & 1899 \\\\ & -1701 \\\\ \\hline & 198 \\end{tabular}",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-12",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 12,
+      "body": "Find the least number that must be added to 1300 so as to get a perfect square. Also find the square root of the perfect square.",
+      "solution": "We find \\(\\sqrt{1300}\\) by long division method. The remainder is 4 . This shows that \\(36^{2}<1300\\). Next perfect square number is \\(37^{2}=1369\\). Hence, the number to be added is \\(37^{2}-1300=1369-1300=69\\). \\begin{tabular}{l|r} \\cline { 2 - 2 } 3 & \\multicolumn{1}{|c}{36} \\\\ \\cline { 2 - 2 }\\(\\overline{13} \\overline{00}\\) \\\\ \\hline 66 & \\begin{tabular}{r} 400 \\\\ -96 \\end{tabular} \\\\ \\hline & 4 \\end{tabular}",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-14",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 14,
+      "body": "Area of a square plot is \\(2304 \\mathrm{~m}^{2}\\). Find the side of the square plot.",
+      "solution": "Area of square plot \\(=2304 \\mathrm{~m}^{2}\\) Therefore, \\[\\text { side of the square plot }=\\sqrt{2304} \\mathrm{~m}\\] We find that, \\[\\sqrt{2304}=48\\] Thus, the side of the square plot is 48 m .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-15",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 15,
+      "body": "There are 2401 students in a school. P.T. teacher wants them to stand in rows and columns such that the number of rows is equal to the number of columns. Find the number of rows.",
+      "solution": "Let the number of rows be \\(x\\) So, the number of columns \\(=x\\) Therefore, number of students \\(=x \\times x=x^{2}\\) Thus, \\(x^{2}=2401\\) gives \\(x=\\sqrt{2401}=49\\) The number of rows \\(=49\\). \\begin{tabular}{c|c} \\cline { 2 - 2 } 4 & \\begin{tabular}{c} 49 \\\\ \\(\\overline{24} \\overline{01}\\) \\\\ -16 \\end{tabular} \\\\ \\hline 89 & \\begin{tabular}{c} 801 \\\\ 801 \\end{tabular} \\\\ \\hline & 0 \\end{tabular}",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-1",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Is 243 a perfect cube?",
+      "solution": "\\(243=\\underline{3 \\times 3 \\times 3 \\times 3 \\times 3}\\) \\[729=\\underline{3 \\times 3 \\times 3 \\times 3 \\times 3 \\times 3}\\] In the above factorisation \\(3 \\times 3\\) remains after grouping the 3 's in triplets. Therefore, 243 is not a perfect cube.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-2",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Is 392 a perfect cube? If not, find the smallest natural number by which 392 must be multiplied so that the product is a perfect cube.",
+      "solution": "\\(392=\\underline{2 \\times 2 \\times 2} \\times 7 \\times 7\\) The prime factor 7 does not appear in a group of three. Therefore, 392 is not a perfect cube. To make its a cube, we need one more 7. In that case \\[392 \\times 7=\\underline{2 \\times 2 \\times 2} \\times \\underline{7 \\times 7 \\times 7}=2744 \\quad \\text { which is a perfect cube } .\\] Hence the smallest natural number by which 392 should be multiplied to make a perfect cube is 7 .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-3",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "Is 53240 a perfect cube? If not, then by which smallest natural number should 53240 be divided so that the quotient is a perfect cube?",
+      "solution": "\\(53240=\\underline{2 \\times 2 \\times 2} \\times \\underline{11 \\times 11 \\times 11 \\times 5}\\) The prime factor 5 does not appear in a group of three. So, 53240 is not a perfect cube. In the factorisation 5 appears only one time. If we divide the number by 5 , then the prime factorisation of the quotient will not contain 5 . So, \\[53240 \\div 5=\\underline{2 \\times 2 \\times 2} \\times \\underline{11 \\times 11 \\times 11}\\] Hence the smallest number by which 53240 should be divided to make it a perfect cube is 5 . The perfect cube in that case is \\(=10648\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-4",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "Is 1188 a perfect cube? If not, by which smallest natural number should 1188 be divided so that the quotient is a perfect cube?",
+      "solution": "\\(1188=2 \\times 2 \\times \\underline{3 \\times 3 \\times 3 \\times 11}\\) The primes 2 and 11 do not appear in groups of three. So, 1188 is not a perfect cube. In the factorisation of 1188 the prime 2 appears only two times and the prime 11 appears once. So, if we divide 1188 by \\(2 \\times 2 \\times 11=44\\), then the prime factorisation of the quotient will not contain 2 and 11 . Hence the smallest natural number by which 1188 should be divided to make it a perfect cube is 44 . And the resulting perfect cube is \\(1188 \\div 44=27\\left(=3^{3}\\right)\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-5",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "Is 68600 a perfect cube? If not, find the smallest number by which 68600 must be multiplied to get a perfect cube.",
+      "solution": "We have, \\(68600=2 \\times 2 \\times 2 \\times 5 \\times 5 \\times 7 \\times 7 \\times 7\\). In this factorisation, we find that there is no triplet of 5. So, 68600 is not a perfect cube. To make it a perfect cube we multiply it by 5 . Thus, \\[\\begin{aligned} 68600 \\times 5 & =2 \\times 2 \\times 2 \\times 5 \\times 5 \\times 5 \\times 7 \\times 7 \\times 7 \\\\ & =343000, \\text { which is a perfect cube } \\end{aligned}\\] Observe that 343 is a perfect cube. From",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-5",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "we know that 343000 is also perfect cube.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-6",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 6,
+      "body": "Find the cube root of 8000.",
+      "solution": "Prime factorisation of 8000 is \\(\\underline{2 \\times 2 \\times 2} \\times \\underline{2 \\times 2 \\times 2} \\times \\underline{5 \\times 5 \\times 5}\\) So, \\[\\sqrt[3]{8000}=2 \\times 2 \\times 5=20\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-7",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 7,
+      "body": "Find the cube root of 13824 by prime factorisation method.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-1",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 1,
+      "body": "A picnic is being planned in a school for Class VII. Girls are \\(60 \\%\\) of the total number of students and are 18 in number. The picnic site is 55 km from the school and the transport company is charging at the rate of ₹ 12 per km. The total cost of refreshments will be ₹ 4280 . Can you tell. 1. The ratio of the number of girls to the number of boys in the class? 2. The cost per head if two teachers are also going with the class? 3. If their first stop is at a place 22 km from the school, what per cent of the total distance of 55 km is this? What per cent of the distance is left to be covered?",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-2",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 2,
+      "body": "An item marked at ₹ 840 is sold for ₹ 714. What is the discount and ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-096.jpg?height=420&width=331&top_left_y=981&top_left_x=184) discount \\%?",
+      "solution": "\\[\\begin{aligned} \\text { Discount } & =\\text { Marked Price }- \\text { Sale Price } \\\\ & =₹ 840-₹ 714 \\\\ & =₹ 126 \\end{aligned}\\] Since discount is on marked price, we will have to use marked price as the base. On marked price of ₹ 840 , the discount is ₹ 126 . On MP of ₹ 100 , how much will the discount be? \\[\\text { Discount }=\\frac{126}{840} \\times 100 \\%=15 \\%\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-3",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 3,
+      "body": "The list price of a frock is ₹ 220. A discount of \\(20 \\%\\) is announced on sales. What is the amount of discount on it and its sale price.",
+      "solution": "Marked price is same as the list price. \\(20 \\%\\) discount means that on ₹ 100 (MP), the discount is ₹ 20 . By unitary method, on ₹1 the discount will be ₹ \\(\\frac{20}{100}\\). ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-096.jpg?height=325&width=411&top_left_y=1763&top_left_x=1464) On ₹ 220 , discount \\(=₹ \\frac{20}{100} \\times 220=₹ 44\\) The sale price \\(=(\\) ₹ \\(220-\\) ₹ 44\\()\\) or ₹ 176 Rehana found the sale price like this - A discount of \\(20 \\%\\) means for a MP of ₹ 100 , discount is ₹ 20 . Hence the sale price is ₹ 80 . Using unitary method, when MP is ₹ 100 , sale price is ₹ 80 ; When MP is ₹ 1 , sale price is ₹ \\(\\frac{80}{100}\\). Hence when MP is ₹ 220, sale price \\(=₹ \\frac{80}{100} \\times 220=₹ 176\\). Even though the discount was not found, I could find the sale price directly.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-4",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 4,
+      "body": "(Finding Sales Tax) The cost of a pair of roller skates at a shop was ₹ 450 . The sales tax charged was \\(5 \\%\\). Find the bill amount.",
+      "solution": "On ₹ 100, the tax paid was ₹ 5 . \\[\\begin{aligned} \\text { On ₹ } 450, \\text { the tax paid would be } & =₹ \\frac{5}{100} \\times 450 \\\\ & =₹ 22.50 \\end{aligned}\\] ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-098.jpg?height=333&width=396&top_left_y=677&top_left_x=1471) Bill amount \\(=\\) Cost of item + Sales tax \\(=\\) ₹ \\(450+\\) ₹ \\(22.50=\\) ₹ 472.50 . ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-098.jpg?height=352&width=267&top_left_y=1099&top_left_x=208)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-5",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 5,
+      "body": "(Value Added Tax (VAT)) Waheeda bought an air cooler for ₹ 3300 including a tax of \\(10 \\%\\). Find the price of the air cooler before VAT was added.",
+      "solution": "The price includes the VAT, i.e., the value added tax. Thus, a 10\\% VAT means if the price without VAT is ₹ 100 then price including VAT is ₹ 110 . Now, when price including VAT is ₹ 110 , original price is ₹ 100 . Hence when price including tax is ₹ 3300 , the original price \\(=₹ \\frac{100}{110} \\times 3300=₹ 3000\\). ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-098.jpg?height=346&width=271&top_left_y=1529&top_left_x=204)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-6",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 6,
+      "body": "Salim bought an article for ₹ 784 which included GST of \\(12 \\%\\). What is the price of the article before GST was added?",
+      "solution": "Let original price of the article be ₹ 100 . \\(\\mathrm{GST}=12 \\%\\). Price after GST is included \\(=₹(100+12)=₹ 112\\) When the selling price is ₹ 112 then original price \\(=₹ 100\\). When the selling price is ₹784, then original price \\(=₹ \\frac{100}{12} \\times 784=₹ 700\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-7",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 7,
+      "body": "A sum of ₹ 10,000 is borrowed at a rate of interest \\(15 \\%\\) per annum for 2 ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-099.jpg?height=273&width=277&top_left_y=1153&top_left_x=1592) years. Find the simple interest on this sum and the amount to be paid at the end of 2 years.",
+      "solution": "On ₹ 100 , interest charged for 1 year is ₹ 15 . So, on ₹ 10,000 , interest charged \\(=\\frac{15}{100} \\times 10000=₹ 1500\\) Interest for 2 years \\(=₹ 1500 \\times 2=₹ 3000\\) Amount to be paid at the end of 2 years \\(=\\) Principal + Interest \\(=₹ 10000+₹ 3000=₹ 13000\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-8",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 8,
+      "body": "Find CI on ₹ 12600 for 2 years at \\(10 \\%\\) per annum compounded annually.",
+      "solution": "We have, \\(A=P\\left(1+\\frac{R}{100}\\right)^{n}\\), where Principal \\((P)=₹ 12600\\), Rate \\((R)=10\\), Number of years \\((n)=2\\) \\[=₹ 12600\\left(1+\\frac{10}{100}\\right)^{2}=₹ 12600\\left(\\frac{11}{10}\\right)^{2}\\] \\[\\begin{array}{r} =₹ 12600 \\times \\frac{11}{10} \\times \\frac{11}{10}=₹ 15246 \\\\ C I=A-P=₹ 15246-₹ 12600=₹ 2646 \\end{array}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-9",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 9,
+      "body": "The population of a city was 20,000 in the year 1997. It increased at the rate of \\(5 \\%\\) p.a. Find the population at the end of the year 2000.",
+      "solution": "There is 5\\% increase in population every year, so every new year has new population. Thus, we can say it is increasing in compounded form. Population in the beginning of 1998=20000 (we treat this as the principal for the 1st year) ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-103.jpg?height=367&width=599&top_left_y=1433&top_left_x=227) \\[\\text { Increase at } 5 \\%=\\frac{5}{100} \\times 20000=1000\\] Population in 1999 \\(=20000+1000=21000\\) \\[\\text { Increase at } 5 \\%=\\frac{5}{100} \\times 21000=1050\\] \\[\\begin{aligned} \\text { Population in } 2000 & =21000+1050 \\\\ & =22050 \\end{aligned}\\] ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-103.jpg?height=210&width=533&top_left_y=1692&top_left_x=1304) \\[\\text { Increase at } \\begin{aligned} 5 \\% & =\\frac{5}{100} \\times 22050 \\\\ & =1102.5 \\end{aligned}\\] At the end of 2000 the population \\(=22050+1102.5=23152.5\\) or, Population at the end of \\(2000=20000\\left(1+\\frac{5}{100}\\right)^{3}\\) \\[\\begin{aligned} & =20000 \\times \\frac{21}{20} \\times \\frac{21}{20} \\times \\frac{21}{20} \\\\ & =23152.5 \\end{aligned}\\] So, the estimated population \\(=23153\\). Aruna asked what is to be done if there is a decrease. The teacher then considered the following example.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-10",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Recalling Ratios and Percentages",
+      "exampleNumber": 10,
+      "body": "A TV was bought at a price of ₹ 21,000 . After one year the value of the TV was depreciated by 5\\% (Depreciation means reduction of value due to use and age of the item). Find the value of the TV after one year.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-1",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 1,
+      "body": "Add: \\(7 x y+5 y z-3 z x, 4 y z+9 z x-4 y,-3 x z+5 x-2 x y\\).",
+      "solution": "Writing the three expressions in separate rows, with like terms one below the other, we have \\[\\left.\\begin{array}{rl} & 7 x y+5 y z-3 z x \\\\ + & 4 y z+9 z x-4 y \\\\ + & -2 x y-3 z x+5 x \\\\ \\hline & 5 x y+9 y z+3 z x+5 x-4 y \\end{array} \\text { (Note } x z \\text { is same as } z x\\right)\\] Thus, the sum of the expressions is \\(5 x y+9 y z+3 z x+5 x-4 y\\). Note how the terms, \\(-4 y\\) in the second expression and \\(5 x\\) in the third expression, are carried over as they are, since they have no like terms in the other expressions.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-2",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 2,
+      "body": "Subtract \\(5 x^{2}-4 y^{2}+6 y-3\\) from \\(7 x^{2}-4 x y+8 y^{2}+5 x-3 y\\).",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-3",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 3,
+      "body": "Complete the table for area of a rectangle with given length and breadth.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-4",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 4,
+      "body": "Find the volume of each rectangular box with given length, breadth and height. \\begin{tabular}{|r|c|c|c|} \\hline & length & breadth & height \\\\ \\hline (i) & \\(2 a x\\) & \\(3 b y\\) & \\(5 c z\\) \\\\ (ii) & \\(m^{2} n\\) & \\(n^{2} p\\) & \\(p^{2} m\\) \\\\ (iii) & \\(2 q\\) & \\(4 q^{2}\\) & \\(8 q^{3}\\) \\\\ \\hline \\end{tabular}",
+      "solution": "Volume \\(=\\) length × breadth × height Hence, for (i) volume \\(=(2 a x) \\times(3 b y) \\times(5 c z)\\) \\[=2 \\times 3 \\times 5 \\times(a x) \\times(b y) \\times(c z)=30 a b c x y z\\] for (ii) volume \\(=m^{2} n \\times n^{2} p \\times p^{2} m\\) \\[=\\left(m^{2} \\times m\\right) \\times\\left(n \\times n^{2}\\right) \\times\\left(p \\times p^{2}\\right)=m^{3} n^{3} p^{3}\\] for (iii) volume \\(=2 q \\times 4 q^{2} \\times 8 q^{3}\\) \\[=2 \\times 4 \\times 8 \\times q \\times q^{2} \\times q^{3}=64 q^{6}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-5",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 5,
+      "body": "Simplify the expressions and evaluate them as directed: (i) \\(x(x-3)+2\\) for \\(x=1\\), (ii) \\(3 y(2 y-7)-3(y-4)-63\\) for \\(y=-2\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-6",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 6,
+      "body": "Add (i) \\(5 m(3-m)\\) and \\(6 m^{2}-13 m\\) (ii) \\(4 y\\left(3 y^{2}+5 y-7\\right)\\) and \\(2\\left(y^{3}-4 y^{2}+5\\right)\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-7",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 7,
+      "body": "Subtract \\(3 p q(p-q)\\) from \\(2 p q(p+q)\\).",
+      "solution": "We have \\[\\begin{aligned} & 3 p q(p-q)=3 p^{2} q-3 p q^{2} \\quad \\text { and } \\\\ & 2 p q(p+q)=2 p^{2} q+2 p q^{2} \\end{aligned}\\] Subtracting, \\[\\begin{aligned} 2 p^{2} q & +2 p q^{2} \\\\ 3 p^{2} q & -3 p q^{2} \\\\ - & + \\\\ \\hline-p^{2} q & +5 p q^{2} \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-8",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 8,
+      "body": "Multiply} (i) \\((x-4)\\) and \\((2 x+3)\\) (ii) \\((x-y)\\) and \\((3 x+5 y)\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-9",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 9,
+      "body": "Multiply} (i) \\((a+7)\\) and \\((b-5)\\) (ii) \\(\\left(a^{2}+2 b^{2}\\right)\\) and \\((5 a-3 b)\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-10",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Addition and Subtraction of Algebraic Expressions",
+      "exampleNumber": 10,
+      "body": "Simplify \\((a+b)(2 a-3 b+c)-(2 a-3 b) c\\).",
+      "solution": "We have \\[\\begin{array}{rlr} (a+b)(2 a-3 b+c) & =a(2 a-3 b+c)+b(2 a-3 b+c) & \\\\ & =2 a^{2}-3 a b+a c+2 a b-3 b^{2}+b c & \\\\ & =2 a^{2}-a b-3 b^{2}+b c+a c & \\text { (Note, }-3 a b \\text { and } 2 a b \\\\ & \\text { are like terms) } \\end{array}\\] and \\((2 a-3 b) c=2 a c-3 b c\\) Therefore, \\[\\begin{aligned} (a+b)(2 a-3 b+c)-(2 a-3 b) c & =2 a^{2}-a b-3 b^{2}+b c+a c-(2 a c-3 b c) \\\\ & =2 a^{2}-a b-3 b^{2}+b c+a c-2 a c+3 b c \\\\ & =2 a^{2}-a b-3 b^{2}+(b c+3 b c)+(a c-2 a c) \\\\ & =2 a^{2}-3 b^{2}-a b+4 b c-a c \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-4",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exampleNumber": 4,
+      "body": "An aquarium is in the form of a cuboid whose external measures are \\(80 \\mathrm{~cm} \\times 30 \\mathrm{~cm} \\times 40 \\mathrm{~cm}\\). The base, side faces and back face are to be covered with a coloured paper. Find the area of the paper needed?",
+      "solution": "The length of the aquarium \\(=l=80 \\mathrm{~cm}\\) Width of the aquarium \\(=b=30 \\mathrm{~cm}\\) Height of the aquarium \\(=h=40 \\mathrm{~cm}\\) Area of the base \\(=l \\times b=80 \\times 30=2400 \\mathrm{~cm}^{2}\\) Area of the side face \\(=b \\times h=30 \\times 40=1200 \\mathrm{~cm}^{2}\\) Area of the back face \\(=l \\times h=80 \\times 40=3200 \\mathrm{~cm}^{2}\\) ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-127.jpg?height=238&width=434&top_left_y=288&top_left_x=1440) \\[\\begin{aligned} \\text { Required area }= & \\text { Area of the base }+ \\text { area of the back face } \\\\ & +(2 \\times \\text { area of a side face }) \\\\ = & 2400+3200+(2 \\times 1200)=8000 \\mathrm{~cm}^{2} \\end{aligned}\\] Hence the area of the coloured paper required is \\(8000 \\mathrm{~cm}^{2}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-5",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exampleNumber": 5,
+      "body": "The internal measures of a cuboidal room are \\(12 \\mathrm{~m} \\times 8 \\mathrm{~m} \\times 4 \\mathrm{~m}\\). Find the total cost of whitewashing all four walls of a room, if the cost of white washing is ₹ 5 per \\(\\mathrm{m}^{2}\\). What will be the cost of white washing if the ceiling of the room is also whitewashed.",
+      "solution": "Let the length of the room \\(=l=12 \\mathrm{~m}\\) Width of the room \\(=b=8 \\mathrm{~m}\\) Height of the room \\(=h=4 \\mathrm{~m}\\) Area of the four walls of the room \\(=\\) Perimeter of the base × Height of the room \\[\\begin{aligned} & =2(l+b) \\times h=2(12+8) \\times 4 \\\\ & =2 \\times 20 \\times 4=160 \\mathrm{~m}^{2} \\end{aligned}\\] Cost of white washing per \\(\\mathrm{m}^{2}=₹ 5\\) Hence the total cost of white washing four walls of the room \\(=₹(160 \\times 5)=₹ 800\\) Area of ceiling is \\(12 \\times 8=96 \\mathrm{~m}^{2}\\) Cost of white washing the ceiling \\(=₹(96 \\times 5)=₹ 480\\) So the total cost of white washing \\(=₹(800+480)=₹ 1280\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-6",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exampleNumber": 6,
+      "body": "In a building there are 24 cylindrical pillars. The radius of each pillar is 28 cm and height is 4 m . Find the total cost of painting the curved surface area of all pillars at the rate of ₹ 8 per \\(\\mathrm{m}^{2}\\).",
+      "solution": "Radius of cylindrical pillar, \\(r=28 \\mathrm{~cm}=0.28 \\mathrm{~m}\\) height, \\(h=4 \\mathrm{~m}\\) ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-127.jpg?height=377&width=334&top_left_y=1520&top_left_x=1545) curved surface area of a cylinder \\(=2 \\pi r h\\) curved surface area of a pillar \\(=2 \\times \\frac{22}{7} \\times 0.28 \\times 4=7.04 \\mathrm{~m}^{2}\\) curved surface area of 24 such pillar \\(=7.04 \\times 24=168.96 \\mathrm{~m}^{2}\\) cost of painting an area of \\(1 \\mathrm{~m}^{2}=₹ 8\\) Therefore, cost of painting \\(1689.6 \\mathrm{~m}^{2}=168.96 \\times 8=₹ 1351.68\\) ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-127.jpg?height=317&width=181&top_left_y=1938&top_left_x=1641)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-7",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exampleNumber": 7,
+      "body": "Find the height of a cylinder whose radius is 7 cm and the total surface area is \\(968 \\mathrm{~cm}^{2}\\).",
+      "solution": "Let height of the cylinder \\(=h\\), radius \\(=r=7 \\mathrm{~cm}\\) Total surface area \\(=2 \\pi r(h+r)\\) i.e., \\[\\begin{aligned} 2 \\times \\frac{22}{7} \\times 7 \\times(7+h) & =968 \\\\ h & =15 \\mathrm{~cm} \\end{aligned}\\] Hence, the height of the cylinder is 15 cm .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-8",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exampleNumber": 8,
+      "body": "Find the height of a cuboid whose volume is \\(275 \\mathrm{~cm}^{3}\\) and base area is \\(25 \\mathrm{~cm}^{2}\\).",
+      "solution": "\\[\\begin{aligned} \\text { Volume of a cuboid } & =\\text { Base area × Height } \\\\ \\text { Hence height of the cuboid } & =\\frac{\\text { Volume of cuboid }}{\\text { Base area }} \\\\ & =\\frac{275}{25}=11 \\mathrm{~cm} \\end{aligned}\\] Height of the cuboid is 11 cm .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-9",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exampleNumber": 9,
+      "body": "A godown is in the form of a cuboid of measures \\(60 \\mathrm{~m} \\times 40 \\mathrm{~m} \\times 30 \\mathrm{~m}\\). How many cuboidal boxes can be stored in it if the volume of one box is \\(0.8 \\mathrm{~m}^{3}\\) ?",
+      "solution": "\\[\\begin{aligned} & \\text { Volume of one box }=0.8 \\mathrm{~m}^{3} \\\\ & \\text { Volume of godown }=60 \\times 40 \\times 30=72000 \\mathrm{~m}^{3} \\end{aligned}\\] Number of boxes that can be stored in the godown \\(=\\frac{\\text { Volume of the godown }}{\\text { Volume of one box }}\\) \\[=\\frac{60 \\times 40 \\times 30}{0.8}=90,000\\] Hence the number of cuboidal boxes that can be stored in the godown is 90,000 .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-10",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exampleNumber": 10,
+      "body": "A rectangular paper of width 14 cm is rolled along its width and a cylinder of radius 20 cm is formed. Find the volume of the cylinder (Fig 9.31). (Take \\(\\frac{22}{7}\\) for \\(\\pi\\) )",
+      "solution": "A cylinder is formed by rolling a rectangle about its width. Hence the width of the paper becomes height and radius of the cylinder is 20 cm . \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-132.jpg?height=286&width=855&top_left_y=1997&top_left_x=760} \\captionsetup{labelformat=empty} \\caption{Fig 9.31 Height of the cylinder \\(=h=14 \\mathrm{~cm}\\) Radius \\(=r=20 \\mathrm{~cm}\\)} \\end{figure} \\[\\begin{aligned} \\text { Volume of the cylinder } & =\\mathrm{V}=\\pi r^{2} h \\\\ & =\\frac{22}{7} \\times 20 \\times 20 \\times 14=17600 \\mathrm{~cm}^{3} \\end{aligned}\\] Hence, the volume of the cylinder is \\(17600 \\mathrm{~cm}^{3}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-11",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Solid Shapes",
+      "exampleNumber": 11,
+      "body": "A rectangular piece of paper \\(11 \\mathrm{~cm} \\times 4 \\mathrm{~cm}\\) is folded without overlapping to make a cylinder of height 4 cm . Find the volume of the cylinder.",
+      "solution": "Length of the paper becomes the perimeter of the base of the cylinder and width becomes height. Let radius of the cylinder \\(=r\\) and height \\(=h\\) Perimeter of the base of the cylinder \\(=2 \\pi r=11\\) or \\[\\begin{aligned} 2 \\times \\frac{22}{7} \\times r & =11 \\\\ r & =\\frac{7}{4} \\mathrm{~cm} \\\\ \\text { f the cylinder } & =\\mathrm{V}=\\pi r^{2} h \\\\ & =\\frac{22}{7} \\times \\frac{7}{4} \\times \\frac{7}{4} \\times 4 \\mathrm{~cm}^{3}=38.5 \\mathrm{~cm}^{3} \\end{aligned}\\] Therefore, Hence the volume of the cylinder is \\(38.5 \\mathrm{~cm}^{3}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-1",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Find the value of (i) \\(2^{-3}\\) (ii) \\(\\frac{1}{3^{-2}}\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-2",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Simplify} (i) \\((-4)^{5} \\times(-4)^{-10}\\) (ii) \\(2^{5} \\div 2^{-6}\\) ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-138.jpg?height=478&width=359&top_left_y=303&top_left_x=1524)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-3",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "Express \\(4^{-3}\\) as a power with the base 2.",
+      "solution": "We have, \\(4=2 \\times 2=2^{2}\\) Therefore, \\((4)^{-3}=(2 \\times 2)^{-3}=\\left(2^{2}\\right)^{-3}=2^{2 \\times(-3)}=2^{-6} \\quad\\left[\\left(a^{m}\\right)^{n}=a^{m n}\\right]\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-4",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "Simplify and write the answer in the exponential form. (i) \\(\\left(2^{5} \\div 2^{8}\\right)^{5} \\times 2^{-5}\\) (ii) \\((-4)^{-3} \\times(5)^{-3} \\times(-5)^{-3}\\) (iii) \\(\\frac{1}{8} \\times(3)^{-3}\\) (iv) \\((-3)^{4} \\times\\left(\\frac{5}{3}\\right)^{4}\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-5",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "Find \\(m\\) so that \\((-3)^{m+1} \\times(-3)^{5}=(-3)^{7}\\)",
+      "solution": "\\(\\quad(-3)^{m+1} \\times(-3)^{5}=(-3)^{7}\\) \\[\\begin{array}{r} (-3)^{m+1+5}=(-3)^{7} \\\\ (-3)^{m+6}=(-3)^{7} \\end{array}\\] On both the sides powers have the same base different from 1 and -1 , so their exponents must be equal. Therefore, or \\(\\begin{aligned} m+6 & =7 \\\\ m=7-6 & =1\\end{aligned}\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-6",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 6,
+      "body": "Find the value of \\(\\left(\\frac{2}{3}\\right)^{-2}\\).",
+      "solution": "\\(\\left(\\frac{2}{3}\\right)^{-2}=\\frac{2^{-2}}{3^{-2}}=\\frac{3^{2}}{2^{2}}=\\frac{9}{4}\\) \\(a^{n}=1\\) only if \\(n=0\\). This will work for any \\(a\\). For \\(a=1,1^{1}=1^{2}=1^{3}=1^{-2}=\\ldots=1\\) or \\((1)^{n}=\\) 1 for infinitely many \\(n\\). For \\(a=-1\\), \\((-1)^{0}=(-1)^{2}=(-1)^{4}=(-1)^{-2}=\\ldots=1\\) or \\((-1)^{p}=1\\) for any even integer \\(p\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-7",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 7,
+      "body": "Simplify (i) \\(\\left\\{\\left(\\frac{1}{3}\\right)^{-2}-\\left(\\frac{1}{2}\\right)^{-3}\\right\\} \\div\\left(\\frac{1}{4}\\right)^{-2} \\geq\\left(\\frac{2}{3}\\right)^{-2}=\\frac{2^{-2}}{3^{-2}}=\\frac{3^{2}}{2^{2}}=\\left(\\frac{3}{2}\\right)^{2}\\) (ii) \\(\\left(\\frac{5}{8}\\right)^{-7} \\times\\left(\\frac{8}{5}\\right)^{-5}\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-8",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 8,
+      "body": "Express the following numbers in standard form. (i) 0.000035 (ii) 4050000",
+      "solution": "(i) \\(0.000035=3.5 \\times 10^{-5}\\) (ii) \\(4050000=4.05 \\times 10^{6}\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-9",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 9,
+      "body": "Express the following numbers in usual form. (i) \\(3.52 \\times 10^{5}\\) (ii) \\(7.54 \\times 10^{-4}\\) (iii) \\(3 \\times 10^{-5}\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH11-EX-1",
+      "chapterNumber": 11,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "The cost of 5 metres of a particular quality of cloth is ₹ 210 . Tabulate the cost of \\(2,4,10\\) and 13 metres of cloth of the same type.",
+      "solution": "Suppose the length of cloth is \\(x\\) metres and its cost, in ₹, is \\(y\\). \\begin{tabular}{|c|c|c|c|c|c|} \\hline\\(x\\) & 2 & 4 & 5 & 10 & 13 \\\\ \\hline\\(y\\) & \\(y_{2}\\) & \\(y_{3}\\) & 210 & \\(y_{4}\\) & \\(y_{5}\\) \\\\ \\hline \\end{tabular} As the length of cloth increases, cost of the cloth also increases in the same ratio. It is a case of direct proportion. We make use of the relation of type \\(\\frac{x_{1}}{y_{1}}=\\frac{x_{2}}{y_{2}}\\) (i) Here \\(x_{1}=5, y_{1}=210\\) and \\(x_{2}=2\\) Therefore, \\(\\frac{x_{1}}{y_{1}}=\\frac{x_{2}}{y_{2}}\\) gives \\(\\frac{5}{210}=\\frac{2}{y_{2}}\\) or \\(5 y_{2}=2 \\times 210\\) or \\(y_{2}=\\frac{2 \\times 210}{5}=84\\) (ii) If \\(x_{3}=4\\), then \\(\\frac{5}{210}=\\frac{4}{y_{3}}\\) or \\(5 y_{3}=4 \\times 210\\) or \\(y_{3}=\\frac{4 \\times 210}{5}=168\\) [Can we use \\(\\frac{x_{2}}{y_{2}}=\\frac{x_{3}}{y_{3}}\\) here? Try!] (iii) If \\(x_{4}=10\\), then \\(\\frac{5}{210}=\\frac{10}{y_{4}}\\) or \\(y_{4}=\\frac{10 \\times 210}{5}=420\\) (iv) If \\(x_{5}=13\\), then \\(\\frac{5}{210}=\\frac{13}{y_{5}}\\) or \\(y_{5}=\\frac{13 \\times 210}{5}=546\\) ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-147.jpg?height=467&width=479&top_left_y=714&top_left_x=1400) [Note that here we can also use \\(\\frac{2}{84}\\) or \\(\\frac{4}{168}\\) or \\(\\frac{10}{420}\\) in the place of \\(\\frac{5}{210}\\) ]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH11-EX-2",
+      "chapterNumber": 11,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "An electric pole, 14 metres high, casts a shadow of 10 metres. Find the height of a tree that casts a shadow of 15 metres under similar conditions.",
+      "solution": "Let the height of the tree be \\(x\\) metres. We form a table as shown below: \\begin{tabular}{|l|l|c|} \\hline height of the object (in metres) & 14 & \\(x\\) \\\\ \\hline length of the shadow (in metres) & 10 & 15 \\\\ \\hline \\end{tabular} Note that more the height of an object, the more would be the length of its shadow. Hence, this is a case of direct proportion. That is, \\(\\frac{x_{1}}{y_{1}}=\\frac{x_{2}}{y_{2}}\\) We have \\(\\frac{14}{10}=\\frac{x}{15}\\) (Why?) or \\(\\quad \\frac{14}{10} \\times 15=x\\) or \\(\\quad \\frac{14 \\times 3}{2}=x\\) So \\(21=x\\) Thus, height of the tree is 21 metres. Alternately, we can write \\(\\frac{x_{1}}{y_{1}}=\\frac{x_{2}}{y_{2}}\\) as \\(\\frac{x_{1}}{x_{2}}=\\frac{y_{1}}{y_{2}}\\) ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-147.jpg?height=597&width=380&top_left_y=1872&top_left_x=1366) so \\(\\quad x_{1}: x_{2}=y_{1}: y_{2}\\) or \\(\\quad 14: x=10: 15\\) Therefore, \\(\\quad 10 \\times x=15 \\times 14\\) or \\[x=\\frac{15 \\times 14}{10}=21\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH11-EX-3",
+      "chapterNumber": 11,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "If the weight of 12 sheets of thick paper is 40 grams, how many sheets of the same paper would weigh \\(2 \\frac{1}{2}\\) kilograms?",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH11-EX-4",
+      "chapterNumber": 11,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "A train is moving at a uniform speed of \\(75 \\mathrm{~km} / \\mathrm{hour}\\). (i) How far will it travel in 20 minutes? (ii) Find the time required to cover a distance of 250 km .",
+      "solution": "Let the distance travelled (in km ) in 20 minutes be \\(x\\) and time taken (in minutes) to cover 250 km be \\(y\\). ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-148.jpg?height=166&width=385&top_left_y=2303&top_left_x=286) \\begin{tabular}{|l|l|l|c|} \\hline Distance travelled (in km) & 75 & \\(x\\) & 250 \\\\ \\hline Time taken (in minutes) & 60 & 20 & \\(y\\) \\\\ \\hline \\end{tabular} Since the speed is uniform, therefore, the distance covered would be directly proportional to time. (i) We have \\(\\frac{75}{60}=\\frac{x}{20}\\) \\[\\begin{aligned} & \\text { or } \\quad \\frac{75}{60} \\times 20=x \\\\ & \\text { or } \\quad x=25 \\end{aligned}\\] So, the train will cover a distance of 25 km in 20 minutes. (ii) Also, \\(\\frac{75}{60}=\\frac{250}{y}\\) or \\(\\quad y=\\frac{250 \\times 60}{75}=200\\) minutes or 3 hours 20 minutes. ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-149.jpg?height=450&width=478&top_left_y=428&top_left_x=1391) Therefore, 3 hours 20 minutes will be required to cover a distance of 250 kilometres. Alternatively, when \\(x\\) is known, then one can determine \\(y\\) from the relation \\(\\frac{x}{20}=\\frac{250}{y}\\). You know that a map is a miniature representation of a very large region. A scale is usually given at the bottom of the map. The scale shows a relationship between actual length and the length represented on the map. The scale of the map is thus the ratio of the distance between two points on the map to the actual distance between two points on the large region. For example, if 1 cm on the map represents 8 km of actual distance [i.e., the scale is \\(1 \\mathrm{~cm}: 8 \\mathrm{~km}\\) or \\(1: 800,000]\\) then 2 cm on the same map will represent 16 km . Hence, we can say that scale of a map is based on the concept of direct proportion.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH11-EX-5",
+      "chapterNumber": 11,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "The scale of a map is given as 1:30000000. Two cities are 4 cm apart on the map. Find the actual distance between them.",
+      "solution": "Let the map distance be \\(x \\mathrm{~cm}\\) and actual distance be \\(y \\mathrm{~cm}\\), then \\[1: 30000000=x: y\\] or \\[\\frac{1}{3 \\times 10^{7}}=\\frac{x}{y}\\] Since \\(\\quad x=4\\) so, \\(\\quad \\frac{1}{3 \\times 10^{7}}=\\frac{4}{y}\\) or \\[y=4 \\times 3 \\times 10^{7}=12 \\times 10^{7} \\mathrm{~cm}=1200 \\mathrm{~km} .\\] ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-149.jpg?height=442&width=423&top_left_y=1646&top_left_x=1446) Thus, two cities, which are 4 cm apart on the map, are actually 1200 km away from each other.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH11-EX-7",
+      "chapterNumber": 11,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 7,
+      "body": "6 pipes are required to fill a tank in 1 hour 20 minutes. How long will it take if only 5 pipes of the same type are used?",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH11-EX-8",
+      "chapterNumber": 11,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 8,
+      "body": "There are 100 students in a hostel. Food provision for them is for 20 days. How long will these provisions last, if 25 more students join the group?",
+      "solution": "Suppose the provisions last for \\(y\\) days when the number of students is 125 . We have the following table. \\begin{tabular}{|l|c|c|} \\hline Number of students & 100 & 125 \\\\ \\hline Number of days & 20 & \\(y\\) \\\\ \\hline \\end{tabular} Note that more the number of students, the sooner would the provisions exhaust. Therefore, this is a case of inverse proportion. \\(\\begin{array}{ll}\\text { So, } & 100 \\times 20=125 \\times y \\\\ \\text { or } & \\frac{100 \\times 20}{125}=y \\text { or } 16=y\\end{array}\\) ![](https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-154.jpg?height=461&width=440&top_left_y=1320&top_left_x=1412) Thus, the provisions will last for 16 days, if 25 more students join the hostel. Alternately, we can write \\(x_{1} y_{1}=x_{2} y_{2} \\quad\\) as \\(\\quad \\frac{x_{1}}{x_{2}}=\\frac{y_{2}}{y_{1}}\\). That is, \\(\\quad x_{1}: x_{2}=y_{2}: y_{1}\\) or \\(\\quad 100: 125=y: 20\\) or \\(\\quad y=\\frac{100 \\times 20}{125}=16\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH11-EX-9",
+      "chapterNumber": 11,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 9,
+      "body": "If 15 workers can build a wall in 48 hours, how many workers will be required to do the same work in 30 hours?",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-1",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Factorise \\(12 a^{2} b+15 a b^{2}\\)",
+      "solution": "We have \\(12 a^{2} b=2 \\times 2 \\times 3 \\times a \\times a \\times b\\) \\[15 a b^{2}=3 \\times 5 \\times a \\times b \\times b\\] The two terms have 3 , and \\(b\\) as common factors. Therefore, \\[\\begin{aligned} 12 a^{2} b+15 a b^{2} & =(3 \\times a \\times b \\times 2 \\times 2 \\times a)+(3 \\times a \\times b \\times 5 \\times b) \\\\ & =3 \\times a \\times b \\times[(2 \\times 2 \\times a)+(5 \\times b)] \\quad \\text { (combining the terms) } \\\\ & =3 a b \\times(4 a+5 b) \\\\ & =3 a b(4 a+5 b) \\quad \\text { (required factor form) } \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-2",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Factorise \\(10 x^{2}-18 x^{3}+14 x^{4}\\)",
+      "solution": "\\[\\begin{aligned} 10 x^{2} & =2 \\times 5 \\times x \\times x \\\\ 18 x^{3} & =2 \\times 3 \\times 3 \\times x \\times x \\times x \\\\ 14 x^{4} & =2 \\times 7 \\times x \\times x \\times x \\times x \\end{aligned}\\] The common factors of the three terms are \\(2, x\\) and \\(x\\). Therefore, \\(10 x^{2}-18 x^{3}+14 x^{4}=(2 \\times x \\times x \\times 5)-(2 \\times x \\times x \\times 3 \\times 3 \\times x)\\) \\[\\begin{aligned} & +(2 \\times x \\times x \\times 7 \\times x \\times x) \\\\ = & 2 \\times x \\times x \\times[(5-(3 \\times 3 \\times x)+(7 \\times x \\times x)](\\text { combining the three terms }) \\\\ = & 2 x^{2} \\times\\left(5-9 x+7 x^{2}\\right)=2 x^{2}\\left(7 x^{2}-9 x+5\\right) \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-3",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "Factorise \\(6 x y-4 y+6-9 x\\).",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-4",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "Factorise \\(x^{2}+8 x+16\\)",
+      "solution": "Observe the expression; it has three terms. Therefore, it does not fit Identity III. Also, it's first and third terms are perfect squares with a positive sign before the middle term. So, it is of the form \\(a^{2}+2 a b+b^{2}\\) where \\(a=x\\) and \\(b=4\\) such that \\[\\begin{aligned} a^{2}+2 a b+b^{2} & =x^{2}+2(x)(4)+4^{2} \\\\ & =x^{2}+8 x+16 \\end{aligned}\\] Since \\[a^{2}+2 a b+b^{2}=(a+b)^{2},\\] by comparison \\[x^{2}+8 x+16=(x+4)^{2} \\text { (the required factorisation) }\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-5",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "Factorise \\(4 y^{2}-12 y+9\\)",
+      "solution": "Observe \\(4 y^{2}=(2 y)^{2}, 9=3^{2}\\) and \\(12 y=2 \\times 3 \\times(2 y)\\) Therefore, \\[\\begin{aligned} 4 y^{2}-12 y+9 & =(2 y)^{2}-2 \\times 3 \\times(2 y)+(3)^{2} \\\\ & =(2 y-3)^{2} \\quad \\text { (required factorisation) } \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-6",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 6,
+      "body": "Factorise \\(49 p^{2}-36\\)",
+      "solution": "There are two terms; both are squares and the second is negative. The expression is of the form ( \\(a^{2}-b^{2}\\) ). Identity III is applicable here; \\[\\begin{aligned} 49 p^{2}-36 & =(7 p)^{2}-(6)^{2} \\\\ & =(7 p-6)(7 p+6) \\text { (required factorisation) } \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-7",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 7,
+      "body": "Factorise \\(a^{2}-2 a b+b^{2}-c^{2}\\)",
+      "solution": "The first three terms of the given expression form \\((a-b)^{2}\\). The fourth term is a square. So the expression can be reduced to a difference of two squares. Thus, \\[\\begin{aligned} a^{2}-2 a b+b^{2}-c^{2} & =(a-b)^{2}-c^{2} & \\text { (Applying Identity II) } \\\\ & =[(a-b)-c)((a-b)+c)] & \\text { (Applying Identity III) } \\\\ & =(a-b-c)(a-b+c) & \\text { (required factorisation) } \\end{aligned}\\] Notice, how we applied two identities one after the other to obtain the required factorisation.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-8",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 8,
+      "body": "Factorise \\(m^{4}-256\\)",
+      "solution": "We note \\[m^{4}=\\left(m^{2}\\right)^{2} \\text { and } 256=(16)^{2}\\] Thus, the given expression fits Identity III. Therefore, \\[\\begin{aligned} m^{4}-256 & =\\left(m^{2}\\right)^{2}-(16)^{2} \\\\ & =\\left(m^{2}-16\\right)\\left(m^{2}+16\\right) \\quad[(\\text { using Identity (III) }] \\end{aligned}\\] Now, \\(\\left(m^{2}+16\\right)\\) cannot be factorised further, but \\(\\left(m^{2}-16\\right)\\) is factorisable again as per Identity III. Therefore, \\[\\begin{aligned} m^{2}-16 & =m^{2}-4^{2} \\\\ & =(m-4)(m+4) \\\\ m^{4}-256 & =(m-4)(m+4)\\left(m^{2}+16\\right) \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-9",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 9,
+      "body": "Factorise \\(x^{2}+5 x+6\\)",
+      "solution": "If we compare the R.H.S. of Identity (IV) with \\(x^{2}+5 x+6\\), we find \\(a b=6\\), and \\(a+b=5\\). From this, we must obtain \\(a\\) and \\(b\\). The factors then will be \\((x+a)\\) and \\((x+b)\\). If \\(a b=6\\), it means that \\(a\\) and \\(b\\) are factors of 6. Let us try \\(a=6, b=1\\). For these values \\(a+b=7\\), and not 5 , So this choice is not right. Let us try \\(a=2, b=3\\). For this \\(a+b=5\\) exactly as required. The factorised form of this given expression is then \\((x+2)(x+3)\\). In general, for factorising an algebraic expression of the type \\(x^{2}+p x+q\\), we find two factors \\(a\\) and \\(b\\) of \\(q\\) (i.e., the constant term) such that \\[a b=q \\quad \\text { and } \\quad a+b=p\\] Then, the expression becomes \\[x^{2}+(a+b) x+a b\\] or \\[x^{2}+a x+b x+a b\\] or \\[x(x+a)+b(x+a)\\] or \\[(x+a)(x+b)\\] which are the required factors.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-10",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 10,
+      "body": "Find the factors of \\(y^{2}-7 y+12\\).",
+      "solution": "We note \\(12=3 \\times 4\\) and \\(3+4=7\\). Therefore, \\[\\begin{aligned} y^{2}-7 y+12 & =y^{2}-3 y-4 y+12 \\\\ & =y(y-3)-4(y-3)=(y-3)(y-4) \\end{aligned}\\] Note, this time we did not compare the expression with that in Identity (IV) to identify \\(a\\) and \\(b\\). After sufficient practice you may not need to compare the given expressions for their factorisation with the expressions in the identities; instead you can proceed directly as we did above.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-11",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 11,
+      "body": "Obtain the factors of \\(z^{2}-4 z-12\\).",
+      "solution": "Here \\(a b=-12\\); this means one of \\(a\\) and \\(b\\) is negative. Further, \\(a+b=-4\\), this means the one with larger numerical value is negative. We try \\(a=-4, b=3\\); but this will not work, since \\(a+b=-1\\). Next possible values are \\(a=-6, b=2\\), so that \\(a+b=-4\\) as required. Hence, \\[\\begin{aligned} z^{2}-4 z-12 & =z^{2}-6 z+2 z-12 \\\\ & =z(z-6)+2(z-6) \\\\ & =(z-6)(z+2) \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-12",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 12,
+      "body": "Find the factors of \\(3 m^{2}+9 m+6\\).",
+      "solution": "We notice that 3 is a common factor of all the terms. Therefore, \\[3 m^{2}+9 m+6=3\\left(m^{2}+3 m+2\\right)\\] Now, \\[\\begin{aligned} m^{2}+3 m+2 & =m^{2}+m+2 m+2 \\\\ & =m(m+1)+2(m+1) \\\\ & =(m+1)(m+2) \\end{aligned}\\] Therefore, \\[3 m^{2}+9 m+6=3(m+1)(m+2)\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-13",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 13,
+      "body": "Do the following divisions. (i) \\(-20 x^{4} \\div 10 x^{2}\\) (ii) \\(7 x^{2} y^{2} z^{2} \\div 14 x y z\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-14",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 14,
+      "body": "Divide \\(24\\left(x^{2} y z+x y^{2} z+x y z^{2}\\right)\\) by \\(8 x y z\\) using both the methods.",
+      "solution": "\\(24\\left(x^{2} y z+x y^{2} z+x y z^{2}\\right)\\) \\[\\begin{aligned} & =2 \\times 2 \\times 2 \\times 3 \\times[(x \\times x \\times y \\times z)+(x \\times y \\times y \\times z)+(x \\times y \\times z \\times z)] \\\\ & =2 \\times 2 \\times 2 \\times 3 \\times x \\times y \\times z \\times(x+y+z)=8 \\times 3 \\times x y z \\times(x+y+z) \\end{aligned}\\] (By taking out the Therefore, \\(24\\left(x^{2} y z+x y^{2} z+x y z^{2}\\right) \\div 8 x y z\\) common factor) \\[=\\frac{8 \\times 3 \\times x y z \\times(x+y+z)}{8 \\times x y z}=3 \\times(x+y+z)=3(x+y+z)\\] Alternately, \\(24\\left(x^{2} y z+x y^{2} z+x y z^{2}\\right) \\div 8 x y z=\\frac{24 x^{2} y z}{8 x y z}+\\frac{24 x y^{2} z}{8 x y z}+\\frac{24 x y z^{2}}{8 x y z}\\) \\[=3 x+3 y+3 z=3(x+y+z)\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-15",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 15,
+      "body": "Divide \\(44\\left(x^{4}-5 x^{3}-24 x^{2}\\right)\\) by \\(11 x(x-8)\\)",
+      "solution": "Factorising \\(44\\left(x^{4}-5 x^{3}-24 x^{2}\\right)\\), we get \\[44\\left(x^{4}-5 x^{3}-24 x^{2}\\right)=2 \\times 2 \\times 11 \\times x^{2}\\left(x^{2}-5 x-24\\right)\\] (taking the common factor \\(x^{2}\\) out of the bracket) Therefore, \\(44\\left(x^{4}-5 x^{3}-24 x^{2}\\right) \\div 11 x(x-8)\\) \\[=\\frac{2 \\times 2 \\times 11 \\times x \\times x \\times(x+3) \\times(x-8)}{11 \\times x \\times(x-8)}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-16",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 16,
+      "body": "Divide \\(z\\left(5 z^{2}-80\\right)\\) by \\(5 z(z+4)\\) We cancel the factors 11, \\(x\\) and \\((x-8)\\) common to both the numerator and denominator.",
+      "solution": "Dividend \\(=z\\left(5 z^{2}-80\\right)\\) (Cancelling the factor \\((x+2)\\) ) \\[=\\frac{7 x(x+2)}{x+2}=7 x\\] \\(=7 x \\quad\\) (Cancelling the factor \\((x+2)\\) ) \\[\\begin{aligned} & =2 \\times 2 \\times 11 \\times x^{2}\\left(x^{2}-8 x+3 x-24\\right) \\\\ & =2 \\times 2 \\times 11 \\times x^{2}[x(x-8)+3(x-8)] \\\\ & =2 \\times 2 \\times 11 \\times x^{2}(x+3)(x-8) \\end{aligned}\\] \\(2 \\times\\) \\[x(\\] ) \\[\\begin{aligned} & =z\\left[\\left(5 \\times z^{2}\\right)-(5 \\times 16)\\right] \\\\ & =z \\times 5 \\times\\left(z^{2}-16\\right) \\\\ & =5 z \\times(z+4)(z-4) \\end{aligned}\\] [using the identity \\[\\left.a^{2}-b^{2}=(a+b)(a-b)\\right]\\] Thus, \\[z\\left(5 z^{2}-80\\right) \\div 5 z(z+4)=\\frac{5 z(z-4)(z+4)}{5 z(z+4)}=(z-4)\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-1",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "(A graph on \"performance\")} The given graph (Fig 13.3) represents the total runs scored by two batsmen A and B , during each of the ten different matches in the year 2007. Study the graph and answer the following questions. (i) What information is given on the two axes? (ii) Which line shows the runs scored by batsman A ? (iii) Were the run scored by them same in any match in 2007? If so, in which match? (iii) Among the two batsmen, who is steadier? How do you judge it?",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-2",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "The given graph (Fig 13.4) describes the distances of a car from a city P at different times when it is travelling from City P to City Q, which are 350 km apart. Study the graph and answer the following: (i) What information is given on the two axes? (ii) From where and when did the car begin its journey? (iii) How far did the car go in the first hour? \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-173.jpg?height=958&width=801&top_left_y=317&top_left_x=1078} \\captionsetup{labelformat=empty} \\caption{Fig 13.3} \\end{figure} (iv) How far did the car go during (i) the 2nd hour? (ii) the 3rd hour? (v) Was the speed same during the first three hours? How do you know it? (vi) Did the car stop for some duration at any place? Justify your answer. (vii) When did the car reach City Q? \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-173.jpg?height=807&width=902&top_left_y=1607&top_left_x=459} \\captionsetup{labelformat=empty} \\caption{Fig 13.4} \\end{figure}",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-3",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "(Quantity and Cost)} The following table gives the quantity of petrol and its cost. \\begin{tabular}{|l|c|c|c|c|} \\hline No. of Litres of petrol & 10 & 15 & 20 & 25 \\\\ \\hline Cost of petrol in ₹ & 500 & 750 & 1000 & 1250 \\\\ \\hline \\end{tabular} Plot a graph to show the data.",
+      "solution": "(i) Let us take a suitable scale on both the axes (Fig 13.5). \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-178.jpg?height=1021&width=1190&top_left_y=1456&top_left_x=497} \\captionsetup{labelformat=empty} \\caption{Fig 13.5} \\end{figure} (ii) Mark number of litres along the horizontal axis. (iii) Mark cost of petrol along the vertical axis. (iv) Plot the points: \\((10,500),(15,750),(20,1000),(25,1250)\\). (v) Join the points. We find that the graph is a line. (It is a linear graph). Why does this graph pass through the origin? Think about it. This graph can help us to estimate a few things. Suppose we want to find the amount needed to buy 12 litres of petrol. Locate 12 on the horizontal axis. Follow the vertical line through 12 till you meet the graph at P (say). From P you take a horizontal line to meet the vertical axis. This meeting point provides the answer. This is the graph of a situation in which two quantities, are in direct variation. (How ?). In such situations, the graphs will always be linear.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-4",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "(Principal and Simple Interest)} A bank gives 10\\% Simple Interest (S.I.) on deposits by senior citizens. Draw a graph to illustrate the relation between the sum deposited and simple interest earned. Find from your graph (a) the annual interest obtainable for an investment of ₹ 250 . (b) the investment one has to make to get an annual simple interest of ₹ 70 .",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-4",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": ", a case of direct variation? (b) Corresponding to ₹ 70 on the vertical axis, we get the sum to be ₹ 700 on the horizontal axis. \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/2dba4960-d233-4c45-9dbe-6e0a59dba658-180.jpg?height=785&width=858&top_left_y=1299&top_left_x=689} \\captionsetup{labelformat=empty} \\caption{Fig 13.6} \\end{figure}",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-5",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "(Time and Distance)} Ajit can ride a scooter constantly at a speed of \\(30 \\mathrm{kms} /\\) hour . Draw a time-distance graph for this situation. Use it to find (i) the time taken by Ajit to ride 75 km . (ii) the distance covered by Ajit in \\(3 \\frac{1}{2}\\) hours.",
+      "solution": "",
+      "sourceRef": "mmd"
+    }
+  ]
+}

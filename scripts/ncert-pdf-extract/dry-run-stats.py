@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-OUTPUT_DIR = Path(__file__).parent / "output"
+OUTPUT_DIR = Path(__file__).parent / "output" / "from_mmd"
 GRADES = [7, 8, 9, 10, 11, 12]
 
 # Anthropic Claude Haiku 4.5 (2026 pricing, verified via web search 2026-05-15).

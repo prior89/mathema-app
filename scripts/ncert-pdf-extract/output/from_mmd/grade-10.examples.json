@@ -1,0 +1,1230 @@
+{
+  "version": "ncert-grade-10-examples@2026-05",
+  "ncertClass": "CLASS_10",
+  "examples": [
+    {
+      "exampleKey": "NCERT-CH01-EX-1",
+      "chapterNumber": 1,
+      "chapterTitleHint": "The Fundamental Theorem of Arithmetic",
+      "exampleNumber": 1,
+      "body": "Consider the numbers \\(4^{n}\\), where \\(n\\) is a natural number. Check whether there is any value of \\(n\\) for which \\(4^{n}\\) ends with the digit zero.",
+      "solution": "If the number \\(4^{n}\\), for any \\(n\\), were to end with the digit zero, then it would be divisible by 5 . That is, the prime factorisation of \\(4^{n}\\) would contain the prime 5 . This is not possible because \\(4^{n}=(2)^{2 n}\\); so the only prime in the factorisation of \\(4^{n}\\) is 2 . So, the uniqueness of the Fundamental Theorem of Arithmetic guarantees that there are no other primes in the factorisation of \\(4^{n}\\). So, there is no natural number \\(n\\) for which \\(4^{n}\\) ends with the digit zero. You have already learnt how to find the HCF and LCM of two positive integers using the Fundamental Theorem of Arithmetic in earlier classes, without realising it! This method is also called the prime factorisation method. Let us recall this method through an example.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH01-EX-2",
+      "chapterNumber": 1,
+      "chapterTitleHint": "The Fundamental Theorem of Arithmetic",
+      "exampleNumber": 2,
+      "body": "Find the LCM and HCF of 6 and 20 by the prime factorisation method.",
+      "solution": "We have: \\(\\quad 6=2^{1} \\times 3^{1}\\) and \\(20=2 \\times 2 \\times 5=2^{2} \\times 5^{1}\\). You can find \\(\\operatorname{HCF}(6,20)=2\\) and \\(\\operatorname{LCM}(6,20)=2 \\times 2 \\times 3 \\times 5=60\\), as done in your earlier classes. Note that \\(\\operatorname{HCF}(6,20)=2^{1}=\\) Product of the smallest power of each common prime factor in the numbers. \\(\\operatorname{LCM}(6,20)=2^{2} \\times 3^{1} \\times 5^{1}=\\) Product of the greatest power of each prime factor, involved in the numbers. From the example above, you might have noticed that \\(\\operatorname{HCF}(6,20) \\times \\operatorname{LCM}(6,20) =6 \\times 20\\). In fact, we can verify that for any two positive integers \\(\\boldsymbol{a}\\) and \\(\\boldsymbol{b}\\), \\(\\operatorname{HCF}(\\boldsymbol{a}, \\boldsymbol{b}) \\times \\operatorname{LCM}(\\boldsymbol{a}, \\boldsymbol{b})=\\boldsymbol{a} \\times \\boldsymbol{b}\\). We can use this result to find the LCM of two positive integers, if we have already found the HCF of the two positive integers.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH01-EX-3",
+      "chapterNumber": 1,
+      "chapterTitleHint": "The Fundamental Theorem of Arithmetic",
+      "exampleNumber": 3,
+      "body": "Find the HCF of 96 and 404 by the prime factorisation method. Hence, find their LCM.",
+      "solution": "The prime factorisation of 96 and 404 gives : \\[96=2^{5} \\times 3,404=2^{2} \\times 101\\] Therefore, the HCF of these two integers is \\(2^{2}=4\\). Also, \\[\\operatorname{LCM}(96,404)=\\frac{96 \\times 404}{\\operatorname{HCF}(96,404)}=\\frac{96 \\times 404}{4}=9696\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH01-EX-4",
+      "chapterNumber": 1,
+      "chapterTitleHint": "The Fundamental Theorem of Arithmetic",
+      "exampleNumber": 4,
+      "body": "Find the HCF and LCM of 6, 72 and 120, using the prime factorisation method.",
+      "solution": "We have : \\[6=2 \\times 3,72=2^{3} \\times 3^{2}, 120=2^{3} \\times 3 \\times 5\\] Here, \\(2^{1}\\) and \\(3^{1}\\) are the smallest powers of the common factors 2 and 3 , respectively. So, \\[\\operatorname{HCF}(6,72,120)=2^{1} \\times 3^{1}=2 \\times 3=6\\] \\(2^{3}, 3^{2}\\) and \\(5^{1}\\) are the greatest powers of the prime factors 2,3 and 5 respectively involved in the three numbers. So, \\[\\operatorname{LCM}(6,72,120)=2^{3} \\times 3^{2} \\times 5^{1}=360\\] Remark : Notice, \\(6 \\times 72 \\times 120 \\neq \\operatorname{HCF}(6,72,120) \\times \\operatorname{LCM}(6,72,120)\\). So, the product of three numbers is not equal to the product of their HCF and LCM.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH01-EX-5",
+      "chapterNumber": 1,
+      "chapterTitleHint": "The Fundamental Theorem of Arithmetic",
+      "exampleNumber": 5,
+      "body": "Prove that \\(\\sqrt{3}\\) is irrational.",
+      "solution": "Let us assume, to the contrary, that \\(\\sqrt{3}\\) is rational. That is, we can find integers \\(a\\) and \\(b(\\neq 0)\\) such that \\(\\sqrt{3}=\\frac{a}{b}\\). Suppose \\(a\\) and \\(b\\) have a common factor other than 1 , then we can divide by the common factor, and assume that \\(a\\) and \\(b\\) are coprime. So, \\(b \\sqrt{3}=a\\). Squaring on both sides, and rearranging, we get \\(3 b^{2}=a^{2}\\). Therefore, \\(a^{2}\\) is divisible by 3 , and by Theorem 1.2, it follows that \\(a\\) is also divisible by 3 . So, we can write \\(a=3 c\\) for some integer \\(c\\). Substituting for \\(a\\), we get \\(3 b^{2}=9 c^{2}\\), that is, \\(b^{2}=3 c^{2}\\). This means that \\(b^{2}\\) is divisible by 3 , and so \\(b\\) is also divisible by 3 (using Theorem 1.2 with \\(p=3\\) ). Therefore, \\(a\\) and \\(b\\) have at least 3 as a common factor. But this contradicts the fact that \\(a\\) and \\(b\\) are coprime. This contradiction has arisen because of our incorrect assumption that \\(\\sqrt{3}\\) is rational. So, we conclude that \\(\\sqrt{3}\\) is irrational. In Class IX, we mentioned that : - the sum or difference of a rational and an irrational number is irrational and - the product and quotient of a non-zero rational and irrational number is irrational. We prove some particular cases here.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH01-EX-6",
+      "chapterNumber": 1,
+      "chapterTitleHint": "The Fundamental Theorem of Arithmetic",
+      "exampleNumber": 6,
+      "body": "Show that \\(5-\\sqrt{3}\\) is irrational.",
+      "solution": "Let us assume, to the contrary, that \\(5-\\sqrt{3}\\) is rational. That is, we can find coprime \\(a\\) and \\(b(b \\neq 0)\\) such that \\(5-\\sqrt{3}=\\frac{a}{b}\\). Therefore, \\(5-\\frac{a}{b}=\\sqrt{3}\\). Rearranging this equation, we get \\(\\sqrt{3}=5-\\frac{a}{b}=\\frac{5 b-a}{b}\\). Since \\(a\\) and \\(b\\) are integers, we get \\(5-\\frac{a}{b}\\) is rational, and so \\(\\sqrt{3}\\) is rational. But this contradicts the fact that \\(\\sqrt{3}\\) is irrational. This contradiction has arisen because of our incorrect assumption that \\(5-\\sqrt{3}\\) is rational. So, we conclude that \\(5-\\sqrt{3}\\) is irrational.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH01-EX-7",
+      "chapterNumber": 1,
+      "chapterTitleHint": "The Fundamental Theorem of Arithmetic",
+      "exampleNumber": 7,
+      "body": "Show that \\(3 \\sqrt{2}\\) is irrational.",
+      "solution": "Let us assume, to the contrary, that \\(3 \\sqrt{2}\\) is rational. That is, we can find coprime \\(a\\) and \\(b(b \\neq 0)\\) such that \\(3 \\sqrt{2}=\\frac{a}{b}\\). Rearranging, we get \\(\\sqrt{2}=\\frac{a}{3 b}\\). Since 3, \\(a\\) and \\(b\\) are integers, \\(\\frac{a}{3 b}\\) is rational, and so \\(\\sqrt{2}\\) is rational. But this contradicts the fact that \\(\\sqrt{2}\\) is irrational. So, we conclude that \\(3 \\sqrt{2}\\) is irrational.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH01-EX-8",
+      "chapterNumber": 1,
+      "chapterTitleHint": "The Fundamental Theorem of Arithmetic",
+      "exampleNumber": 8,
+      "body": "). However, the following results hold good for three numbers \\(p, q\\) and \\(r\\) : \\[\\begin{aligned} \\operatorname{LCM}(p, q, r) & =\\frac{p \\cdot q \\cdot r \\cdot \\operatorname{HCF}(p, q, r)}{\\operatorname{HCF}(p, q) \\cdot \\operatorname{HCF}(q, r) \\cdot \\operatorname{HCF}(p, r)} \\\\ \\operatorname{HCF}(p, q, r) & =\\frac{p \\cdot q \\cdot r \\cdot \\operatorname{LCM}(p, q, r)}{\\operatorname{LCM}(p, q) \\cdot \\operatorname{LCM}(q, r) \\cdot \\operatorname{LCM}(p, r)} \\end{aligned}\\]",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH02-EX-1",
+      "chapterNumber": 2,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Look at the graphs in Fig. 2.9 given below. Each is the graph of \\(y=p(x)\\), where \\(p(x)\\) is a polynomial. For each of the graphs, find the number of zeroes of \\(p(x)\\). \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-063.jpg?height=847&width=1300&top_left_y=959&top_left_x=166} \\captionsetup{labelformat=empty} \\caption{Fig. 2.9} \\end{figure}",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH02-EX-2",
+      "chapterNumber": 2,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Find the zeroes of the quadratic polynomial \\(x^{2}+7 x+10\\), and verify the relationship between the zeroes and the coefficients.",
+      "solution": "We have \\[x^{2}+7 x+10=(x+2)(x+5)\\] So, the value of \\(x^{2}+7 x+10\\) is zero when \\(x+2=0\\) or \\(x+5=0\\), i.e., when \\(x=-2\\) or \\(x=-5\\). Therefore, the zeroes of \\(x^{2}+7 x+10\\) are -2 and -5 . Now, \\[\\begin{gathered} \\text { sum of zeroes }=-2+(-5)=-(7)=\\frac{-(7)}{1}=\\frac{-(\\text { Coefficient of } x)}{\\text { Coefficient of } x^{2}} \\text {, } \\\\ \\text { product of zeroes }=(-2) \\times(-5)=10=\\frac{10}{1}=\\frac{\\text { Constant term }}{\\text { Coefficient of } x^{2}} \\text {. } \\end{gathered}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH02-EX-3",
+      "chapterNumber": 2,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "Find the zeroes of the polynomial \\(x^{2}-3\\) and verify the relationship between the zeroes and the coefficients.",
+      "solution": "Recall the identity \\(a^{2}-b^{2}=(a-b)(a+b)\\). Using it, we can write: \\[x^{2}-3=(x-\\sqrt{3})(x+\\sqrt{3})\\] So, the value of \\(x^{2}-3\\) is zero when \\(x=\\sqrt{3}\\) or \\(x=-\\sqrt{3}\\). Therefore, the zeroes of \\(x^{2}-3\\) are \\(\\sqrt{3}\\) and \\(-\\sqrt{3}\\). Now, \\[\\begin{gathered} \\text { sum of zeroes }=\\sqrt{3}-\\sqrt{3}=0=\\frac{-(\\text { Coefficient of } x)}{\\text { Coefficient of } x^{2}} \\\\ \\text { product of zeroes }=(\\sqrt{3})(-\\sqrt{3})=-3=\\frac{-3}{1}=\\frac{\\text { Constant term }}{\\text { Coefficient of } x^{2}} . \\end{gathered}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH02-EX-4",
+      "chapterNumber": 2,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "Find a quadratic polynomial, the sum and product of whose zeroes are -3 and 2, respectively.",
+      "solution": "Let the quadratic polynomial be \\(a x^{2}+b x+c\\), and its zeroes be \\(\\alpha\\) and \\(\\beta\\). We have \\[\\alpha+\\beta=-3=\\frac{-b}{a},\\] and \\[\\alpha \\beta=2=\\frac{c}{a} .\\] If \\(a=1\\), then \\(b=3\\) and \\(c=2\\). So, one quadratic polynomial which fits the given conditions is \\(x^{2}+3 x+2\\). You can check that any other quadratic polynomial that fits these conditions will be of the form \\(k\\left(x^{2}+3 x+2\\right)\\), where \\(k\\) is real. Let us now look at cubic polynomials. Do you think a similar relation holds between the zeroes of a cubic polynomial and its coefficients? Let us consider \\(p(x)=2 x^{3}-5 x^{2}-14 x+8\\). You can check that \\(p(x)=0\\) for \\(x=4,-2, \\frac{1}{2}\\). Since \\(p(x)\\) can have atmost three zeroes, these are the zeores of \\(2 x^{3}-5 x^{2}-14 x+8\\). Now, \\[\\begin{gathered} \\text { sum of the zeroes }=4+(-2)+\\frac{1}{2}=\\frac{5}{2}=\\frac{-(-5)}{2}=\\frac{-\\left(\\text { Coefficient of } x^{2}\\right)}{\\text { Coefficient of } x^{3}}, \\\\ \\text { product of the zeroes }=4 \\times(-2) \\times \\frac{1}{2}=-4=\\frac{-8}{2}=\\frac{- \\text { Constant term }}{\\text { Coefficient of } x^{3}} . \\end{gathered}\\] However, there is one more relationship here. Consider the sum of the products of the zeroes taken two at a time. We have \\[\\begin{aligned} \\{4 \\times(-2)\\}+\\{(-2) & \\left.\\times \\frac{1}{2}\\right\\}+\\left\\{\\frac{1}{2} \\times 4\\right\\} \\\\ & =-8-1+2=-7=\\frac{-14}{2}=\\frac{\\text { Coefficient of } x}{\\text { Coefficient of } x^{3}} \\end{aligned}\\] In general, it can be proved that if \\(\\alpha, \\beta, \\gamma\\) are the zeroes of the cubic polynomial \\(a x^{3}+b x^{2}+c x+d\\), then \\[\\begin{aligned} \\alpha+\\beta+\\gamma & =\\frac{-b}{a}, \\\\ \\alpha \\beta+\\beta \\gamma+\\gamma \\alpha & =\\frac{c}{a}, \\\\ \\alpha \\beta \\gamma & =\\frac{-d}{a} . \\end{aligned}\\] Let us consider an example.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH02-EX-5",
+      "chapterNumber": 2,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "* : Verify that \\(3,-1,-\\frac{1}{3}\\) are the zeroes of the cubic polynomial \\(p(x)=3 x^{3}-5 x^{2}-11 x-3\\), and then verify the relationship between the zeroes and the coefficients.",
+      "solution": "Comparing the given polynomial with \\(a x^{3}+b x^{2}+c x+d\\), we get \\[\\begin{aligned} & a=3, b=-5, c=-11, d=-3 . \\text { Further } \\\\ & p(3)=3 \\times 3^{3}-\\left(5 \\times 3^{2}\\right)-(11 \\times 3)-3=81-45-33-3=0 \\\\ & p(-1)=3 \\times(-1)^{3}-5 \\times(-1)^{2}-11 \\times(-1)-3=-3-5+11-3=0 \\\\ & p\\left(-\\frac{1}{3}\\right)=3 \\times\\left(-\\frac{1}{3}\\right)^{3}-5 \\times\\left(-\\frac{1}{3}\\right)^{2}-11 \\times\\left(-\\frac{1}{3}\\right)-3 \\\\ & \\quad=-\\frac{1}{9}-\\frac{5}{9}+\\frac{11}{3}-3=-\\frac{2}{3}+\\frac{2}{3}=0 \\end{aligned}\\] Therefore, \\(3,-1\\) and \\(-\\frac{1}{3}\\) are the zeroes of \\(3 x^{3}-5 x^{2}-11 x-3\\). So, we take \\(\\alpha=3, \\beta=-1\\) and \\(\\gamma=-\\frac{1}{3}\\). Now, \\[\\begin{aligned} & \\alpha+\\beta+\\gamma=3+(-1)+\\left(-\\frac{1}{3}\\right)=2-\\frac{1}{3}=\\frac{5}{3}=\\frac{-(-5)}{3}=\\frac{-b}{a} \\\\ & \\alpha \\beta+\\beta \\gamma+\\gamma \\alpha=3 \\times(-1)+(-1) \\times\\left(-\\frac{1}{3}\\right)+\\left(-\\frac{1}{3}\\right) \\times 3=-3+\\frac{1}{3}-1=\\frac{-11}{3}=\\frac{c}{a} \\\\ & \\alpha \\beta \\gamma=3 \\times(-1) \\times\\left(-\\frac{1}{3}\\right)=1=\\frac{-(-3)}{3}=\\frac{-d}{a} . \\end{aligned}\\] \\footnotetext{ * Not from the examination point of view. }",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-1",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 1,
+      "body": "Check graphically whether the pair of equations \\[a_{2} x+b_{2} y+c_{2}=0\\] \\[\\begin{aligned} & \\text { are (i) intersecting, then } \\frac{a_{1}}{a_{2}} \\neq \\frac{b_{1}}{b_{2}} \\\\ & \\text { (ii) coincident, then } \\frac{a_{1}}{a_{2}}=\\frac{b_{1}}{b_{2}}=\\frac{c_{1}}{c_{2}} \\\\ & \\text { (iii) parallel, then } \\frac{a_{1}}{a_{2}}=\\frac{b_{1}}{b_{2}} \\neq \\frac{c_{1}}{c_{2}} \\end{aligned}\\] fact, the converse is also true for any pair of lines. You can verify them by onsidering some more examples by yourself. Let us now consider some more examples to illustrate it. \\[x+3 y=6\\] \\[2 x-3 y=12\\] is consistent. If so, solve them graphically.",
+      "solution": "Let us draw the graphs of the Equations (1) and (2). For this, we find two solutions of each of the equations, which are given in Table 3.2 \\begin{tabular}{|c|c|c|} \\hline\\(x\\) & 0 & 6 \\\\ \\hline\\(y=\\frac{6-x}{3}\\) & 2 & 0 \\\\ \\hline \\end{tabular} \\begin{table} \\captionsetup{labelformat=empty} \\caption{Table 3.2} \\begin{tabular}{|c|c|c|} \\hline\\(x\\) & 0 & 3 \\\\ \\hline\\(y=\\frac{2 x-12}{3}\\) & -4 & -2 \\\\ \\hline \\end{tabular} \\end{table} Plot the points \\(\\mathrm{A}(0,2), \\mathrm{B}(6,0)\\), \\(\\mathrm{P}(0,-4)\\) and \\(\\mathrm{Q}(3,-2)\\) on graph paper, and join the points to form the lines AB and PQ as shown in Fig. 3.1. We observe that there is a point \\(\\mathrm{B}(6,0)\\) common to both the lines AB and PQ . So, the solution of the pair of linear equations is \\(x=6\\) and \\(y=0\\), i.e., the given pair of equations is consistent. \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-073.jpg?height=640&width=745&top_left_y=619&top_left_x=719} \\captionsetup{labelformat=empty} \\caption{Fig. 3.1} \\end{figure}",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-2",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 2,
+      "body": "Graphically, find whether the following pair of equations has no",
+      "solution": ", unique solution or infinitely many solutions: \\[\\begin{array}{r} 5 x-8 y+1=0 \\\\ 3 x-\\frac{24}{5} y+\\frac{3}{5}=0 \\\\ 5 \\end{array}\\] Solution : Multiplying Equation (2) by \\(\\frac{5}{3}\\), we get \\[5 x-8 y+1=0\\] But, this is the same as Equation (1). Hence the lines represented by Equations (1) and (2) are coincident. Therefore, Equations (1) and (2) have infinitely many solutions. Plot few points on the graph and verify it yourself.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-3",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 3,
+      "body": "Champa went to a 'Sale' to purchase some pants and skirts. When her friends asked her how many of each she had bought, she answered, \"The number of skirts is two less than twice the number of pants purchased. Also, the number of skirts is four less than four times the number of pants purchased\". Help her friends to find how many pants and skirts Champa bought.",
+      "solution": "Let us denote the number of pants by \\(x\\) and the number of skirts by \\(y\\). Then the equations formed are : and \\[\\begin{aligned} & y=2 x-2 \\\\ & y=4 x-4 \\end{aligned}\\] Let us draw the graphs of Equations (1) and (2) by finding two solutions for each of the equations. They are given in Table 3.3. Table 3.3 \\begin{tabular}{|c|r|r|} \\hline\\(x\\) & 2 & 0 \\\\ \\hline\\(y=2 x-2\\) & 2 & -2 \\\\ \\hline \\end{tabular} \\begin{tabular}{|c|r|c|} \\hline\\(x\\) & 0 & 1 \\\\ \\hline\\(y=4 x-4\\) & -4 & 0 \\\\ \\hline \\end{tabular} \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-074.jpg?height=664&width=745&top_left_y=593&top_left_x=719} \\captionsetup{labelformat=empty} \\caption{Fig. 3.2} \\end{figure} Plot the points and draw the lines passing through them to represent the equations, as shown in Fig. 3.2. The two lines intersect at the point ( 1,0 ). So, \\(x=1, y=0\\) is the required solution of the pair of linear equations, i.e., the number of pants she purchased is 1 and she did not buy any skirt. Verify the answer by checking whether it satisfies the conditions of the given problem.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-4",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 4,
+      "body": "Solve the following pair of equations by substitution method: \\[\\begin{array}{r} 7 x-15 y=2 \\\\ x+2 y=3 \\end{array}\\]",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-5",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 5,
+      "body": "Solve the following question-Aftab tells his daughter, \"Seven years ago, I was seven times as old as you were then. Also, three years from now, I shall be three times as old as you will be.\" (Isn't this interesting?) Represent this situation algebraically and graphically by the method of substitution.",
+      "solution": "Let \\(s\\) and \\(t\\) be the ages (in years) of Aftab and his daughter, respectively. Then, the pair of linear equations that represent the situation is \\[s-7=7(t-7), \\text { i.e., } s-7 t+42=0\\] and \\[s+3=3(t+3) \\text {, i.e., } s-3 t=6\\] Using Equation (2), we get \\(s=3 t+6\\). Putting this value of \\(s\\) in Equation (1), we get \\[(3 t+6)-7 t+42=0,\\] i.e., \\[4 t=48, \\text { which gives } t=12 .\\] Putting this value of \\(t\\) in Equation (2), we get \\[s=3(12)+6=42\\] So, Aftab and his daughter are 42 and 12 years old, respectively. Verify this answer by checking if it satisfies the conditions of the given problems.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-6",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 6,
+      "body": "In a shop the cost of 2 pencils and 3 erasers is ₹ 9 and the cost of 4 pencils and 6 erasers is ₹ 18 . Find the cost of each pencil and each eraser.",
+      "solution": "The pair of linear equations formed were: \\[\\begin{aligned} & 2 x+3 y=9 \\\\ & 4 x+6 y=18 \\end{aligned}\\] We first express the value of \\(x\\) in terms of \\(y\\) from the equation \\(2 x+3 y=9\\), to get \\[x=\\frac{9-3 y}{2}\\] Now we substitute this value of \\(x\\) in Equation (2), to get \\[\\frac{4(9-3 y)}{2}+6 y=18\\] i.e., \\[18-6 y+6 y=18\\] i.e., \\[18=18\\] This statement is true for all values of \\(y\\). However, we do not get a specific value of \\(y\\) as a solution. Therefore, we cannot obtain a specific value of \\(x\\). This situation has arisen because both the given equations are the same. Therefore, Equations (1) and (2) have infinitely many solutions. We cannot find a unique cost of a pencil and an eraser, because there are many common solutions, to the given situation.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-7",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 7,
+      "body": "Two rails are represented by the equations \\(x+2 y-4=0\\) and \\(2 x+4 y-12=0\\). Will the rails cross each other?",
+      "solution": "The pair of linear equations formed were: \\[\\begin{array}{r} x+2 y-4=0 \\\\ 2 x+4 y-12=0 \\end{array}\\] We express \\(x\\) in terms of \\(y\\) from Equation (1) to get \\[x=4-2 y\\] Now, we substitute this value of \\(x\\) in Equation (2) to get \\[2(4-2 y)+4 y-12=0\\] i.e., \\[\\begin{array}{r} 8-12=0 \\\\ -4=0 \\end{array}\\] i.e., which is a false statement. Therefore, the equations do not have a common solution. So, the two rails will not cross each other.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-8",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 8,
+      "body": "The ratio of incomes of two persons is \\(9: 7\\) and the ratio of their expenditures is \\(4: 3\\). If each of them manages to save ₹ 2000 per month, find their monthly incomes.",
+      "solution": "Let us denote the incomes of the two person by \\(₹ 9 x\\) and \\(₹ 7 x\\) and their expenditures by ₹ \\(4 y\\) and ₹ \\(3 y\\) respectively. Then the equations formed in the situation is given by : and \\[\\begin{aligned} & 9 x-4 y=2000 \\\\ & 7 x-3 y=2000 \\end{aligned}\\] Step 1 : Multiply Equation (1) by 3 and Equation (2) by 4 to make the coefficients of \\(y\\) equal. Then we get the equations: \\[\\begin{aligned} & 27 x-12 y=6000 \\\\ & 28 x-12 y=8000 \\end{aligned}\\] Step 2 : Subtract Equation (3) from Equation (4) to eliminate y, because the coefficients of \\(y\\) are the same. So, we get \\[(28 x-27 x)-(12 y-12 y)=8000-6000\\] i.e., \\[x=2000\\] Step 3 : Substituting this value of \\(x\\) in (1), we get i.e., \\[\\begin{aligned} 9(2000)-4 y & =2000 \\\\ y & =4000 \\end{aligned}\\] So, the solution of the equations is \\(x=2000, y=4000\\). Therefore, the monthly incomes of the persons are ₹ 18,000 and ₹ 14,000 , respectively. Verification : \\(18000: 14000=9: 7\\). Also, the ratio of their expenditures \\(= 18000-2000: 14000-2000=16000: 12000=4: 3\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-9",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 9,
+      "body": "Use elimination method to find all possible solutions of the following pair of linear equations : \\[\\begin{aligned} & 2 x+3 y=8 \\\\ & 4 x+6 y=7 \\end{aligned}\\]",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH03-EX-10",
+      "chapterNumber": 3,
+      "chapterTitleHint": "Graphical Method of Solution of a Pair of Linear Equations",
+      "exampleNumber": 10,
+      "body": "The sum of a two-digit number and the number obtained by reversing the digits is 66 . If the digits of the number differ by 2 , find the number. How many such numbers are there?",
+      "solution": "Let the ten's and the unit's digits in the first number be \\(x\\) and \\(y\\), respectively. So, the first number may be written as \\(10 x+y\\) in the expanded form (for example, \\(56=10(5)+6)\\). When the digits are reversed, \\(x\\) becomes the unit's digit and \\(y\\) becomes the ten's digit. This number, in the expanded notation is \\(10 y+x\\) (for example, when 56 is reversed, we get \\(65=10(6)+5\\) ). According to the given condition. \\[\\begin{aligned} & (10 x+y)+(10 y+x)=66 \\\\ \\text { i.e., } & 11(x+y)=66 \\\\ \\text { i.e., } & x+y=6 \\end{aligned}\\] We are also given that the digits differ by 2 , therefore, either \\[x-y=2\\] or \\[y-x=2\\] If \\(x-y=2\\), then solving (1) and (2) by elimination, we get \\(x=4\\) and \\(y=2\\). In this case, we get the number 42. If \\(y-x=2\\), then solving (1) and (3) by elimination, we get \\(x=2\\) and \\(y=4\\). In this case, we get the number 24 . Thus, there are two such numbers 42 and 24 . Verification : Here \\(42+24=66\\) and \\(4-2=2\\). Also \\(24+42=66\\) and \\(4-2=2\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-1",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 1,
+      "body": "Represent the following situations mathematically:} (i) John and Jivanti together have 45 marbles. Both of them lost 5 marbles each, and the product of the number of marbles they now have is 124 . We would like to find out how many marbles they had to start with. (ii) A cottage industry produces a certain number of toys in a day. The cost of production of each toy (in rupees) was found to be 55 minus the number of toys produced in a day. On a particular day, the total cost of production was ₹ 750 . We would like to find out the number of toys produced on that day.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-2",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 2,
+      "body": "Check whether the following are quadratic equations: (i) \\((x-2)^{2}+1=2 x-3\\) (ii) \\(x(x+1)+8=(x+2)(x-2)\\) (iii) \\(x(2 x+3)=x^{2}+1\\) (iv) \\((x+2)^{3}=x^{3}-4\\)",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-3",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 3,
+      "body": "Find the roots of the equation \\(2 x^{2}-5 x+3=0\\), by factorisation.",
+      "solution": "Let us first split the middle term \\(-5 x\\) as \\(-2 x-3 x\\) [because \\((-2 x) \\times(-3 x)= \\left.6 x^{2}=\\left(2 x^{2}\\right) \\times 3\\right]\\). So, \\(2 x^{2}-5 x+3=2 x^{2}-2 x-3 x+3=2 x(x-1)-3(x-1)=(2 x-3)(x-1)\\) Now, \\(2 x^{2}-5 x+3=0\\) can be rewritten as \\((2 x-3)(x-1)=0\\). So, the values of \\(x\\) for which \\(2 x^{2}-5 x+3=0\\) are the same for which \\((2 x-3)(x-1)=0\\), i.e., either \\(2 x-3=0\\) or \\(x-1=0\\). Now, \\(2 x-3=0\\) gives \\(x=\\frac{3}{2}\\) and \\(x-1=0\\) gives \\(x=1\\). So, \\(x=\\frac{3}{2}\\) and \\(x=1\\) are the solutions of the equation. In other words, 1 and \\(\\frac{3}{2}\\) are the roots of the equation \\(2 x^{2}-5 x+3=0\\). Verify that these are the roots of the given equation. Note that we have found the roots of \\(2 x^{2}-5 x+3=0\\) by factorising \\(2 x^{2}-5 x+3\\) into two linear factors and equating each factor to zero.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-4",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 4,
+      "body": "Find the roots of the quadratic equation \\(6 x^{2}-x-2=0\\).",
+      "solution": "We have \\[\\begin{aligned} 6 x^{2}-x-2 & =6 x^{2}+3 x-4 x-2 \\\\ & =3 x(2 x+1)-2(2 x+1) \\\\ & =(3 x-2)(2 x+1) \\end{aligned}\\] The roots of \\(6 x^{2}-x-2=0\\) are the values of \\(x\\) for which \\((3 x-2)(2 x+1)=0\\) Therefore, \\(3 x-2=0\\) or \\(2 x+1=0\\), i.e., \\[x=\\frac{2}{3} \\quad \\text { or } \\quad x=-\\frac{1}{2}\\] Therefore, the roots of \\(6 x^{2}-x-2=0\\) are \\(\\frac{2}{3}\\) and \\(-\\frac{1}{2}\\). We verify the roots, by checking that \\(\\frac{2}{3}\\) and \\(-\\frac{1}{2}\\) satisfy \\(6 x^{2}-x-2=0\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-5",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 5,
+      "body": "Find the roots of the quadratic equation \\(3 x^{2}-2 \\sqrt{6} x+2=0\\).",
+      "solution": "\\(3 x^{2}-2 \\sqrt{6} x+2=3 x^{2}-\\sqrt{6} x-\\sqrt{6} x+2\\) \\[\\begin{aligned} & =\\sqrt{3} x(\\sqrt{3} x-\\sqrt{2})-\\sqrt{2}(\\sqrt{3} x-\\sqrt{2}) \\\\ & =(\\sqrt{3} x-\\sqrt{2})(\\sqrt{3} x-\\sqrt{2}) \\end{aligned}\\] So, the roots of the equation are the values of \\(x\\) for which \\[(\\sqrt{3} x-\\sqrt{2})(\\sqrt{3} x-\\sqrt{2})=0\\] Now, \\(\\sqrt{3} x-\\sqrt{2}=0\\) for \\(x=\\sqrt{\\frac{2}{3}}\\). So, this root is repeated twice, one for each repeated factor \\(\\sqrt{3} x-\\sqrt{2}\\). Therefore, the roots of \\(3 x^{2}-2 \\sqrt{6} x+2=0\\) are \\(\\sqrt{\\frac{2}{3}}, \\sqrt{\\frac{2}{3}}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-6",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 6,
+      "body": "Find the dimensions of the prayer hall discussed in Section 4.1.",
+      "solution": "In Section 4.1, we found that if the breadth of the hall is \\(x \\mathrm{~m}\\), then \\(x\\) satisfies the equation \\(2 x^{2}+x-300=0\\). Applying the factorisation method, we write this equation as i.e., \\[\\begin{array}{r} 2 x^{2}-24 x+25 x-300=0 \\\\ 2 x(x-12)+25(x-12)=0 \\\\ (x-12)(2 x+25)=0 \\end{array}\\] So, the roots of the given equation are \\(x=12\\) or \\(x=-12.5\\). Since \\(x\\) is the breadth of the hall, it cannot be negative. Thus, the breadth of the hall is 12 m . Its length \\(=2 x+1=25 \\mathrm{~m}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-1",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 1,
+      "body": "3. Find two numbers whose sum is 27 and product is 182 . 4. Find two consecutive positive integers, sum of whose squares is 365 . 5. The altitude of a right triangle is 7 cm less than its base. If the hypotenuse is 13 cm , find the other two sides. 6. A cottage industry produces a certain number of pottery articles in a day. It was observed on a particular day that the cost of production of each article (in rupees) was 3 more than twice the number of articles produced on that day. If the total cost of production on that day was ₹ 90 , find the number of articles produced and the cost of each article.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-7",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 7,
+      "body": "Find the discriminant of the quadratic equation \\(2 x^{2}-4 x+3=0\\), and hence find the nature of its roots.",
+      "solution": "The given equation is of the form \\(a x^{2}+b x+c=0\\), where \\(a=2, b=-4\\) and \\(c=3\\). Therefore, the discriminant \\[b^{2}-4 a c=(-4)^{2}-(4 \\times 2 \\times 3)=16-24=-8<0\\] So, the given equation has no real roots.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-8",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 8,
+      "body": "A pole has to be erected at a point on the boundary of a circular park of diameter 13 metres in such a way that the differences of its distances from two diametrically opposite fixed gates A and B on the boundary is 7 metres. Is it possible to do so? If yes, at what distances from the two gates should the pole be erected?",
+      "solution": "Let us first draw the diagram (see Fig. 4.2). Let P be the required location of the pole. Let the distance of the pole from the gate B be \\(x \\mathrm{~m}\\), i.e., \\(\\mathrm{BP}=x \\mathrm{~m}\\). Now the difference of the distances of the pole from the two gates \\(=\\mathrm{AP}-\\mathrm{BP}\\) (or, \\(\\mathrm{BP}-\\mathrm{AP}\\) ) \\(=\\) 7 m . Therefore, \\(\\mathrm{AP}=(x+7) \\mathrm{m}\\). \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-091.jpg?height=382&width=383&top_left_y=1773&top_left_x=955} \\captionsetup{labelformat=empty} \\caption{Fig. 4.2} \\end{figure} Now, \\(\\mathrm{AB}=13 \\mathrm{~m}\\), and since AB is a diameter, \\begin{tabular}{rlrl} & \\(\\angle \\mathrm{APB}\\) & \\(=90^{\\circ}\\) & \\\\ Therefore, & \\(\\mathrm{AP}^{2}+\\mathrm{PB}^{2}\\) & \\(=\\mathrm{AB}^{2}\\) & (Why?) \\\\ i.e., & \\((x+7)^{2}+x^{2}\\) & \\(=13^{2}\\) & \\\\ i.e., & \\(x^{2}+14 x+49+x^{2}\\) & \\(=169\\) & \\\\ i.e., & \\(2 x^{2}+14 x-120\\) & \\(=0\\) & \\end{tabular} So, the distance ' \\(x\\) ' of the pole from gate B satisfies the equation \\[x^{2}+7 x-60=0\\] So, it would be possible to place the pole if this equation has real roots. To see if this is so or not, let us consider its discriminant. The discriminant is \\[b^{2}-4 a c=7^{2}-4 \\times 1 \\times(-60)=289>0\\] So, the given quadratic equation has two real roots, and it is possible to erect the pole on the boundary of the park. Solving the quadratic equation \\(x^{2}+7 x-60=0\\), by the quadratic formula, we get \\[x=\\frac{-7 \\pm \\sqrt{289}}{2}=\\frac{-7 \\pm 17}{2}\\] Therefore, \\(x=5\\) or -12 . Since \\(x\\) is the distance between the pole and the gate B , it must be positive. Therefore, \\(x=-12\\) will have to be ignored. So, \\(x=5\\). Thus, the pole has to be erected on the boundary of the park at a distance of 5 m from the gate B and 12 m from the gate A .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH04-EX-9",
+      "chapterNumber": 4,
+      "chapterTitleHint": "Quadratic Equations",
+      "exampleNumber": 9,
+      "body": "Find the discriminant of the equation \\(3 x^{2}-2 x+\\frac{1}{3}=0\\) and hence find the nature of its roots. Find them, if they are real.",
+      "solution": "Here \\(a=3, b=-2\\) and \\(c=\\frac{1}{3}\\). Therefore, discriminant \\(b^{2}-4 a c=(-2)^{2}-4 \\times 3 \\times \\frac{1}{3}=4-4=0\\). Hence, the given quadratic equation has two equal real roots. The roots are \\(\\frac{-b}{2 a}, \\frac{-b}{2 a}\\), i.e., \\(\\frac{2}{6}, \\frac{2}{6}\\), i.e., \\(\\frac{1}{3}, \\frac{1}{3}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-1",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 1,
+      "body": "For the \\(\\mathrm{AP}: \\frac{3}{2}, \\frac{1}{2},-\\frac{1}{2},-\\frac{3}{2}, \\ldots\\), write the first term \\(a\\) and the common difference \\(d\\).",
+      "solution": "Here, \\(\\quad a=\\frac{3}{2}, d=\\frac{1}{2}-\\frac{3}{2}=-1\\). Remember that we can find \\(d\\) using any two consecutive terms, once we know that the numbers are in AP.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-2",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 2,
+      "body": "Which of the following list of numbers form an AP? If they form an AP, write the next two terms : (i) \\(4,10,16,22, \\ldots\\) (ii) \\(1,-1,-3,-5, \\ldots\\) (iii) \\(-2,2,-2,2,-2, \\ldots\\) (iv) \\(1,1,1,2,2,2,3,3,3, \\ldots\\)",
+      "solution": "(i) We have \\(a_{2}-a_{1}=10-4=6\\) \\[\\begin{aligned} & a_{3}-a_{2}=16-10=6 \\\\ & a_{4}-a_{3}=22-16=6 \\end{aligned}\\] i.e., \\(\\quad a_{k+1}-a_{k}\\) is the same every time. So, the given list of numbers forms an AP with the common difference \\(d=6\\). The next two terms are: \\(22+6=28\\) and \\(28+6=34\\). (ii) \\(a_{2}-a_{1}=-1-1=-2\\) \\[\\begin{aligned} & a_{3}-a_{2}=-3-(-1)=-3+1=-2 \\\\ & a_{4}-a_{3}=-5-(-3)=-5+3=-2 \\end{aligned}\\] i.e., \\(a_{k+1}-a_{k}\\) is the same every time. So, the given list of numbers forms an AP with the common difference \\(d=-2\\). The next two terms are: \\[-5+(-2)=-7 \\quad \\text { and } \\quad-7+(-2)=-9\\] (iii) \\(a_{2}-a_{1}=2-(-2)=2+2=4\\) \\[a_{3}-a_{2}=-2-2=-4\\] As \\(a_{2}-a_{1} \\neq a_{3}-a_{2}\\), the given list of numbers does not form an AP. (iv) \\(a_{2}-a_{1}=1-1=0\\) \\(a_{3}-a_{2}=1-1=0\\) \\(a_{4}-a_{3}=2-1=1\\) Here, \\(a_{2}-a_{1}=a_{3}-a_{2} \\neq a_{4}-a_{3}\\). So, the given list of numbers does not form an AP.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-3",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 3,
+      "body": "Find the 10th term of the AP : 2, 7, 12, . .",
+      "solution": "Here, \\(a=2, \\quad d=7-2=5\\) and \\(n=10\\). We have \\(\\quad a_{n}=a+(n-1) d\\) So, \\(\\quad a_{10}=2+(10-1) \\times 5=2+45=47\\) Therefore, the 10th term of the given AP is 47.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-4",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 4,
+      "body": "Which term of the AP : \\(21,18,15, \\ldots\\) is -81 ? Also, is any term 0 ? Give reason for your answer.",
+      "solution": "Here, \\(a=21, d=18-21=-3\\) and \\(a_{n}=-81\\), and we have to find \\(n\\). As \\[a_{n}=a+(n-1) d\\] we have \\[\\begin{aligned} -81 & =21+(n-1)(-3) \\\\ -81 & =24-3 n \\\\ -105 & =-3 n \\end{aligned}\\] So, \\[n=35\\] Therefore, the 35th term of the given AP is -81 . Next, we want to know if there is any \\(n\\) for which \\(a_{n}=0\\). If such an \\(n\\) is there, then i.e., \\[21+(n-1)(-3)=0\\] i.e., \\[\\begin{aligned} 3(n-1) & =21 \\\\ n & =8 \\end{aligned}\\] So, the eighth term is 0 .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-5",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 5,
+      "body": "Determine the AP whose 3rd term is 5 and the 7th term is 9.",
+      "solution": "We have and \\[\\begin{aligned} & a_{3}=a+(3-1) d=a+2 d=5 \\\\ & a_{7}=a+(7-1) d=a+6 d=9 \\end{aligned}\\] Solving the pair of linear equations (1) and (2), we get \\[a=3, \\quad d=1\\] Hence, the required AP is \\(3,4,5,6,7, \\ldots\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-6",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 6,
+      "body": "Check whether 301 is a term of the list of numbers \\(5,11,17,23, \\ldots\\)",
+      "solution": "We have : \\[a_{2}-a_{1}=11-5=6, \\quad a_{3}-a_{2}=17-11=6, \\quad a_{4}-a_{3}=23-17=6\\] As \\(a_{k+1}-a_{k}\\) is the same for \\(k=1,2,3\\), etc., the given list of numbers is an AP. Now, \\(\\quad a=5\\) and \\(\\quad d=6\\). Let 301 be a term, say, the \\(n\\)th term of this AP. We know that \\[\\begin{aligned} & \\text { So, } \\\\ & \\text { So, } \\\\ & \\text { i.e., } \\\\ & 301=5+(n-1) d \\\\ & 301=6 n-1 \\\\ & \\text { So, } \\quad n=\\frac{302}{6}=\\frac{151}{3} \\end{aligned}\\] But \\(n\\) should be a positive integer (Why?). So, 301 is not a term of the given list of numbers.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-7",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 7,
+      "body": "How many two-digit numbers are divisible by 3 ?",
+      "solution": "The list of two-digit numbers divisible by 3 is : \\[12,15,18, \\ldots, 99\\] Is this an AP? Yes it is. Here, \\(\\quad a=12, d=3, a_{n}=99\\). As \\[a_{n}=a+(n-1) d,\\] we have \\[99=12+(n-1) \\times 3\\] i.e., \\[87=(n-1) \\times 3\\] i.e., \\[n-1=\\frac{87}{3}=29\\] i.e., \\[n=29+1=30\\] So, there are 30 two-digit numbers divisible by 3 .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-8",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 8,
+      "body": "Find the 11th term from the last term (towards the first term) of the AP : 10, 7, 4, . ., - 62.",
+      "solution": "Here, \\(\\quad a=10, d=7-10=-3, l=-62\\), where \\[l=a+(n-1) d\\] To find the 11th term from the last term, we will find the total number of terms in the AP. So, \\[\\begin{aligned} & -62=10+(n-1)(-3) \\\\ & -72=(n-1)(-3) \\end{aligned}\\] i.e., i.e., \\[n-1=24\\] or \\[n=25\\] So, there are 25 terms in the given AP. The 11th term from the last term will be the 15th term. (Note that it will not be the 14th term. Why?) So, \\[a_{15}=10+(15-1)(-3)=10-42=-32\\] i.e., the 11th term from the last term is -32 .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-9",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 9,
+      "body": "A sum of ₹ 1000 is invested at \\(8 \\%\\) simple interest per year. Calculate the interest at the end of each year. Do these interests form an AP? If so, find the interest at the end of 30 years making use of this fact.",
+      "solution": "We know that the formula to calculate simple interest is given by \\[\\text { Simple Interest }=\\frac{\\mathrm{P} \\times \\mathrm{R} \\times \\mathrm{T}}{100}\\] So, the interest at the end of the 1 st year \\(=₹ \\frac{1000 \\times 8 \\times 1}{100}=₹ 80\\) The interest at the end of the 2 nd year \\(=₹ \\frac{1000 \\times 8 \\times 2}{100}=₹ 160\\) The interest at the end of the \\(\\operatorname{3rd}\\) year \\(=₹ \\frac{1000 \\times 8 \\times 3}{100}=₹ 240\\) Similarly, we can obtain the interest at the end of the 4th year, 5th year, and so on. So, the interest (in ₹) at the end of the 1st, 2nd, 3rd, . . . years, respectively are \\[80,160,240, \\ldots\\] It is an AP as the difference between the consecutive terms in the list is 80 , i.e., \\(d=80\\). Also, \\(a=80\\). So, to find the interest at the end of 30 years, we shall find \\(a_{30}\\). Now, \\[a_{30}=a+(30-1) d=80+29 \\times 80=2400\\] So, the interest at the end of 30 years will be ₹ 2400 .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-10",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 10,
+      "body": "In a flower bed, there are 23 rose plants in the first row, 21 in the second, 19 in the third, and so on. There are 5 rose plants in the last row. How many rows are there in the flower bed?",
+      "solution": "The number of rose plants in the 1st, 2nd, 3rd, . . ., rows are : \\[23,21,19, \\ldots, 5\\] It forms an AP (Why?). Let the number of rows in the flower bed be \\(n\\). Then \\(\\quad a=23, \\quad d=21-23=-2, a_{n}=5\\) As, \\(\\quad a_{n}=a+(n-1) d\\) We have, \\(\\quad 5=23+(n-1)(-2)\\) i.e., \\(\\quad-18=(n-1)(-2)\\) i.e., \\(\\quad n=10\\) So, there are 10 rows in the flower bed.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-11",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 11,
+      "body": "Find the sum of the first 22 terms of the \\(\\mathrm{AP}: 8,3,-2, \\ldots\\)",
+      "solution": "Here, \\(a=8, d=3-8=-5, n=22\\). We know that \\[S=\\frac{n}{2}[2 a+(n-1) d]\\] Therefore, \\[S=\\frac{22}{2}[16+21(-5)]=11(16-105)=11(-89)=-979\\] So, the sum of the first 22 terms of the AP is -979 .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-12",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 12,
+      "body": "If the sum of the first 14 terms of an AP is 1050 and its first term is 10 , find the 20th term.",
+      "solution": "Here, \\(\\mathrm{S}_{14}=1050\\), \\(n=14, a=10\\). As \\[\\mathrm{S}_{n}=\\frac{n}{2}[2 a+(n-1) d]\\] so, \\[1050=\\frac{14}{2}[20+13 d]=140+91 d\\] i.e., \\[910=91 d\\] or, \\[d=10\\] Therefore, \\[a_{20}=10+(20-1) \\times 10=200 \\text {, i.e. } 20 \\text { th term is } 200 \\text {. }\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-13",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 13,
+      "body": "How many terms of the AP : 24, 21, 18, ... must be taken so that their sum is 78 ?",
+      "solution": "Here, \\(a=24, d=21-24=-3, S_{n}=78\\). We need to find \\(n\\). We know that \\[\\mathrm{S}_{n}=\\frac{n}{2}[2 a+(n-1) d]\\] So, \\[78=\\frac{n}{2}[48+(n-1)(-3)]=\\frac{n}{2}[51-3 n]\\] or \\[3 n^{2}-51 n+156=0\\] or \\[n^{2}-17 n+52=0\\] or \\[(n-4)(n-13)=0\\] or \\[n=4 \\text { or } 13\\] Both values of \\(n\\) are admissible. So, the number of terms is either 4 or 13 .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-14",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 14,
+      "body": "Find the sum of : (i) the first 1000 positive integers (ii) the first \\(n\\) positive integers",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-15",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 15,
+      "body": "Find the sum of first 24 terms of the list of numbers whose \\(n\\)th term is given by \\[a_{n}=3+2 n\\]",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-16",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 16,
+      "body": "A manufacturer of TV sets produced 600 sets in the third year and 700 sets in the seventh year. Assuming that the production increases uniformly by a fixed number every year, find : (i) the production in the 1st year (ii) the production in the 10th year (iii) the total production in first 7 years",
+      "solution": "(i) Since the production increases uniformly by a fixed number every year, the number of TV sets manufactured in 1st, 2nd, 3rd, . . ., years will form an AP. Let us denote the number of TV sets manufactured in the \\(n\\)th year by \\(a_{n}\\). Then, \\[a_{3}=600 \\text { and } a_{7}=700\\] or, \\[a+2 d=600\\] and \\[a+6 d=700\\] Solving these equations, we get \\(d=25\\) and \\(a=550\\). Therefore, production of TV sets in the first year is 550 . (ii) Now \\[a_{10}=a+9 d=550+9 \\times 25=775\\] So, production of TV sets in the 10th year is 775 . (iii) Also, \\[\\begin{aligned} S_{7} & =\\frac{7}{2}[2 \\times 550+(7-1) \\times 25] \\\\ & =\\frac{7}{2}[1100+150]=4375 \\end{aligned}\\] Thus, the total production of TV sets in first 7 years is 4375.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH05-EX-7",
+      "chapterNumber": 5,
+      "chapterTitleHint": "Arithmetic Progressions",
+      "exampleNumber": 7,
+      "body": ", Q. 15 of",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-1",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Similar Figures",
+      "exampleNumber": 1,
+      "body": "If a line intersects sides AB and AC of a \\(\\triangle \\mathrm{ABC}\\) at D and E respectively and is parallel to BC , prove that \\(\\frac{\\mathrm{AD}}{\\mathrm{AB}}=\\frac{\\mathrm{AE}}{\\mathrm{AC}}\\) (see Fig. 6.13).",
+      "solution": "\\(\\mathrm{DE} \\| \\mathrm{BC}\\) (Given) So, \\[\\frac{\\mathrm{AD}}{\\mathrm{DB}}=\\frac{\\mathrm{AE}}{\\mathrm{EC}}\\] (Theorem 6.1) or, \\[\\frac{\\mathrm{DB}}{\\mathrm{AD}}=\\frac{\\mathrm{EC}}{\\mathrm{AE}}\\] or, \\[\\frac{\\mathrm{DB}}{\\mathrm{AD}}+1=\\frac{\\mathrm{EC}}{\\mathrm{AE}}+1\\] or, \\[\\frac{\\mathrm{AB}}{\\mathrm{AD}}=\\frac{\\mathrm{AC}}{\\mathrm{AE}}\\] So, \\[\\frac{\\mathrm{AD}}{\\mathrm{AB}}=\\frac{\\mathrm{AE}}{\\mathrm{AC}}\\] \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-128.jpg?height=440&width=518&top_left_y=1629&top_left_x=946} \\captionsetup{labelformat=empty} \\caption{Fig. 6.13} \\end{figure}",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-2",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Similar Figures",
+      "exampleNumber": 2,
+      "body": "ABCD is a trapezium with \\(\\mathrm{AB} \\| \\mathrm{DC}\\). E and \\(F\\) are points on non-parallel sides \\(A D\\) and \\(B C\\) respectively such that \\(E F\\) is parallel to \\(A B\\) (see Fig. 6.14). Show that \\(\\frac{A E}{E D}=\\frac{B F}{F C}\\).",
+      "solution": "Let us join AC to intersect EF at G (see Fig. 6.15). \\(\\mathrm{AB} \\| \\mathrm{DC}\\) and \\(\\mathrm{EF} \\| \\mathrm{AB}\\) (Given) So, \\(\\quad \\mathrm{EF} \\| \\mathrm{DC}\\) (Lines parallel to the same line are parallel to each other) Now, in \\(\\triangle \\mathrm{ADC}\\), \\(\\mathrm{EG} \\| \\mathrm{DC}\\) (As \\(\\mathrm{EF} \\| \\mathrm{DC}\\) ) So, \\(\\frac{\\mathrm{AE}}{\\mathrm{ED}}=\\frac{\\mathrm{AG}}{\\mathrm{GC}}\\) (Theorem 6.1) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-129.jpg?height=287&width=478&top_left_y=350&top_left_x=990} \\captionsetup{labelformat=empty} \\caption{Fig. 6.14} \\end{figure} \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-129.jpg?height=314&width=532&top_left_y=854&top_left_x=942} \\captionsetup{labelformat=empty} \\caption{Fig. 6.15} \\end{figure} Similarly, from \\(\\triangle \\mathrm{CAB}\\), \\[\\frac{C G}{A G}=\\frac{C F}{B F}\\] i.e., \\[\\frac{\\mathrm{AG}}{\\mathrm{GC}}=\\frac{\\mathrm{BF}}{\\mathrm{FC}}\\] Therefore, from (1) and (2), \\[\\frac{A E}{E D}=\\frac{B F}{F C}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-3",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Similar Figures",
+      "exampleNumber": 3,
+      "body": "In Fig. 6.16, \\(\\frac{\\mathrm{PS}}{\\mathrm{SQ}}=\\frac{\\mathrm{PT}}{\\mathrm{TR}}\\) and \\(\\angle \\mathrm{PST}= \\angle \\mathrm{PRQ}\\). Prove that PQR is an isosceles triangle.",
+      "solution": "It is given that \\(\\frac{\\mathrm{PS}}{\\mathrm{SQ}}=\\frac{\\mathrm{PT}}{\\mathrm{TR}}\\). Fig. 6.16 So, Therefore, \\(\\mathrm{ST} \\| \\mathrm{QR}\\) (Theorem 6.2) (Corresponding angles) Also, it is given that \\[\\angle \\mathrm{PST}=\\angle \\mathrm{PRQ}\\] So, \\[\\angle \\mathrm{PRQ}=\\angle \\mathrm{PQR} \\text { [From (1) and (2)] }\\] Therefore, PQ \\(=\\) PR \\(\\quad\\) (Sides opposite the equal angles) i.e., \\(\\quad \\mathrm{PQR}\\) is an isosceles triangle.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-4",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Similar Figures",
+      "exampleNumber": 4,
+      "body": "In Fig. 6.29, if \\(\\mathrm{PQ} \\| \\mathrm{RS}\\), prove that \\(\\Delta \\mathrm{POQ} \\sim \\Delta \\mathrm{SOR}\\). \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-137.jpg?height=346&width=476&top_left_y=660&top_left_x=571} \\captionsetup{labelformat=empty} \\caption{Fig. 6.29} \\end{figure}",
+      "solution": "\\(\\mathrm{PQ} \\| \\mathrm{RS}\\) (Given) So, \\[\\angle \\mathrm{P}=\\angle \\mathrm{S}\\] (Alternate angles) and \\[\\angle \\mathrm{Q}=\\angle \\mathrm{R}\\] Also, \\[\\angle \\mathrm{POQ}=\\angle \\mathrm{SOR}\\] (Vertically opposite angles) Therefore, \\[\\Delta \\mathrm{POQ} \\sim \\Delta \\mathrm{SOR}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-5",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Similar Figures",
+      "exampleNumber": 5,
+      "body": "Observe Fig. 6.30 and then find \\(\\angle \\mathrm{P}\\).} Fig. 6.30",
+      "solution": "In \\(\\triangle \\mathrm{ABC}\\) and \\(\\triangle \\mathrm{PQR}\\), \\[\\frac{\\mathrm{AB}}{\\mathrm{RQ}}=\\frac{3.8}{7.6}=\\frac{1}{2}, \\frac{\\mathrm{BC}}{\\mathrm{QP}}=\\frac{6}{12}=\\frac{1}{2} \\text { and } \\frac{\\mathrm{CA}}{\\mathrm{PR}}=\\frac{3 \\sqrt{3}}{6 \\sqrt{3}}=\\frac{1}{2}\\] That is, \\(\\quad \\frac{\\mathrm{AB}}{\\mathrm{RQ}}=\\frac{\\mathrm{BC}}{\\mathrm{QP}}=\\frac{\\mathrm{CA}}{\\mathrm{PR}}\\) So, Therefore, \\[\\Delta \\mathrm{ABC} \\sim \\Delta \\mathrm{RQP}\\] (SSS similarity) But \\[\\angle \\mathrm{C}=\\angle \\mathrm{P} \\quad \\text { (Corresponding angles of similar triangles) }\\] \\[\\begin{aligned} \\angle \\mathrm{C} & =180^{\\circ}-\\angle \\mathrm{A}-\\angle \\mathrm{B} \\\\ & =180^{\\circ}-80^{\\circ}-60^{\\circ}=40^{\\circ} \\end{aligned}\\] (Angle sum property) So, \\[\\angle \\mathrm{P}=40^{\\circ}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-6",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Similar Figures",
+      "exampleNumber": 6,
+      "body": "In Fig. 6.31, \\[\\mathrm{OA} \\cdot \\mathrm{OB}=\\mathrm{OC} \\cdot \\mathrm{OD} .\\] Show that \\(\\quad \\angle \\mathrm{A}=\\angle \\mathrm{C}\\) and \\(\\angle \\mathrm{B}=\\angle \\mathrm{D}\\).",
+      "solution": "\\(\\mathrm{OA} . \\mathrm{OB}=\\mathrm{OC} . \\mathrm{OD}\\) (Given) So, \\(\\quad \\frac{\\mathrm{OA}}{\\mathrm{OC}}=\\frac{\\mathrm{OD}}{\\mathrm{OB}}\\) ![](https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-138.jpg?height=370&width=447&top_left_y=920&top_left_x=975) Also, we have \\(\\angle \\mathrm{AOD}=\\angle \\mathrm{COB}\\) (Vertically opposite angles) Therefore, from (1) and (2), \\(\\quad \\triangle \\mathrm{AOD} \\sim \\Delta \\mathrm{COB} \\quad\\) (SAS similarity criterion) So, \\[\\angle \\mathrm{A}=\\angle \\mathrm{C} \\text { and } \\angle \\mathrm{D}=\\angle \\mathrm{B}\\] (Corresponding angles of similar triangles)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-7",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Similar Figures",
+      "exampleNumber": 7,
+      "body": "A girl of height 90 cm is walking away from the base of a lamp-post at a speed of \\(1.2 \\mathrm{~m} / \\mathrm{s}\\). If the lamp is 3.6 m above the ground, find the length of her shadow after 4 seconds.",
+      "solution": "Let AB denote the lamp-post and CD the girl after walking for 4 seconds away from the lamp-post (see Fig. 6.32). From the figure, you can see that DE is the shadow of the girl. Let DE be \\(x\\) metres. \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-138.jpg?height=460&width=633&top_left_y=1595&top_left_x=831} \\captionsetup{labelformat=empty} \\caption{Fig. 6.32} \\end{figure} Now, \\(\\mathrm{BD}=1.2 \\mathrm{~m} \\times 4=4.8 \\mathrm{~m}\\). Note that in \\(\\triangle \\mathrm{ABE}\\) and \\(\\triangle \\mathrm{CDE}\\), \\[\\begin{aligned} \\angle \\mathrm{B}=\\angle \\mathrm{D} & \\text { (Each is of } 90^{\\circ} \\text { because lamp-post } \\\\ & \\text { as well as the girl are standing } \\\\ & \\text { vertical to the ground) } \\end{aligned}\\] and So, Therefore, Therefore, i.e., i.e., i.e., i.e., \\[\\angle \\mathrm{E}=\\angle \\mathrm{E}\\] \\(\\Delta \\mathrm{ABE} \\sim \\Delta \\mathrm{CDE}\\) \\[\\frac{B E}{D E}=\\frac{A B}{C D}\\] \\[\\frac{4.8+x}{x}=\\frac{3.6}{0.9}\\] \\(\\left(90 \\mathrm{~cm}=\\frac{90}{100} \\mathrm{~m}=0.9 \\mathrm{~m}\\right)\\) (Same angle) (AA similarity criterion) So, the shadow of the girl after walking for 4 seconds is 1.6 ml long.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-8",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Similar Figures",
+      "exampleNumber": 8,
+      "body": "In Fig. 6.33, CM and RN are respectively the medians of \\(\\triangle \\mathrm{ABC}\\) and \\(\\Delta \\mathrm{PQR}\\). If \\(\\triangle \\mathrm{ABC} \\sim \\Delta \\mathrm{PQR}\\), prove that : (i) \\(\\triangle \\mathrm{AMC} \\sim \\triangle \\mathrm{PNR}\\) (ii) \\(\\frac{\\mathrm{CM}}{\\mathrm{RN}}=\\frac{\\mathrm{AB}}{\\mathrm{PQ}}\\) (iii) \\(\\triangle \\mathrm{CMB} \\sim \\Delta \\mathrm{RNQ}\\)",
+      "solution": "(i) \\[\\begin{array}{r} 4.8+x=4 x \\\\ 3 x=4.8 \\\\ x=1.6 \\end{array}\\] \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-139.jpg?height=309&width=613&top_left_y=1319&top_left_x=853} \\captionsetup{labelformat=empty} \\caption{Fig. 6.33} \\end{figure} So, \\[\\frac{\\mathrm{AB}}{\\mathrm{PQ}}=\\frac{\\mathrm{BC}}{\\mathrm{QR}}=\\frac{\\mathrm{CA}}{\\mathrm{RP}}\\] and \\[\\angle \\mathrm{A}=\\angle \\mathrm{P}, \\angle \\mathrm{~B}=\\angle \\mathrm{Q} \\text { and } \\angle \\mathrm{C}=\\angle \\mathrm{R}\\] But \\[A B=2 A M \\text { and } P Q=2 P N\\] (As CM and RN are medians) So, from (1), \\(\\quad \\frac{2 \\mathrm{AM}}{2 \\mathrm{PN}}=\\frac{\\mathrm{CA}}{\\mathrm{RP}}\\) i.e., Also, So, from (3) and (4), (ii) From (5), But Therefore, (iii) Again, Therefore, Also, i.e., i.e., Therefore, \\[\\frac{\\mathrm{AM}}{\\mathrm{PN}}=\\frac{\\mathrm{CA}}{\\mathrm{RP}}\\] \\(\\angle \\mathrm{MAC}=\\angle \\mathrm{NPR}\\) [From (2)] (4) (SAS similarity) [From (1)] [From (6) and (7)] (8) From (1)] [From (8)] (9) [From (9) and (10)] (SSS similarity) [Note : You can also prove part (iii) by following the same method as used for proving part (i).]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH06-EX-2",
+      "chapterNumber": 6,
+      "chapterTitleHint": "Similar Figures",
+      "exampleNumber": 2,
+      "body": ", Chapter 8, the proof will become simpler.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-1",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 1,
+      "body": "Do the points \\((3,2)\\), ( \\(-2,-3\\) ) and ( 2,3 ) form a triangle? If so, name the type of triangle formed.",
+      "solution": "Let us apply the distance formula to find the distances \\(\\mathrm{PQ}, \\mathrm{QR}\\) and PR , where \\(\\mathrm{P}(3,2), \\mathrm{Q}(-2,-3)\\) and \\(\\mathrm{R}(2,3)\\) are the given points. We have \\[\\begin{aligned} & \\mathrm{PQ}=\\sqrt{(3+2)^{2}+(2+3)^{2}}=\\sqrt{5^{2}+5^{2}}=\\sqrt{50}=7.07 \\text { (approx.) } \\\\ & \\mathrm{QR}=\\sqrt{(-2-2)^{2}+(-3-3)^{2}}=\\sqrt{(-4)^{2}+(-6)^{2}}=\\sqrt{52}=7.21 \\text { (approx.) } \\\\ & \\mathrm{PR}=\\sqrt{(3-2)^{2}+(2-3)^{2}}=\\sqrt{1^{2}+(-1)^{2}}=\\sqrt{2}=1.41 \\text { (approx.) } \\end{aligned}\\] Since the sum of any two of these distances is greater than the third distance, therefore, the points \\(\\mathrm{P}, \\mathrm{Q}\\) and R form a triangle. Also, \\(\\mathrm{PQ}^{2}+\\mathrm{PR}^{2}=\\mathrm{QR}^{2}\\), by the converse of Pythagoras theorem, we have \\(\\angle \\mathrm{P}=90^{\\circ}\\). Therefore, PQR is a right triangle.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-2",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 2,
+      "body": "Show that the points \\((1,7),(4,2),(-1,-1)\\) and \\((-4,4)\\) are the vertices of a square.",
+      "solution": "Let \\(\\mathrm{A}(1,7), \\mathrm{B}(4,2), \\mathrm{C}(-1,-1)\\) and \\(\\mathrm{D}(-4,4)\\) be the given points. One way of showing that ABCD is a square is to use the property that all its sides should be equal and both its digonals should also be equal. Now, \\[\\begin{aligned} & \\mathrm{AB}=\\sqrt{(1-4)^{2}+(7-2)^{2}}=\\sqrt{9+25}=\\sqrt{34} \\\\ & \\mathrm{BC}=\\sqrt{(4+1)^{2}+(2+1)^{2}}=\\sqrt{25+9}=\\sqrt{34} \\\\ & \\mathrm{CD}=\\sqrt{(-1+4)^{2}+(-1-4)^{2}}=\\sqrt{9+25}=\\sqrt{34} \\\\ & \\mathrm{DA}=\\sqrt{(1+4)^{2}+(7-4)^{2}}=\\sqrt{25+9}=\\sqrt{34} \\\\ & \\mathrm{AC}=\\sqrt{(1+1)^{2}+(7+1)^{2}}=\\sqrt{4+64}=\\sqrt{68} \\\\ & \\mathrm{BD}=\\sqrt{(4+4)^{2}+(2-4)^{2}}=\\sqrt{64+4}=\\sqrt{68} \\end{aligned}\\] Since, \\(\\mathrm{AB}=\\mathrm{BC}=\\mathrm{CD}=\\mathrm{DA}\\) and \\(\\mathrm{AC}=\\mathrm{BD}\\), all the four sides of the quadrilateral ABCD are equal and its diagonals AC and BD are also equal. Thereore, ABCD is a square. Alternative Solution : We find the four sides and one diagonal, say, AC as above. Here \\(\\mathrm{AD}^{2}+\\mathrm{DC}^{2}= 34+34=68=\\mathrm{AC}^{2}\\). Therefore, by the converse of Pythagoras theorem, \\(\\angle \\mathrm{D}=90^{\\circ}\\). Aquadrilateral with all four sides equal and one angle \\(90^{\\circ}\\) is a square. So, ABCD is a square.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-3",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 3,
+      "body": "Fig. 7.6 shows the arrangement of desks in a classroom. Ashima, Bharti and Camella are seated at \\(\\mathrm{A}(3,1)\\), \\(B(6,4)\\) and \\(C(8,6)\\) respectively. Do you think they are seated in a line? Give reasons for your answer. \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-149.jpg?height=667&width=768&top_left_y=1354&top_left_x=706} \\captionsetup{labelformat=empty} \\caption{Fig. 7.6} \\end{figure}",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-4",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 4,
+      "body": "Find a relation between \\(x\\) and \\(y\\) such that the point \\((x, y)\\) is equidistant from the points \\((7,1)\\) and \\((3,5)\\).",
+      "solution": "Let \\(\\mathrm{P}(x, y)\\) be equidistant from the points \\(\\mathrm{A}(7,1)\\) and \\(\\mathrm{B}(3,5)\\). We are given that \\(\\mathrm{AP}=\\mathrm{BP}\\). So, \\(\\mathrm{AP}^{2}=\\mathrm{BP}^{2}\\) i.e., \\[(x-7)^{2}+(y-1)^{2}=(x-3)^{2}+(y-5)^{2}\\] i.e., \\[x^{2}-14 x+49+y^{2}-2 y+1=x^{2}-6 x+9+y^{2}-10 y+25\\] i.e., \\[x-y=2\\] which is the required relation. Remark : Note that the graph of the equation \\(x-y=2\\) is a line. From your earlier studies, you know that a point which is equidistant from A and B lies on the perpendicular bisector of AB . Therefore, the graph of \\(x-y=2\\) is the perpendicular bisector of AB (see Fig. 7.7).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-5",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 5,
+      "body": "Find a point on the \\(y\\)-axis which is equidistant from the points \\(\\mathrm{A}(6,5)\\) and \\(B(-4,3)\\).",
+      "solution": "We know that a point on the \\(y\\)-axis is of the form \\((0, y)\\). So, let the point \\(\\mathrm{P}(0, y)\\) be equidistant from A and B . Then ![](https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-150.jpg?height=691&width=627&top_left_y=1204&top_left_x=847) \\[(6-0)^{2}+(5-y)^{2}=(-4-0)^{2}+(3-y)^{2}\\] i.e., \\[36+25+y^{2}-10 y=16+9+y^{2}-6 y\\] i.e., \\[4 y=36\\] i.e., \\[y=9\\] So, the required point is \\((0,9)\\). Let us check our solution : \\(\\mathrm{AP}=\\sqrt{(6-0)^{2}+(5-9)^{2}}=\\sqrt{36+16}=\\sqrt{52}\\) \\[\\mathrm{BP}=\\sqrt{(-4-0)^{2}+(3-9)^{2}}=\\sqrt{16+36}=\\sqrt{52}\\] Note : Using the remark above, we see that \\((0,9)\\) is the intersection of the \\(y\\)-axis and the perpendicular bisector of AB .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-6",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 6,
+      "body": "Find the coordinates of the point which divides the line segment joining the points \\((4,-3)\\) and \\((8,5)\\) in the ratio \\(3: 1\\) internally.",
+      "solution": "Let \\(\\mathrm{P}(x, y)\\) be the required point. Using the section formula, we get \\[x=\\frac{3(8)+1(4)}{3+1}=7, \\quad y=\\frac{3(5)+1(-3)}{3+1}=3\\] Therefore, (7,3) is the required point.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-7",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 7,
+      "body": "In what ratio does the point \\((-4,6)\\) divide the line segment joining the points \\(\\mathrm{A}(-6,10)\\) and \\(\\mathrm{B}(3,-8)\\) ?",
+      "solution": "Let \\((-4,6)\\) divide AB internally in the ratio \\(m_{1}: m_{2}\\). Using the section formula, we get \\[(-4,6)=\\left(\\frac{3 m_{1}-6 m_{2}}{m_{1}+m_{2}}, \\frac{-8 m_{1}+10 m_{2}}{m_{1}+m_{2}}\\right)\\] Recall that if \\((x, y)=(a, b)\\) then \\(x=a\\) and \\(y=b\\). So, \\[-4=\\frac{3 m_{1}-6 m_{2}}{m_{1}+m_{2}} \\text { and } 6=\\frac{-8 m_{1}+10 m_{2}}{m_{1}+m_{2}}\\] Now, \\[-4=\\frac{3 m_{1}-6 m_{2}}{m_{1}+m_{2}} \\quad \\text { gives us }\\] \\[-4 m_{1}-4 m_{2}=3 m_{1}-6 m_{2}\\] i.e., \\[7 m_{1}=2 m_{2}\\] i.e., \\[m_{1}: m_{2}=2: 7\\] You should verify that the ratio satisfies the \\(y\\)-coordinate also. Now, \\[\\begin{aligned} \\frac{-8 m_{1}+10 m_{2}}{m_{1}+m_{2}} & =\\frac{-8 \\frac{m_{1}}{m_{2}}+10}{\\frac{m_{1}}{m_{2}}+1} \\quad\\left(\\text { Dividing throughout by } m_{2}\\right) \\\\ & =\\frac{-8 \\times \\frac{2}{7}+10}{\\frac{2}{7}+1}=6 \\end{aligned}\\] Therefore, the point ( \\(-4,6\\) ) divides the line segment joining the points \\(\\mathrm{A}(-6,10)\\) and \\(B(3,-8)\\) in the ratio \\(2: 7\\). Alternatively : The ratio \\(m_{1}: m_{2}\\) can also be written as \\(\\frac{m_{1}}{m_{2}}: 1\\), or \\(k: 1\\). Let ( \\(-4,6\\) ) divide AB internally in the ratio \\(k: 1\\). Using the section formula, we get \\[(-4,6)=\\left(\\frac{3 k-6}{k+1}, \\frac{-8 k+10}{k+1}\\right)\\] So, \\[-4=\\frac{3 k-6}{k+1}\\] i.e., \\[-4 k-4=3 k-6\\] i.e., \\[7 k=2\\] i.e., \\[k: 1=2: 7\\] You can check for the \\(y\\)-coordinate also. So, the point \\((-4,6)\\) divides the line segment joining the points \\(\\mathrm{A}(-6,10)\\) and \\(B(3,-8)\\) in the ratio \\(2: 7\\). Note : You can also find this ratio by calculating the distances PA and PB and taking their ratios provided you know that \\(\\mathrm{A}, \\mathrm{P}\\) and B are collinear.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-8",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 8,
+      "body": "Find the coordinates of the points of trisection (i.e., points dividing in three equal parts) of the line segment joining the points \\(\\mathrm{A}(2,-2)\\) and \\(\\mathrm{B}(-7,4)\\).",
+      "solution": "Let P and Q be the points of trisection of AB i.e., \\(\\mathrm{AP}=\\mathrm{PQ}=\\mathrm{QB}\\) (see Fig. 7.11). \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-155.jpg?height=107&width=486&top_left_y=1521&top_left_x=886} \\captionsetup{labelformat=empty} \\caption{Fig. 7.11} \\end{figure} Therefore, P divides AB internally in the ratio \\(1: 2\\). Therefore, the coordinates of P , by applying the section formula, are \\[\\left(\\frac{1(-7)+2(2)}{1+2}, \\frac{1(4)+2(-2)}{1+2}\\right), \\text { i.e., }(-1,0)\\] Now, Q also divides AB internally in the ratio 2 : 1. So, the coordinates of Q are \\[\\left(\\frac{2(-7)+1(2)}{2+1}, \\frac{2(4)+1(-2)}{2+1}\\right), \\text { i.e., }(-4,2)\\] Therefore, the coordinates of the points of trisection of the line segment joining A and \\(B\\) are \\((-1,0)\\) and \\((-4,2)\\). Note : We could also have obtained Q by noting that it is the mid-point of PB . So, we could have obtained its coordinates using the mid-point formula.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-9",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 9,
+      "body": "Find the ratio in which the \\(y\\)-axis divides the line segment joining the points \\((5,-6)\\) and \\((-1,-4)\\). Also find the point of intersection.",
+      "solution": "Let the ratio be \\(k: 1\\). Then by the section formula, the coordinates of the point which divides AB in the ratio \\(k: 1\\) are \\(\\left(\\frac{-k+5}{k+1}, \\frac{-4 k-6}{k+1}\\right)\\). This point lies on the \\(y\\)-axis, and we know that on the \\(y\\)-axis the abscissa is 0 . Therefore, \\[\\frac{-k+5}{k+1}=0\\] So, \\[k=5\\] That is, the ratio is \\(5: 1\\). Putting the value of \\(k=5\\), we get the point of intersection as \\(\\left(0, \\frac{-13}{3}\\right)\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH07-EX-10",
+      "chapterNumber": 7,
+      "chapterTitleHint": "Distance Formula",
+      "exampleNumber": 10,
+      "body": "If the points \\(\\mathrm{A}(6,1), \\mathrm{B}(8,2), \\mathrm{C}(9,4)\\) and \\(\\mathrm{D}(p, 3)\\) are the vertices of a parallelogram, taken in order, find the value of \\(p\\).",
+      "solution": "We know that diagonals of a parallelogram bisect each other. So, the coordinates of the mid-point of \\(\\mathrm{AC}=\\) coordinates of the mid-point of BD i.e., \\[\\left(\\frac{6+9}{2}, \\frac{1+4}{2}\\right)=\\left(\\frac{8+p}{2}, \\frac{2+3}{2}\\right)\\] i.e., \\[\\left(\\frac{15}{2}, \\frac{5}{2}\\right)=\\left(\\frac{8+p}{2}, \\frac{5}{2}\\right)\\] so, \\[\\frac{15}{2}=\\frac{8+p}{2}\\] i.e., \\[p=7\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-1",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Given \\(\\tan \\mathrm{A}=\\frac{4}{3}\\), find the other trigonometric ratios of the angle A .",
+      "solution": "Let us first draw a right \\(\\triangle \\mathrm{ABC}\\) (see Fig 8.8). Now, we know that \\(\\tan \\mathrm{A}=\\frac{\\mathrm{BC}}{\\mathrm{AB}}=\\frac{4}{3}\\). Therefore, if \\(\\mathrm{BC}=4 k\\), then \\(\\mathrm{AB}=3 k\\), where \\(k\\) is a positive number. Now, by using the Pythagoras Theorem, we have Fig. 8.8 \\[\\mathrm{AC}^{2}=\\mathrm{AB}^{2}+\\mathrm{BC}^{2}=(4 k)^{2}+(3 k)^{2}=25 k^{2}\\] So, \\[\\mathrm{AC}=5 k\\] Now, we can write all the trigonometric ratios using their definitions. \\[\\begin{aligned} & \\sin \\mathrm{A}=\\frac{\\mathrm{BC}}{\\mathrm{AC}}=\\frac{4 k}{5 k}=\\frac{4}{5} \\\\ & \\cos \\mathrm{~A}=\\frac{\\mathrm{AB}}{\\mathrm{AC}}=\\frac{3 k}{5 k}=\\frac{3}{5} \\end{aligned}\\] Therefore, \\(\\cot \\mathrm{A}=\\frac{1}{\\tan \\mathrm{~A}}=\\frac{3}{4}, \\operatorname{cosec} \\mathrm{~A}=\\frac{1}{\\sin \\mathrm{~A}}=\\frac{5}{4}\\) and \\(\\sec \\mathrm{A}=\\frac{1}{\\cos \\mathrm{~A}}=\\frac{5}{3}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-2",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "If \\(\\angle \\mathrm{B}\\) and \\(\\angle \\mathrm{Q}\\) are acute angles such that \\(\\sin \\mathrm{B}=\\sin \\mathrm{Q}\\), then prove that \\(\\angle \\mathrm{B}=\\angle \\mathrm{Q}\\).",
+      "solution": "Let us consider two right triangles ABC and PQR where \\(\\sin \\mathrm{B}=\\sin \\mathrm{Q}\\) (see Fig. 8.9). We have \\[\\sin \\mathrm{B}=\\frac{\\mathrm{AC}}{\\mathrm{AB}}\\] Fig. 8.9 and \\[\\sin \\mathrm{Q}=\\frac{\\mathrm{PR}}{\\mathrm{PQ}}\\] Then \\[\\frac{\\mathrm{AC}}{\\mathrm{AB}}=\\frac{\\mathrm{PR}}{\\mathrm{PQ}}\\] Therefore, \\[\\frac{\\mathrm{AC}}{\\mathrm{PR}}=\\frac{\\mathrm{AB}}{\\mathrm{PQ}}=k \\text {, say }\\] Now, using Pythagoras theorem, and \\[\\begin{aligned} & \\mathrm{BC}=\\sqrt{\\mathrm{AB}^{2}-\\mathrm{AC}^{2}} \\\\ & \\mathrm{QR}=\\sqrt{\\mathrm{PQ}^{2}-\\mathrm{PR}^{2}} \\end{aligned}\\] So, \\(\\frac{\\mathrm{BC}}{\\mathrm{QR}}=\\frac{\\sqrt{\\mathrm{AB}^{2}-\\mathrm{AC}^{2}}}{\\sqrt{\\mathrm{PQ}^{2}-\\mathrm{PR}^{2}}}=\\frac{\\sqrt{k^{2} \\mathrm{PQ}^{2}-k^{2} \\mathrm{PR}^{2}}}{\\sqrt{\\mathrm{PQ}^{2}-\\mathrm{PR}^{2}}}=\\frac{k \\sqrt{\\mathrm{PQ}^{2}-\\mathrm{PR}^{2}}}{\\sqrt{\\mathrm{PQ}^{2}-\\mathrm{PR}^{2}}}=k\\) From (1) and (2), we have \\[\\frac{\\mathrm{AC}}{\\mathrm{PR}}=\\frac{\\mathrm{AB}}{\\mathrm{PQ}}=\\frac{\\mathrm{BC}}{\\mathrm{QR}}\\] Then, by using Theorem 6.4, \\(\\triangle \\mathrm{ACB} \\sim \\Delta \\mathrm{PRQ}\\) and therefore, \\(\\angle \\mathrm{B}=\\angle \\mathrm{Q}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-3",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "Consider \\(\\triangle \\mathrm{ACB}\\), right-angled at C , in which \\(\\mathrm{AB}=29\\) units, \\(\\mathrm{BC}=21\\) units and \\(\\angle \\mathrm{ABC}=\\theta\\) (see Fig. 8.10). Determine the values of (i) \\(\\cos ^{2} \\theta+\\sin ^{2} \\theta\\), (ii) \\(\\cos ^{2} \\theta-\\sin ^{2} \\theta\\).",
+      "solution": "In \\(\\triangle \\mathrm{ACB}\\), we have \\[\\begin{aligned} \\mathrm{AC} & =\\sqrt{\\mathrm{AB}^{2}-\\mathrm{BC}^{2}}=\\sqrt{(29)^{2}-(21)^{2}} \\\\ & =\\sqrt{(29-21)(29+21)}=\\sqrt{(8)(50)}=\\sqrt{400}=20 \\text { units } \\end{aligned}\\] So, \\(\\quad \\sin \\theta=\\frac{\\mathrm{AC}}{\\mathrm{AB}}=\\frac{20}{29}, \\cos \\theta=\\frac{\\mathrm{BC}}{\\mathrm{AB}}=\\frac{21}{29}\\). Now, (i) \\(\\cos ^{2} \\theta+\\sin ^{2} \\theta=\\left(\\frac{20}{29}\\right)^{2}+\\left(\\frac{21}{29}\\right)^{2}=\\frac{20^{2}+21^{2}}{29^{2}}=\\frac{400+441}{841}=1\\), and (ii) \\(\\cos ^{2} \\theta-\\sin ^{2} \\theta=\\left(\\frac{21}{29}\\right)^{2}-\\left(\\frac{20}{29}\\right)^{2}=\\frac{(21+20)(21-20)}{29^{2}}=\\frac{41}{841}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-4",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "In a right triangle ABC , right-angled at B , if \\(\\tan \\mathrm{A}=1\\), then verify that \\(2 \\sin \\mathrm{~A} \\cos \\mathrm{~A}=1\\).",
+      "solution": "In \\(\\triangle \\mathrm{ABC}, \\tan \\mathrm{A}=\\frac{\\mathrm{BC}}{\\mathrm{AB}}=1\\) (see Fig 8.11) i.e., \\[\\mathrm{BC}=\\mathrm{AB}\\] Fig. 8.11 Let \\(\\mathrm{AB}=\\mathrm{BC}=k\\), where \\(k\\) is a positive number. Now, \\[\\begin{aligned} \\mathrm{AC} & =\\sqrt{\\mathrm{AB}^{2}+\\mathrm{BC}^{2}} \\\\ & =\\sqrt{(k)^{2}+(k)^{2}}=k \\sqrt{2} \\end{aligned}\\] Therefore, \\[\\sin A=\\frac{B C}{A C}=\\frac{1}{\\sqrt{2}} \\quad \\text { and } \\quad \\cos A=\\frac{A B}{A C}=\\frac{1}{\\sqrt{2}}\\] So, \\(\\quad 2 \\sin \\mathrm{~A} \\cos \\mathrm{~A}=2\\left(\\frac{1}{\\sqrt{2}}\\right)\\left(\\frac{1}{\\sqrt{2}}\\right)=1\\), which is the required value.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-5",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "In \\(\\Delta \\mathrm{OPQ}\\), right-angled at P , \\(\\mathrm{OP}=7 \\mathrm{~cm}\\) and \\(\\mathrm{OQ}-\\mathrm{PQ}=1 \\mathrm{~cm}\\) (see Fig. 8.12). Determine the values of \\(\\sin \\mathrm{Q}\\) and \\(\\cos \\mathrm{Q}\\).",
+      "solution": "In \\(\\triangle \\mathrm{OPQ}\\), we have \\[\\mathrm{OQ}^{2}=\\mathrm{OP}^{2}+\\mathrm{PQ}^{2}\\] i.e., \\[(1+\\mathrm{PQ})^{2}=\\mathrm{OP}^{2}+\\mathrm{PQ}^{2} \\quad \\text { (Why?) }\\] i.e., \\(\\quad 1+\\mathrm{PQ}^{2}+2 \\mathrm{PQ}=\\mathrm{OP}^{2}+\\mathrm{PQ}^{2}\\) i.e., \\[1+2 \\mathrm{PQ}=7^{2} \\quad(\\text { Why? })\\] i.e., \\[\\mathrm{PQ}=24 \\mathrm{~cm} \\text { and } \\mathrm{OQ}=1+\\mathrm{PQ}=25 \\mathrm{~cm}\\] Fig. 8.12 So, \\[\\sin \\mathrm{Q}=\\frac{7}{25} \\text { and } \\cos \\mathrm{Q}=\\frac{24}{25}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-6",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 6,
+      "body": "In \\(\\triangle \\mathrm{ABC}\\), right-angled at B , \\(\\mathrm{AB}=5 \\mathrm{~cm}\\) and \\(\\angle \\mathrm{ACB}=30^{\\circ}\\) (see Fig. 8.19). Determine the lengths of the sides BC and AC .",
+      "solution": "To find the length of the side BC , we will choose the trigonometric ratio involving BC and the given side AB . Since BC is the side adjacent to angle C and AB is the side opposite to angle C , therefore Fig. 8.19 i.e., \\[\\frac{\\mathrm{AB}}{\\mathrm{BC}}=\\tan \\mathrm{C}\\] \\[\\frac{5}{\\mathrm{BC}}=\\tan 30^{\\circ}=\\frac{1}{\\sqrt{3}}\\] which gives \\[\\mathrm{BC}=5 \\sqrt{3} \\mathrm{~cm}\\] To find the length of the side AC, we consider \\[\\sin 30^{\\circ}=\\frac{\\mathrm{AB}}{\\mathrm{AC}} \\quad(\\mathrm{Why?)}\\] i.e., \\[\\frac{1}{2}=\\frac{5}{A C}\\] i.e., \\[\\mathrm{AC}=10 \\mathrm{~cm}\\] Note that alternatively we could have used Pythagoras theorem to determine the third side in the example above, i.e., \\[A C=\\sqrt{A B^{2}+B C^{2}}=\\sqrt{5^{2}+(5 \\sqrt{3})^{2}} \\mathrm{~cm}=10 \\mathrm{~cm} .\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-7",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 7,
+      "body": "In \\(\\Delta \\mathrm{PQR}\\), right-angled at Q (see Fig. 8.20), \\(\\mathrm{PQ}=3 \\mathrm{~cm}\\) and \\(\\mathrm{PR}=6 \\mathrm{~cm}\\). Determine \\(\\angle \\mathrm{QPR}\\) and \\(\\angle \\mathrm{PRQ}\\).",
+      "solution": "Given \\(\\mathrm{PQ}=3 \\mathrm{~cm}\\) and \\(\\mathrm{PR}=6 \\mathrm{~cm}\\). Therefore, \\(\\quad \\frac{\\mathrm{PQ}}{\\mathrm{PR}}=\\sin \\mathrm{R}\\) Fig. 8.20 or \\(\\sin \\mathrm{R}=\\frac{3}{6}=\\frac{1}{2}\\) So, \\(\\angle \\mathrm{PRQ}=30^{\\circ}\\) and therefore, \\(\\quad \\angle \\mathrm{QPR}=60^{\\circ}\\). (Why?) You may note that if one of the sides and any other part (either an acute angle or any side) of a right triangle is known, the remaining sides and angles of the triangle can be determined.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-8",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 8,
+      "body": "If \\(\\sin (\\mathrm{A}-\\mathrm{B})=\\frac{1}{2}, \\cos (\\mathrm{~A}+\\mathrm{B})=\\frac{1}{2}, 0^{\\circ}<\\mathrm{A}+\\mathrm{B} \\leq 90^{\\circ}, \\mathrm{A}>\\mathrm{B}\\), find A and B .",
+      "solution": "Since, \\(\\sin (A-B)=\\frac{1}{2}\\), therefore, \\(A-B=30^{\\circ} \\quad\\) (Why?) Also, since \\(\\cos (A+B)=\\frac{1}{2}\\), therefore, \\(A+B=60^{\\circ}\\) (Why?) Solving (1) and (2), we get : \\(\\mathrm{A}=45^{\\circ}\\) and \\(\\mathrm{B}=15^{\\circ}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-9",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 9,
+      "body": "Express the ratios \\(\\cos \\mathrm{A}\\), \\(\\tan \\mathrm{A}\\) and \\(\\sec \\mathrm{A}\\) in terms of \\(\\sin \\mathrm{A}\\).",
+      "solution": "Since \\(\\cos ^{2} \\mathrm{~A}+\\sin ^{2} \\mathrm{~A}=1\\), therefore, \\[\\cos ^{2} A=1-\\sin ^{2} A \\text {, i.e., } \\cos A= \\pm \\sqrt{1-\\sin ^{2} A}\\] This gives \\[\\cos \\mathrm{A}=\\sqrt{1-\\sin ^{2} \\mathrm{~A}} \\quad(\\text { Why? })\\] Hence, \\[\\tan A=\\frac{\\sin A}{\\cos A}=\\frac{\\sin A}{\\sqrt{1-\\sin ^{2} A}} \\text { and sec } A=\\frac{1}{\\cos A}=\\frac{1}{\\sqrt{1-\\sin ^{2} A}}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-10",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 10,
+      "body": "Prove that \\(\\sec \\mathrm{A}(1-\\sin \\mathrm{A})(\\sec \\mathrm{A}+\\tan \\mathrm{A})=1\\).",
+      "solution": "\\(L H S=\\sec A(1-\\sin A)(\\sec A+\\tan A)=\\left(\\frac{1}{\\cos A}\\right)(1-\\sin A)\\left(\\frac{1}{\\cos A}+\\frac{\\sin A}{\\cos A}\\right)\\) \\[\\begin{aligned} & =\\frac{(1-\\sin \\mathrm{A})(1+\\sin \\mathrm{A})}{\\cos ^{2} \\mathrm{~A}}=\\frac{1-\\sin ^{2} \\mathrm{~A}}{\\cos ^{2} \\mathrm{~A}} \\\\ & =\\frac{\\cos ^{2} \\mathrm{~A}}{\\cos ^{2} \\mathrm{~A}}=1=\\mathrm{RHS} \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-11",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 11,
+      "body": "Prove that \\(\\frac{\\cot A-\\cos A}{\\cot A+\\cos A}=\\frac{\\operatorname{cosec} A-1}{\\operatorname{cosec} A+1}\\)",
+      "solution": "\\(\\mathrm{LHS}=\\frac{\\cot \\mathrm{A}-\\cos \\mathrm{A}}{\\cot \\mathrm{A}+\\cos \\mathrm{A}}=\\frac{\\frac{\\cos \\mathrm{A}}{\\sin \\mathrm{A}}-\\cos \\mathrm{A}}{\\frac{\\cos \\mathrm{A}}{\\sin \\mathrm{A}}+\\cos \\mathrm{A}}\\) \\[=\\frac{\\cos A\\left(\\frac{1}{\\sin A}-1\\right)}{\\cos A\\left(\\frac{1}{\\sin A}+1\\right)}=\\frac{\\left(\\frac{1}{\\sin A}-1\\right)}{\\left(\\frac{1}{\\sin A}+1\\right)}=\\frac{\\operatorname{cosec} A-1}{\\operatorname{cosec} A+1}=\\mathrm{RHS}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH08-EX-12",
+      "chapterNumber": 8,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 12,
+      "body": "Prove that \\(\\frac{\\sin \\theta-\\cos \\theta+1}{\\sin \\theta+\\cos \\theta-1}=\\frac{1}{\\sec \\theta-\\tan \\theta}\\), using the identity \\(\\sec ^{2} \\theta=1+\\tan ^{2} \\theta\\).",
+      "solution": "Since we will apply the identity involving sec \\(\\theta\\) and \\(\\tan \\theta\\), let us first convert the LHS (of the identity we need to prove) in terms of \\(\\sec \\theta\\) and \\(\\tan \\theta\\) by dividing numerator and denominator by \\(\\cos \\theta\\). \\[\\begin{aligned} \\text { LHS } & =\\frac{\\sin \\theta-\\cos \\theta+1}{\\sin \\theta+\\cos \\theta-1}=\\frac{\\tan \\theta-1+\\sec \\theta}{\\tan \\theta+1-\\sec \\theta} \\\\ & =\\frac{(\\tan \\theta+\\sec \\theta)-1}{(\\tan \\theta-\\sec \\theta)+1}=\\frac{\\{(\\tan \\theta+\\sec \\theta)-1\\}(\\tan \\theta-\\sec \\theta)}{\\{(\\tan \\theta-\\sec \\theta)+1\\}(\\tan \\theta-\\sec \\theta)} \\\\ & =\\frac{\\left(\\tan ^{2} \\theta-\\sec ^{2} \\theta\\right)-(\\tan \\theta-\\sec \\theta)}{\\{\\tan \\theta-\\sec \\theta+1\\}(\\tan \\theta-\\sec \\theta)} \\\\ & =\\frac{-1-\\tan \\theta+\\sec \\theta}{(\\tan \\theta-\\sec \\theta+1)(\\tan \\theta-\\sec \\theta)} \\end{aligned}\\] \\[=\\frac{-1}{\\tan \\theta-\\sec \\theta}=\\frac{1}{\\sec \\theta-\\tan \\theta},\\] which is the RHS of the identity, we are required to prove.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-1",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Heights and Distances",
+      "exampleNumber": 1,
+      "body": "A tower stands vertically on the ground. From a point on the ground, which is 15 m away from the foot of the tower, the angle of elevation of the top of the tower is found to be \\(60^{\\circ}\\). Find the height of the tower.",
+      "solution": "First let us draw a simple diagram to represent the problem (see Fig. 9.4). Here AB represents the tower, CB is the distance of the point from the tower and \\(\\angle \\mathrm{ACB}\\) is the angle of elevation. We need to determine the height of the tower, i.e., AB . Also, ACB is a triangle, right-angled at B . To solve the problem, we choose the trigonometric ratio \\(\\tan 60^{\\circ}\\) (or \\(\\cot 60^{\\circ}\\) ), as the ratio involves AB and BC . Now, \\(\\tan 60^{\\circ}=\\frac{\\mathrm{AB}}{\\mathrm{BC}}\\) i.e., \\(\\quad \\sqrt{3}=\\frac{\\mathrm{AB}}{15}\\) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-181.jpg?height=606&width=484&top_left_y=1335&top_left_x=979} \\captionsetup{labelformat=empty} \\caption{Fig. 9.4} \\end{figure} i.e., \\[\\mathrm{AB}=15 \\sqrt{3}\\] Hence, the height of the tower is \\(15 \\sqrt{3} \\mathrm{~m}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-2",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Heights and Distances",
+      "exampleNumber": 2,
+      "body": "An electrician has to repair an electric fault on a pole of height 5 m . She needs to reach a point 1.3 m below the top of the pole to undertake the repair work (see Fig. 9.5). What should be the length of the ladder that she should use which, when inclined at an angle of \\(60^{\\circ}\\) to the horizontal, would enable her to reach the required position? Also, how far from the foot of the pole should she place the foot of the ladder? (You may take \\(\\sqrt{3}=1.73\\) )",
+      "solution": "In Fig. 9.5, the electrician is required to reach the point B on the pole AD . So, \\(\\quad \\mathrm{BD}=\\mathrm{AD}-\\mathrm{AB}=(5-1.3) \\mathrm{m}=3.7 \\mathrm{~m}\\). \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-182.jpg?height=646&width=406&top_left_y=330&top_left_x=981} \\captionsetup{labelformat=empty} \\caption{Fig. 9.5} \\end{figure} Here, BC represents the ladder. We need to find its length, i.e., the hypotenuse of the right triangle BDC. Now, can you think which trigonometic ratio should we consider? It should be \\(\\sin 60^{\\circ}\\). So, \\[\\frac{\\mathrm{BD}}{\\mathrm{BC}}=\\sin 60^{\\circ} \\text { or } \\frac{3.7}{\\mathrm{BC}}=\\frac{\\sqrt{3}}{2}\\] Therefore, \\[\\mathrm{BC}=\\frac{3.7 \\times 2}{\\sqrt{3}}=4.28 \\mathrm{~m} \\text { (approx.) }\\] i.e., the length of the ladder should be 4.28 m . Now, \\[\\frac{\\mathrm{DC}}{\\mathrm{BD}}=\\cot 60^{\\circ}=\\frac{1}{\\sqrt{3}}\\] i.e., \\[\\mathrm{DC}=\\frac{3.7}{\\sqrt{3}}=2.14 \\mathrm{~m} \\text { (approx.) }\\] Therefore, she should place the foot of the ladder at a distance of 2.14 m from the pole.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-3",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Heights and Distances",
+      "exampleNumber": 3,
+      "body": "An observer 1.5 m tall is 28.5 m away from a chimney. The angle of elevation of the top of the chimney from her eyes is \\(45^{\\circ}\\). What is the height of the chimney?",
+      "solution": "Here, AB is the chimney, CD the observer and \\(\\angle \\mathrm{ADE}\\) the angle of elevation (see Fig. 9.6). In this case, ADE is a triangle, right-angled at E and we are required to find the height of the chimney. We have \\[\\begin{aligned} & \\mathrm{AB}=\\mathrm{AE}+\\mathrm{BE}=\\mathrm{AE}+1.5 \\\\ & \\mathrm{DE}=\\mathrm{CB}=28.5 \\mathrm{~m} \\end{aligned}\\] \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-183.jpg?height=504&width=511&top_left_y=337&top_left_x=950} \\captionsetup{labelformat=empty} \\caption{Fig. 9.6} \\end{figure} and To determine AE, we choose a trigonometric ratio, which involves both AE and DE . Let us choose the tangent of the angle of elevation. Now, \\[\\tan 45^{\\circ}=\\frac{\\mathrm{AE}}{\\mathrm{DE}}\\] i.e., \\[1=\\frac{\\mathrm{AE}}{28.5}\\] Therefore, \\[\\mathrm{AE}=28.5\\] So the height of the chimney \\((\\mathrm{AB})=(28.5+1.5) \\mathrm{m}=30 \\mathrm{~m}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-4",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Heights and Distances",
+      "exampleNumber": 4,
+      "body": "From a point P on the ground the angle of elevation of the top of a 10 m tall building is \\(30^{\\circ}\\). A flag is hoisted at the top of the building and the angle of elevation of the top of the flagstaff from P is \\(45^{\\circ}\\). Find the length of the flagstaff and the distance of the building from the point P . (You may take \\(\\sqrt{3}=1.732\\) )",
+      "solution": "In Fig. 9.7, AB denotes the height of the building, BD the flagstaff and P the given point. Note that there are two right triangles PAB and PAD . We are required to find the length of the flagstaff, i.e., DB and the distance of the building from the point P , i.e., PA . Since, we know the height of the building AB , we will first consider the right \\(\\triangle \\mathrm{PAB}\\). We have \\[\\tan 30^{\\circ}=\\frac{\\mathrm{AB}}{\\mathrm{AP}}\\] i.e., \\[\\frac{1}{\\sqrt{3}}=\\frac{10}{\\mathrm{AP}}\\] Therefore, \\[\\mathrm{AP}=10 \\sqrt{3}\\] \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-184.jpg?height=409&width=669&top_left_y=328&top_left_x=797} \\captionsetup{labelformat=empty} \\caption{Fig. 9.7} \\end{figure} i.e., the distance of the building from P is \\(10 \\sqrt{3} \\mathrm{~m}=17.32 \\mathrm{~m}\\). Next, let us suppose \\(\\mathrm{DB}=x \\mathrm{~m}\\). Then \\(\\mathrm{AD}=(10+x) \\mathrm{m}\\). Now, in right \\(\\triangle \\mathrm{PAD}\\), \\[\\tan 45^{\\circ}=\\frac{\\mathrm{AD}}{\\mathrm{AP}}=\\frac{10+x}{10 \\sqrt{3}}\\] Therefore, \\[1=\\frac{10+x}{10 \\sqrt{3}}\\] i.e., \\[x=10(\\sqrt{3}-1)=7.32\\] So, the length of the flagstaff is 7.32 m .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-5",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Heights and Distances",
+      "exampleNumber": 5,
+      "body": "The shadow of a tower standing on a level ground is found to be 40 m longer when the Sun's altitude is \\(30^{\\circ}\\) than when it is \\(60^{\\circ}\\). Find the height of the tower.",
+      "solution": "In Fig. 9.8, AB is the tower and BC is the length of the shadow when the Sun's altitude is \\(60^{\\circ}\\), i.e., the angle of elevation of the top of the tower from the tip of the shadow is \\(60^{\\circ}\\) and DB is the length of \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-184.jpg?height=398&width=606&top_left_y=1426&top_left_x=862} \\captionsetup{labelformat=empty} \\caption{Fig. 9.8} \\end{figure} the shadow, when the angle of elevation is \\(30^{\\circ}\\). Now, let AB be \\(h \\mathrm{~m}\\) and BC be \\(x \\mathrm{~m}\\). According to the question, DB is 40 m longer than BC . So, \\[\\mathrm{DB}=(40+x) \\mathrm{m}\\] Now, we have two right triangles ABC and ABD . In \\(\\triangle \\mathrm{ABC}\\), \\[\\tan 60^{\\circ}=\\frac{\\mathrm{AB}}{\\mathrm{BC}}\\] or, \\[\\sqrt{3}=\\frac{h}{x}\\] In \\(\\triangle \\mathrm{ABD}, \\quad \\tan 30^{\\circ}=\\frac{\\mathrm{AB}}{\\mathrm{BD}}\\) i.e., \\[\\frac{1}{\\sqrt{3}}=\\frac{h}{x+40}\\] From (1), we have \\(\\quad h=x \\sqrt{3}\\) Putting this value in (2), we get \\((x \\sqrt{3}) \\sqrt{3}=x+40\\), i.e., \\(3 x=x+40\\) i.e., \\[x=20\\] So, \\[h=20 \\sqrt{3}\\] Therefore, the height of the tower is \\(20 \\sqrt{3} \\mathrm{~m}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-6",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Heights and Distances",
+      "exampleNumber": 6,
+      "body": "The angles of depression of the top and the bottom of an 8 m tall building from the top of a multi-storeyed building are \\(30^{\\circ}\\) and \\(45^{\\circ}\\), respectively. Find the height of the multistoreyed building and the distance between the two buildings.",
+      "solution": "In Fig. 9.9, PC denotes the multistoryed building and AB denotes the 8 m tall building. We are interested to determine the height of the multi-storeyed building, i.e., PC and the distance between the two buildings, i.e., AC. Look at the figure carefully. Observe that PB is a transversal to the parallel lines PQ and BD . Therefore, \\(\\angle \\mathrm{QPB}\\) and \\(\\angle \\mathrm{PBD}\\) are alternate angles, and so are equal. \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-185.jpg?height=455&width=515&top_left_y=1473&top_left_x=953} \\captionsetup{labelformat=empty} \\caption{Fig. 9.9} \\end{figure} So \\(\\angle \\mathrm{PBD}=30^{\\circ}\\). Similarly, \\(\\quad \\angle \\mathrm{PAC}=45^{\\circ}\\). In right \\(\\triangle \\mathrm{PBD}\\), we have \\[\\frac{\\mathrm{PD}}{\\mathrm{BD}}=\\tan 30^{\\circ}=\\frac{1}{\\sqrt{3}} \\text { or } \\mathrm{BD}=\\mathrm{PD} \\sqrt{3}\\] In right \\(\\Delta\\) PAC, we have \\[\\frac{\\mathrm{PC}}{\\mathrm{AC}}=\\tan 45^{\\circ}=1\\] i.e., \\[\\mathrm{PC}=\\mathrm{AC}\\] Also, \\[\\mathrm{PC}=\\mathrm{PD}+\\mathrm{DC} \\text {, therefore, } \\mathrm{PD}+\\mathrm{DC}=\\mathrm{AC} \\text {. }\\] Since, \\(\\mathrm{AC}=\\mathrm{BD}\\) and \\(\\mathrm{DC}=\\mathrm{AB}=8 \\mathrm{~m}\\), we get \\(\\mathrm{PD}+8=\\mathrm{BD}=\\mathrm{PD} \\sqrt{3}\\) (Why?) This gives \\[\\mathrm{PD}=\\frac{8}{\\sqrt{3}-1}=\\frac{8(\\sqrt{3}+1)}{(\\sqrt{3}+1)(\\sqrt{3}-1)}=4(\\sqrt{3}+1) \\mathrm{m}\\] So, the height of the multi-storeyed building is \\(\\{4(\\sqrt{3}+1)+8\\} \\mathrm{m}=4(3+\\sqrt{3}) \\mathrm{m}\\) and the distance between the two buildings is also \\(4(3+\\sqrt{3}) \\mathrm{m}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH09-EX-7",
+      "chapterNumber": 9,
+      "chapterTitleHint": "Heights and Distances",
+      "exampleNumber": 7,
+      "body": "From a point on a bridge across a river, the angles of depression of the banks on opposite sides of the river are \\(30^{\\circ}\\) and \\(45^{\\circ}\\), respectively. If the bridge is at a height of 3 m from the banks, find the width of the river.",
+      "solution": "In Fig 9.10, A and B represent points on the bank on opposite sides of the river, so that AB is the width of the river. P is a point on the bridge at a height of 3 m , i.e., \\(\\mathrm{DP}=3 \\mathrm{~m}\\). We are interested to determine the width \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-186.jpg?height=207&width=752&top_left_y=1402&top_left_x=712} \\captionsetup{labelformat=empty} \\caption{Fig. 9.10} \\end{figure} of the river, which is the length of the side \\(A B\\) of the \\(D A P B\\). Now, \\(\\quad \\mathrm{AB}=\\mathrm{AD}+\\mathrm{DB}\\) In right \\(\\triangle \\mathrm{APD}, \\angle \\mathrm{A}=30^{\\circ}\\). So, \\(\\quad \\tan 30^{\\circ}=\\frac{\\mathrm{PD}}{\\mathrm{AD}}\\) i.e., \\(\\quad \\frac{1}{\\sqrt{3}}=\\frac{3}{\\mathrm{AD}}\\) or \\(\\mathrm{AD}=3 \\sqrt{3} \\mathrm{~m}\\) Also, in right \\(\\Delta \\mathrm{PBD}, \\angle \\mathrm{B}=45^{\\circ}\\). So, \\(\\mathrm{BD}=\\mathrm{PD}=3 \\mathrm{~m}\\). Now, \\[\\mathrm{AB}=\\mathrm{BD}+\\mathrm{AD}=3+3 \\sqrt{3}=3(1+\\sqrt{3}) \\mathrm{m} .\\] Therefore, the width of the river is \\(3(\\sqrt{3}+1) \\mathrm{m}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-1",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Prove that in two concentric circles, the chord of the larger circle, which touches the smaller circle, is bisected at the point of contact.",
+      "solution": "We are given two concentric circles \\(\\mathrm{C}_{1}\\) and \\(\\mathrm{C}_{2}\\) with centre O and a chord AB of the larger circle \\(\\mathrm{C}_{1}\\) which touches the smaller circle \\(\\mathrm{C}_{2}\\) at the point P (see Fig. 10.8). We need to prove that \\(\\mathrm{AP}=\\mathrm{BP}\\). Let us join OP . Then, AB is a tangent to \\(\\mathrm{C}_{2}\\) at P \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-195.jpg?height=363&width=404&top_left_y=1591&top_left_x=996} \\captionsetup{labelformat=empty} \\caption{Fig. 10.8} \\end{figure} and OP is its radius. Therefore, by Theorem 10.1, \\(\\mathrm{OP} \\perp \\mathrm{AB}\\) Now AB is a chord of the circle \\(\\mathrm{C}_{1}\\) and \\(\\mathrm{OP} \\perp \\mathrm{AB}\\). Therefore, OP is the bisector of the chord AB , as the perpendicular from the centre bisects the chord, i.e., \\[\\mathrm{AP}=\\mathrm{BP}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-2",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Two tangents TP and TQ are drawn to a circle with centre O from an external point T . Prove that \\(\\angle \\mathrm{PTQ}=2 \\angle \\mathrm{OPQ}\\).",
+      "solution": "We are given a circle with centre O, an external point T and two tangents TP and TQ to the circle, where \\(\\mathrm{P}, \\mathrm{Q}\\) are the points of contact (see Fig. 10.9). We need to prove that \\[\\angle \\mathrm{PTQ}=2 \\angle \\mathrm{OPQ}\\] \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-196.jpg?height=324&width=463&top_left_y=534&top_left_x=979} \\captionsetup{labelformat=empty} \\caption{Fig. 10.9} \\end{figure} Let \\[\\angle \\mathrm{PTQ}=\\theta\\] Now, by Theorem 10.2, \\(\\mathrm{TP}=\\mathrm{TQ}\\). So, TPQ is an isosceles triangle. Therefore, \\[\\angle \\mathrm{TPQ}=\\angle \\mathrm{TQP}=\\frac{1}{2}\\left(180^{\\circ}-\\theta\\right)=90^{\\circ}-\\frac{1}{2} \\theta\\] Also, by Theorem 10.1, \\[\\angle \\mathrm{OPT}=90^{\\circ}\\] So, \\(\\quad \\angle \\mathrm{OPQ}=\\angle \\mathrm{OPT}-\\angle \\mathrm{TPQ}=90^{\\circ}-\\left(90^{\\circ}-\\frac{1}{2} \\theta\\right)\\) This gives \\[=\\frac{1}{2} \\theta=\\frac{1}{2} \\angle \\mathrm{PTQ}\\] \\[\\angle \\mathrm{PTQ}=2 \\angle \\mathrm{OPQ}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-3",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "PQ is a chord of length 8 cm of a circle of radius 5 cm . The tangents at P and Q intersect at a point T (see Fig. 10.10). Find the length TP.",
+      "solution": "Join OT. Let it intersect PQ at the point R . Then \\(\\triangle \\mathrm{TPQ}\\) is isosceles and TO is the angle bisector of \\(\\angle \\mathrm{PTQ}\\). So, \\(\\mathrm{OT} \\perp \\mathrm{PQ}\\) and therefore, OT bisects PQ which gives \\(\\mathrm{PR}=\\mathrm{RQ}=4 \\mathrm{~cm}\\). Also, \\(\\mathrm{OR}=\\sqrt{\\mathrm{OP}^{2}-\\mathrm{PR}^{2}}=\\sqrt{5^{2}-4^{2}} \\mathrm{~cm}=3 \\mathrm{~cm}\\). \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-196.jpg?height=464&width=543&top_left_y=1591&top_left_x=925} \\captionsetup{labelformat=empty} \\caption{Fig. 10.10} \\end{figure} Now, \\(\\angle \\mathrm{TPR}+\\angle \\mathrm{RPO}=90^{\\circ}=\\angle \\mathrm{TPR}+\\angle \\mathrm{PTR} \\quad\\) (Why?) So, \\(\\quad \\angle \\mathrm{RPO}=\\angle \\mathrm{PTR}\\) Therefore, right triangle TRP is similar to the right triangle PRO by AA similarity. This gives \\[\\frac{\\mathrm{TP}}{\\mathrm{PO}}=\\frac{\\mathrm{RP}}{\\mathrm{RO}} \\text {, i.e., } \\frac{\\mathrm{TP}}{5}=\\frac{4}{3} \\text { or } \\mathrm{TP}=\\frac{20}{3} \\mathrm{~cm} .\\] Note : TP can also be found by using the Pythagoras Theorem, as follows: Let \\[\\begin{aligned} \\mathrm{TP} & =x \\text { and } \\mathrm{TR}=y . \\quad \\text { Then } \\\\ x^{2} & =y^{2}+16 \\quad(\\text { Taking right } \\Delta \\mathrm{PRT}) \\\\ x^{2}+5^{2} & =(y+3)^{2} \\quad(\\text { Taking right } \\Delta \\mathrm{OPT}) \\end{aligned}\\] Subtracting (1) from (2), we get Therefore, \\[\\begin{aligned} 25 & =6 y-7 \\text { or } y=\\frac{32}{6}=\\frac{16}{3} \\\\ x^{2} & =\\left(\\frac{16}{3}\\right)^{2}+16=\\frac{16}{9}(16+9)=\\frac{16 \\times 25}{9} \\\\ x & =\\frac{20}{3} \\end{aligned}\\] [From (1)] or",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-1",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Find the area of the sector of a circle with radius 4 cm and of angle \\(30^{\\circ}\\). Also, find the area of the corresponding major sector (Use \\(\\pi=3.14\\) ).",
+      "solution": "Given sector is OAPB (see Fig. 11.5). \\[\\begin{aligned} \\text { Area of the sector } & =\\frac{\\theta}{360} \\times \\pi r^{2} \\\\ & =\\frac{30}{360} \\times 3.14 \\times 4 \\times 4 \\mathrm{~cm}^{2} \\\\ & =\\frac{12.56}{3} \\mathrm{~cm}^{2}=4.19 \\mathrm{~cm}^{2} \\text { (approx.) } \\end{aligned}\\] \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-202.jpg?height=379&width=347&top_left_y=907&top_left_x=1053} \\captionsetup{labelformat=empty} \\caption{Fig. 11.5} \\end{figure} Area of the corresponding major sector \\[\\begin{aligned} & =\\pi r^{2}-\\text { area of sector OAPB } \\\\ & =(3.14 \\times 16-4.19) \\mathrm{cm}^{2} \\\\ & =46.05 \\mathrm{~cm}^{2}=46.1 \\mathrm{~cm}^{2}(\\text { approx } .) \\end{aligned}\\] Alternatively, area of the major sector \\(=\\frac{(360-\\theta)}{360} \\times \\pi r^{2}\\) \\[\\begin{aligned} & =\\left(\\frac{360-30}{360}\\right) \\times 3.14 \\times 16 \\mathrm{~cm}^{2} \\\\ & =\\frac{330}{360} \\times 3.14 \\times 16 \\mathrm{~cm}^{2}=46.05 \\mathrm{~cm}^{2} \\\\ & =46.1 \\mathrm{~cm}^{2} \\text { (approx.) } \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH10-EX-2",
+      "chapterNumber": 10,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "Find the area of the segment AYB shown in Fig. 11.6, if radius of the circle is 21 cm and \\(\\angle \\mathrm{AOB}=120^{\\circ}\\). (Use \\(\\pi=\\frac{22}{7}\\) ) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-203.jpg?height=359&width=352&top_left_y=352&top_left_x=1042} \\captionsetup{labelformat=empty} \\caption{Fig. 11.6} \\end{figure}",
+      "solution": "Area of the segment AYB \\[=\\text { Area of sector OAYB - Area of } \\Delta \\mathrm{OAB}\\] Now, area of the sector OAYB \\(=\\frac{120}{360} \\times \\frac{22}{7} \\times 21 \\times 21 \\mathrm{~cm}^{2}=462 \\mathrm{~cm}^{2}\\) For finding the area of \\(\\Delta \\mathrm{OAB}\\), draw \\(\\mathrm{OM} \\perp \\mathrm{AB}\\) as shown in Fig. 11.7. Note that \\(\\mathrm{OA}=\\mathrm{OB}\\). Therefore, by RHS congruence, \\(\\triangle \\mathrm{AMO} \\cong \\triangle \\mathrm{BMO}\\). So, M is the mid-point of AB and \\(\\angle \\mathrm{AOM}=\\angle \\mathrm{BOM}=\\frac{1}{2} \\times 120^{\\circ}=60^{\\circ}\\). Let \\[\\mathrm{OM}=x \\mathrm{~cm}\\] So, from \\(\\Delta\\) OMA, \\[\\frac{\\mathrm{OM}}{\\mathrm{OA}}=\\cos 60^{\\circ}\\] ![](https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-203.jpg?height=210&width=507&top_left_y=1306&top_left_x=961) or, \\[\\frac{x}{21}=\\frac{1}{2} \\quad\\left(\\cos 60^{\\circ}=\\frac{1}{2}\\right)\\] Fig. 11.7 or, \\[x=\\frac{21}{2}\\] So, \\[\\mathrm{OM}=\\frac{21}{2} \\mathrm{~cm}\\] Also, \\[\\frac{\\mathrm{AM}}{\\mathrm{OA}}=\\sin 60^{\\circ}=\\frac{\\sqrt{3}}{2}\\] So, \\[\\mathrm{AM}=\\frac{21 \\sqrt{3}}{2} \\mathrm{~cm}\\] Therefore, \\[\\mathrm{AB}=2 \\mathrm{AM}=\\frac{2 \\times 21 \\sqrt{3}}{2} \\mathrm{~cm}=21 \\sqrt{3} \\mathrm{~cm}\\] So, \\[\\text { area of } \\begin{aligned} \\Delta \\mathrm{OAB} & =\\frac{1}{2} \\mathrm{AB} \\times \\mathrm{OM}=\\frac{1}{2} \\times 21 \\sqrt{3} \\times \\frac{21}{2} \\mathrm{~cm}^{2} \\\\ & =\\frac{441}{4} \\sqrt{3} \\mathrm{~cm}^{2} \\end{aligned}\\] Therefore, area of the segment \\(\\mathrm{AYB}=\\left(462-\\frac{441}{4} \\sqrt{3}\\right) \\mathrm{cm}^{2}\\) [From (1), (2) and (3)] \\[=\\frac{21}{4}(88-21 \\sqrt{3}) \\mathrm{cm}^{2}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-1",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Rasheed got a playing top (lattu) as his birthday present, which surprisingly had no colour on it. He wanted to colour it with his crayons. The top is shaped like a cone surmounted by a hemisphere (see Fig 12.6). The entire top is 5 cm in height and the diameter of the top is 3.5 cm . Find the area he has to colour. (Take \\(\\pi=\\frac{22}{7}\\) ) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-209.jpg?height=304&width=319&top_left_y=1309&top_left_x=1027} \\captionsetup{labelformat=empty} \\caption{Fig. 12.6} \\end{figure}",
+      "solution": "This top is exactly like the object we have discussed in Fig. 12.5. So, we can conveniently use the result we have arrived at there. That is : TSA of the toy = CSA of hemisphere + CSA of cone Now, the curved surface area of the hemisphere \\(=\\frac{1}{2}\\left(4 \\pi r^{2}\\right)=2 \\pi r^{2}\\) \\[=\\left(2 \\times \\frac{22}{7} \\times \\frac{3.5}{2} \\times \\frac{3.5}{2}\\right) \\mathrm{cm}^{2}\\] Also, the height of the cone = height of the top - height (radius) of the hemispherical part \\[=\\left(5-\\frac{3.5}{2}\\right) \\mathrm{cm}=3.25 \\mathrm{~cm}\\] So, the slant height of the cone \\((l)=\\sqrt{r^{2}+h^{2}}=\\sqrt{\\left(\\frac{3.5}{2}\\right)^{2}+(3.25)^{2}} \\mathrm{~cm}=3.7 \\mathrm{~cm}\\) (approx.) Therefore, CSA of cone \\(=\\pi r l=\\left(\\frac{22}{7} \\times \\frac{3.5}{2} \\times 3.7\\right) \\mathrm{cm}^{2}\\) This gives the surface area of the top as \\[\\begin{aligned} & =\\left(2 \\times \\frac{22}{7} \\times \\frac{3.5}{2} \\times \\frac{3.5}{2}\\right) \\mathrm{cm}^{2}+\\left(\\frac{22}{7} \\times \\frac{3.5}{2} \\times 3.7\\right) \\mathrm{cm}^{2} \\\\ & =\\frac{22}{7} \\times \\frac{3.5}{2}(3.5+3.7) \\mathrm{cm}^{2}=\\frac{11}{2} \\times(3.5+3.7) \\mathrm{cm}^{2}=39.6 \\mathrm{~cm}^{2}(\\text { approx. }) \\end{aligned}\\] You may note that 'total surface area of the top' is not the sum of the total surface areas of the cone and hemisphere.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-2",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "The decorative block shown in Fig. 12.7 is made of two solids - a cube and a hemisphere. The base of the block is a cube with edge 5 cm , and the hemisphere fixed on the top has a diameter of 4.2 cm . Find the total surface area of the block. (Take \\(\\pi=\\frac{22}{7}\\) ) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-210.jpg?height=412&width=446&top_left_y=1180&top_left_x=922} \\captionsetup{labelformat=empty} \\caption{Fig. 12.7} \\end{figure}",
+      "solution": "The total surface area of the cube \\(=6 \\times(\\text { edge })^{2}=6 \\times 5 \\times 5 \\mathrm{~cm}^{2}=150 \\mathrm{~cm}^{2}\\). Note that the part of the cube where the hemisphere is attached is not included in the surface area. So, the surface area of the block \\(=\\) TSA of cube - base area of hemisphere + CSA of hemisphere \\[\\begin{aligned} & =150-\\pi r^{2}+2 \\pi r^{2}=\\left(150+\\pi r^{2}\\right) \\mathrm{cm}^{2} \\\\ & =150 \\mathrm{~cm}^{2}+\\left(\\frac{22}{7} \\times \\frac{4.2}{2} \\times \\frac{4.2}{2}\\right) \\mathrm{cm}^{2} \\\\ & =(150+13.86) \\mathrm{cm}^{2}=163.86 \\mathrm{~cm}^{2} \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-3",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "A wooden toy rocket is in the shape of a cone mounted on a cylinder, as shown in Fig. 12.8. The height of the entire rocket is 26 cm , while the height of the conical part is 6 cm . The base of the conical portion has a diameter of 5 cm , while the base diameter of the cylindrical portion is 3 cm . If the conical portion is to be painted orange and the cylindrical portion yellow, find the area of the rocket painted with each of these colours. (Take \\(\\pi=3.14\\) )",
+      "solution": "Denote radius of cone by \\(r\\), slant height of cone by \\(l\\), height of cone by \\(h\\), radius of cylinder by \\(r^{\\prime}\\) and height of cylinder by \\(h^{\\prime}\\). Then \\(r=2.5 \\mathrm{~cm}, h=6 \\mathrm{~cm}, r^{\\prime}=1.5 \\mathrm{~cm}\\), \\(h^{\\prime}=26-6=20 \\mathrm{~cm}\\) and \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-211.jpg?height=702&width=637&top_left_y=345&top_left_x=846} \\captionsetup{labelformat=empty} \\caption{Fig. 12.8} \\end{figure} \\[l=\\sqrt{r^{2}+h^{2}}=\\sqrt{2.5^{2}+6^{2}} \\mathrm{~cm}=6.5 \\mathrm{~cm}\\] Here, the conical portion has its circular base resting on the base of the cylinder, but the base of the cone is larger than the base of the cylinder. So, a part of the base of the cone (a ring) is to be painted. So, the area to be painted orange \\(=\\) CSA of the cone + base area of the cone - base area of the cylinder \\[\\begin{aligned} & =\\pi r l+\\pi r^{2}-\\pi\\left(r^{\\prime}\\right)^{2} \\\\ & =\\pi\\left[(2.5 \\times 6.5)+(2.5)^{2}-(1.5)^{2}\\right] \\mathrm{cm}^{2} \\\\ & =\\pi[20.25] \\mathrm{cm}^{2}=3.14 \\times 20.25 \\mathrm{~cm}^{2} \\\\ & =63.585 \\mathrm{~cm}^{2} \\end{aligned}\\] Now, the area to be painted yellow = CSA of the cylinder + area of one base of the cylinder \\[\\begin{aligned} & =2 \\pi r^{\\prime} h^{\\prime}+\\pi\\left(r^{\\prime}\\right)^{2} \\\\ & =\\pi r^{\\prime}\\left(2 h^{\\prime}+r^{\\prime}\\right) \\\\ & =(3.14 \\times 1.5)(2 \\times 20+1.5) \\mathrm{cm}^{2} \\\\ & =4.71 \\times 41.5 \\mathrm{~cm}^{2} \\\\ & =195.465 \\mathrm{~cm}^{2} \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-4",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "Mayank made a bird-bath for his garden in the shape of a cylinder with a hemispherical depression at one end (see Fig. 12.9). The height of the cylinder is 1.45 m and its radius is 30 cm . Find the total surface area of the bird-bath. (Take \\(\\pi=\\frac{22}{7}\\) )",
+      "solution": "Let \\(h\\) be height of the cylinder, and \\(r\\) the common radius of the cylinder and hemisphere. Then, \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-212.jpg?height=383&width=356&top_left_y=332&top_left_x=1057} \\captionsetup{labelformat=empty} \\caption{Fig. 12.9} \\end{figure} the total surface area of the bird-bath = CSA of cylinder + CSA of hemisphere \\[\\begin{aligned} & =2 \\pi r h+2 \\pi r^{2}=2 \\pi r(h+r) \\\\ & =2 \\times \\frac{22}{7} \\times 30(145+30) \\mathrm{cm}^{2} \\\\ & =33000 \\mathrm{~cm}^{2}=3.3 \\mathrm{~m}^{2} \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-5",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "Shanta runs an industry in a shed which is in the shape of a cuboid surmounted by a half cylinder (see Fig. 12.12). If the base of the shed is of dimension \\(7 \\mathrm{~m} \\times 15 \\mathrm{~m}\\), and the height of the cuboidal portion is 8 m , find the volume of air that the shed can hold. Further, suppose the machinery in the shed occupies a total space of \\(300 \\mathrm{~m}^{3}\\), and there are 20 workers, each of whom occupy about \\(0.08 \\mathrm{~m}^{3}\\) space on an average. Then, how much air is in the shed? (Take \\(\\pi=\\frac{22}{7}\\) ) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-213.jpg?height=415&width=665&top_left_y=1549&top_left_x=801} \\captionsetup{labelformat=empty} \\caption{Fig. 12.12} \\end{figure}",
+      "solution": "The volume of air inside the shed (when there are no people or machinery) is given by the volume of air inside the cuboid and inside the half cylinder, taken together. Now, the length, breadth and height of the cuboid are \\(15 \\mathrm{~m}, 7 \\mathrm{~m}\\) and 8 m , respectively. Also, the diameter of the half cylinder is 7 m and its height is 15 m . So, the required volume \\(=\\) volume of the cuboid \\(+\\frac{1}{2}\\) volume of the cylinder \\[=\\left[15 \\times 7 \\times 8+\\frac{1}{2} \\times \\frac{22}{7} \\times \\frac{7}{2} \\times \\frac{7}{2} \\times 15\\right] \\mathrm{m}^{3}=1128.75 \\mathrm{~m}^{3}\\] Next, the total space occupied by the machinery \\(=300 \\mathrm{~m}^{3}\\) And the total space occupied by the workers \\(=20 \\times 0.08 \\mathrm{~m}^{3}=1.6 \\mathrm{~m}^{3}\\) Therefore, the volume of the air, when there are machinery and workers \\[=1128.75-(300.00+1.60)=827.15 \\mathrm{~m}^{3}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-6",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 6,
+      "body": "A juice seller was serving his customers using glasses as shown in Fig. 12.13. The inner diameter of the cylindrical glass was 5 cm , but the bottom of the glass had a hemispherical raised portion which reduced the capacity of the glass. If the height of a glass was 10 cm , find the apparent capacity of the glass and its actual capacity. (Use \\(\\pi=3.14\\).) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-214.jpg?height=308&width=170&top_left_y=1142&top_left_x=1087} \\captionsetup{labelformat=empty} \\caption{Fig. 12.13} \\end{figure}",
+      "solution": "Since the inner diameter of the glass \\(=5 \\mathrm{~cm}\\) and height \\(=10 \\mathrm{~cm}\\), the apparent capacity of the glass \\(=\\pi r^{2} h\\) \\[=3.14 \\times 2.5 \\times 2.5 \\times 10 \\mathrm{~cm}^{3}=196.25 \\mathrm{~cm}^{3}\\] But the actual capacity of the glass is less by the volume of the hemisphere at the base of the glass. i.e., \\(\\quad\\) it is less by \\(\\frac{2}{3} \\pi r^{3}=\\frac{2}{3} \\times 3.14 \\times 2.5 \\times 2.5 \\times 2.5 \\mathrm{~cm}^{3}=32.71 \\mathrm{~cm}^{3}\\) So, the actual capacity of the glass \\(=\\) apparent capacity of glass - volume of the hemisphere \\[\\begin{aligned} & =(196.25-32.71) \\mathrm{cm}^{3} \\\\ & =163.54 \\mathrm{~cm}^{3} \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH12-EX-7",
+      "chapterNumber": 12,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 7,
+      "body": "A solid toy is in the form of a hemisphere surmounted by a right circular cone. The height of the cone is 2 cm and the diameter of the base is 4 cm . Determine the volume of the toy. If a right circular cylinder circumscribes the toy, find the difference of the volumes of the cylinder and the toy. (Take \\(\\pi=3.14\\) ) \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-215.jpg?height=307&width=316&top_left_y=330&top_left_x=1074} \\captionsetup{labelformat=empty} \\caption{Fig. 12.14} \\end{figure}",
+      "solution": "Let BPC be the hemisphere and ABC be the cone standing on the base of the hemisphere (see Fig. 12.14). The radius BO of the hemisphere (as well as of the cone) \\(=\\frac{1}{2} \\times 4 \\mathrm{~cm}=2 \\mathrm{~cm}\\). So, volume of the toy \\(=\\frac{2}{3} \\pi r^{3}+\\frac{1}{3} \\pi r^{2} h\\) \\[=\\left[\\frac{2}{3} \\times 3.14 \\times(2)^{3}+\\frac{1}{3} \\times 3.14 \\times(2)^{2} \\times 2\\right] \\mathrm{cm}^{3}=25.12 \\mathrm{~cm}^{3}\\] Now, let the right circular cylinder EFGH circumscribe the given solid. The radius of the base of the right circular cylinder \\(=\\mathrm{HP}=\\mathrm{BO}=2 \\mathrm{~cm}\\), and its height is \\[\\mathrm{EH}=\\mathrm{AO}+\\mathrm{OP}=(2+2) \\mathrm{cm}=4 \\mathrm{~cm}\\] So, the volume required \\(=\\) volume of the right circular cylinder - volume of the toy \\[\\begin{aligned} & =\\left(3.14 \\times 2^{2} \\times 4-25.12\\right) \\mathrm{cm}^{3} \\\\ & =25.12 \\mathrm{~cm}^{3} \\end{aligned}\\] Hence, the required difference of the two volumes \\(=25.12 \\mathrm{~cm}^{3}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-1",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "The marks obtained by 30 students of Class \\(X\\) of a certain school in a Mathematics paper consisting of 100 marks are presented in table below. Find the mean of the marks obtained by the students. \\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|} \\hline \\begin{tabular}{c} Marks obtained \\\\ \\(\\left(\\boldsymbol{x}_{\\boldsymbol{i}}\\right)\\) \\end{tabular} & 10 & 20 & 36 & 40 & 50 & 56 & 60 & 70 & 72 & 80 & 88 & 92 & 95 \\\\ \\hline \\begin{tabular}{c} Number of \\\\ students \\(\\left(\\boldsymbol{f}_{\\boldsymbol{i}}\\right)\\) \\end{tabular} & 1 & 1 & 3 & 4 & 3 & 2 & 4 & 4 & 1 & 1 & 2 & 3 & 1 \\\\ \\hline \\end{tabular}",
+      "solution": "Recall that to find the mean marks, we require the product of each \\(x_{i}\\) with the corresponding frequency \\(f_{i}\\). So, let us put them in a column as shown in Table 13.1. \\begin{table} \\captionsetup{labelformat=empty} \\caption{Table 13.1} \\begin{tabular}{|l|l|l|} \\hline Marks obtained ( \\(\\boldsymbol{x}_{\\boldsymbol{i}}\\) ) & Number of students ( \\(\\boldsymbol{f}_{\\boldsymbol{i}}\\) ) & \\(\\boldsymbol{f}_{\\boldsymbol{i}} \\boldsymbol{X}_{\\boldsymbol{i}}\\) \\\\ \\hline 10 & 1 & 10 \\\\ \\hline 20 & 1 & 20 \\\\ \\hline 36 & 3 & 108 \\\\ \\hline 40 & 4 & 160 \\\\ \\hline 50 & 3 & 150 \\\\ \\hline 56 & 2 & 112 \\\\ \\hline 60 & 4 & 240 \\\\ \\hline 70 & 4 & 280 \\\\ \\hline 72 & 1 & 72 \\\\ \\hline 80 & 1 & 80 \\\\ \\hline 88 & 2 & 176 \\\\ \\hline 92 & 3 & 276 \\\\ \\hline 95 & 1 & 95 \\\\ \\hline Total & \\(\\Sigma f_{i}=30\\) & \\(\\Sigma f_{i} x_{i}=1779\\) \\\\ \\hline \\end{tabular} \\end{table} Now, \\[\\bar{x}=\\frac{\\sum f_{i} x_{i}}{\\Sigma f_{i}}=\\frac{1779}{30}=59.3\\] Therefore, the mean marks obtained is 59.3 . In most of our real life situations, data is usually so large that to make a meaningful study it needs to be condensed as grouped data. So, we need to convert given ungrouped data into grouped data and devise some method to find its mean. Let us convert the ungrouped data of",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-1",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "into grouped data by forming class-intervals of width, say 15 . Remember that, while allocating frequencies to each class-interval, students falling in any upper class-limit would be considered in the next class, e.g., 4 students who have obtained 40 marks would be considered in the classinterval 40-55 and not in 25-40. With this convention in our mind, let us form a grouped frequency distribution table (see Table 13.2). \\begin{table} \\captionsetup{labelformat=empty} \\caption{Table 13.2} \\begin{tabular}{|l|c|c|c|c|c|c|} \\hline Class interval & \\(10-25\\) & \\(25-40\\) & \\(40-55\\) & \\(55-70\\) & \\(70-85\\) & \\(85-100\\) \\\\ \\hline Number of students & 2 & 3 & 7 & 6 & 6 & 6 \\\\ \\hline \\end{tabular} \\end{table} Now, for each class-interval, we require a point which would serve as the representative of the whole class. It is assumed that the frequency of each classinterval is centred around its mid-point. So the mid-point (or class mark) of each class can be chosen to represent the observations falling in the class. Recall that we find the mid-point of a class (or its class mark) by finding the average of its upper and lower limits. That is, \\[\\text { Class mark }=\\frac{\\text { Upper class limit }+ \\text { Lower class limit }}{2}\\] With reference to Table 13.2, for the class \\(10-25\\), the class mark is \\(\\frac{10+25}{2}\\), i.e., 17.5. Similarly, we can find the class marks of the remaining class intervals. We put them in Table 13.3. These class marks serve as our \\(x_{i}\\) 's. Now, in g",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-1",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "\\begin{table} \\captionsetup{labelformat=empty} \\caption{Table 13.3} \\begin{tabular}{|l|l|l|l|} \\hline Class interval & Number of students ( \\(\\boldsymbol{f}_{\\boldsymbol{i}}\\) ) & Class mark ( \\(\\boldsymbol{x} \\boldsymbol{i}\\) ) & \\(\\boldsymbol{f}_{\\boldsymbol{i}} \\boldsymbol{x}_{\\boldsymbol{i}}\\) \\\\ \\hline 10-25 & 2 & 17.5 & 35.0 \\\\ \\hline 25-40 & 3 & 32.5 & 97.5 \\\\ \\hline 40-55 & 7 & 47.5 & 332.5 \\\\ \\hline 55-70 & 6 & 62.5 & 375.0 \\\\ \\hline 70-85 & 6 & 77.5 & 465.0 \\\\ \\hline 85-100 & 6 & 92.5 & 555.0 \\\\ \\hline Total & \\(\\Sigma f_{i}=30\\) & & \\(\\Sigma f_{i} x_{i}=1860.0\\) \\\\ \\hline \\end{tabular} \\end{table} The sum of the values in the last column gives us \\(\\sum f_{i} x_{i}\\). So, the mean \\(\\bar{x}\\) of the given data is given by \\[\\bar{x}=\\frac{\\Sigma f_{i} x_{i}}{\\Sigma f_{i}}=\\frac{1860.0}{30}=62\\] This new method of finding the mean is known as the Direct Method. We observe that Tables 13.1 and 13.3 are using the same data and employing the same formula for the calculation of the mean but the results obtained are different. Can you think why this is so, and which one is more accurate? The difference in the two values is because of the mid-point assumption in Table 13.3, 59.3 being the exact mean, while 62 an approximate mean. Sometimes when the numerical values of \\(x_{i}\\) and \\(f_{i}\\) are large, finding the product of \\(x_{i}\\) and \\(f_{i}\\) becomes tedious and time consuming. So, for such situations, let us think of a method of reducing these calculations. We can d",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-2",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 2,
+      "body": "The table below gives the percentage distribution of female teachers in the primary schools of rural areas of various states and union territories (U.T.) of India. Find the mean percentage of female teachers by all the three methods discussed in this section. \\begin{tabular}{|l|c|c|c|c|c|c|c|} \\hline \\begin{tabular}{l} Percentage of \\\\ female teachers \\end{tabular} & \\(15-25\\) & \\(25-35\\) & \\(35-45\\) & \\(45-55\\) & \\(55-65\\) & \\(65-75\\) & \\(75-85\\) \\\\ \\hline \\begin{tabular}{l} Number of \\\\ States/U.T. \\end{tabular} & 6 & 11 & 7 & 4 & 4 & 2 & 1 \\\\ \\hline \\end{tabular} Source : Seventh All India School Education Survey conducted by NCERT",
+      "solution": "Let us find the class marks, \\(x_{i}\\), of each class, and put them in a column (see Table 13.6): \\begin{table} \\captionsetup{labelformat=empty} \\caption{Table 13.6} \\begin{tabular}{|l|l|l|} \\hline Percentage of female teachers & Number of States/U.T. ( \\(\\boldsymbol{f}_{\\boldsymbol{i}}\\) ) & \\(x_{i}\\) \\\\ \\hline 15-25 & 6 & 20 \\\\ \\hline 25-35 & 11 & 30 \\\\ \\hline 35-45 & 7 & 40 \\\\ \\hline 45-55 & 4 & 50 \\\\ \\hline 55-65 & 4 & 60 \\\\ \\hline 65-75 & 2 & 70 \\\\ \\hline 75-85 & 1 & 80 \\\\ \\hline \\end{tabular} \\end{table} Here we take \\(a=50, h=10\\), then \\(d_{i}=x_{i}-50\\) and \\(u_{i}=\\frac{x_{i}-50}{10}\\). We now find \\(d_{i}\\) and \\(u_{i}\\) and put them in Table 13.7. \\begin{table} \\captionsetup{labelformat=empty} \\caption{Table 13.7} \\begin{tabular}{|l|l|l|l|l|l|l|l|} \\hline Percentage of female teachers & Number of states/U.T. ( \\(\\boldsymbol{f}_{\\boldsymbol{i}}\\) ) & \\(\\boldsymbol{x}_{\\boldsymbol{i}}\\) & \\(d_{i}=x_{i}-\\mathbf{5 0}\\) & \\(\\boldsymbol{u}_{\\boldsymbol{i}}=\\frac{\\boldsymbol{x}_{\\boldsymbol{i}}-\\mathbf{5 0}}{\\mathbf{1 0}}\\) & \\(\\boldsymbol{f}_{\\boldsymbol{i}} \\boldsymbol{x}_{\\boldsymbol{i}}\\) & \\(\\boldsymbol{f}_{\\boldsymbol{i}} \\boldsymbol{d}_{\\boldsymbol{i}}\\) & \\(\\boldsymbol{f}_{\\boldsymbol{i}} \\boldsymbol{u}_{\\boldsymbol{i}}\\) \\\\ \\hline 15-25 & 6 & 20 & -30 & -3 & 120 & -180 & -18 \\\\ \\hline 25-35 & 11 & 30 & -20 & -2 & 330 & -220 & -22 \\\\ \\hline 35-45 & 7 & 40 & -10 & -1 & 280 & -70 & -7 \\\\ \\hline 45-55 & 4 & 50 & 0 & 0 & 200 & 0 & 0 \\\\ \\hline 55-65 & 4 & 60 & 10 & 1 & 240 & 40 & 4 \\\\ \\hline 65-75 & 2 & 70 & 20 & 2 & 140 & 40 & 4 \\\\ \\hline 75-85 & 1 & 80 & 30 & 3 & 80 & 30 & 3 \\\\ \\hline Total & 35 & & & & 1390 & -360 & -36 \\\\ \\hline \\end{tabular} \\end{table} From the table above, we obtain \\(\\Sigma f_{i}=35, \\Sigma f_{i} x_{i}=1390\\), \\[\\Sigma f_{i} d_{i}=-360, \\quad \\Sigma f_{i} u_{i}=-36\\] Using the direct method, \\(\\bar{x}=\\frac{\\Sigma f_{i} x_{i}}{\\Sigma f_{i}}=\\frac{1390}{35}=39.71\\) Using the assumed mean method, \\[\\bar{x}=a+\\frac{\\Sigma f_{i} d_{i}}{\\",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-3",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 3,
+      "body": "The distribution below shows the number of wickets taken by bowlers in one-day cricket matches. Find the mean number of wickets by choosing a suitable method. What does the mean signify? \\begin{tabular}{|l|c|c|c|c|c|c|} \\hline \\begin{tabular}{l} Number of \\\\ wickets \\end{tabular} & \\(20-60\\) & \\(60-100\\) & \\(100-150\\) & \\(150-250\\) & \\(250-350\\) & \\(350-450\\) \\\\ \\hline \\begin{tabular}{l} Number of \\\\ bowlers \\end{tabular} & 7 & 5 & 16 & 12 & 2 & 3 \\\\ \\hline \\end{tabular}",
+      "solution": "Here, the class size varies, and the \\(x_{i}\\) s are large. Let us still apply the stepdeviation method with \\(a=200\\) and \\(h=20\\). Then, we obtain the data as in Table 13.8. \\begin{table} \\captionsetup{labelformat=empty} \\caption{Table 13.8} \\begin{tabular}{|l|l|l|l|l|l|} \\hline Number of wickets taken & Number of bowlers ( \\(\\boldsymbol{f}_{\\boldsymbol{i}}\\) ) & \\(\\boldsymbol{x}_{\\boldsymbol{i}}\\) & \\(d_{i}=x_{i}-200\\) & \\(\\boldsymbol{u}_{\\boldsymbol{i}}=\\frac{\\boldsymbol{d}_{\\boldsymbol{i}}}{\\mathbf{2 0}}\\) & \\(\\boldsymbol{u}_{\\boldsymbol{i}} \\boldsymbol{f}_{\\boldsymbol{i}}\\) \\\\ \\hline 20-60 & 7 & 40 & -160 & -8 & -56 \\\\ \\hline 60-100 & 5 & 80 & -120 & -6 & -30 \\\\ \\hline 100-150 & 16 & 125 & -75 & -3.75 & -60 \\\\ \\hline 150-250 & 12 & 200 & 0 & 0 & 0 \\\\ \\hline 250-350 & 2 & 300 & 100 & 5 & 10 \\\\ \\hline 350-450 & 3 & 400 & 200 & 10 & 30 \\\\ \\hline Total & 45 & & & & -106 \\\\ \\hline \\end{tabular} \\end{table} So, \\(\\bar{u}=\\frac{-106}{45}\\). Therefore, \\(\\bar{x}=200+20\\left(\\frac{-106}{45}\\right)=200-47.11=152.89\\). This tells us that, on an average, the number of wickets taken by these 45 bowlers in one-day cricket is 152.89 . Now, let us see how well you can apply the concepts discussed in this section!",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-4",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 4,
+      "body": "The wickets taken by a bowler in 10 cricket matches are as follows:} \\begin{tabular}{|l|l|l|l|l|l|l|l|} \\hline \\begin{tabular}{l} Number of \\\\ wickets \\end{tabular} & 0 & 1 & 2 & 3 & 4 & 5 & 6 \\\\ \\hline \\begin{tabular}{l} Number of \\\\ matches \\end{tabular} & 1 & 1 & 3 & 2 & 1 & 1 & 1 \\\\ \\hline \\end{tabular} \\end{table} Clearly, 2 is the number of wickets taken by the bowler in the maximum number (i.e., 3 ) of matches. So, the mode of this data is 2 . In a grouped frequency distribution, it is not possible to determine the mode by looking at the frequencies. Here, we can only locate a class with the maximum frequency, called the modal class. The mode is a value inside the modal class, and is given by the formula: \\[\\text { Mode }=l+\\left(\\frac{f_{1}-f_{0}}{2 f_{1}-f_{0}-f_{2}}\\right) \\times h\\] where \\(l=\\) lower limit of the modal class, \\[\\begin{aligned} & h=\\text { size of the class interval (assuming all class sizes to be equal), } \\\\ & f_{1}=\\text { frequency of the modal class, } \\\\ & f_{0}=\\text { frequency of the class preceding the modal class, } \\\\ & f_{2}=\\text { frequency of the class succeeding the modal class. } \\end{aligned}\\] Let us consider the following examples to illustrate the use of this formula.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-5",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 5,
+      "body": "A survey conducted on 20 households in a locality by a group of students resulted in the following frequency table for the number of family members in a household: \\begin{tabular}{|l|c|c|c|c|c|} \\hline Family size & \\(1-3\\) & \\(3-5\\) & \\(5-7\\) & \\(7-9\\) & \\(9-11\\) \\\\ \\hline \\begin{tabular}{l} Number of \\\\ families \\end{tabular} & 7 & 8 & 2 & 2 & 1 \\\\ \\hline \\end{tabular} Find the mode of this data.",
+      "solution": "Here the maximum class frequency is 8 , and the class corresponding to this frequency is \\(3-5\\). So, the modal class is \\(3-5\\). Now modal class \\(=3-5\\), lower limit \\((l)\\) of modal class \\(=3\\), class size \\((h)=2\\) frequency ( \\(f_{1}\\) ) of the modal class \\(=8\\), frequency ( \\(f_{0}\\) ) of class preceding the modal class \\(=7\\), frequency ( \\(f_{2}\\) ) of class succeeding the modal class \\(=2\\). Now, let us substitute these values in the formula : \\[\\begin{aligned} \\text { Mode } & =l+\\left(\\frac{f_{1}-f_{0}}{2 f_{1}-f_{0}-f_{2}}\\right) \\times h \\\\ & =3+\\left(\\frac{8-7}{2 \\times 8-7-2}\\right) \\times 2=3+\\frac{2}{7}=3.286 \\end{aligned}\\] Therefore, the mode of the data above is 3.286 .",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-6",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 6,
+      "body": "The marks distribution of 30 students in a mathematics examination are given in Table 13.3 of",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-1",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Find the mode of this data. Also compare and interpret the mode and the mean.",
+      "solution": "Refer to Table 13.3 of",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-1",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": "Since the maximum number of students (i.e., 7) have got marks in the interval 40-55, the modal class is 40-55. Therefore, the lower limit ( \\(l\\) ) of the modal class \\(=40\\), the class size \\((h)=15\\), the frequency ( \\(f_{1}\\) ) of modal class \\(=7\\), the frequency ( \\(f_{0}\\) ) of the class preceding the modal class \\(=3\\), the frequency ( \\(f_{2}\\) ) of the class succeeding the modal class \\(=6\\). Now, using the formula: we get \\[\\begin{aligned} & \\text { Mode }=l+\\left(\\frac{f_{1}-f_{0}}{2 f_{1}-f_{0}-f_{2}}\\right) \\times h \\\\ & \\text { Mode }=40+\\left(\\frac{7-3}{14-6-3}\\right) \\times 15=52 \\end{aligned}\\] So, the mode marks is 52. Now, from",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-1",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 1,
+      "body": ", you know that the mean marks is 62. So, the maximum number of students obtained 52 marks, while on an average a student obtained 62 marks. Remarks : 1. In",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-6",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 6,
+      "body": ", the mode is less than the mean. But for some other problems it may be equal or more than the mean also. 2. It depends upon the demand of the situation whether we are interested in finding the average marks obtained by the students or the average of the marks obtained by most of the students. In the first situation, the mean is required and in the second situation, the mode is required. Activity 3 : Continuing with the same groups as formed in Activity 2 and the situations assigned to the groups. Ask each group to find the mode of the data. They should also compare this with the mean, and interpret the meaning of both. Remark : The mode can also be calculated for grouped data with unequal class sizes. However, we shall not be discussing it.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-7",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 7,
+      "body": "A survey regarding the heights (in cm) of 51 girls of Class \\(X\\) of a school was conducted and the following data was obtained: \\begin{tabular}{|l|l|} \\hline Height (in cm) & Number of girls \\\\ \\hline Less than 140 & 4 \\\\ \\hline Less than 145 & 11 \\\\ \\hline Less than 150 & 29 \\\\ \\hline Less than 155 & 40 \\\\ \\hline Less than 160 & 46 \\\\ \\hline Less than 165 & 51 \\\\ \\hline \\end{tabular} Find the median height.",
+      "solution": "To calculate the median height, we need to find the class intervals and their corresponding frequencies. The given distribution being of the less than type, 140, 145, 150, . . ., 165 give the upper limits of the corresponding class intervals. So, the classes should be below 140 , 140-145, 145-150, . . ., 160-165. Observe that from the given distribution, we find that there are 4 girls with height less than 140, i.e., the frequency of class interval below 140 is 4 . Now, there are 11 girls with heights less than 145 and 4 girls with height less than 140. Therefore, the number of girls with height in the interval 140-145 is \\(11-4=7\\). Similarly, the frequency of \\(145-150\\) is \\(29-11=18\\), for 150-155, it is \\(40-29=11\\), and so on. So, our frequency distribution table with the given cumulative frequencies becomes: \\begin{table} \\captionsetup{labelformat=empty} \\caption{Table 13.16} \\begin{tabular}{|l|l|l|} \\hline Class intervals & Frequency & Cumulative frequency \\\\ \\hline Below 140 & 4 & 4 \\\\ \\hline 140-145 & 7 & 11 \\\\ \\hline 145-150 & 18 & 29 \\\\ \\hline 150-155 & 11 & 40 \\\\ \\hline 155-160 & 6 & 46 \\\\ \\hline 160-165 & 5 & 51 \\\\ \\hline \\end{tabular} \\end{table} Now \\(n=51\\). So, \\(\\frac{n}{2}=\\frac{51}{2}=25.5\\). This observation lies in the class 145-150. Then, \\(l\\) (the lower limit) \\(=145\\), cf (the cumulative frequency of the class preceding 145-150) \\(=11\\), \\(f\\) (the frequency of the median class 145-150) = 18, \\(h\\) (the class size) \\(=5\\). Using the formula, Median \\(=l+\\left(\\frac{\\frac{n}{2}-\\mathrm{cf}}{f}\\right) \\times h\\), we have \\[\\begin{aligned} \\text { Median } & =145+\\left(\\frac{25.5-11}{18}\\right) \\times 5 \\\\ & =145+\\frac{72.5}{18}=149.03 \\end{aligned}\\] So, the median height of the girls is 149.03 cm . This means that the height of about \\(50 \\%\\) of the girls is less than this height, and \\(50 \\%\\) are taller than this height.",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH13-EX-8",
+      "chapterNumber": 13,
+      "chapterTitleHint": "Introduction",
+      "exampleNumber": 8,
+      "body": "The median of the following data is 525. Find the values of \\(x\\) and \\(y\\), if the total frequency is 100 . \\begin{tabular}{|l|l|} \\hline Class intervals & Frequency \\\\ \\hline 0-100 & 2 \\\\ \\hline 100-200 & 5 \\\\ \\hline 200-300 & \\(x\\) \\\\ \\hline 300-400 & 12 \\\\ \\hline 400-500 & 17 \\\\ \\hline 500-600 & 20 \\\\ \\hline 600-700 & \\(y\\) \\\\ \\hline 700-800 & 9 \\\\ \\hline 800-900 & 7 \\\\ \\hline 900-1000 & 4 \\\\ \\hline \\end{tabular}",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-1",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 1,
+      "body": "Find the probability of getting a head when a coin is tossed once. Also find the probability of getting a tail.",
+      "solution": "In the experiment of tossing a coin once, the number of possible outcomes is two - Head (H) and Tail (T). Let E be the event 'getting a head'. The number of outcomes favourable to E, (i.e., of getting a head) is 1. Therefore, \\[P(E)=P(\\text { head })=\\frac{\\text { Number of outcomes favourable to } E}{\\text { Number of all possible outcomes }}=\\frac{1}{2}\\] Similarly, if F is the event 'getting a tail', then \\[\\mathrm{P}(\\mathrm{~F})=\\mathrm{P}(\\text { tail })=\\frac{1}{2} \\quad(\\text { Why ? })\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-2",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 2,
+      "body": "A bag contains a red ball, a blue ball and a yellow ball, all the balls being of the same size. Kritika takes out a ball from the bag without looking into it. What is the probability that she takes out the (i) yellow ball? (ii) red ball? (iii) blue ball?",
+      "solution": "Kritika takes out a ball from the bag without looking into it. So, it is equally likely that she takes out any one of them. Let Y be the event 'the ball taken out is yellow', B be the event 'the ball taken out is blue', and R be the event 'the ball taken out is red'. Now, the number of possible outcomes \\(=3\\). (i) The number of outcomes favourable to the event \\(\\mathrm{Y}=1\\). So, \\[\\mathrm{P}(\\mathrm{Y})=\\frac{1}{3}\\] Similarly, (ii) \\(\\mathrm{P}(\\mathrm{R})=\\frac{1}{3}\\) and (iii) \\(\\mathrm{P}(\\mathrm{B})=\\frac{1}{3}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-1",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 1,
+      "body": ", both the events E and F are elementary events. Similarly, in",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-2",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 2,
+      "body": ", all the three events, \\(\\mathrm{Y}, \\mathrm{B}\\) and R are elementary events. 2. In",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-1",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 1,
+      "body": ", we note that: \\(\\mathrm{P}(\\mathrm{E})+\\mathrm{P}(\\mathrm{F})=1\\) In",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-2",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 2,
+      "body": ", we note that: \\(\\mathrm{P}(\\mathrm{Y})+\\mathrm{P}(\\mathrm{R})+\\mathrm{P}(\\mathrm{B})=1\\) Observe that the sum of the probabilities of all the elementary events of an experiment is 1 . This is true in general also.",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-3",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 3,
+      "body": "Suppose we throw a die once. (i) What is the probability of getting a number greater than 4 ? (ii) What is the probability of getting a number less than or equal to 4 ?",
+      "solution": "(i) Here, let E be the event 'getting a number greater than 4 '. The number of possible outcomes is six : \\(1,2,3,4,5\\) and 6, and the outcomes favourable to E are 5 and 6 . Therefore, the number of outcomes favourable to E is 2 . So, \\[P(E)=P(\\text { number greater than } 4)=\\frac{2}{6}=\\frac{1}{3}\\] (ii) Let F be the event 'getting a number less than or equal to 4 '. Number of possible outcomes \\(=6\\) Outcomes favourable to the event F are 1, 2, 3, 4. So, the number of outcomes favourable to F is 4. Therefore, \\[P(F)=\\frac{4}{6}=\\frac{2}{3}\\] Are the events E and F in the example above elementary events? No, they are not because the event E has 2 outcomes and the event F has 4 outcomes. Remarks : From",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-1",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 1,
+      "body": ", we note that \\[\\mathrm{P}(\\mathrm{E})+\\mathrm{P}(\\mathrm{~F})=\\frac{1}{2}+\\frac{1}{2}=1\\] where E is the event 'getting a head' and F is the event 'getting a tail'. From (i) and (ii) of",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-3",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 3,
+      "body": ", we also get \\[\\mathrm{P}(\\mathrm{E})+\\mathrm{P}(\\mathrm{~F})=\\frac{1}{3}+\\frac{2}{3}=1\\] where E is the event 'getting a number \\(>4\\) ' and F is the event 'getting a number \\(\\leq 4\\) '. Note that getting a number not greater than 4 is same as getting a number less than or equal to 4 , and vice versa. In (1) and (2) above, is F not the same as 'not E'? Yes, it is. We denote the event 'not E' by \\(\\overline{\\mathrm{E}}\\). So, \\[\\mathrm{P}(\\mathrm{E})+\\mathrm{P}(\\text { not } \\mathrm{E})=1\\] i.e., \\[\\mathrm{P}(\\mathrm{E})+\\mathrm{P}(\\overline{\\mathrm{E}})=1, \\quad \\text { which gives us } \\mathrm{P}(\\overline{\\mathrm{E}})=1-\\mathrm{P}(\\mathrm{E}) .\\]",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-4",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 4,
+      "body": "One card is drawn from a well-shuffled deck of 52 cards. Calculate the probability that the card will (i) be an ace, (ii) not be an ace.",
+      "solution": "Well-shuffling ensures equally likely outcomes. (i) There are 4 aces in a deck. Let E be the event 'the card is an ace'. The number of outcomes favourable to \\(\\mathrm{E}=4\\) The number of possible outcomes \\(=52 \\quad\\) (Why ?) Therefore, \\[P(E)=\\frac{4}{52}=\\frac{1}{13}\\] (ii) Let F be the event 'card drawn is not an ace'. The number of outcomes favourable to the event \\(\\mathrm{F}=52-4=48\\) (Why?) The number of possible outcomes \\(=52\\) Therefore, \\[P(F)=\\frac{48}{52}=\\frac{12}{13}\\] Remark : Note that F is nothing but \\(\\overline{\\mathrm{E}}\\). Therefore, we can also calculate \\(\\mathrm{P}(\\mathrm{F})\\) as follows: \\(\\mathrm{P}(\\mathrm{F})=\\mathrm{P}(\\overline{\\mathrm{E}})=1-\\mathrm{P}(\\mathrm{E})=1-\\frac{1}{13}=\\frac{12}{13}\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-5",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 5,
+      "body": "Two players, Sangeeta and Reshma, play a tennis match. It is known that the probability of Sangeeta winning the match is 0.62 . What is the probability of Reshma winning the match?",
+      "solution": "Let S and R denote the events that Sangeeta wins the match and Reshma wins the match, respectively. The probability of Sangeeta's winning \\(=\\mathrm{P}(\\mathrm{S})=0.62\\) (given) The probability of Reshma's winning \\(=\\mathrm{P}(\\mathrm{R})=1-\\mathrm{P}(\\mathrm{S})\\) [As the events R and S are complementary] \\[=1-0.62=0.38\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-6",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 6,
+      "body": "Savita and Hamida are friends. What is the probability that both will have (i) different birthdays? (ii) the same birthday? (ignoring a leap year).",
+      "solution": "Out of the two friends, one girl, say, Savita's birthday can be any day of the year. Now, Hamida's birthday can also be any day of 365 days in the year. We assume that these 365 outcomes are equally likely. (i) If Hamida's birthday is different from Savita's, the number of favourable outcomes for her birthday is \\(365-1=364\\) So, P (Hamida's birthday is different from Savita's birthday) \\(=\\frac{364}{365}\\) (ii) P (Savita and Hamida have the same birthday) \\[\\begin{aligned} & =1-\\mathrm{P} \\text { (both have different birthdays) } \\\\ & =1-\\frac{364}{365} \\quad[\\text { Using } \\mathrm{P}(\\overline{\\mathrm{E}})=1-\\mathrm{P}(\\mathrm{E})] \\\\ & =\\frac{1}{365} \\end{aligned}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-7",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 7,
+      "body": "There are 40 students in Class X of a school of whom 25 are girls and 15 are boys. The class teacher has to select one student as a class representative. She writes the name of each student on a separate card, the cards being identical. Then she puts cards in a bag and stirs them thoroughly. She then draws one card from the bag. What is the probability that the name written on the card is the name of (i) a girl? (ii) a boy?",
+      "solution": "There are 40 students, and only one name card has to be chosen. (i) The number of all possible outcomes is 40 The number of outcomes favourable for a card with the name of a girl \\(=25\\) (Why?) Therefore, \\(\\mathrm{P}(\\) card with name of a girl \\()=\\mathrm{P}(\\) Girl \\()=\\frac{25}{40}=\\frac{5}{8}\\) (ii) The number of outcomes favourable for a card with the name of a boy \\(=15\\) (Why?) Therefore, \\(\\mathrm{P}(\\) card with name of a boy \\()=\\mathrm{P}(\\) Boy \\()=\\frac{15}{40}=\\frac{3}{8}\\) Note : We can also determine P (Boy), by taking \\[\\mathrm{P}(\\text { Boy })=1-\\mathrm{P}(\\text { not Boy })=1-\\mathrm{P}(\\text { Girl })=1-\\frac{5}{8}=\\frac{3}{8}\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-8",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 8,
+      "body": "A box contains 3 blue, 2 white, and 4 red marbles. If a marble is drawn at random from the box, what is the probability that it will be (i) white? (ii) blue? (iii) red?",
+      "solution": "Saying that a marble is drawn at random is a short way of saying that all the marbles are equally likely to be drawn. Therefore, the \\[\\text { number of possible outcomes }=3+2+4=9 \\quad \\text { (Why?) }\\] Let W denote the event 'the marble is white', B denote the event 'the marble is blue' and R denote the event 'marble is red'. (i) The number of outcomes favourable to the event \\(\\mathrm{W}=2\\) So, \\[P(W)=\\frac{2}{9}\\] Similarly, (ii) \\(\\mathrm{P}(\\mathrm{B})=\\frac{3}{9}=\\frac{1}{3}\\) and (iii) \\(\\mathrm{P}(\\mathrm{R})=\\frac{4}{9}\\) Note that \\(\\mathrm{P}(\\mathrm{W})+\\mathrm{P}(\\mathrm{B})+\\mathrm{P}(\\mathrm{R})=1\\).",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-9",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 9,
+      "body": "Harpreet tosses two different coins simultaneously (say, one is of ₹ 1 and other of ₹ 2). What is the probability that she gets at least one head?",
+      "solution": "We write H for 'head' and T for 'tail'. When two coins are tossed simultaneously, the possible outcomes are (H, H), (H, T), (T, H), (T, T), which are all equally likely. Here (H, H) means head up on the first coin (say on ₹ 1) and head up on the second coin (₹ 2). Similarly (H, T) means head up on the first coin and tail up on the second coin and so on. The outcomes favourable to the event E , 'at least one head' are \\((\\mathrm{H}, \\mathrm{H}),(\\mathrm{H}, \\mathrm{T})\\) and (T, H). (Why?) So, the number of outcomes favourable to E is 3 . Therefore, \\[\\mathrm{P}(\\mathrm{E})=\\frac{3}{4}\\] i.e., the probability that Harpreet gets at least one head is \\(\\frac{3}{4}\\). Note : You can also find \\(\\mathrm{P}(\\mathrm{E})\\) as follows: \\[\\mathrm{P}(\\mathrm{E})=1-\\mathrm{P}(\\overline{\\mathrm{E}})=1-\\frac{1}{4}=\\frac{3}{4} \\quad\\left(\\text { Since } \\mathrm{P}(\\overline{\\mathrm{E}})=\\mathrm{P}(\\mathrm{no} \\text { head })=\\frac{1}{4}\\right)\\] Did you observe that in all the examples discussed so far, the number of possible outcomes in each experiment was finite? If not, check it now. There are many experiments in which the outcome is any number between two given numbers, or in which the outcome is every point within a circle or rectangle, etc. Can you now count the number of all possible outcomes? As you know, this is not possible since there are infinitely many numbers between two given numbers, or there are infinitely many points within a circle. So, the definition of (theoretical) probability which you have learnt so far cannot be applied in the present form. What is the way out? To answer this, let us consider the following example :",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-10",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 10,
+      "body": "*: In a musical chair game, the person playing the music has been advised to stop playing the music at any time within 2 minutes after she starts playing. What is the probability that the music will stop within the first half-minute after starting?",
+      "solution": "Here the possible outcomes are all the numbers between 0 and 2 . This is the portion of the number line from 0 to 2 (see Fig. 14.1). \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-256.jpg?height=76&width=554&top_left_y=1938&top_left_x=539} \\captionsetup{labelformat=empty} \\caption{Fig. 14.1} \\end{figure} \\footnotetext{ * Not from the examination point of view. } Let E be the event that 'the music is stopped within the first half-minute'. The outcomes favourable to E are points on the number line from 0 to \\(\\frac{1}{2}\\). The distance from 0 to 2 is 2 , while the distance from 0 to \\(\\frac{1}{2}\\) is \\(\\frac{1}{2}\\). Since all the outcomes are equally likely, we can argue that, of the total distance of 2 , the distance favourable to the event E is \\(\\frac{1}{2}\\). So, \\[\\mathrm{P}(\\mathrm{E})=\\frac{\\text { Distance favourable to the event } \\mathrm{E}}{\\text { Total distance in which outcomes can lie }}=\\frac{\\frac{1}{2}}{2}=\\frac{1}{4}\\] Can we now extend the idea of",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-10",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 10,
+      "body": "for finding the probability as the ratio of the favourable area to the total area?",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-11",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 11,
+      "body": "* : A missing helicopter is reported to have crashed somewhere in the rectangular region shown in Fig. 14.2. What is the probability that it crashed inside the lake shown in the figure? \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-257.jpg?height=578&width=1061&top_left_y=1232&top_left_x=313} \\captionsetup{labelformat=empty} \\caption{Fig. 14.2} \\end{figure}",
+      "solution": "The helicopter is equally likely to crash anywhere in the region. Area of the entire region where the helicopter can crash \\[=(4.5 \\times 9) \\mathrm{km}^{2}=40.5 \\mathrm{~km}^{2}\\] \\footnotetext{ * Not from the examination point of view. } Area of the lake \\(=(2.5 \\times 3) \\mathrm{km}^{2}=7.5 \\mathrm{~km}^{2}\\) Therefore, \\(P\\) (helicopter crashed in the lake) \\(=\\frac{7.5}{40.5}=\\frac{75}{405}=\\frac{5}{27}\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-12",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 12,
+      "body": "A carton consists of 100 shirts of which 88 are good, 8 have minor defects and 4 have major defects. Jimmy, a trader, will only accept the shirts which are good, but Sujatha, another trader, will only reject the shirts which have major defects. One shirt is drawn at random from the carton. What is the probability that (i) it is acceptable to Jimmy? (ii) it is acceptable to Sujatha?",
+      "solution": "One shirt is drawn at random from the carton of 100 shirts. Therefore, there are 100 equally likely outcomes. (i) The number of outcomes favourable (i.e., acceptable) to Jimmy \\(=88\\) (Why?) Therefore, P (shirt is acceptable to Jimmy) \\(=\\frac{88}{100}=0.88\\) (ii) The number of outcomes favourable to Sujatha \\(=88+8=96\\) (Why?) So, P (shirt is acceptable to Sujatha) \\(=\\frac{96}{100}=0.96\\)",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-13",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 13,
+      "body": "Two dice, one blue and one grey, are thrown at the same time. Write down all the possible outcomes. What is the probability that the sum of the two numbers appearing on the top of the dice is (i) 8 ? (ii) 13 ? (iii) less than or equal to 12 ?",
+      "solution": "When the blue die shows '1', the grey die could show any one of the numbers \\(1,2,3,4,5,6\\). The same is true when the blue die shows ' 2 ', ' 3 ', ' 4 ', ' 5 ' or ' 6 '. The possible outcomes of the experiment are listed in the table below; the first number in each ordered pair is the number appearing on the blue die and the second number is that on the grey die. \\begin{figure} \\includegraphics[alt={},max width=\\textwidth]{https://cdn.mathpix.com/cropped/0f6def98-c5f4-41d3-8cce-ab69b5f89494-259.jpg?height=644&width=1137&top_left_y=332&top_left_x=196} \\captionsetup{labelformat=empty} \\caption{Fig. 14.3} \\end{figure} Note that the pair \\((1,4)\\) is different from \\((4,1)\\). (Why?) So, the number of possible outcomes \\(=6 \\times 6=36\\). (i) The outcomes favourable to the event 'the sum of the two numbers is 8 ' denoted by E , are: \\((2,6),(3,5),(4,4),(5,3),(6,2)\\) (see Fig. 14.3) i.e., the number of outcomes favourable to \\(\\mathrm{E}=5\\). Hence, \\[P(E)=\\frac{5}{36}\\] (ii) As you can see from Fig. 14.3, there is no outcome favourable to the event F , 'the sum of two numbers is 13 '. So, \\[P(F)=\\frac{0}{36}=0\\] (iii) As you can see from Fig. 14.3, all the outcomes are favourable to the event G, 'sum of two numbers \\(\\leq 12\\) '. So, \\[P(G)=\\frac{36}{36}=1\\]",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-13",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 13,
+      "body": "(i) Complete the following table: \\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|} \\hline \\begin{tabular}{l} Event: \\\\ 'Sum on 2 dice' \\end{tabular} & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 \\\\ \\hline Probability & \\(\\frac{1}{36}\\) & & & & & & \\(\\frac{5}{36}\\) & & & & \\(\\frac{1}{36}\\) \\\\ \\hline \\end{tabular} (ii) A student argues that 'there are 11 possible outcomes \\(2,3,4,5,6,7,8,9,10,11\\) and 12. Therefore, each of them has a probability \\(\\frac{1}{11}\\). Do you agree with this argument? Justify your answer. 23. A game consists of tossing a one rupee coin 3 times and noting its outcome each time. Hanif wins if all the tosses give the same result i.e., three heads or three tails, and loses otherwise. Calculate the probability that Hanif will lose the game. 24. A die is thrown twice. What is the probability that (i) 5 will not come up either time? (ii) 5 will come up at least once? [Hint : Throwing a die twice and throwing two dice simultaneously are treated as the same experiment] \\footnotetext{ * Not from the examination point of view. } 25. Which of the following arguments are correct and which are not correct? Give reasons for your answer. (i) If two coins are tossed simultaneously there are three possible outcomes - two heads, two tails or one of each. Therefore, for each of these outcomes, the probability is \\(\\frac{1}{3}\\). (ii) If a die is thrown, there are two possible outcomes - an odd number or an even number. Therefore, the probability of getting an odd number is ",
+      "solution": "",
+      "sourceRef": "mmd"
+    },
+    {
+      "exampleKey": "NCERT-CH14-EX-10",
+      "chapterNumber": 14,
+      "chapterTitleHint": "Probability - A Theoretical Approach",
+      "exampleNumber": 10,
+      "body": "of Chapter 1. 6. See Theorem 5.1 of Class IX Mathematics Textbook.",
+      "solution": "",
+      "sourceRef": "mmd"
+    }
+  ]
+}
