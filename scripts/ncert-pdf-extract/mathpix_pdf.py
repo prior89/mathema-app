@@ -46,9 +46,13 @@ def headers_for(app_id: str, app_key: str) -> dict:
 
 
 def upload_pdf(pdf_path: Path, app_id: str, app_key: str) -> str:
-    """Upload the PDF; return the pdf_id assigned by Mathpix."""
+    """Upload the PDF; return the pdf_id assigned by Mathpix.
+
+    Note: .mmd is the default output (no conversion_formats needed) — listing it
+    triggers an "Unknown: [mmd]" error. We only pass conversion_formats for
+    *additional* formats like docx/tex/html.
+    """
     options = {
-        "conversion_formats": {"mmd": True},
         "math_inline_delimiters": ["\\(", "\\)"],
         "math_display_delimiters": ["\\[", "\\]"],
         "rm_spaces": True,
