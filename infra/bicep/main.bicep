@@ -56,6 +56,16 @@ param minReplicas int = 1
 @description('Max replicas — auto-scale ceiling on HTTP concurrency.')
 param maxReplicas int = 5
 
+@description('Static Web Apps region — must be one of: centralus, eastus2, westus2, westeurope, eastasia. SWA is not yet available in Central India.')
+@allowed([
+  'centralus'
+  'eastus2'
+  'westus2'
+  'westeurope'
+  'eastasia'
+])
+param swaLocation string = 'eastasia'
+
 @description('Provision Azure OpenAI account in this RG. Default false — we use platform.openai.com directly.')
 param provisionAzureOpenAi bool = false
 
@@ -376,13 +386,16 @@ resource kvSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' 
 
 resource swa 'Microsoft.Web/staticSites@2023-12-01' = {
   name: swaName
-  location: location
+  // SWA is not available in centralindia (2026-05). Pinned to swaLocation
+  // (default eastasia — closest to India). All other resources stay in
+  // centralindia for DPDP data-residency on the user-data side.
+  location: swaLocation
   sku: { name: 'Free', tier: 'Free' }
   properties: {
-    repositoryUrl: 'https://github.com/prior89/mathema'   // GitHub Actions 가 빌드/푸시
+    repositoryUrl: 'https://github.com/prior89/mathema-app'  // GitHub Actions builds & deploys
     branch: 'main'
     buildProperties: {
-      appLocation: 'frontend'
+      appLocation: 'app'
       apiLocation: ''
       outputLocation: 'dist'
     }
