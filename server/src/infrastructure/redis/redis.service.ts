@@ -16,6 +16,10 @@ export class RedisService implements OnModuleDestroy {
       host: config.get<string>('redis.host'),
       port: config.get<number>('redis.port'),
       password: config.get<string>('redis.password') || undefined,
+      // Azure Cache for Redis uses 6380 + TLS. ioredis enables TLS when the
+      // `tls` option is any object; an empty object is enough for SNI/CA via
+      // the system trust store.
+      tls: config.get<boolean>('redis.tls') ? {} : undefined,
       lazyConnect: false,
     });
     this.client.on('connect', () => this.logger.log('Redis connected'));

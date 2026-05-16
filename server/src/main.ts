@@ -103,8 +103,10 @@ async function bootstrap() {
   app.useGlobalInterceptors(new TransformInterceptor());
 
   const port = config.get<number>('app.port') ?? 4000;
-  await app.listen(port);
-  logger.log(`Mathēma backend listening on :${port}`);
+  // Bind to all interfaces explicitly — required inside Container Apps /
+  // Docker so the Container Apps gateway can route to the replica.
+  await app.listen(port, '0.0.0.0');
+  logger.log(`Mathēma backend listening on 0.0.0.0:${port}`);
 }
 
 bootstrap();
