@@ -3,9 +3,9 @@
  *   Phase 0 (concept) — all non-RETRIEVAL steps stacked on one scrollable screen.
  *   Phase 1+ (problem) — each RETRIEVAL step on its own screen as multiple-choice.
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   fetchConceptLesson, fetchPracticeProblems, fetchProblem,
   type ConceptStep, type Problem, type ProblemStep as ProblemStepData,
@@ -30,6 +30,12 @@ const STEP_TONE: Record<string, { eyebrow: string; tint: string }> = {
 
 export function ConceptLessonScreen() {
   const { code } = useParams<{ code: string }>();
+  const [sp] = useSearchParams();
+  // Deep-link target: when arriving from /app/notes (wrong-note card) or any
+  // "retry this exact problem" link, the URL carries ?problemId=<id>.
+  // We jump straight to that problem's first MC step instead of starting the
+  // concept-review phase.
+  const targetProblemId = sp.get('problemId');
   const nav = useNavigate();
   const qc = useQueryClient();
   const lesson = useQuery({ queryKey: ['lesson', code], queryFn: () => fetchConceptLesson(code!), enabled: !!code });
@@ -53,6 +59,17 @@ export function ConceptLessonScreen() {
   });
   const totalProblems = problemList.data?.length ?? 0;
   const currentProblemId = problemList.data?.[practiceProblemIdx]?.id ?? null;
+
+  // When ?problemId=<id> is in the URL and the list has loaded, jump straight
+  // to that problem in practice phase. Runs once per (data, target) pair.
+  useEffect(() => {
+    if (!targetProblemId || !problemList.data) return;
+    const idx = problemList.data.findIndex((p) => p.id === targetProblemId);
+    if (idx < 0) return;
+    setPhase('practice');
+    setPracticeProblemIdx(idx);
+    setPracticeStepIdx(1);
+  }, [problemList.data, targetProblemId]);
   const problem = useQuery({
     queryKey: ['problem', currentProblemId],
     queryFn: () => fetchProblem(currentProblemId!),

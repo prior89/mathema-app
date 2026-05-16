@@ -76,7 +76,7 @@ export function NotesListScreen() {
               <div
                 key={n.id}
                 className="note-card"
-                onClick={() => nav(n.chapterCode ? `/app/learn/${n.chapterCode}` : `/app/notes/${n.id}`)}
+                onClick={() => nav(n.chapterCode ? `/app/learn/${n.chapterCode}?problemId=${n.problemId}` : `/app/notes/${n.id}`)}
               >
                 <div className="src">{(n.problem || n.unit).replace(/Class\s+(\d+)/g, 'Grade $1')}</div>
                 <div className="body"><MathText text={n.problemBody || n.insight} /></div>
