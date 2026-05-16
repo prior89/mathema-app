@@ -44,16 +44,25 @@ export function parseSourceLabel(label: string): ParsedSourceLabel {
 /**
  * Build a license-safe attribution string for Problem.source.
  *
- * Returns null when the parsed label is incomplete — caller MUST reject
+ * Two precision tiers:
+ *   - full   : class + chapter + exerciseId + qIndex are all known
+ *              → "NCERT Class 10 Mathematics, Ch.1 Ex.1.1 Q.4 (derived ...)"
+ *   - chapter: only class + chapter are known (e.g. Grade 9 Ganita Manjari
+ *              inline narrative activities surfaced by the LLM extractor)
+ *              → "NCERT Class 9 Mathematics, Ch.1 inline activity (derived ...)"
+ *
+ * Returns null only when even class+chapter are missing — caller MUST reject
  * the publish operation so a reviewer can supply manual attribution.
  */
 export function buildNcertAttribution(label: string): string | null {
   const p = parseSourceLabel(label);
-  if (p.ncertClass === null || p.chapter === null || p.exerciseId === null || p.qIndex === null) {
-    return null;
+  if (p.ncertClass === null || p.chapter === null) return null;
+
+  if (p.exerciseId && p.qIndex !== null) {
+    const exDisplay = /^\d+\.\d+/.test(p.exerciseId) ? `Ex.${p.exerciseId}` : p.exerciseId;
+    return `NCERT Class ${p.ncertClass} Mathematics, Ch.${p.chapter} ${exDisplay} Q.${p.qIndex} (derived for Mathēma, Reprint ${NCERT_REPRINT_YEAR})`;
   }
-  const exDisplay = /^\d+\.\d+/.test(p.exerciseId) ? `Ex.${p.exerciseId}` : p.exerciseId;
-  return `NCERT Class ${p.ncertClass} Mathematics, Ch.${p.chapter} ${exDisplay} Q.${p.qIndex} (derived for Mathēma, Reprint ${NCERT_REPRINT_YEAR})`;
+  return `NCERT Class ${p.ncertClass} Mathematics, Ch.${p.chapter} inline activity (derived for Mathēma, Reprint ${NCERT_REPRINT_YEAR})`;
 }
 
 /**
