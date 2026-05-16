@@ -219,6 +219,43 @@ The CLI:
 **Cost estimate at `gpt-4o-mini` ($0.15 in / $0.60 out per Mtok):**
 2,169 problems × ~2,800 tokens each ≈ **$2.30 total** for a complete run.
 
+Verified end-to-end (2026-05-16):
+
+| grade | drafts | failed | total | success |
+|---|---|---|---|---|
+| 7 | 497 | 1 | 498 | 99.8 % |
+| 8 | 194 | 1 | 195 | 99.5 % |
+| 9 | 133 | 5 | 138 | 96.4 % |
+| 10 | 260 | 3 | 263 | 98.9 % |
+| 11 | 375 | 3 | 378 | 99.2 % |
+| 12 | 681 | 16 | 697 | 97.7 % |
+| **total** | **2,140** | **29** | **2,169** | **98.7 %** |
+
+Token usage: 1.59 M in / 1.98 M out → **$1.43** actual (about 38 % under the
+estimate because of prompt caching).
+
+### Bulk publish (PENDING → Problem)
+
+Drafts land as `status=PENDING` for human review. To go from "drafts queued"
+to "students can solve the problem" without one-by-one approval, use the
+bulk publisher:
+
+```bash
+cd server
+npx ts-node scripts/bulk-publish.ts
+```
+
+Same NestJS-standalone pattern as `import:ncert`. 5 workers in parallel,
+calls `ContentIngestService.approveDraft(id, adminId, alsoPublish=true)`
+for every `PENDING` draft that has a payload and a mapped `conceptLesson`.
+`DraftPublisher` enforces NCERT attribution at this step (see next section).
+
+End-to-end on the same corpus:
+- 2,140 drafts → **Problem** rows
+- 29 `LLM-FAIL` rows stay `PENDING` for manual review
+- Total `Problem` count after run: **2,164** (seed 24 + new 2,140)
+- Wall-clock: ~5 s on a local Postgres
+
 ### License-safe attribution
 
 NCERT textbooks are copyright-protected — derivative works (NCERT problem →
@@ -243,6 +280,16 @@ Two paths to a valid attribution:
 Both paths must pass `isAcceptableAttribution()` — checks for a textbook
 brand (`NCERT|EBS|CBSE|ICSE`) and a `(derived ...)` tail. See
 `server/src/modules/content-ingest/attribution.helper.ts`.
+
+`buildNcertAttribution()` has two precision tiers:
+- **full** — class + chapter + exerciseId + qIndex all known →
+  `"NCERT Class 10 Mathematics, Ch.1 Ex.1.1 Q.4 (derived for Mathēma, Reprint 2024-25)"`
+- **chapter-level** — only class + chapter known (Ganita Manjari Grade 9
+  inline narrative activities have no exercise number) →
+  `"NCERT Class 9 Mathematics, Ch.1 inline activity (derived for Mathēma, Reprint 2024-25)"`
+
+Both pass `isAcceptableAttribution()`. Only when even chapter is unknown
+does publish abort and demand a manual `SOURCE:` override.
 
 ---
 
