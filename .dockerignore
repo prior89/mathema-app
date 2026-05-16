@@ -13,8 +13,12 @@
 # Other workspaces — not needed for the backend image
 app
 infra
-scripts
 docs
+
+# Exclude the scripts dir but keep sync-env.cjs (root postinstall needs it
+# during `npm ci` — otherwise install fails on the npm-run-postinstall step).
+scripts/*
+!scripts/sync-env.cjs
 
 # Local artifacts
 node_modules

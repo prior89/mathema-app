@@ -10,6 +10,10 @@
 FROM node:20-alpine AS deps
 WORKDIR /repo
 COPY package.json package-lock.json ./
+# Root postinstall is `node scripts/sync-env.cjs` — a dev-only helper that
+# copies the root .env into each workspace. It exits 0 when no .env exists,
+# which is exactly the case in CI. Copy it so npm can run the hook.
+COPY scripts/sync-env.cjs ./scripts/sync-env.cjs
 COPY server/package.json ./server/
 RUN npm ci --workspace=mathema-backend --include-workspace-root=false --include=dev
 
