@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { get } from '../../lib/api';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import MathText from '../MathText';
 
 type StepRow = {
   stepIndex: number;
@@ -121,7 +122,7 @@ export function MockResultDetailScreen() {
                       {p.allCorrect ? '✓ ALL' : '✗ MISSED'}
                     </span>
                   </div>
-                  <div style={{ fontSize: 13, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap', marginBottom: 8 }}>{p.body}</div>
+                  <div style={{ fontSize: 13, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap', marginBottom: 8 }}><MathText text={p.body} /></div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {p.steps.map((s) => (
@@ -134,11 +135,11 @@ export function MockResultDetailScreen() {
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ color: 'var(--p-ink-2)' }}>
-                            <strong style={{ color: 'var(--p-ink)' }}>Your pick:</strong> {s.myChoice ?? '—'}
+                            <strong style={{ color: 'var(--p-ink)' }}>Your pick:</strong> {s.myChoice ? <MathText text={s.myChoice} /> : '—'}
                           </div>
                           {!s.isCorrect && s.rationale && (
                             <div style={{ marginTop: 2, color: 'var(--p-muted)', fontSize: 11.5 }}>
-                              {s.rationale}
+                              <MathText text={s.rationale} />
                             </div>
                           )}
                         </div>

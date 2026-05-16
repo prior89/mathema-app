@@ -1,0 +1,135 @@
+{
+  "version": "ncert-grade-8@2026-05",
+  "chapters": [
+    {
+      "chapterNumber": 1,
+      "title": "Introduction",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 3,
+      "exampleCount": 3
+    },
+    {
+      "chapterNumber": 2,
+      "title": "Introduction",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 11,
+      "exampleCount": 4
+    },
+    {
+      "chapterNumber": 3,
+      "title": "Introduction",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 26,
+      "exampleCount": 8
+    },
+    {
+      "chapterNumber": 4,
+      "title": "Circle Graph or Pie Chart",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 11,
+      "exampleCount": 3
+    },
+    {
+      "chapterNumber": 5,
+      "title": "Introduction",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 27,
+      "exampleCount": 14
+    },
+    {
+      "chapterNumber": 6,
+      "title": "Introduction",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 6,
+      "exampleCount": 8
+    },
+    {
+      "chapterNumber": 7,
+      "title": "Recalling Ratios and Percentages",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 11,
+      "exampleCount": 10
+    },
+    {
+      "chapterNumber": 8,
+      "title": "Addition and Subtraction of Algebraic Expressions",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 14,
+      "exampleCount": 10
+    },
+    {
+      "chapterNumber": 9,
+      "title": "Solid Shapes",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 29,
+      "exampleCount": 8
+    },
+    {
+      "chapterNumber": 10,
+      "title": "Introduction",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 11,
+      "exampleCount": 9
+    },
+    {
+      "chapterNumber": 11,
+      "title": "Introduction",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 24,
+      "exampleCount": 8
+    },
+    {
+      "chapterNumber": 12,
+      "title": "Introduction",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 13,
+      "exampleCount": 16
+    },
+    {
+      "chapterNumber": 13,
+      "title": "Introduction",
+      "ncertClass": "CLASS_8",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 9,
+      "exampleCount": 6
+    }
+  ]
+}

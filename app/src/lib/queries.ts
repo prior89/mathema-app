@@ -14,6 +14,8 @@ export type RecommendCard = {
 };
 export type WrongNoteCard = {
   id: string; problemId: string;
+  /** ConceptLesson chapter code — populated for NCERT-derived problems; null for legacy seed. */
+  chapterCode?: string | null;
   problem: string;
   /** 실제 문제 본문 — 어떤 문제였는지 카드/모달에서 즉시 확인 */
   problemBody?: string;

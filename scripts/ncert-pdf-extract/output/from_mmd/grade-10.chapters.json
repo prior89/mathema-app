@@ -1,0 +1,145 @@
+{
+  "version": "ncert-grade-10@2026-05",
+  "chapters": [
+    {
+      "chapterNumber": 1,
+      "title": "The Fundamental Theorem of Arithmetic",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 10,
+      "exampleCount": 8
+    },
+    {
+      "chapterNumber": 2,
+      "title": "Introduction",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 3,
+      "exampleCount": 5
+    },
+    {
+      "chapterNumber": 3,
+      "title": "Graphical Method of Solution of a Pair of Linear Equations",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 12,
+      "exampleCount": 10
+    },
+    {
+      "chapterNumber": 4,
+      "title": "Quadratic Equations",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 13,
+      "exampleCount": 10
+    },
+    {
+      "chapterNumber": 5,
+      "title": "Arithmetic Progressions",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 44,
+      "exampleCount": 17
+    },
+    {
+      "chapterNumber": 6,
+      "title": "Similar Figures",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 29,
+      "exampleCount": 9
+    },
+    {
+      "chapterNumber": 7,
+      "title": "Distance Formula",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 16,
+      "exampleCount": 10
+    },
+    {
+      "chapterNumber": 8,
+      "title": "Introduction",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 19,
+      "exampleCount": 12
+    },
+    {
+      "chapterNumber": 9,
+      "title": "Heights and Distances",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 15,
+      "exampleCount": 7
+    },
+    {
+      "chapterNumber": 10,
+      "title": "Introduction",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 17,
+      "exampleCount": 5
+    },
+    {
+      "chapterNumber": 11,
+      "title": "Summary",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 14,
+      "exampleCount": 0
+    },
+    {
+      "chapterNumber": 12,
+      "title": "Introduction",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 17,
+      "exampleCount": 7
+    },
+    {
+      "chapterNumber": 13,
+      "title": "Introduction",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 13,
+      "exampleCount": 14
+    },
+    {
+      "chapterNumber": 14,
+      "title": "Probability - A Theoretical Approach",
+      "ncertClass": "CLASS_10",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 41,
+      "exampleCount": 22
+    }
+  ]
+}

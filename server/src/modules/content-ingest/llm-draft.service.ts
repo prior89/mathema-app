@@ -101,7 +101,13 @@ export class LlmDraftService {
 
     const prompt = `${ctxLine ? ctxLine + '\n\n' : ''}Source problem:\n"""\n${input.text}\n"""\n\nReturn the strict JSON draft now.`;
 
-    const res = await this.ai.generateText({ prompt, system: SYSTEM_PROMPT, maxTokens: 2200, temperature: 0.2 });
+    const res = await this.ai.generateText({
+      prompt,
+      system: SYSTEM_PROMPT,
+      maxTokens: 4000,        // 3-step MC + 15 choices + rationale often runs 1600-2400; 2200 caused frequent truncation
+      temperature: 0.2,
+      jsonObject: true,       // OpenAI: response_format=json_object — provider-side JSON guarantee
+    });
     const payload = this.parseAndValidate(res.text);
     return {
       payload,

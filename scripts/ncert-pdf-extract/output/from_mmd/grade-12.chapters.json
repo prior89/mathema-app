@@ -1,0 +1,135 @@
+{
+  "version": "ncert-grade-12@2026-05",
+  "chapters": [
+    {
+      "chapterNumber": 1,
+      "title": "Introduction",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 28,
+      "exampleCount": 28
+    },
+    {
+      "chapterNumber": 2,
+      "title": "Introduction",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 25,
+      "exampleCount": 9
+    },
+    {
+      "chapterNumber": 3,
+      "title": "Types of Matrices",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 45,
+      "exampleCount": 22
+    },
+    {
+      "chapterNumber": 4,
+      "title": "Introduction",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 48,
+      "exampleCount": 20
+    },
+    {
+      "chapterNumber": 5,
+      "title": "Introduction",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 84,
+      "exampleCount": 54
+    },
+    {
+      "chapterNumber": 6,
+      "title": "Increasing and Decreasing Functions",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 76,
+      "exampleCount": 38
+    },
+    {
+      "chapterNumber": 7,
+      "title": "Integration as an Inverse Process of Differentiation",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 165,
+      "exampleCount": 42
+    },
+    {
+      "chapterNumber": 8,
+      "title": "Introduction",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 4,
+      "exampleCount": 4
+    },
+    {
+      "chapterNumber": 9,
+      "title": "Introduction",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 80,
+      "exampleCount": 22
+    },
+    {
+      "chapterNumber": 10,
+      "title": "Introduction",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 54,
+      "exampleCount": 38
+    },
+    {
+      "chapterNumber": 11,
+      "title": "Equation of a Line in Space",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 20,
+      "exampleCount": 5
+    },
+    {
+      "chapterNumber": 12,
+      "title": "Introduction",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 10,
+      "exampleCount": 5
+    },
+    {
+      "chapterNumber": 13,
+      "title": "Introduction",
+      "ncertClass": "CLASS_12",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 58,
+      "exampleCount": 24
+    }
+  ]
+}

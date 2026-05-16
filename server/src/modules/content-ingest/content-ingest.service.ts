@@ -92,7 +92,11 @@ export class ContentIngestService {
     }
   }
 
-  /** Generate a 3-step draft per problem via LLM. Failed items are saved as PENDING (payload null). */
+  /** Generate a 3-step draft per problem via LLM.
+   *  Runs CONCURRENCY workers in parallel — bound is conservative for OpenAI tier-1
+   *  rate limits (500 RPM / 200K TPM). Failed items still produce a PENDING row
+   *  with `LLM-FAIL` label so a reviewer can retry or author manually.
+   */
   private async draftAll(jobId: string, problems: NormalizedProblem[], ctx: IngestContext): Promise<void> {
     // Pre-fetch conceptLesson mapping — (ncertClass, chapterNumber) → lesson.id
     const lessonMap = new Map<string, { id: string; titleEn: string }>();
@@ -101,9 +105,12 @@ export class ContentIngestService {
     });
     for (const l of lessons) lessonMap.set(`${l.ncertClass}__${l.chapterNumber}`, { id: l.id, titleEn: l.titleEn });
 
+    const CONCURRENCY = Number(process.env.LLM_DRAFT_CONCURRENCY ?? 5);
     let drafted = 0;
     let failed = 0;
-    for (let i = 0; i < problems.length; i++) {
+    let cursor = 0;
+
+    const processOne = async (i: number): Promise<void> => {
       const p = problems[i];
       const lk = p.ncertClass && p.chapterNumber ? lessonMap.get(`${p.ncertClass}__${p.chapterNumber}`) : undefined;
       const sourceLabel = [
@@ -138,7 +145,6 @@ export class ContentIngestService {
         failed++;
         const msg = e instanceof Error ? e.message : String(e);
         this.logger.warn(`Draft failed at ${sourceLabel}: ${msg}`);
-        // Persist the draft row even on failure so the reviewer can retry or author manually
         await this.prisma.contentDraft.create({
           data: {
             ingestJobId: jobId,
@@ -151,10 +157,23 @@ export class ContentIngestService {
           },
         });
       }
-      if ((i + 1) % 10 === 0) await ctx.updateStatus('DRAFTING', { draftsCreated: drafted });
-    }
+    };
+
+    const worker = async (): Promise<void> => {
+      for (;;) {
+        const i = cursor++;
+        if (i >= problems.length) return;
+        await processOne(i);
+        const done = drafted + failed;
+        if (done > 0 && done % 10 === 0) {
+          await ctx.updateStatus('DRAFTING', { draftsCreated: drafted });
+        }
+      }
+    };
+
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, problems.length) }, () => worker()));
     await ctx.updateStatus('DRAFTING', { draftsCreated: drafted });
-    this.logger.log(`Job ${jobId}: drafted ${drafted} · failed ${failed} (of ${problems.length})`);
+    this.logger.log(`Job ${jobId}: drafted ${drafted} · failed ${failed} (of ${problems.length}, concurrency=${CONCURRENCY})`);
   }
 
   // ---------- Job listing / detail ----------

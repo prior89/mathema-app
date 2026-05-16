@@ -1,0 +1,145 @@
+{
+  "version": "ncert-grade-11@2026-05",
+  "chapters": [
+    {
+      "chapterNumber": 1,
+      "title": "The Empty Set",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 31,
+      "exampleCount": 23
+    },
+    {
+      "chapterNumber": 2,
+      "title": "Introduction",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 24,
+      "exampleCount": 30
+    },
+    {
+      "chapterNumber": 3,
+      "title": "Trigonometric Functions",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 41,
+      "exampleCount": 18
+    },
+    {
+      "chapterNumber": 4,
+      "title": "Algebra of Complex Numbers",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 6,
+      "exampleCount": 7
+    },
+    {
+      "chapterNumber": 5,
+      "title": "Algebraic Solutions of Linear Inequalities in One Variable and their Graphical Representation",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 18,
+      "exampleCount": 17
+    },
+    {
+      "chapterNumber": 6,
+      "title": "Permutations",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 30,
+      "exampleCount": 28
+    },
+    {
+      "chapterNumber": 7,
+      "title": "Chapter 7",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 8,
+      "exampleCount": 0
+    },
+    {
+      "chapterNumber": 8,
+      "title": "Series",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 43,
+      "exampleCount": 13
+    },
+    {
+      "chapterNumber": 9,
+      "title": "Introduction",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 47,
+      "exampleCount": 16
+    },
+    {
+      "chapterNumber": 10,
+      "title": "Introduction",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 49,
+      "exampleCount": 19
+    },
+    {
+      "chapterNumber": 11,
+      "title": "Coordinate Axes and Coordinate Planes in Three Dimensional Space",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 9,
+      "exampleCount": 9
+    },
+    {
+      "chapterNumber": 12,
+      "title": "Limits",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 11,
+      "exampleCount": 23
+    },
+    {
+      "chapterNumber": 13,
+      "title": "Measures of Dispersion",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 16,
+      "exampleCount": 16
+    },
+    {
+      "chapterNumber": 14,
+      "title": "Event",
+      "ncertClass": "CLASS_11",
+      "pageStart": 0,
+      "pageEnd": 0,
+      "sections": [],
+      "problemCount": 45,
+      "exampleCount": 15
+    }
+  ]
+}

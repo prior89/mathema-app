@@ -6,7 +6,7 @@ type TabId = 'home' | 'learn' | 'notes' | 'mocks' | 'me';
 const TABS: Array<{ id: TabId; label: string; path: string; icon: (c: string) => JSX.Element }> = [
   { id: 'home', label: 'Home', path: '/app',
     icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><path d="M 3 11 L 12 4 L 21 11 V 20 H 14 V 14 H 10 V 20 H 3 Z" fill="none" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/></svg> },
-  { id: 'learn', label: 'Learn', path: '/app/learn',
+  { id: 'learn', label: 'Mastery', path: '/app/learn',
     icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><path d="M 4 6 C 4 5, 5 4, 6 4 H 11 V 20 H 6 C 5 20, 4 19, 4 18 Z M 20 6 C 20 5, 19 4, 18 4 H 13 V 20 H 18 C 19 20, 20 19, 20 18 Z" fill="none" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg> },
   { id: 'notes', label: 'Notes', path: '/app/notes',
     icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><path d="M 6 3 H 16 L 19 6 V 21 H 6 Z M 8 8 H 17 M 8 12 H 17 M 8 16 H 14" fill="none" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg> },

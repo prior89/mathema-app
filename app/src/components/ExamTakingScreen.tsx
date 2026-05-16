@@ -259,7 +259,7 @@ export default function ExamTakingScreen({ exam, onClose }: Props) {
         </div>
         {currentStep && (
           <div style={{ fontSize: 14, color: '#142850', fontWeight: 600, marginTop: 12, lineHeight: 1.5 }}>
-            Q{problemStep}. {currentStep.prompt}
+            Q{problemStep}. <MathText text={currentStep.prompt} />
           </div>
         )}
       </div>
@@ -305,7 +305,7 @@ export default function ExamTakingScreen({ exam, onClose }: Props) {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 11, fontWeight: 600,
                 }}>{icon ?? (ci + 1)}</span>
-                <span style={{ flex: 1, fontFamily: 'JetBrains Mono, monospace', fontSize: 13, lineHeight: 1.5 }}>{c.text}</span>
+                <span style={{ flex: 1, fontFamily: 'JetBrains Mono, monospace', fontSize: 13, lineHeight: 1.5 }}><MathText text={c.text} /></span>
               </button>
             );
           })}
@@ -341,7 +341,7 @@ export default function ExamTakingScreen({ exam, onClose }: Props) {
                  lastFeedback.distractorType === 'TIME_PRESSURE_GUESS' ? t('study.feedback.distractor.time') : t('study.feedback.distractor.other')}
               </div>
               {lastFeedback.rationale && (
-                <div style={{ color: '#142850', marginBottom: 6 }}>{lastFeedback.rationale}</div>
+                <div style={{ color: '#142850', marginBottom: 6 }}><MathText text={lastFeedback.rationale} /></div>
               )}
               <div style={{ fontSize: 12, color: '#5C6B85' }}>{t('study.feedback.wrong.tryAgain')}</div>
             </div>
@@ -361,7 +361,7 @@ export default function ExamTakingScreen({ exam, onClose }: Props) {
             <Lightbulb size={13} /> {t('study.concept.label')}
           </div>
           <div style={{ fontSize: 13, lineHeight: 1.7, color: '#142850', whiteSpace: 'pre-wrap' }}>
-            {(current as any).concept}
+            <MathText text={(current as any).concept} />
           </div>
           {current.formula && (
             <div style={{
@@ -372,7 +372,7 @@ export default function ExamTakingScreen({ exam, onClose }: Props) {
                 {t('study.formula.label')}
               </div>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: '#142850' }}>
-                {current.formula}
+                <MathText text={current.formula} />
               </div>
             </div>
           )}

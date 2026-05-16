@@ -1,0 +1,207 @@
+{
+  "version": "ncert-grade-12@2026-05",
+  "chapters": [
+    {
+      "chapterNumber": 1,
+      "title": "Chapter 1",
+      "ncertClass": "CLASS_12",
+      "pageStart": 13,
+      "pageEnd": 21,
+      "sections": [],
+      "problemCount": 0,
+      "exampleCount": 11
+    },
+    {
+      "chapterNumber": 2,
+      "title": "Chapter 2",
+      "ncertClass": "CLASS_12",
+      "pageStart": 22,
+      "pageEnd": 66,
+      "sections": [
+        {
+          "code": "2.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "2.2",
+          "title": "Basic Concepts"
+        },
+        {
+          "code": "2.3",
+          "title": "Properties of Inverse Trigonometric Functions"
+        }
+      ],
+      "problemCount": 34,
+      "exampleCount": 45
+    },
+    {
+      "chapterNumber": 3,
+      "title": "Chapter 3",
+      "ncertClass": "CLASS_12",
+      "pageStart": 67,
+      "pageEnd": 108,
+      "sections": [
+        {
+          "code": "3.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "3.2",
+          "title": "Matrix"
+        },
+        {
+          "code": "3.3",
+          "title": "Types of Matrices"
+        },
+        {
+          "code": "3.4",
+          "title": "Operations on Matrices"
+        },
+        {
+          "code": "3.6",
+          "title": "Symmetric and Skew Symmetric Matrices"
+        },
+        {
+          "code": "3.7",
+          "title": "Invertible Matrices"
+        }
+      ],
+      "problemCount": 64,
+      "exampleCount": 27
+    },
+    {
+      "chapterNumber": 4,
+      "title": "Chapter 4",
+      "ncertClass": "CLASS_12",
+      "pageStart": 109,
+      "pageEnd": 136,
+      "sections": [
+        {
+          "code": "4.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "4.2",
+          "title": "Determinant"
+        },
+        {
+          "code": "4.3",
+          "title": "Area of a Triangle"
+        },
+        {
+          "code": "4.4",
+          "title": "Minors and Cofactors"
+        },
+        {
+          "code": "4.5",
+          "title": "Adjoint and Inverse of a Matrix"
+        },
+        {
+          "code": "4.6",
+          "title": "Applications of Determinants and Matrices"
+        }
+      ],
+      "problemCount": 43,
+      "exampleCount": 20
+    },
+    {
+      "chapterNumber": 5,
+      "title": "Chapter 5",
+      "ncertClass": "CLASS_12",
+      "pageStart": 137,
+      "pageEnd": 179,
+      "sections": [
+        {
+          "code": "5.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "5.2",
+          "title": "Continuity"
+        },
+        {
+          "code": "5.4",
+          "title": "Exponential and Logarithmic Functions"
+        },
+        {
+          "code": "5.6",
+          "title": "Derivatives of Functions in Parametric Forms"
+        },
+        {
+          "code": "5.7",
+          "title": "Second Order Derivative"
+        }
+      ],
+      "problemCount": 83,
+      "exampleCount": 48
+    },
+    {
+      "chapterNumber": 6,
+      "title": "Chapter 6",
+      "ncertClass": "CLASS_12",
+      "pageStart": 180,
+      "pageEnd": 431,
+      "sections": [
+        {
+          "code": "6.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "6.2",
+          "title": "Rate of Change of Quantities"
+        },
+        {
+          "code": "6.3",
+          "title": "Increasing and Decreasing Functions"
+        },
+        {
+          "code": "6.4",
+          "title": "Maxima and Minima"
+        }
+      ],
+      "problemCount": 107,
+      "exampleCount": 159
+    },
+    {
+      "chapterNumber": 7,
+      "title": "Chapter 7",
+      "ncertClass": "CLASS_12",
+      "pageStart": 432,
+      "pageEnd": 402,
+      "sections": [],
+      "problemCount": 0,
+      "exampleCount": 0
+    },
+    {
+      "chapterNumber": 11,
+      "title": "Chapter 11",
+      "ncertClass": "CLASS_12",
+      "pageStart": 403,
+      "pageEnd": 484,
+      "sections": [
+        {
+          "code": "11.1",
+          "title": "Introduction"
+        },
+        {
+          "code": "11.2",
+          "title": "Direction Cosines and Direction Ratios of a Line"
+        },
+        {
+          "code": "11.3",
+          "title": "Equation of a Line in Space"
+        },
+        {
+          "code": "11.4",
+          "title": "Angle between Two Lines"
+        },
+        {
+          "code": "11.5",
+          "title": "Shortest Distance between Two Lines"
+        }
+      ],
+      "problemCount": 36,
+      "exampleCount": 39
+    }
+  ]
+}

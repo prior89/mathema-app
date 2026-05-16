@@ -1,0 +1,13 @@
+{
+  "pdfPath": "scripts\\ncert-pdf-extract\\output\\mmd\\Grade_11_Mathematics_Latest.mmd",
+  "grade": 11,
+  "ncertClass": "CLASS_11",
+  "totalPages": 0,
+  "chaptersFound": 14,
+  "problemsFound": 378,
+  "examplesFound": 234,
+  "rejectedTooShort": 46,
+  "rejectedPureNoise": 0,
+  "rejectedNoLetters": 3,
+  "extractedAt": "2026-05-15T04:50:00.711816+00:00"
+}
