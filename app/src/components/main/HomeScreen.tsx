@@ -56,7 +56,6 @@ export function HomeScreen() {
   }, [today.data]);
 
   const userName = me.data?.name ?? 'Aarav';
-  const initial = userName.charAt(0).toUpperCase();
   const examDate = me.data?.examDate;
   const dday = dDay(examDate);
   const dateStr = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
@@ -73,7 +72,6 @@ export function HomeScreen() {
             <div className="hello">{dateStr}</div>
             <div className="name">Hello, <em>{userName.split(' ')[0]}</em></div>
           </div>
-          <div className="avatar">{initial}</div>
         </div>
 
         <div style={{ padding: '0 22px' }}>
