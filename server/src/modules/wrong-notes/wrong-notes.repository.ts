@@ -85,6 +85,8 @@ const toCardShape = (n: any, lang: Lang = 'ko') => {
   return {
     id: n.id,
     problemId: n.problemId,
+    /** ConceptLesson chapter code (e.g. "C11-CH04-COMPLEX") — frontend uses this to deep-link the card to /app/learn/:code. Null only for legacy seed problems with no lesson mapping. */
+    chapterCode: (n.problem as { conceptLesson?: { chapterCode?: string | null } | null })?.conceptLesson?.chapterCode ?? null,
     problem: lang !== 'ko' ? (SOURCE_EN[sourceKo] ?? sourceKo) : sourceKo,
     /** 실제 문제 본문 (오답노트에서 어떤 문제였는지 즉시 확인 가능) */
     problemBody,
@@ -171,7 +173,7 @@ export class WrongNotesRepository {
         { occurrences: 'desc' },
       ],
       ...(limit ? { take: limit } : {}),
-      include: { problem: { include: { unit: true, subUnit: true } } },
+      include: { problem: { include: { unit: true, subUnit: true, conceptLesson: { select: { chapterCode: true } } } } },
     });
     return rows.map((r) => toCardShape(r, lang));
   }
@@ -195,7 +197,7 @@ export class WrongNotesRepository {
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: limit,
-      include: { problem: { include: { unit: true, subUnit: true } } },
+      include: { problem: { include: { unit: true, subUnit: true, conceptLesson: { select: { chapterCode: true } } } } },
     });
     return rows.map((r) => toCardShape(r, lang));
   }
@@ -204,7 +206,7 @@ export class WrongNotesRepository {
     const rows = await this.prisma.wrongNote.findMany({
       where: { userId, ...this.buildWhere(query) },
       orderBy: this.buildOrderBy(query),
-      include: { problem: { include: { unit: true, subUnit: true } } },
+      include: { problem: { include: { unit: true, subUnit: true, conceptLesson: { select: { chapterCode: true } } } } },
     });
     return rows.map((r) => toCardShape(r, lang));
   }
@@ -212,7 +214,7 @@ export class WrongNotesRepository {
   async findOne(userId: string, id: string, lang: Lang = 'ko') {
     const n = await this.prisma.wrongNote.findFirstOrThrow({
       where: { id, userId },
-      include: { problem: { include: { unit: true, subUnit: true } } },
+      include: { problem: { include: { unit: true, subUnit: true, conceptLesson: { select: { chapterCode: true } } } } },
     });
     return toCardShape(n, lang);
   }

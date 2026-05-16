@@ -73,7 +73,11 @@ export function NotesListScreen() {
           {notes.data && notes.data.length === 0 && <Empty msg="No wrong notes yet — practice problems to start building." />}
           <div className="notes-grid">
             {(notes.data ?? []).map((n) => (
-              <div key={n.id} className="note-card" onClick={() => nav(`/app/notes/${n.id}`)}>
+              <div
+                key={n.id}
+                className="note-card"
+                onClick={() => nav(n.chapterCode ? `/app/learn/${n.chapterCode}` : `/app/notes/${n.id}`)}
+              >
                 <div className="src">{(n.problem || n.unit).replace(/Class\s+(\d+)/g, 'Grade $1')}</div>
                 <div className="body"><MathText text={n.problemBody || n.insight} /></div>
                 <div className="foot">
