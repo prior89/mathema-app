@@ -31,7 +31,6 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      # Install at the workspace root because deps live in the root lock.
       - name: Install workspace deps
         run: npm ci
 
@@ -40,12 +39,42 @@ jobs:
           VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
         run: npm -w app run build
 
-      # Use the SWA CLI directly — the static-web-apps-deploy action keeps
-      # returning "An unknown exception" with both Oryx and skip-build modes,
-      # which is a well-known opaque-failure path. The CLI is more verbose
-      # and gives a real error if something is off (token, target, etc.).
+      # Fetch the canonical deployment token from Azure directly using the
+      # same service principal we use for the backend. This removes any
+      # chance that the stored AZURE_STATIC_WEB_APPS_API_TOKEN secret has
+      # drifted from the actual SWA (rotation, recreate, wrong copy, etc.)
+      # and is the root cause of the "An unknown exception" messages.
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Resolve SWA deployment token
+        id: swa
+        run: |
+          TOKEN=$(az staticwebapp secrets list \
+            --name mathema-swa \
+            --resource-group mathema-prod-cin \
+            --query "properties.apiKey" -o tsv)
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Could not fetch SWA deployment token"
+            exit 1
+          fi
+          echo "token_len=${#TOKEN}"
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Show SWA target (sanity)
+        run: |
+          az staticwebapp show \
+            --name mathema-swa \
+            --resource-group mathema-prod-cin \
+            --query "{name:name, location:location, sku:sku.name, defaultHostname:defaultHostname, repositoryUrl:repositoryUrl}" \
+            -o json
+
       - name: Deploy to Static Web Apps (swa CLI)
         run: |
           npx -y @azure/static-web-apps-cli@latest deploy ./app/dist \
-            --deployment-token "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" \
-            --env production
+            --deployment-token "${{ steps.swa.outputs.token }}" \
+            --env production \
+            --verbose silly

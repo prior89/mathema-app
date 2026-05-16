@@ -20,8 +20,9 @@ RUN npm ci --workspace=mathema-backend --include-workspace-root=false --include=
 # ----- stage 2: build (TypeScript + Prisma client) -----
 FROM node:20-alpine AS build
 WORKDIR /repo
+# npm workspaces hoist everything into /repo/node_modules; there is no
+# server/node_modules at the deps stage (server resolves up the tree).
 COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/server/node_modules ./server/node_modules
 COPY package.json package-lock.json ./
 COPY server ./server
 WORKDIR /repo/server
@@ -44,8 +45,9 @@ ENV NODE_ENV=production \
     NODE_OPTIONS="--enable-source-maps"
 
 # Flatten the workspace layout into /app — runtime doesn't need the monorepo shape.
+# Workspaces hoist deps to the repo-root node_modules, so we ship that one.
 COPY --from=build --chown=app:app /repo/server/dist          ./dist
-COPY --from=build --chown=app:app /repo/server/node_modules  ./node_modules
+COPY --from=build --chown=app:app /repo/node_modules         ./node_modules
 COPY --from=build --chown=app:app /repo/server/prisma        ./prisma
 COPY --from=build --chown=app:app /repo/server/package.json  ./
 
