@@ -22,12 +22,12 @@ import { useT } from '../lib/i18n';
 // 한국 학년 enum ↔ NCERT 학년 매핑 — ConceptLesson 트리는 NCERT 학년 1차 기준이므로
 // 사용자의 한국 gradeLevel 을 그에 대응하는 NCERT class 로 변환해 디폴트 탭으로 사용.
 const KO_GRADE_TO_NCERT: Record<string, NcertClass> = {
-  G_MIDDLE_1: 'CLASS_7',
-  G_MIDDLE_2: 'CLASS_8',
-  G_MIDDLE_3: 'CLASS_9',
-  G_HIGH_1: 'CLASS_10',
-  G_HIGH_2: 'CLASS_11',
-  G_HIGH_3: 'CLASS_12',
+  CLASS_7: 'CLASS_7',
+  CLASS_8: 'CLASS_8',
+  CLASS_9: 'CLASS_9',
+  CLASS_10: 'CLASS_10',
+  CLASS_11: 'CLASS_11',
+  CLASS_12: 'CLASS_12',
 };
 
 const CLASSES: { key: NcertClass; label: string }[] = [

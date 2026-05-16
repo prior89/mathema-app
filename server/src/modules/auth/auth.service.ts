@@ -125,7 +125,7 @@ export class AuthService {
         examDate: new Date('2027-02-14'),
         targetGrade: 1,
         country: 'IN' as any,
-        gradeLevel: 'G_HIGH_2' as any,
+        gradeLevel: 'CLASS_11' as any,
         role: 'STUDENT' as any,
       });
     }
@@ -210,7 +210,7 @@ export class AuthService {
         examDate: placeholderExam,
         targetGrade: 1,
         country: 'IN' as any,
-        gradeLevel: 'G_HIGH_2' as any,
+        gradeLevel: 'CLASS_11' as any,
       });
     }
     return this.issueTokens(user.id);

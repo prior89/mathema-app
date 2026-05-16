@@ -48,7 +48,7 @@ describe('AdaptiveNextProblemService — 사용자 격리', () => {
 
   it('expandWithPrerequisites: prerequisite mastery 조회 시 항상 같은 userId 가 필터로 들어간다', async () => {
     const USER_ID = 'user-alice';
-    userFindUniqueMock.mockResolvedValue({ tenantId: null, gradeLevel: 'G_HIGH_2' });
+    userFindUniqueMock.mockResolvedValue({ tenantId: null, gradeLevel: 'CLASS_11' });
 
     // 약점 concept 1 개 (prerequisite 2 개) — 그 prerequisite 가 더 약해서 우선 진입
     masteryFindManyMock

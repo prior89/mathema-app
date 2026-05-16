@@ -25,7 +25,7 @@ export class DiagnosticService {
     if (!user) throw new NotFoundException('user not found');
 
     // 사용자 grade 에 매핑된 ConceptLesson 들 → 매핑된 Problem 들 풀에서 4개 추출 (서로 다른 concept 우선).
-    const problems = await this.selectFour(user.gradeLevel ?? 'G_HIGH_2');
+    const problems = await this.selectFour(user.gradeLevel ?? 'CLASS_11');
     if (problems.length === 0) {
       throw new BadRequestException('No diagnostic problems available for your grade yet. Please contact support.');
     }

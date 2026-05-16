@@ -44,7 +44,7 @@ async function main() {
   }
 
   // ===== Demo user — PoC persona: Class 11 (JEE prep) =====
-  // Seed user is a Class 11 student (G_HIGH_2 = NCERT Class 11), preparing for JEE Main
+  // Seed user is a Class 11 student (CLASS_11 = NCERT Class 11), preparing for JEE Main
   // (January or April session). examDate ≈ 150 days out (close to the April session).
   // targetGrade=1 means "top rank band". mastery / wrongNote / mockExam are all seeded
   // consistently in a Class 11 context.
@@ -52,14 +52,14 @@ async function main() {
   examDate.setDate(examDate.getDate() + 150);
   const user = await prisma.user.upsert({
     where: { email: 'polopot123@gmail.com' },
-    update: { gradeLevel: 'G_HIGH_2', country: 'IN', name: 'Arjun Sharma' } as any,
+    update: { gradeLevel: 'CLASS_11', country: 'IN', name: 'Arjun Sharma' } as any,
     create: {
       email: 'polopot123@gmail.com',
       passwordHash: await bcrypt.hash('password1234', 10),
       name: 'Arjun Sharma',
       examDate,
       targetGrade: 1,
-      gradeLevel: 'G_HIGH_2',
+      gradeLevel: 'CLASS_11',
       country: 'IN' as any,
     },
   });

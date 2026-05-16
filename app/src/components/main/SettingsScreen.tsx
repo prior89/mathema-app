@@ -75,8 +75,8 @@ export function SettingsScreen() {
           <Row k="Email" v={me.data?.email ?? '—'} />
           <Row k="Role" v={me.data?.role ?? 'STUDENT'} />
           <Row k="Grade" v={({
-            G_MIDDLE_1: 'Grade 7', G_MIDDLE_2: 'Grade 8', G_MIDDLE_3: 'Grade 9',
-            G_HIGH_1: 'Grade 10', G_HIGH_2: 'Grade 11', G_HIGH_3: 'Grade 12',
+            CLASS_7: 'Grade 7', CLASS_8: 'Grade 8', CLASS_9: 'Grade 9',
+            CLASS_10: 'Grade 10', CLASS_11: 'Grade 11', CLASS_12: 'Grade 12',
           } as Record<string, string>)[me.data?.gradeLevel ?? ''] ?? me.data?.gradeLevel ?? '—'} last />
         </div>
 

@@ -24,12 +24,12 @@ type NcertClass = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 
 
 /** NCERT class ↔ 기존 GradeLevel 매핑 (인도 학년 → 한국 학년 enum). */
 const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
-  CLASS_7:  'G_MIDDLE_1',
-  CLASS_8:  'G_MIDDLE_2',
-  CLASS_9:  'G_MIDDLE_3',
-  CLASS_10: 'G_HIGH_1',
-  CLASS_11: 'G_HIGH_2',
-  CLASS_12: 'G_HIGH_3',
+  CLASS_7:  'CLASS_7',
+  CLASS_8:  'CLASS_8',
+  CLASS_9:  'CLASS_9',
+  CLASS_10: 'CLASS_10',
+  CLASS_11: 'CLASS_11',
+  CLASS_12: 'CLASS_12',
 };
 
 export default function RegisterPage() {

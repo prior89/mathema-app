@@ -73,14 +73,14 @@ enum DistractorType {
 }
 
 /// Grade selected at signup. For unit mapping see Unit.gradeLevels.
-/// First launch: India NCERT (Class 7~12) ↔ G_MIDDLE_1~G_HIGH_3 mapping
+/// Indian NCERT class system — Class 7 through Class 12.
 enum GradeLevel {
-  G_MIDDLE_1 // Class 7  (Korean middle school grade 1)
-  G_MIDDLE_2 // Class 8  (Korean middle school grade 2)
-  G_MIDDLE_3 // Class 9  (Korean middle school grade 3)
-  G_HIGH_1 // Class 10 (Korean high school grade 1)
-  G_HIGH_2 // Class 11 (Korean high school grade 2)
-  G_HIGH_3 // Class 12 (Korean high school grade 3)
+  CLASS_7
+  CLASS_8
+  CLASS_9
+  CLASS_10
+  CLASS_11
+  CLASS_12
 }
 
 /// NCERT class — classification dimension for ConceptLesson.
@@ -271,7 +271,7 @@ model User {
   examDate     DateTime // exam date → D-day calculation
   targetGrade  Int // target grade (1~9)
   /// Grade selected at signup — used to recommend / filter units. Nullable for backward compatibility with existing users.
-  gradeLevel   GradeLevel?  @default(G_HIGH_3)
+  gradeLevel   GradeLevel?  @default(CLASS_12)
   /// User country — determines curriculum / currency / date format. Defaults to GLOBAL when unspecified.
   country      CountryCode  @default(IN)
   /// School level — corresponds to the spec's Student.schoolLevel. Derivable from gradeLevel, but storing it explicitly simplifies analytics.
@@ -347,7 +347,7 @@ model Unit {
   id             String            @id @default(uuid())
   name           String            @unique // Calculus II
   order          Int
-  /// List of grades that can study this unit (e.g., [G_HIGH_1, G_HIGH_2])
+  /// List of grades that can study this unit (e.g., [CLASS_10, CLASS_11])
   gradeLevels    GradeLevel[]      @default([])
   subUnits       SubUnit[]
   problems       Problem[]
@@ -1260,7 +1260,7 @@ model ContentIngestJob {
   label        String
 
   status          ContentIngestStatus @default(QUEUED)
-  /// Classes detected during processing (kept in their native notation — "CLASS_8", "G_HIGH_2", etc.).
+  /// Classes detected during processing (kept in their native notation — "CLASS_8", "CLASS_11", etc.).
   detectedClasses String[]            @default([])
 
   /// Progress metrics (each adapter populates as appropriate).

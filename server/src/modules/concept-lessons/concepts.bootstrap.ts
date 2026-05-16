@@ -114,15 +114,15 @@ export class ConceptsBootstrap implements OnModuleInit {
   }
 }
 
-/** NcertClass → GradeLevel 매핑 (Class 7→G_MIDDLE_1 ... Class 12→G_HIGH_3). */
+/** NcertClass → GradeLevel 매핑 (Class 7→CLASS_7 ... Class 12→CLASS_12). */
 function ncertToGrade(nc: string): GradeLevel {
   switch (nc) {
-    case 'CLASS_7':  return GradeLevel.G_MIDDLE_1;
-    case 'CLASS_8':  return GradeLevel.G_MIDDLE_2;
-    case 'CLASS_9':  return GradeLevel.G_MIDDLE_3;
-    case 'CLASS_10': return GradeLevel.G_HIGH_1;
-    case 'CLASS_11': return GradeLevel.G_HIGH_2;
-    case 'CLASS_12': return GradeLevel.G_HIGH_3;
-    default: return GradeLevel.G_HIGH_3;
+    case 'CLASS_7':  return GradeLevel.CLASS_7;
+    case 'CLASS_8':  return GradeLevel.CLASS_8;
+    case 'CLASS_9':  return GradeLevel.CLASS_9;
+    case 'CLASS_10': return GradeLevel.CLASS_10;
+    case 'CLASS_11': return GradeLevel.CLASS_11;
+    case 'CLASS_12': return GradeLevel.CLASS_12;
+    default: return GradeLevel.CLASS_12;
   }
 }

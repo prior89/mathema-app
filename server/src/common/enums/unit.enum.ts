@@ -8,37 +8,37 @@
  *   단원명(EN) = ncert-chapters.ts 의 titleEn (i18n/content-en.ts 매핑)
  *
  * 시드의 진실 원천 — Unit 테이블 row 와 동기화.
- * 한국 학년 enum 은 NCERT Class 7~12 와 1:1 (G_MIDDLE_1 = Class 7, …).
+ * 한국 학년 enum 은 NCERT Class 7~12 와 1:1 (CLASS_7 = Class 7, …).
  */
 
 export const GRADE_LEVELS = [
-  'G_MIDDLE_1',
-  'G_MIDDLE_2',
-  'G_MIDDLE_3',
-  'G_HIGH_1',
-  'G_HIGH_2',
-  'G_HIGH_3',
+  'CLASS_7',
+  'CLASS_8',
+  'CLASS_9',
+  'CLASS_10',
+  'CLASS_11',
+  'CLASS_12',
 ] as const;
 export type GradeLevel = (typeof GRADE_LEVELS)[number];
 
 /** 개발자 보조용 한국어 학년 라벨 (실제 UI 는 EN 디폴트) */
 export const GRADE_LABEL_KO: Record<GradeLevel, string> = {
-  G_MIDDLE_1: '중1 / Class 7',
-  G_MIDDLE_2: '중2 / Class 8',
-  G_MIDDLE_3: '중3 / Class 9',
-  G_HIGH_1: '고1 / Class 10',
-  G_HIGH_2: '고2 / Class 11',
-  G_HIGH_3: '고3 / Class 12',
+  CLASS_7: '중1 / Class 7',
+  CLASS_8: '중2 / Class 8',
+  CLASS_9: '중3 / Class 9',
+  CLASS_10: '고1 / Class 10',
+  CLASS_11: '고2 / Class 11',
+  CLASS_12: '고3 / Class 12',
 };
 
 /** 출시 표준 — NCERT Class 표기 */
 export const GRADE_LABEL_EN: Record<GradeLevel, string> = {
-  G_MIDDLE_1: 'Class 7',
-  G_MIDDLE_2: 'Class 8',
-  G_MIDDLE_3: 'Class 9',
-  G_HIGH_1: 'Class 10',
-  G_HIGH_2: 'Class 11',
-  G_HIGH_3: 'Class 12',
+  CLASS_7: 'Class 7',
+  CLASS_8: 'Class 8',
+  CLASS_9: 'Class 9',
+  CLASS_10: 'Class 10',
+  CLASS_11: 'Class 11',
+  CLASS_12: 'Class 12',
 };
 
 /**
@@ -48,36 +48,36 @@ export const GRADE_LABEL_EN: Record<GradeLevel, string> = {
  * 총 79 챕터 (Class 7: 13, 8: 13, 9: 12, 10: 14, 11: 14, 12: 13)
  */
 export const GRADE_TO_UNITS: Record<GradeLevel, string[]> = {
-  G_MIDDLE_1: [
+  CLASS_7: [
     '정수', '분수와 소수', '자료의 정리', '간단한 방정식', '직선과 각',
     '삼각형의 성질', '비교하기 (비·백분율)', '유리수', '둘레와 넓이',
     '대수식', '지수와 거듭제곱', '대칭', '입체도형의 시각화',
   ],
-  G_MIDDLE_2: [
+  CLASS_8: [
     '유리수의 성질', '일변수 일차방정식', '사각형의 이해', '자료의 정리 II',
     '제곱과 제곱근', '세제곱과 세제곱근', '비교하기 II (이자·할인)',
     '대수식과 항등식', '도형의 양 (둘레·넓이·부피)', '지수의 확장',
     '정비례·반비례', '인수분해 (입문)', '그래프 입문',
   ],
-  G_MIDDLE_3: [
+  CLASS_9: [
     '수의 체계 (실수)', '다항식', '좌표기하 입문', '두 변수 일차방정식',
     '유클리드 기하의 공준', '직선과 각 II', '삼각형 (합동)', '사각형 (성질·증명)',
     '원', '헤론의 공식', '겉넓이와 부피', '통계 입문',
   ],
-  G_HIGH_1: [
+  CLASS_10: [
     '실수 II (산술의 기본정리)', '다항식 II (영점·계수 관계)',
     '두 변수 일차연립방정식', '이차방정식', '등차수열 (A.P.)',
     '삼각형의 닮음', '좌표기하 II (분점·넓이)', '삼각비 입문',
     '삼각비의 활용', '원 II (접선)', '원과 관련된 넓이',
     '겉넓이·부피 (합성도형)', '통계 II (평균·중앙값·최빈값)', '확률 입문',
   ],
-  G_HIGH_2: [
+  CLASS_11: [
     '집합', '관계와 함수', '삼각함수 (일반각)', '복소수와 이차방정식',
     '일차부등식', '순열과 조합', '이항정리', '수열과 급수',
     '직선의 방정식', '원뿔곡선', '공간기하 입문', '극한과 미분 입문',
     '통계 III (분산·표준편차)', '확률 II (사건의 대수)',
   ],
-  G_HIGH_3: [
+  CLASS_12: [
     '관계와 함수 II', '역삼각함수', '행렬', '행렬식',
     '연속과 미분가능성', '미분의 활용', '적분', '적분의 활용',
     '미분방정식', '벡터대수', '공간기하 II', '선형계획법',

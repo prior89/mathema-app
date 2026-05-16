@@ -7,8 +7,8 @@ import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 
 const GRADE_TO_CLASS: Record<string, NcertClass> = {
-  G_MIDDLE_1: 'CLASS_7', G_MIDDLE_2: 'CLASS_8', G_MIDDLE_3: 'CLASS_9',
-  G_HIGH_1: 'CLASS_10', G_HIGH_2: 'CLASS_11', G_HIGH_3: 'CLASS_12',
+  CLASS_7: 'CLASS_7', CLASS_8: 'CLASS_8', CLASS_9: 'CLASS_9',
+  CLASS_10: 'CLASS_10', CLASS_11: 'CLASS_11', CLASS_12: 'CLASS_12',
 };
 
 const CLASS_LABEL: Record<NcertClass, string> = {
@@ -19,7 +19,7 @@ const CLASS_LABEL: Record<NcertClass, string> = {
 export function LearnScreen() {
   const nav = useNavigate();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
-  const defaultClass: NcertClass = GRADE_TO_CLASS[me.data?.gradeLevel ?? 'G_HIGH_2'] ?? 'CLASS_11';
+  const defaultClass: NcertClass = GRADE_TO_CLASS[me.data?.gradeLevel ?? 'CLASS_11'] ?? 'CLASS_11';
   const [ncertClass, setNcertClass] = useState<NcertClass>(defaultClass);
   const lessons = useQuery({ queryKey: ['lessons', ncertClass], queryFn: () => fetchConceptLessons(ncertClass) });
 

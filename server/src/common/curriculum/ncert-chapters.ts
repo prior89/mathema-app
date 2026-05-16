@@ -662,11 +662,11 @@ export const NCERT_BY_CLASS: Record<NcertClass, NcertChapter[]> = NCERT_CHAPTERS
 );
 
 /** NCERT Class → 한국 GradeLevel 매핑 (1:1) */
-export const NCERT_TO_KO_GRADE: Record<NcertClass, 'G_MIDDLE_1' | 'G_MIDDLE_2' | 'G_MIDDLE_3' | 'G_HIGH_1' | 'G_HIGH_2' | 'G_HIGH_3'> = {
-  CLASS_7:  'G_MIDDLE_1',
-  CLASS_8:  'G_MIDDLE_2',
-  CLASS_9:  'G_MIDDLE_3',
-  CLASS_10: 'G_HIGH_1',
-  CLASS_11: 'G_HIGH_2',
-  CLASS_12: 'G_HIGH_3',
+export const NCERT_TO_KO_GRADE: Record<NcertClass, 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12'> = {
+  CLASS_7:  'CLASS_7',
+  CLASS_8:  'CLASS_8',
+  CLASS_9:  'CLASS_9',
+  CLASS_10: 'CLASS_10',
+  CLASS_11: 'CLASS_11',
+  CLASS_12: 'CLASS_12',
 };

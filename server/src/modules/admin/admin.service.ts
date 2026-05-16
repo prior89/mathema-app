@@ -244,7 +244,7 @@ export class AdminService {
     });
 
     // 학년별 요약
-    const grades = ['G_MIDDLE_1', 'G_MIDDLE_2', 'G_MIDDLE_3', 'G_HIGH_1', 'G_HIGH_2', 'G_HIGH_3'];
+    const grades = ['CLASS_7', 'CLASS_8', 'CLASS_9', 'CLASS_10', 'CLASS_11', 'CLASS_12'];
     const summary = grades.map((g) => {
       const inGrade = result.filter((u) => (u.gradeLevels as string[]).includes(g));
       const total = inGrade.reduce((s, u) => s + u.problems, 0);

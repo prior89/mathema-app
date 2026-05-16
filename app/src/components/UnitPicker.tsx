@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchUnitsForUser, GradeLevel } from '../lib/queries';
 import { useT } from '../lib/i18n';
@@ -8,7 +8,7 @@ import { useT } from '../lib/i18n';
  */
 
 type GradeOption = '__mine__' | '__all__' | GradeLevel;
-const GRADE_OPTIONS: GradeOption[] = ['__mine__', 'G_MIDDLE_1', 'G_MIDDLE_2', 'G_MIDDLE_3', 'G_HIGH_1', 'G_HIGH_2', 'G_HIGH_3', '__all__'];
+const GRADE_OPTIONS: GradeOption[] = ['__mine__', 'CLASS_7', 'CLASS_8', 'CLASS_9', 'CLASS_10', 'CLASS_11', 'CLASS_12', '__all__'];
 
 export function UnitPicker({ onPick, disabled }: { onPick: (unitId: string) => void; disabled?: boolean }) {
   const { t } = useT();

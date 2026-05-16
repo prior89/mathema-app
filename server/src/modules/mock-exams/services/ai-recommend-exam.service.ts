@@ -154,6 +154,6 @@ export class AiRecommendExamService {
 
 /** GradeLevel → NcertClass (DB enum 매핑 — 1:1) */
 const GRADE_TO_NCERT: Record<string, string> = {
-  G_MIDDLE_1: 'CLASS_7', G_MIDDLE_2: 'CLASS_8', G_MIDDLE_3: 'CLASS_9',
-  G_HIGH_1: 'CLASS_10', G_HIGH_2: 'CLASS_11', G_HIGH_3: 'CLASS_12',
+  CLASS_7: 'CLASS_7', CLASS_8: 'CLASS_8', CLASS_9: 'CLASS_9',
+  CLASS_10: 'CLASS_10', CLASS_11: 'CLASS_11', CLASS_12: 'CLASS_12',
 };

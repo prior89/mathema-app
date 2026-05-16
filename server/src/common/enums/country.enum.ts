@@ -113,8 +113,8 @@ export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
 /** 학년 enum → 국가별 표시 라벨 */
 export function gradeLabelFor(country: CountryCode, grade: string): string {
   const num = ({
-    G_MIDDLE_1: 7, G_MIDDLE_2: 8, G_MIDDLE_3: 9,
-    G_HIGH_1: 10, G_HIGH_2: 11, G_HIGH_3: 12,
+    CLASS_7: 7, CLASS_8: 8, CLASS_9: 9,
+    CLASS_10: 10, CLASS_11: 11, CLASS_12: 12,
   } as Record<string, number>)[grade];
   if (!num) return grade;
   const cfg = COUNTRY_CONFIG[country];
