@@ -7,7 +7,7 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev=false
+RUN npm ci --include=dev
 
 # ----- stage 2: build (TypeScript + Prisma client) -----
 FROM node:20-alpine AS build
