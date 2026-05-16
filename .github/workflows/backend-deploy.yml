@@ -63,6 +63,11 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
 
+      # Bounded smoke test: poll every 10s, give up after 2min, then dump the
+      # last 100 log lines of the new revision so we can see the real cause
+      # without having to open the portal. `curl --max-time` caps each call
+      # so a hung backend (504 from the Container Apps gateway) doesn't burn
+      # the whole job.
       - name: Smoke test
         run: |
           BACKEND_URL=$(az containerapp show \
@@ -70,9 +75,20 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --query "properties.configuration.ingress.fqdn" -o tsv)
           echo "Backend URL: https://$BACKEND_URL"
-          # Give the revision 30s to come up before health-checking
-          sleep 30
-          curl --fail --retry 5 --retry-delay 10 "https://$BACKEND_URL/api/v1/health" || {
-            echo "Health check failed — check Container App logs in portal"
-            exit 1
-          }
+          ok=0
+          for i in $(seq 1 12); do
+            sleep 10
+            code=$(curl -s -o /dev/null --max-time 8 -w "%{http_code}" "https://$BACKEND_URL/api/v1/health" || echo "000")
+            echo "attempt $i -> HTTP $code"
+            if [ "$code" = "200" ]; then ok=1; break; fi
+          done
+          if [ "$ok" = "1" ]; then
+            echo "::notice::Backend healthy at https://$BACKEND_URL/api/v1/health"
+            exit 0
+          fi
+          echo "::error::Backend did not become healthy within 2 min — dumping container logs"
+          az containerapp logs show \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --type=console --tail 100 || true
+          exit 1
