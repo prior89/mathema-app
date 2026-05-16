@@ -49,17 +49,10 @@ jobs:
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
 
-      # The initial Bicep deploy created the Container App via the ARM template
-      # path, which doesn't require the namespace to be pre-registered on the
-      # subscription. The Azure CLI's `containerapp update` *does* — it talks
-      # to the Microsoft.App provider directly and fails with a confusing
-      # "Subscription is not registered" error otherwise. Register is
-      # idempotent (no-op once registered) so it's safe to keep here.
-      - name: Ensure Microsoft.App provider registered
-        run: |
-          az provider register --namespace Microsoft.App --wait
-          az provider show --namespace Microsoft.App --query "registrationState" -o tsv
-
+      # Microsoft.App provider is pre-registered on the subscription (done
+      # once via the owner identity in Cloud Shell — the workflow's service
+      # principal only has RG-scoped Contributor and can't write at the
+      # subscription level).
       - name: Install containerapp extension
         run: az extension add --name containerapp --upgrade -y
 
