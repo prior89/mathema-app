@@ -347,6 +347,11 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'ADMIN_EMAILS',        value: 'polopot123@gmail.com,karvysingh14@gmail.com' }
             { name: 'STORAGE_DRIVER',      value: 'local' }
             { name: 'LLM_DRAFT_CONCURRENCY', value: '5' }
+            // SPA origins for the backend's CORS allowlist. Both point at the
+            // SWA's default hostname for now; if you ever split admin into its
+            // own SWA, change ADMIN_ORIGIN to that hostname.
+            { name: 'WEB_ORIGIN',          value: 'https://${swa.properties.defaultHostname}' }
+            { name: 'ADMIN_ORIGIN',        value: 'https://${swa.properties.defaultHostname}' }
           ]
           probes: [
             {
