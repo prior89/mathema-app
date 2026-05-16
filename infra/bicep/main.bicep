@@ -37,6 +37,9 @@ param location string = 'centralindia'
 @description('Container image tag (set by CI: e.g. \\$(Build.BuildId) or git short SHA).')
 param containerImageTag string = 'latest'
 
+@description('Bootstrap mode — first deploy when ACR has no image yet. When true, the Container App runs a Microsoft hello-world placeholder so the resource can be provisioned. After you push the real mathema-backend image to ACR, redeploy with bootstrapMode=false (or run `az containerapp update --image ...`).')
+param bootstrapMode bool = true
+
 @description('PostgreSQL admin login.')
 param dbAdminUsername string = 'mathemaadmin'
 
@@ -318,7 +321,11 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
       containers: [
         {
           name: 'backend'
-          image: '${acr.properties.loginServer}/mathema-backend:${containerImageTag}'
+          // First deploy: ACR is empty, so use a Microsoft hello-world image
+          // to bootstrap the Container App. After `az acr build` pushes the
+          // real mathema-backend image, redeploy with bootstrapMode=false
+          // (or `az containerapp update --image ...`).
+          image: bootstrapMode ? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest' : '${acr.properties.loginServer}/mathema-backend:${containerImageTag}'
           resources: { cpu: json(containerCpu), memory: containerMemory }
           env: [
             { name: 'NODE_ENV',            value: 'production' }
