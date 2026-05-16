@@ -36,7 +36,10 @@ FROM node:20-alpine
 LABEL org.opencontainers.image.title="mathema-backend" \
       org.opencontainers.image.source="https://github.com/prior89/mathema-app"
 
-RUN apk add --no-cache curl tini \
+# Prisma's prebuilt engines link against OpenSSL at runtime. Alpine 3.17+ ships
+# OpenSSL 3.x, and we tell schema.prisma to use the matching engine target —
+# but we still need the openssl library itself installed in the runtime image.
+RUN apk add --no-cache curl tini openssl libssl3 \
  && addgroup -S app && adduser -S app -G app
 
 WORKDIR /app
