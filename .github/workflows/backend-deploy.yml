@@ -1,0 +1,69 @@
+name: Backend — build & deploy to Azure Container Apps
+
+# Build the NestJS Docker image, push to ACR, update the Container App revision.
+# Triggered on pushes to main that touch server/ or this workflow file.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - '.github/workflows/backend-deploy.yml'
+  workflow_dispatch:
+
+env:
+  ACR_NAME: mathemaacr7ehvzqcd6c436
+  RESOURCE_GROUP: mathema-prod-cin
+  CONTAINER_APP: mathema-backend
+  IMAGE_NAME: mathema-backend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR login
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Compute image tag
+        id: tag
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Docker build & push
+        run: |
+          docker build \
+            -f server/Dockerfile \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest \
+            server
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+
+      - name: Container App revision update
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+
+      - name: Smoke test
+        run: |
+          BACKEND_URL=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "Backend URL: https://$BACKEND_URL"
+          # Give the revision 30s to come up before health-checking
+          sleep 30
+          curl --fail --retry 5 --retry-delay 10 "https://$BACKEND_URL/api/v1/health" || {
+            echo "Health check failed — check Container App logs in portal"
+            exit 1
+          }
