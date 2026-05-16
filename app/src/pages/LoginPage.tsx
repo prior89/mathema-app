@@ -97,8 +97,9 @@ export default function LoginPage() {
             <div className="screen-body" style={{ gap: 24, paddingTop: 32 }}>
               <div>
                 <span className="eyebrow">Welcome back</span>
-                <h1 className="display" style={{ marginTop: 10, fontSize: 36 }}>
-                  Sign in to<br /><em>Mathēma</em>.
+                <h1 className="display" style={{ marginTop: 10, fontSize: 36, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+                  <span>Sign in to</span>
+                  <img src="/matheo-logo.png" alt="Mathēma" style={{ height: 72, width: 'auto', objectFit: 'contain', mixBlendMode: 'multiply' }} />
                 </h1>
                 <p className="subtitle">Pick up where you left off — your progress and notes are saved.</p>
               </div>

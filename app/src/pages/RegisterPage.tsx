@@ -108,12 +108,7 @@ export default function RegisterPage() {
         {/* 헤더 — 브랜드 + 언어 토글 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
           <div>
-            <div style={{
-              fontFamily: 'var(--sage-font-display)', fontSize: 24, fontStyle: 'italic',
-              color: 'var(--sage-primary)', lineHeight: 1,
-            }}>
-              Mathēma
-            </div>
+            <img src="/matheo-logo.png" alt="Mathēma" style={{ height: 40, width: 'auto', objectFit: 'contain', mixBlendMode: 'multiply', display: 'block' }} />
             <div className="caption" style={{ marginTop: 4 }}>{t('reg.welcome.tagline')}</div>
           </div>
           <LangToggle lang={lang} setLang={setLang} />
