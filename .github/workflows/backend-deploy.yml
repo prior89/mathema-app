@@ -37,13 +37,15 @@ jobs:
         id: tag
         run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
+      # Dockerfile is monorepo-aware — build context is the repo root so it can
+      # see the workspace package-lock.json and copy both root + server/package.json.
       - name: Docker build & push
         run: |
           docker build \
             -f server/Dockerfile \
             -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest \
-            server
+            .
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
 

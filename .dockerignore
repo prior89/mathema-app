@@ -1,0 +1,50 @@
+# Keep the build context small — only the backend workspace + the root manifest
+# files needed for `npm ci --workspace=mathema-backend`. Everything else (the
+# Vite app, infra, scripts, prebuilt artifacts) is excluded.
+
+# VCS / IDE / OS
+.git
+.gitignore
+.github
+.vscode
+.idea
+.DS_Store
+
+# Other workspaces — not needed for the backend image
+app
+infra
+scripts
+docs
+
+# Local artifacts
+node_modules
+**/node_modules
+**/dist
+**/build
+**/.next
+**/.turbo
+**/.cache
+**/coverage
+
+# Env / secrets — never bake into image
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Server-local stuff we don't want in the image
+server/uploads
+server/logs
+server/*.log
+server/.env*
+server/data
+
+# Heavy assets used by data-extraction pipelines (huge MathPix outputs, PDFs)
+server/scripts/ncert-pdf-extract
+**/*.pdf
+**/*.mmd
+
+# README / license noise
+README.md
+LICENSE
+*.md

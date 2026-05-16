@@ -1,28 +1,35 @@
 # =============================================================
-#  Mathēma backend — production Dockerfile
-#  Multi-stage: deps → build → runtime (slim, non-root, healthcheck)
+#  Mathēma backend — production Dockerfile (monorepo-aware)
+#  Build context = repo root. We use npm workspaces so dependencies
+#  live in the root package-lock.json; this Dockerfile copies that
+#  lock + the server workspace manifest, then `npm ci --workspace=...`
+#  installs only the backend's deps.
 # =============================================================
 
 # ----- stage 1: install deps (cached) -----
 FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --include=dev
+WORKDIR /repo
+COPY package.json package-lock.json ./
+COPY server/package.json ./server/
+RUN npm ci --workspace=mathema-backend --include-workspace-root=false --include=dev
 
 # ----- stage 2: build (TypeScript + Prisma client) -----
 FROM node:20-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+WORKDIR /repo
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/server/node_modules ./server/node_modules
+COPY package.json package-lock.json ./
+COPY server ./server
+WORKDIR /repo/server
 RUN npx prisma generate && npm run build
-
-# Prune dev deps for runtime image — drastically smaller
-RUN npm prune --omit=dev
+# drop dev deps from the runtime tree
+WORKDIR /repo
+RUN npm prune --omit=dev --workspace=mathema-backend --include-workspace-root=false
 
 # ----- stage 3: runtime -----
 FROM node:20-alpine
 LABEL org.opencontainers.image.title="mathema-backend" \
-      org.opencontainers.image.source="https://github.com/prior89/mathema"
+      org.opencontainers.image.source="https://github.com/prior89/mathema-app"
 
 RUN apk add --no-cache curl tini \
  && addgroup -S app && adduser -S app -G app
@@ -32,20 +39,17 @@ ENV NODE_ENV=production \
     PORT=4000 \
     NODE_OPTIONS="--enable-source-maps"
 
-COPY --from=build --chown=app:app /app/dist          ./dist
-COPY --from=build --chown=app:app /app/node_modules  ./node_modules
-COPY --from=build --chown=app:app /app/prisma        ./prisma
-COPY --from=build --chown=app:app /app/package.json  ./
+# Flatten the workspace layout into /app — runtime doesn't need the monorepo shape.
+COPY --from=build --chown=app:app /repo/server/dist          ./dist
+COPY --from=build --chown=app:app /repo/server/node_modules  ./node_modules
+COPY --from=build --chown=app:app /repo/server/prisma        ./prisma
+COPY --from=build --chown=app:app /repo/server/package.json  ./
 
 USER app
 EXPOSE 4000
 
-# 컨테이너 헬스 — Azure Container Apps 의 liveness probe 도 동일 path 사용 권장.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD curl -fsS http://localhost:4000/api/v1/health/live || exit 1
 
-# tini 가 PID 1 — Container Apps 가 보낸 SIGTERM 을 NestJS 까지 전파시켜 graceful shutdown.
 ENTRYPOINT ["/sbin/tini", "--"]
-# 컨테이너 시작 시 마이그레이션 자동 적용 후 서버 기동.
-# nest build 의 출력 경로는 tsconfig.rootDir=./ + include src/**/* 로 dist/src/main.js.
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
