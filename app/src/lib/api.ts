@@ -82,8 +82,11 @@ export async function get<T>(url: string, params?: any): Promise<T> {
   const r = await api.get(url, { params });
   return r.data.data as T;
 }
-export async function post<T>(url: string, body?: any): Promise<T> {
-  const r = await api.post(url, body);
+export async function post<T>(url: string, body?: any, opts?: { isMultipart?: boolean }): Promise<T> {
+  const cfg = opts?.isMultipart
+    ? { headers: { 'Content-Type': 'multipart/form-data' } }
+    : undefined;
+  const r = await api.post(url, body, cfg);
   return r.data.data as T;
 }
 export async function patch<T>(url: string, body?: any): Promise<T> {

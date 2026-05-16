@@ -6,10 +6,12 @@ import { fetchWrongNotes, fetchWrongNotesStats, fetchPatterns } from '../../lib/
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { UploadProblemModal } from './UploadProblemModal';
 
 export function NotesListScreen() {
   const nav = useNavigate();
   const [unitFilter, setUnitFilter] = useState<string | undefined>(undefined);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const stats = useQuery({ queryKey: ['wn-stats'], queryFn: fetchWrongNotesStats });
   const notes = useQuery({ queryKey: ['wn-list', unitFilter], queryFn: () => fetchWrongNotes(unitFilter ? { unitName: unitFilter } : undefined) });
   const patterns = useQuery({ queryKey: ['patterns'], queryFn: fetchPatterns });
@@ -99,11 +101,12 @@ export function NotesListScreen() {
         </div>
       </div>
 
-      <div className="fab" onClick={() => nav('/app/learn')}>
+      <div className="fab" onClick={() => setUploadOpen(true)} aria-label="Upload a problem">
         <svg viewBox="0 0 24 24" width="24" height="24">
           <path d="M 12 5 V 19 M 5 12 H 19" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
         </svg>
       </div>
+      <UploadProblemModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
       <TabBar />
     </div>
   );

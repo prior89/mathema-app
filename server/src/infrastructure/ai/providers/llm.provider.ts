@@ -14,6 +14,13 @@ export interface LlmRequest {
    * it's a hint only — the system prompt is still the primary contract.
    */
   jsonObject?: boolean;
+  /**
+   * Optional vision input. Base64-encoded image bytes (no data: prefix).
+   * Supported on OpenAI gpt-4o family. On Anthropic providers the image is
+   * dropped and only the textual prompt is sent.
+   */
+  imageBase64?: string;
+  imageMimeType?: string;
 }
 
 export interface LlmResponse {
@@ -80,7 +87,18 @@ export class LlmProvider {
     if (this.provider === 'openai' && this.openai) {
       const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [];
       if (req.system) messages.push({ role: 'system', content: req.system });
-      messages.push({ role: 'user', content: req.prompt });
+      if (req.imageBase64) {
+        const mime = req.imageMimeType ?? 'image/jpeg';
+        messages.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: req.prompt },
+            { type: 'image_url', image_url: { url: `data:${mime};base64,${req.imageBase64}` } },
+          ],
+        });
+      } else {
+        messages.push({ role: 'user', content: req.prompt });
+      }
       const res = await this.openai.chat.completions.create({
         model: this.model || 'gpt-4o',
         max_completion_tokens: req.maxTokens ?? 1024,

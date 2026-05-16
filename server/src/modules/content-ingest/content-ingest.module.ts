@@ -23,5 +23,6 @@ import { AdminGuard } from '../../common/guards/admin.guard';
     JsonBulkSourceAdapter,
     AdminGuard,
   ],
+  exports: [LlmDraftService],
 })
 export class ContentIngestModule {}

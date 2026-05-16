@@ -46,6 +46,7 @@ import { FeedbackModule } from './modules/feedback/feedback.module';
 import { StudentsModule } from './modules/students/students.module';
 import { DiagnosticModule } from './modules/diagnostic/diagnostic.module';
 import { ContentIngestModule } from './modules/content-ingest/content-ingest.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -91,6 +92,7 @@ import { ContentIngestModule } from './modules/content-ingest/content-ingest.mod
     StudentsModule,
     DiagnosticModule,
     ContentIngestModule,
+    UploadsModule,
   ],
 })
 export class AppModule {}

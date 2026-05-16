@@ -1,4 +1,4 @@
-import { get } from './api';
+import { get, post } from './api';
 
 export type DashboardSummary = {
   todayMinutes: number; todayGoalMinutes: number;
@@ -426,3 +426,16 @@ export type ProblemListItem = {
 };
 export const fetchPracticeProblems = (chapterCode: string) =>
   get<ProblemListItem[]>(`/concept-lessons/${chapterCode}/practice-problems`);
+
+/** Student-uploaded problem analysis result (vision LLM + 3-step MC draft persisted as PENDING). */
+export type UploadAnalysisResult = {
+  extractedText: string;
+  analysis: { concept: string; formula: string; solutionSteps: string[]; answer: string };
+  draftId: string;
+  ncertClassGuess: string | null;
+};
+export const uploadProblemImage = (file: File) => {
+  const fd = new FormData();
+  fd.append('file', file);
+  return post<UploadAnalysisResult>('/uploads/problem-image', fd, { isMultipart: true });
+};
