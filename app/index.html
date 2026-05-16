@@ -6,7 +6,13 @@
     <title>Mathēma · NCERT Math</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Typography rationale: psycho-cognitive load on screen-based learning.
+         - Inter (UI body): screen-readability benchmarks #1 (Khan Academy / Brilliant / Linear).
+           Tabular figures align math stats; no character ambiguity (1/l/I distinct).
+         - Lora (display, italic supports the Mathēma wordmark): humanist serif tuned for
+           extended on-screen reading — textbook authority + warmth without ornament.
+         - JetBrains Mono (data tags, formulas): unchanged, optimal for technical labels. -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
       /* Mathēma onboarding design tokens — sage palette (인도 PoC 회원가입/온보딩 톤).
          참조: Downloads/App onboarding/styles.css 의 .pal-sage. */
@@ -29,8 +35,8 @@
         --sage-radius: 14px;
         --sage-radius-sm: 8px;
         --sage-radius-lg: 20px;
-        --sage-font-display: 'Instrument Serif', 'Source Serif Pro', Georgia, serif;
-        --sage-font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --sage-font-display: 'Lora', 'Source Serif 4', Georgia, serif;
+        --sage-font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
         --sage-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
       }
       html, body { margin: 0; padding: 0; }

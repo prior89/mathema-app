@@ -17,7 +17,7 @@ export const Glyph = {
       ))}
       <path d="M 40 220 Q 100 220, 130 160 T 220 80 L 220 220 Z" fill={accent} fillOpacity="0.18" />
       <path d="M 40 220 Q 100 220, 130 160 T 220 80" fill="none" stroke={accent} strokeWidth="2.5" strokeLinecap="round" />
-      <text x="48" y="78" fontFamily="Instrument Serif, serif" fontSize="56" fontStyle="italic" fill={accent}>∫</text>
+      <text x="48" y="78" fontFamily="Lora, serif" fontSize="56" fontStyle="italic" fill={accent}>∫</text>
       <text x="84" y="86" fontFamily="JetBrains Mono, monospace" fontSize="11" fill={accent} opacity="0.85">f(x) dx</text>
       <circle cx="130" cy="160" r="3.5" fill={accent} />
       <circle cx="220" cy="80" r="3.5" fill={accent} />
@@ -102,9 +102,9 @@ export const Glyph = {
       <div style={style}>
         <svg viewBox="0 0 28 28" width="22" height="22">
           <circle cx="14" cy="14" r="12" fill="none" stroke={accent} strokeWidth="2" />
-          <text x="14" y="20" textAnchor="middle" fontFamily="Instrument Serif, serif" fontSize="16" fontStyle="italic" fill={accent}>m</text>
+          <text x="14" y="20" textAnchor="middle" fontFamily="Lora, serif" fontSize="16" fontStyle="italic" fill={accent}>m</text>
         </svg>
-        <span style={{ fontFamily: 'Instrument Serif, serif', fontSize: 18, fontStyle: 'italic', color: accent, letterSpacing: '-0.01em' }}>Mathēma</span>
+        <span style={{ fontFamily: 'Lora, serif', fontSize: 18, fontStyle: 'italic', color: accent, letterSpacing: '-0.01em' }}>Mathēma</span>
       </div>
     );
   },

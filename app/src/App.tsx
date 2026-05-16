@@ -42,7 +42,7 @@ function PageFallback() {
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
       backgroundColor: 'var(--p-bg, #f5f7f3)', color: 'var(--p-muted, #5C6B85)',
-      fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', fontSize: 14,
+      fontFamily: '"Inter", system-ui, sans-serif', fontSize: 14,
     }}>—</div>
   );
 }
