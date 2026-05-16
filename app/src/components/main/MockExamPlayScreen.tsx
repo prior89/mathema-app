@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { post } from '../../lib/api';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import MathText from '../MathText';
 
 const STORAGE_PREFIX = 'mathema.mock.';
 
@@ -224,10 +225,14 @@ export function MockExamPlayScreen() {
           <>
             <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
               <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{cur.source.replace(/Class\s+(\d+)/g, 'Grade $1')}</div>
-              <div className="math-big" style={{ fontSize: 16, marginTop: 8, whiteSpace: 'pre-wrap' }}>{cur.body}</div>
+              <div className="math-big" style={{ fontSize: 16, marginTop: 8, whiteSpace: 'pre-wrap' }}>
+                <MathText text={cur.body} />
+              </div>
             </div>
 
-            <div style={{ marginTop: 14, fontSize: 14, fontWeight: 600 }}>{curStep.prompt}</div>
+            <div style={{ marginTop: 14, fontSize: 14, fontWeight: 600 }}>
+              <MathText text={curStep.prompt} />
+            </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
               {curStep.choices.map((c, i) => {
@@ -245,7 +250,7 @@ export function MockExamPlayScreen() {
                     style={wrongPick ? { borderColor: 'var(--p-danger)' } : undefined}
                   >
                     <div className="letter">{letters[i] ?? c.choiceIndex}</div>
-                    <span className="text">{c.text}</span>
+                    <span className="text"><MathText text={c.text} /></span>
                   </div>
                 );
               })}

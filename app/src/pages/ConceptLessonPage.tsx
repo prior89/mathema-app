@@ -271,7 +271,7 @@ export default function ConceptLessonPage() {
               NCERT · {data.ncertClass.replace('CLASS_', 'Class ')} · {L.chapter} {data.chapterNumber}
             </div>
             <h1 style={titleStyle}>{data.title}</h1>
-            <p style={bigIdeaStyle}>{data.bigIdea}</p>
+            <p style={bigIdeaStyle}><MathText text={data.bigIdea} /></p>
           </div>
           {data.mastered && (
             <span style={masteredBadgeStyle}>
@@ -432,7 +432,7 @@ function StepCard({
                 <MathText text={w.math} />
               </div>
               <div style={{ fontSize: 13, color: '#5C6B85' }}>
-                {lang === 'ko' ? w.narrationKo : w.narrationEn}
+                <MathText text={lang === 'ko' ? w.narrationKo : w.narrationEn} />
               </div>
             </li>
           ))}
@@ -505,12 +505,12 @@ function StepCard({
               {retrievalResult.passed ? L.passed : L.failed}
               {explainText && (
                 <div style={{ marginTop: 6, color: '#5C6B85', fontSize: 13 }}>
-                  💡 {explainText}
+                  💡 <MathText text={explainText} />
                 </div>
               )}
               {hintText && !retrievalResult.passed && (
                 <div style={{ marginTop: 6, color: '#7C2D12', fontSize: 13 }}>
-                  {L.hintLabel}: {hintText}
+                  {L.hintLabel}: <MathText text={hintText} />
                 </div>
               )}
             </div>

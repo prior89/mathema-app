@@ -6,8 +6,10 @@ import 'katex/dist/katex.min.css';
  * MathText — 문제 본문/개념/공식 텍스트에서 LaTeX 수식을 KaTeX 로 렌더링.
  *
  * 지원 문법:
- *   - $...$ 인라인 수식
- *   - $$...$$ 디스플레이 수식
+ *   - $...$        인라인 수식 (TeX legacy)
+ *   - $$...$$      디스플레이 수식 (TeX legacy)
+ *   - \(...\)      인라인 수식 (MathPix / NCERT — Mathpix Markdown 표준)
+ *   - \[...\]      디스플레이 수식 (MathPix / NCERT)
  *   - 그 외 일반 텍스트는 그대로 (개행은 <br/>)
  *
  * KaTeX 는 SSR-safe, throwOnError=false 로 잘못된 LaTeX 도 빨갛게 표시만 하고 중단 안함.
@@ -23,22 +25,41 @@ export default function MathText({ text, className }: { text: string; className?
   );
 }
 
+// Matches all four delimiter forms in one regex:
+//   $$ ... $$   (display, TeX legacy)
+//   $ ... $     (inline,  TeX legacy)
+//   \[ ... \]   (display, Mathpix / NCERT)
+//   \( ... \)   (inline,  Mathpix / NCERT)
+// We capture the delimited chunks so split() keeps them as separate tokens.
+const MATH_RE = /(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\))/g;
+
+function classify(tk: string): { tex: string; display: boolean } | null {
+  if (tk.startsWith('$$') && tk.endsWith('$$') && tk.length >= 4)
+    return { tex: tk.slice(2, -2), display: true };
+  if (tk.startsWith('$') && tk.endsWith('$') && tk.length >= 2 && !tk.startsWith('$$'))
+    return { tex: tk.slice(1, -1), display: false };
+  if (tk.startsWith('\\[') && tk.endsWith('\\]') && tk.length >= 4)
+    return { tex: tk.slice(2, -2), display: true };
+  if (tk.startsWith('\\(') && tk.endsWith('\\)') && tk.length >= 4)
+    return { tex: tk.slice(2, -2), display: false };
+  return null;
+}
+
 function renderInline(src: string): string {
-  // $$...$$ → display, $...$ → inline. 둘 다 같이 처리.
-  const tokens = src.split(/(\$\$[^$]+\$\$|\$[^$]+\$)/g);
+  const tokens = src.split(MATH_RE);
   const parts: string[] = [];
   for (const tk of tokens) {
     if (!tk) continue;
-    const display = tk.startsWith('$$') && tk.endsWith('$$');
-    const inline = !display && tk.startsWith('$') && tk.endsWith('$') && tk.length > 1;
-    if (display || inline) {
-      const tex = display ? tk.slice(2, -2) : tk.slice(1, -1);
+    const cls = classify(tk);
+    if (cls) {
       try {
-        parts.push(katex.renderToString(tex, {
-          displayMode: display,
-          throwOnError: false,
-          strict: 'ignore',
-        }));
+        parts.push(
+          katex.renderToString(cls.tex, {
+            displayMode: cls.display,
+            throwOnError: false,
+            strict: 'ignore',
+          }),
+        );
       } catch {
         parts.push(escapeHtml(tk));
       }

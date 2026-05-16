@@ -14,6 +14,7 @@ import { post } from '../../lib/api';
 import { track } from '../../lib/analytics';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import MathText from '../MathText';
 
 const STEP_TONE: Record<string, { eyebrow: string; tint: string }> = {
   HOOK: { eyebrow: 'HOOK', tint: 'var(--p-primary-tint)' },
@@ -227,7 +228,7 @@ function ConceptStepBlock({ step }: { step: ConceptStep }) {
       </div>
       {step.body && (
         <div className="card" style={{ padding: 14, background: tone.tint, borderColor: 'transparent', whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
-          {step.body}
+          <MathText text={step.body} />
         </div>
       )}
       {step.kind === 'MISCONCEPTION' && hasMisconception && <Misconception data={step.misconception} />}
@@ -246,11 +247,11 @@ function Misconception({ data }: { data: ConceptStep['misconception'] }) {
   return (
     <div className="card" style={{ marginTop: 10, padding: 14, borderColor: 'var(--p-danger)' }}>
       <div className="eyebrow" style={{ color: 'var(--p-danger)' }}>COMMON MISTAKE</div>
-      {wrong && <div style={{ marginTop: 6, fontSize: 14, color: 'var(--p-ink)' }}>{wrong}</div>}
-      {why && <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-muted)' }}>Why it’s wrong: {why}</div>}
+      {wrong && <div style={{ marginTop: 6, fontSize: 14, color: 'var(--p-ink)' }}><MathText text={wrong} /></div>}
+      {why && <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-muted)' }}>Why it’s wrong: <MathText text={why} /></div>}
       {correct && (
         <div style={{ marginTop: 8, padding: 10, background: 'oklch(0.95 0.05 155)', borderRadius: 8, fontSize: 13, color: 'var(--p-success)' }}>
-          Correct: {correct}
+          Correct: <MathText text={correct} />
         </div>
       )}
     </div>
@@ -265,8 +266,8 @@ function WorkedExample({ steps }: { steps: NonNullable<ConceptStep['workedSteps'
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <span className="chip primary" style={{ fontSize: 10.5, padding: '2px 8px' }}>STEP {i + 1}</span>
           </div>
-          <div className="math-big" style={{ fontSize: 16 }}>{s.math}</div>
-          <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)' }}>{s.narrationEn || s.narrationKo}</div>
+          <div className="math-big" style={{ fontSize: 16 }}><MathText text={s.math} /></div>
+          <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)' }}><MathText text={s.narrationEn || s.narrationKo} /></div>
         </div>
       ))}
     </div>
@@ -279,7 +280,7 @@ function ReflectPrompts({ prompts }: { prompts: string[] }) {
       {prompts.map((p, i) => (
         <div key={i} className="card" style={{ padding: 12, borderStyle: 'dashed', background: 'transparent' }}>
           <span className="eyebrow" style={{ fontSize: 10 }}>REFLECT</span>
-          <div style={{ marginTop: 6, fontSize: 14 }}>{p}</div>
+          <div style={{ marginTop: 6, fontSize: 14 }}><MathText text={p} /></div>
         </div>
       ))}
     </div>
@@ -356,14 +357,14 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
             QUESTION {problemIdx} OF {problemTotal} · STEP {stepIdx} OF {stepTotal} · {STEP_TYPE_LABEL[step.stepType] ?? step.stepType}
           </span>
           <h3 className="title" style={{ fontSize: 20, marginTop: 6, lineHeight: 1.25 }}>
-            {step.prompt}
+            <MathText text={step.prompt} />
           </h3>
         </div>
 
         {stepIdx === 1 && problem.body && (
           <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent', marginBottom: 12 }}>
             <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM · {problem.source.replace(/Class\s+(\d+)/g, 'Grade $1')}</div>
-            <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}>{problem.body}</div>
+            <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}><MathText text={problem.body} /></div>
           </div>
         )}
 
@@ -382,7 +383,7 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
                 style={isWrongPick ? { borderColor: 'var(--p-danger)' } : undefined}
               >
                 <div className="letter">{letters[i] ?? c.choiceIndex}</div>
-                <span className="text">{c.text}</span>
+                <span className="text"><MathText text={c.text} /></span>
               </div>
             );
           })}
@@ -450,7 +451,7 @@ function FeedbackCard({ result }: { result: StepResult }) {
           <strong style={{ color: 'var(--p-ink)' }}>
             {correct ? 'Why this works: ' : 'Why your pick missed: '}
           </strong>
-          {whyLine}
+          <MathText text={whyLine} />
         </div>
       )}
       {!correct && distractorTypeText && (

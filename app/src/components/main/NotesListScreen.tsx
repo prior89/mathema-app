@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchWrongNotes, fetchWrongNotesStats, fetchPatterns } from '../../lib/queries';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import MathText from '../MathText';
 
 export function NotesListScreen() {
   const nav = useNavigate();
@@ -74,7 +75,7 @@ export function NotesListScreen() {
             {(notes.data ?? []).map((n) => (
               <div key={n.id} className="note-card" onClick={() => nav(`/app/notes/${n.id}`)}>
                 <div className="src">{(n.problem || n.unit).replace(/Class\s+(\d+)/g, 'Grade $1')}</div>
-                <div className="body">{n.problemBody || n.insight}</div>
+                <div className="body"><MathText text={n.problemBody || n.insight} /></div>
                 <div className="foot">
                   <span className={`status-chip ${n.status?.toLowerCase()}`}>
                     {n.status === 'PENDING' && '· PENDING'}

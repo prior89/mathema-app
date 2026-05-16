@@ -135,7 +135,7 @@ export default function WrongNoteDetailModal({ noteId, onClose, onPracticeSimila
                         }}>{s.stepIndex}/{solution.data!.steps.length} · {stepLabel}</span>
                       </div>
                       <div style={{ fontSize: 13, color: '#142850', fontWeight: 600, marginBottom: 6 }}>
-                        {s.prompt}
+                        <MathText text={s.prompt} />
                       </div>
                       {s.correctChoice && (
                         <div style={{
@@ -148,7 +148,7 @@ export default function WrongNoteDetailModal({ noteId, onClose, onPracticeSimila
                           display: 'inline-flex', alignItems: 'center', gap: 8,
                         }}>
                           <CheckCircle2 size={12} color="#5A8A45" />
-                          <span>{s.correctChoice.text}</span>
+                          <span><MathText text={s.correctChoice.text} /></span>
                         </div>
                       )}
                     </li>
@@ -172,7 +172,7 @@ export default function WrongNoteDetailModal({ noteId, onClose, onPracticeSimila
                   {t('wn.detail.answer')}
                 </span>
                 <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 15, color: '#142850', fontWeight: 600 }}>
-                  {detail.data.problemAnswer}
+                  <MathText text={detail.data.problemAnswer} />
                 </span>
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function WrongNoteDetailModal({ noteId, onClose, onPracticeSimila
           <div style={{ padding: 16, backgroundColor: '#14285008', borderLeft: '2px solid #C25E2E', borderRadius: '0 4px 4px 0' }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
               <Sparkles size={14} color="#C25E2E" style={{ marginTop: 3, flexShrink: 0 }} />
-              <div style={{ fontSize: 13, lineHeight: 1.65 }}>{detail.data.insight}</div>
+              <div style={{ fontSize: 13, lineHeight: 1.65 }}><MathText text={detail.data.insight} /></div>
             </div>
           </div>
 
@@ -221,7 +221,7 @@ export default function WrongNoteDetailModal({ noteId, onClose, onPracticeSimila
                 {t('wn.detail.hint')}
               </div>
               <div style={{ padding: 12, backgroundColor: '#F8F4E9', border: '1px solid #14285018', borderRadius: 4, fontSize: 13, lineHeight: 1.65 }}>
-                {hint.data.hint}
+                <MathText text={hint.data.hint} />
               </div>
             </div>
           )}
