@@ -206,6 +206,8 @@ npm run db:seed                                    # creates admin user (polopot
 #   ADMIN_EMAILS=polopot123@gmail.com
 
 npm run import:ncert                               # creates 6 JSON_BULK jobs, sequential
+# or, to import AND publish to Problem table in one command:
+npm run setup:ncert                                # = import:ncert && publish:bulk
 ```
 
 The CLI:
