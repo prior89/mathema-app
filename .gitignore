@@ -28,7 +28,7 @@ app/android/local.properties
 app/android/.idea/
 # Server — Nest build + uploaded files + Prisma generated
 server/dist/
-server/uploads/
+/server/uploads/
 server/scripts/ncert-import/pages/
 server/scripts/ncert-import/problems.json
 server/scripts/ncert-import/exercise-index.json
