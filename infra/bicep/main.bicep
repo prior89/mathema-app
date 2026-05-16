@@ -44,7 +44,7 @@ param bootstrapMode bool = true
 param dbAdminUsername string = 'mathemaadmin'
 
 @secure()
-@description('PostgreSQL admin password — must satisfy Azure complexity rules.')
+@description('PostgreSQL admin password — must satisfy Azure complexity rules. IMPORTANT: avoid the URL-reserved characters @ : / ? # & % since this value is interpolated directly into the database-url KeyVault secret; Bicep has no URL-encoding helper. If you must use them, manually URL-encode the password in the KeyVault secret after deploy.')
 param dbAdminPassword string
 
 @description('Initial backend container CPU.')
