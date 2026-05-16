@@ -24,12 +24,6 @@ function gradeBand(n: number | null): string {
   return 'E';
 }
 
-function dDay(examDate?: string | null) {
-  if (!examDate) return null;
-  const diff = Math.ceil((new Date(examDate).getTime() - Date.now()) / 86_400_000);
-  return diff;
-}
-
 const PLAN_BADGE: Record<string, { glyph: string; bg: string; fg: string }> = {
   concept: { glyph: '∫', bg: 'var(--p-primary-tint)', fg: 'var(--p-primary)' },
   practice: { glyph: 'f′', bg: 'var(--p-accent-tint)', fg: 'var(--p-ink)' },
@@ -56,8 +50,6 @@ export function HomeScreen() {
   }, [today.data]);
 
   const userName = me.data?.name ?? 'Aarav';
-  const examDate = me.data?.examDate;
-  const dday = dDay(examDate);
   const dateStr = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
 
   // Backend returns Heatmap = Array<{day, intensity}>. Convert to 12×7 grid.
@@ -75,21 +67,6 @@ export function HomeScreen() {
         </div>
 
         <div style={{ padding: '0 22px' }}>
-          {/* D-day strip */}
-          {examDate && dday != null && (
-            <div className="card" style={{ background: 'var(--p-ink)', color: 'var(--p-bg)', borderColor: 'transparent', padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 28, lineHeight: 1, color: 'var(--p-accent)' }}>
-                D-{dday > 0 ? dday : 0}
-              </span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>CBSE Grade 12 Board</div>
-                <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 2 }}>
-                  {new Date(examDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {Math.max(0, Math.floor(dday / 7))} weeks left
-                </div>
-              </div>
-              <Glyph.ChevronR accent="currentColor" size={16} />
-            </div>
-          )}
 
           {/* 4 stats */}
           <div className="stat-grid" style={{ marginTop: 12 }}>
