@@ -270,7 +270,7 @@
 .mathema-app .math-big { font-family: var(--font-mono); font-size: 22px; color: var(--p-ink); letter-spacing: -0.01em; }
 
 /* ===== Main app ===== */
-.mathema-app .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); background: var(--p-surface); border-top: 1px solid var(--p-border); padding: 6px 4px 8px; }
+.mathema-app .tabbar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: var(--p-surface); border-top: 1px solid var(--p-border); padding: 6px 4px 8px; }
 .mathema-app .tabbar .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; color: var(--p-muted); font-size: 10.5px; font-weight: 500; cursor: pointer; }
 .mathema-app .tabbar .tab .icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
 .mathema-app .tabbar .tab.active { color: var(--p-primary); }

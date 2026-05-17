@@ -1,7 +1,8 @@
 /* Mock exams — features-b.jsx ScreenMocks ported with real backend data. */
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchMockSummary, fetchTrajectory, fetchExamResults } from '../../lib/queries';
+import { generateChapterTest, generateWeeklyAssessment, type MathHelperAssessmentResponse } from '../../lib/mathHelper';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import { post } from '../../lib/api';
@@ -26,6 +27,9 @@ export function MocksScreen() {
   const nav = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [chapter, setChapter] = useState('');
+  const [questionCount, setQuestionCount] = useState(10);
+  const [assessment, setAssessment] = useState<MathHelperAssessmentResponse | null>(null);
   const summary = useQuery({ queryKey: ['mock-summary'], queryFn: fetchMockSummary });
   const traj = useQuery({ queryKey: ['traj'], queryFn: fetchTrajectory });
   const results = useQuery({ queryKey: ['exam-results'], queryFn: fetchExamResults });
@@ -62,6 +66,24 @@ export function MocksScreen() {
       setBusy(null);
     }
   }
+
+  const weeklyAssessment = useMutation({
+    mutationFn: () => generateWeeklyAssessment({ questionCount }),
+    onSuccess: (data) => { setAssessment(data); setMsg(null); },
+    onError: (e: any) => setMsg(`Could not generate weekly assessment: ${e?.response?.data?.error?.message ?? 'backend error'}`),
+  });
+
+  const chapterAssessment = useMutation({
+    mutationFn: () => generateChapterTest({
+      chapter: chapter.trim().startsWith('NCERT-') ? undefined : chapter.trim(),
+      chapterCode: chapter.trim().startsWith('NCERT-') ? chapter.trim() : undefined,
+      questionCount,
+    }),
+    onSuccess: (data) => { setAssessment(data); setMsg(null); },
+    onError: (e: any) => setMsg(`Could not generate chapter test: ${e?.response?.data?.error?.message ?? 'backend error'}`),
+  });
+
+  const assessmentBusy = weeklyAssessment.isPending || chapterAssessment.isPending;
 
   return (
     <div className="screen">
@@ -168,8 +190,60 @@ export function MocksScreen() {
               </div>
             ))}
           </div>
+
+          <div className="section-h">
+            <span className="label">Adaptive assessments</span>
+            <span className="more">personalized</span>
+          </div>
+          <div className="card" style={{ padding: 12 }}>
+            <div style={{ fontSize: 12.5, color: 'var(--p-muted)', lineHeight: 1.45 }}>
+              Generate a quick weekly assessment or a chapter-focused test from your learning history.
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 8, marginTop: 10 }}>
+              <input
+                value={chapter}
+                onChange={(e) => setChapter(e.target.value)}
+                placeholder="Chapter name or NCERT code"
+                style={inputStyle}
+              />
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={questionCount}
+                onChange={(e) => setQuestionCount(Number(e.target.value))}
+                style={inputStyle}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button className="btn outline" disabled={assessmentBusy} onClick={() => weeklyAssessment.mutate()}>
+                {weeklyAssessment.isPending ? 'Generating...' : 'Weekly'}
+              </button>
+              <button className="btn" disabled={assessmentBusy || !chapter.trim()} onClick={() => chapterAssessment.mutate()}>
+                {chapterAssessment.isPending ? 'Generating...' : 'Chapter test'}
+              </button>
+            </div>
+          </div>
           {msg && (
             <div className="card" style={{ marginTop: 8, padding: 12, fontSize: 12, color: 'var(--p-ink-2)' }}>{msg}</div>
+          )}
+
+          {assessment && (
+            <div style={{ marginTop: 10 }}>
+              <div className="section-h">
+                <span className="label">{assessment.title}</span>
+                <span className="more">{assessment.questionCount} Q · {assessment.durationMinutes}m</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {assessment.questions.slice(0, 6).map((q, i) => (
+                  <div key={q.questionId ?? i} className="card" style={{ padding: 10 }}>
+                    <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--p-muted)', letterSpacing: '0.04em' }}>Q{i + 1} · LEVEL {q.difficultyLevel}/5</div>
+                    <div style={{ fontSize: 12.5, lineHeight: 1.45, marginTop: 5 }}>{q.body}</div>
+                    {q.adaptiveReason && <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 6 }}>{q.adaptiveReason}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Recent results */}
@@ -208,6 +282,12 @@ export function MocksScreen() {
     </div>
   );
 }
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box', padding: '9px 10px', borderRadius: 8,
+  border: '1px solid var(--p-line)', background: 'var(--p-surface)', color: 'var(--p-ink)',
+  font: 'inherit', fontSize: 12.5,
+};
 
 function Stat({ k, v, u, delta }: { k: string; v: string; u?: string; delta?: string }) {
   // 화살표로 자동 down 판정 — '↓' 이 들어가면 빨간색.

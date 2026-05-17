@@ -41,6 +41,7 @@ export default function MainAppPage() {
             <Route path="learn/:code" element={<ConceptLessonScreen />} />
             <Route path="notes" element={<NotesListScreen />} />
             <Route path="mocks" element={<MocksScreen />} />
+            <Route path="solve" element={<MathHelperScreen />} />
             <Route path="helper" element={<MathHelperScreen />} />
             <Route path="mocks/play/:resultId" element={<MockExamPlayScreen />} />
             <Route path="mocks/result/:resultId" element={<MockResultDetailScreen />} />

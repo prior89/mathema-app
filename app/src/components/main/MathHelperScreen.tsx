@@ -31,7 +31,7 @@ export function MathHelperScreen() {
       studentAnswer: studentAnswer.trim() || undefined,
     }),
     onSuccess: (data) => { setSolveResult(data); setError(null); },
-    onError: (e: any) => setError(e?.response?.data?.error?.message ?? 'Math helper is unavailable.'),
+    onError: (e: any) => setError(e?.response?.data?.error?.message ?? 'Solver is unavailable right now. Please try again in a moment.'),
   });
 
   const weekly = useMutation({
@@ -61,8 +61,8 @@ export function MathHelperScreen() {
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div>
-            <div style={eyebrow}>LANGGRAPH</div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>AI Math Helper</div>
+            <div style={eyebrow}>SOLVE</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>AI Solver</div>
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@ export function MathHelperScreen() {
       <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px' }}>
         <div className="card" style={{ padding: 14 }}>
           <div style={sectionTitle}>Solve a problem</div>
-          <div style={muted}>The backend sends your DB-based weak concepts, frequent units, and recent wrong notes to the Python LangGraph service.</div>
+          <div style={muted}>Uses your weak concepts, frequent units, and recent wrong notes to personalize the explanation.</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
             <label style={fieldLabel}>Class
               <select value={classLevel} onChange={(e) => setClassLevel(Number(e.target.value))} style={inputStyle}>
@@ -85,7 +85,7 @@ export function MathHelperScreen() {
             <textarea value={question} onChange={(e) => setQuestion(e.target.value)} rows={5} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Paste a Class 7-12 math question..." />
           </label>
           <button className="btn" disabled={question.trim().length < 3 || busy} onClick={() => solve.mutate()} style={{ marginTop: 10 }}>
-            {solve.isPending ? 'Solving...' : 'Solve with LangGraph'}
+            {solve.isPending ? 'Solving...' : 'Solve'}
           </button>
         </div>
 
