@@ -2,12 +2,14 @@
  * Ported from `App onboarding/screens-a.jsx` + `screens-b.jsx`.
  * Phone Auth option hidden (no backend); Goal stored in localStorage; Diagnostic state in-memory.
  */
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { post, patch, tokens, get } from '../lib/api';
 import { Glyph } from '../components/onboarding/Glyph';
 import type { Me } from '../lib/queries';
 import '../styles/onboarding.css';
+
+const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
 
 type StepKey = 'welcome' | 'auth' | 'role' | 'profile' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
 type Role = 'STUDENT' | 'PARENT' | 'TEACHER';
@@ -54,6 +56,8 @@ function Flow({ onFinish }: { onFinish: () => void }) {
   const [step, setStep] = useState<StepKey>('welcome');
   const [role, setRole] = useState<Role | ''>('STUDENT');
   const [name, setName] = useState('Aarav');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [grade, setGrade] = useState<GradeId | ''>('CLASS_11');
   const [goal, setGoal] = useState<GoalId | ''>('BOARD');
   const [consents, setConsents] = useState<ConsentMap>({ ANALYTICS: true, AI_TRAINING: false, MARKETING: false });
@@ -70,7 +74,14 @@ function Flow({ onFinish }: { onFinish: () => void }) {
     case 'welcome':
       return <ScreenWelcome onNext={next} onSignIn={onFinish} />;
     case 'auth':
-      return <ScreenAuth step={stepIndex} onBack={back} onNext={next} />;
+      return (
+        <ScreenAuth
+          step={stepIndex} onBack={back} onNext={next}
+          name={name}
+          email={email} setEmail={setEmail}
+          password={password} setPassword={setPassword}
+        />
+      );
     case 'role':
       return <ScreenRole step={stepIndex} onBack={back} onNext={next} role={role} setRole={setRole} />;
     case 'profile':
@@ -178,52 +189,153 @@ function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () 
   );
 }
 
-// ─────────── 02 Auth method (Phone hidden for PoC) ───────────
-function ScreenAuth({ step, onBack, onNext }: { step: number; onBack: () => void; onNext: () => void }) {
+// ─────────── 02 Auth — real email/password (+ optional Google) signup ───────────
+function ScreenAuth({
+  step, onBack, onNext, name, email, setEmail, password, setPassword,
+}: {
+  step: number; onBack: () => void; onNext: () => void;
+  name: string;
+  email: string; setEmail: (v: string) => void;
+  password: string; setPassword: (v: string) => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  async function authenticate() {
+  const gsiRef = useRef<HTMLDivElement | null>(null);
+
+  async function continueWithEmail() {
     if (busy) return;
     setErr(null);
+
+    // 이미 토큰 있으면(뒤로갔다 다시 온 경우, /login 거쳐서 온 경우) 그대로 진행.
+    if (tokens.get()) { onNext(); return; }
+
+    // DEV 빠른 진입: 입력 비어있으면 dev-login (production 빌드에선 이 분기 dead-code).
+    if (import.meta.env.DEV && (!email || !password)) {
+      setBusy(true);
+      try {
+        const t = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
+        tokens.set(t.accessToken, t.refreshToken);
+        onNext();
+      } catch (e: any) {
+        setErr(e?.response?.data?.error?.message ?? 'Dev sign-in failed');
+      } finally { setBusy(false); }
+      return;
+    }
+
+    // Production / 일반: 진짜 가입.
+    if (!email.includes('@')) { setErr('Please enter a valid email.'); return; }
+    if (password.length < 8)  { setErr('Password must be at least 8 characters.'); return; }
+
     setBusy(true);
     try {
-      // PoC: 모든 경로가 dev-login (admin) — 진단·동의 호출에 토큰 필요해서 여기서 미리 확보.
-      const t = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
+      // 최소 페이로드 — role/grade/goal/consents 등은 이후 step 에서 patch.
+      const t = await post<{ accessToken: string; refreshToken: string }>('/auth/register', {
+        email: email.trim().toLowerCase(),
+        password,
+        name: name || 'Student',
+      });
       tokens.set(t.accessToken, t.refreshToken);
       onNext();
     } catch (e: any) {
-      setErr(e?.response?.data?.error?.message ?? 'Sign-in failed');
-    } finally {
-      setBusy(false);
-    }
+      setErr(e?.response?.data?.error?.message ?? 'Sign-up failed');
+    } finally { setBusy(false); }
   }
+
+  // Google Identity Services — VITE_GOOGLE_CLIENT_ID 설정된 경우만.
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID || !gsiRef.current) return;
+    const navigate = (path: string) => { window.location.assign(path); };
+    const init = () => {
+      const g = (window as any).google;
+      if (!g?.accounts?.id) return;
+      g.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async (resp: { credential: string }) => {
+          setErr(null); setBusy(true);
+          try {
+            const t = await post<{ accessToken: string; refreshToken: string }>(
+              '/auth/google/id-token',
+              { idToken: resp.credential },
+            );
+            tokens.set(t.accessToken, t.refreshToken);
+            onNext();
+          } catch (e: any) {
+            setErr(e?.response?.data?.error?.message ?? 'Google sign-in failed');
+          } finally { setBusy(false); }
+        },
+      });
+      g.accounts.id.renderButton(gsiRef.current!, { theme: 'outline', size: 'large', width: 280, text: 'signup_with' });
+      // 보너스: 사용자가 의도하면 원탭 — 방해되면 빼도 됨.
+      // g.accounts.id.prompt();
+      void navigate; // suppress unused
+    };
+    if ((window as any).google?.accounts?.id) { init(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true; s.defer = true; s.onload = init;
+    document.body.appendChild(s);
+  }, [onNext]);
+
   return (
     <div className="screen">
       <TopScaffold step={step} onBack={onBack} />
-      <div className="screen-body" style={{ gap: 28 }}>
+      <div className="screen-body" style={{ gap: 20 }}>
         <div>
           <span className="eyebrow">Step 01 · Account</span>
-          <h2 className="title" style={{ marginTop: 10 }}>How would you like to sign up?</h2>
-          <p className="subtitle">Choose a method — you can link the other later.</p>
+          <h2 className="title" style={{ marginTop: 10 }}>Create your Mathēma account</h2>
+          <p className="subtitle">Email and password — you can add Google later.</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button className="btn outline" onClick={authenticate} disabled={busy}>
-            <Glyph.Google />
-            <span>Continue with Google</span>
-          </button>
-          <button className="btn outline" onClick={authenticate} disabled={busy}>
-            <Glyph.Mail />
-            <span>Continue with email</span>
-          </button>
+
+        <div className="field">
+          <label>Email</label>
+          <input
+            type="email" autoComplete="email"
+            value={email} onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+          />
         </div>
+        <div className="field">
+          <label>Password (8+ characters)</label>
+          <input
+            type="password" autoComplete="new-password"
+            value={password} onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+
+        <button className="btn" onClick={continueWithEmail} disabled={busy}>
+          <Glyph.Mail />
+          <span>{busy ? 'Working…' : 'Continue with email'}</span>
+          <Glyph.ChevronR />
+        </button>
+
+        {GOOGLE_CLIENT_ID && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
+              <span className="caption" style={{ fontSize: 11 }}>OR</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
+            </div>
+            <div ref={gsiRef} style={{ display: 'flex', justifyContent: 'center' }} />
+          </>
+        )}
+
         {err && <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>}
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
           <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
           <span className="caption" style={{ fontSize: 11 }}>SECURE · DPDP 2023</span>
           <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
         </div>
+
         <div style={{ flex: 1 }} />
-        <p className="caption" style={{ textAlign: 'center', maxWidth: 280, alignSelf: 'center' }}>
+
+        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--p-muted)' }}>
+          Already have an account?{' '}
+          <Link to="/login" style={{ color: 'var(--p-primary)', fontWeight: 600, textDecoration: 'none' }}>
+            Sign in
+          </Link>
+        </div>
+        <p className="caption" style={{ textAlign: 'center', maxWidth: 280, alignSelf: 'center', fontSize: 11 }}>
           By continuing you agree to our <span style={{ color: 'var(--p-primary)', textDecoration: 'underline' }}>Terms</span> and acknowledge the <span style={{ color: 'var(--p-primary)', textDecoration: 'underline' }}>Privacy Notice</span>.
         </p>
       </div>
@@ -714,9 +826,18 @@ function ScreenReady({
     if (busy) return;
     setBusy(true);
     try {
-      // PoC dev-login: admin@mathema.app 토큰 발급 + DATA_PROCESSING 자동 부여 (backend 처리).
-      const t = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
-      tokens.set(t.accessToken, t.refreshToken);
+      // 토큰은 ScreenAuth(가입/Google/로그인) 단계에서 이미 확보되어 있어야 함.
+      // DEV: 토큰 없으면 dev-login 으로 빠르게 진입 — production 빌드에선 이 분기 dead-code.
+      if (!tokens.get()) {
+        if (import.meta.env.DEV) {
+          const t = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
+          tokens.set(t.accessToken, t.refreshToken);
+        } else {
+          // 인증 흐름이 끊겼다 — 가입 화면으로 보냄.
+          window.location.assign('/register');
+          return;
+        }
+      }
       // 프로필 best-effort 반영 — name, gradeLevel, studyGoal 모두 백엔드 User row 에 저장.
       try {
         await patch<Me>('/users/me', { name, gradeLevel: GRADE_MAP[grade], studyGoal: goal });
