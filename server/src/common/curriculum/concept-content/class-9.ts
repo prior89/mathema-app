@@ -27,10 +27,10 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       ko: '√2 가 무리수임을 보이는 핵심 아이디어.',
       en: 'Key idea of √2\'s irrationality proof.',
       steps: [
-        { math: '√2 = p/q (서로소) 가정', narrationKo: '귀류법.', narrationEn: 'Proof by contradiction.' },
-        { math: '2q² = p² ⇒ p 짝수', narrationKo: 'p² 짝수 ⇒ p 짝수.', narrationEn: 'p² even ⇒ p even.' },
-        { math: 'p=2k ⇒ q² = 2k² ⇒ q 짝수', narrationKo: 'q 도 짝수.', narrationEn: 'q also even.' },
-        { math: 'p, q 서로소 모순', narrationKo: '귀류 완료.', narrationEn: 'Contradiction.' },
+        { math: '√2 = p/q (coprime), assume', narrationKo: '귀류법.', narrationEn: 'Proof by contradiction.' },
+        { math: '2q² = p² ⇒ p even', narrationKo: 'p² 짝수 ⇒ p 짝수.', narrationEn: 'p² even ⇒ p even.' },
+        { math: 'p=2k ⇒ q² = 2k² ⇒ q even', narrationKo: 'q 도 짝수.', narrationEn: 'q also even.' },
+        { math: 'p, q coprime — contradiction', narrationKo: '귀류 완료.', narrationEn: 'Contradiction.' },
       ],
     },
     misconception: {
@@ -71,7 +71,7 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       ko: '인수분해: x² + 7x + 12',
       en: 'Factor: x² + 7x + 12',
       steps: [
-        { math: '합 7, 곱 12 ⇒ (3, 4)', narrationKo: '두 수 찾기.', narrationEn: 'Find the pair.' },
+        { math: 'Sum 7, product 12 ⇒ (3, 4)', narrationKo: '두 수 찾기.', narrationEn: 'Find the pair.' },
         { math: '= (x + 3)(x + 4)',     narrationKo: '인수 형태.',  narrationEn: 'Factored form.' },
       ],
     },
@@ -155,7 +155,7 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       ko: 'x + y = 5, x − y = 1 풀이.',
       en: 'Solve x + y = 5 and x − y = 1.',
       steps: [
-        { math: '두 식 합: 2x = 6 ⇒ x = 3', narrationKo: '소거.', narrationEn: 'Eliminate.' },
+        { math: 'Add equations: 2x = 6 ⇒ x = 3', narrationKo: '소거.', narrationEn: 'Eliminate.' },
         { math: 'y = 5 − 3 = 2',             narrationKo: '대입.', narrationEn: 'Back-substitute.' },
       ],
     },
@@ -197,7 +197,7 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       ko: '"같은 것에 같은 것을 더하면 같다" 라는 공리로 a = b ⇒ a+5 = b+5 도출.',
       en: '"Equals added to equals are equal": a = b ⇒ a + 5 = b + 5.',
       steps: [
-        { math: '가정: a = b', narrationKo: '시작.', narrationEn: 'Start.' },
+        { math: 'Assume: a = b', narrationKo: '시작.', narrationEn: 'Start.' },
         { math: '5 = 5',       narrationKo: '자기 동등.', narrationEn: 'Trivial.' },
         { math: 'a + 5 = b + 5', narrationKo: '공리 적용.', narrationEn: 'Apply axiom.' },
       ],
@@ -240,7 +240,7 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       ko: '평행선 사이 동위각 130°. 동측내각은?',
       en: 'Corresponding angle 130° between parallels. Co-interior?',
       steps: [
-        { math: '동측내각 = 180° − 130° = 50°', narrationKo: '동측내각은 동위각의 보각.', narrationEn: 'Supplement of corresponding.' },
+        { math: 'Co-interior = 180° − 130° = 50°', narrationKo: '동측내각은 동위각의 보각.', narrationEn: 'Supplement of corresponding.' },
       ],
     },
     misconception: {
@@ -281,7 +281,7 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       ko: 'AB=DE, BC=EF, ∠B=∠E ⇒ ?',
       en: 'AB=DE, BC=EF, ∠B=∠E ⇒ ?',
       steps: [
-        { math: 'SAS 만족', narrationKo: '두 변과 끼인 각.', narrationEn: 'Two sides + included angle.' },
+        { math: 'SAS satisfied', narrationKo: '두 변과 끼인 각.', narrationEn: 'Two sides + included angle.' },
         { math: '△ABC ≅ △DEF', narrationKo: '합동 결론.', narrationEn: 'Congruent.' },
       ],
     },
@@ -323,7 +323,7 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       ko: '평행사변형 ABCD 에서 ∠A=70°, ∠B=?',
       en: 'In parallelogram ABCD, ∠A=70°. ∠B?',
       steps: [
-        { math: '∠A + ∠B = 180° (동측내각)', narrationKo: '한 변에 인접한 두 각.', narrationEn: 'Co-interior angles.' },
+        { math: '∠A + ∠B = 180° (co-interior)', narrationKo: '한 변에 인접한 두 각.', narrationEn: 'Co-interior angles.' },
         { math: '∠B = 110°',                  narrationKo: '계산.', narrationEn: 'Compute.' },
       ],
     },
@@ -365,7 +365,7 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       ko: '한 호의 중심각이 100°. 원주각은?',
       en: 'Central angle 100° on an arc. Inscribed?',
       steps: [
-        { math: '원주각 = 100°/2 = 50°', narrationKo: '중심각 절반.', narrationEn: 'Half the central.' },
+        { math: 'Inscribed angle = 100°/2 = 50°', narrationKo: '중심각 절반.', narrationEn: 'Half the central.' },
       ],
     },
     misconception: {
@@ -489,8 +489,8 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       ko: '{4, 8, 6, 5, 3} 중앙값.',
       en: 'Median of {4, 8, 6, 5, 3}.',
       steps: [
-        { math: '정렬: 3, 4, 5, 6, 8', narrationKo: '정렬 후 가운데.', narrationEn: 'Sort first.' },
-        { math: '가운데 = 5',           narrationKo: '5번째 중 3번째.', narrationEn: '3rd of 5.' },
+        { math: 'Sorted: 3, 4, 5, 6, 8', narrationKo: '정렬 후 가운데.', narrationEn: 'Sort first.' },
+        { math: 'Middle = 5',           narrationKo: '5번째 중 3번째.', narrationEn: '3rd of 5.' },
       ],
     },
     misconception: {

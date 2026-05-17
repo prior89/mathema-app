@@ -27,7 +27,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
       ko: '계산: −2/3 + 3/5',
       en: 'Compute: −2/3 + 3/5',
       steps: [
-        { math: '공통분모 15', narrationKo: '공통분모로 통분.', narrationEn: 'Find a common denominator.' },
+        { math: 'Common denominator 15', narrationKo: '공통분모로 통분.', narrationEn: 'Find a common denominator.' },
         { math: '−10/15 + 9/15 = −1/15', narrationKo: '분자 합산.', narrationEn: 'Add numerators.' },
       ],
     },
@@ -112,7 +112,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
       ko: '평행사변형의 세 내각이 65°, 115°, 65°. 네 번째는?',
       en: 'Three angles of a parallelogram are 65°, 115°, 65°. Find the fourth.',
       steps: [
-        { math: '합 65+115+65 = 245', narrationKo: '세 각 합.', narrationEn: 'Sum of three.' },
+        { math: 'Sum 65+115+65 = 245', narrationKo: '세 각 합.', narrationEn: 'Sum of three.' },
         { math: '360 − 245 = 115°',    narrationKo: '나머지 각.', narrationEn: 'Remaining angle.' },
       ],
     },
@@ -448,7 +448,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
       ko: '5명 × 6시간 = 30 인시. 10명은? 30/10 = 3시간.',
       en: '5 workers · 6 h = 30 person-hours. 10 workers ⇒ 30/10 = 3 h.',
       steps: [
-        { math: 'x · y = 30 (상수)', narrationKo: '곱이 일정 = 반비례.', narrationEn: 'Constant product = inverse.' },
+        { math: 'x · y = 30 (constant)', narrationKo: '곱이 일정 = 반비례.', narrationEn: 'Constant product = inverse.' },
         { math: '10 · y = 30 ⇒ y = 3', narrationKo: '풀이.', narrationEn: 'Solve.' },
       ],
     },

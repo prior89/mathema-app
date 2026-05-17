@@ -29,7 +29,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       steps: [
         { math: '|−7|=7, |+4|=4', narrationKo: '절댓값을 따로 본다.', narrationEn: 'Read absolute values separately.' },
         { math: '7 − 4 = 3',     narrationKo: '부호가 다르므로 차를 구한다.', narrationEn: 'Signs differ → subtract.' },
-        { math: '결과 부호: −',   narrationKo: '|−7|이 더 크므로 결과는 음수.', narrationEn: 'Larger |·| had the minus sign.' },
+        { math: 'Result sign: −',   narrationKo: '|−7|이 더 크므로 결과는 음수.', narrationEn: 'Larger |·| had the minus sign.' },
         { math: '∴ −3',          narrationKo: '최종 답.', narrationEn: 'Final answer.' },
       ],
     },
@@ -71,8 +71,8 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       ko: '계산: ⅔ × ½',
       en: 'Compute: 2/3 × 1/2',
       steps: [
-        { math: '분자끼리: 2·1 = 2', narrationKo: '분자는 분자끼리.', narrationEn: 'Numerators together.' },
-        { math: '분모끼리: 3·2 = 6', narrationKo: '분모는 분모끼리.', narrationEn: 'Denominators together.' },
+        { math: 'Numerators: 2·1 = 2', narrationKo: '분자는 분자끼리.', narrationEn: 'Numerators together.' },
+        { math: 'Denominators: 3·2 = 6', narrationKo: '분모는 분모끼리.', narrationEn: 'Denominators together.' },
         { math: '2/6 = 1/3',         narrationKo: '약분으로 마무리.', narrationEn: 'Reduce.' },
       ],
     },
@@ -114,9 +114,9 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       ko: '데이터 {2, 3, 3, 5, 7} 의 평균·중앙값·최빈값.',
       en: 'For {2, 3, 3, 5, 7}: mean, median, mode.',
       steps: [
-        { math: '평균 = (2+3+3+5+7)/5 = 20/5 = 4', narrationKo: '합을 개수로 나눔.', narrationEn: 'Sum ÷ count.' },
-        { math: '중앙값 = 3 (정렬 후 가운데)',     narrationKo: '이미 정렬된 가운데 값.', narrationEn: 'Already sorted; pick middle.' },
-        { math: '최빈값 = 3 (2번 등장)',           narrationKo: '가장 자주 나오는 값.', narrationEn: 'Most frequent.' },
+        { math: 'Mean = (2+3+3+5+7)/5 = 20/5 = 4', narrationKo: '합을 개수로 나눔.', narrationEn: 'Sum ÷ count.' },
+        { math: 'Median = 3 (middle after sorting)',     narrationKo: '이미 정렬된 가운데 값.', narrationEn: 'Already sorted; pick middle.' },
+        { math: 'Mode = 3 (appears twice)',           narrationKo: '가장 자주 나오는 값.', narrationEn: 'Most frequent.' },
       ],
     },
     misconception: {
@@ -157,9 +157,9 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       ko: '풀이: 3x − 7 = 11',
       en: 'Solve: 3x − 7 = 11',
       steps: [
-        { math: '+7 양변',  narrationKo: '상수항 이항.', narrationEn: 'Move the constant.' },
+        { math: '+7 to both sides',  narrationKo: '상수항 이항.', narrationEn: 'Move the constant.' },
         { math: '3x = 18',   narrationKo: '단순화.',    narrationEn: 'Simplify.' },
-        { math: '÷3 양변',   narrationKo: '계수로 나눔.', narrationEn: 'Divide by coefficient.' },
+        { math: '÷3 both sides',   narrationKo: '계수로 나눔.', narrationEn: 'Divide by coefficient.' },
         { math: 'x = 6',     narrationKo: '완료.',      narrationEn: 'Done.' },
       ],
     },
@@ -201,9 +201,9 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       ko: '두 직선이 만나 만드는 각 중 하나가 65°. 나머지 세 각은?',
       en: 'Two lines meet; one angle is 65°. Find the other three.',
       steps: [
-        { math: '맞꼭지: 65°', narrationKo: '맞꼭지각은 같다.', narrationEn: 'Vertically opposite is equal.' },
-        { math: '인접: 180° − 65° = 115°', narrationKo: '직선 위 각의 합 = 180°.', narrationEn: 'Linear pair sums to 180°.' },
-        { math: '나머지 맞꼭지: 115°', narrationKo: '같은 논리로.', narrationEn: 'Same logic.' },
+        { math: 'Vertically opposite: 65°', narrationKo: '맞꼭지각은 같다.', narrationEn: 'Vertically opposite is equal.' },
+        { math: 'Linear pair: 180° − 65° = 115°', narrationKo: '직선 위 각의 합 = 180°.', narrationEn: 'Linear pair sums to 180°.' },
+        { math: 'Other vertical: 115°', narrationKo: '같은 논리로.', narrationEn: 'Same logic.' },
       ],
     },
     misconception: {
@@ -286,8 +286,8 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       ko: '₹800 상품의 25% 할인가는?',
       en: 'Sale price of a ₹800 item at 25% off.',
       steps: [
-        { math: '할인액 = 800 × 0.25 = 200', narrationKo: '할인 금액.', narrationEn: 'Discount amount.' },
-        { math: '판매가 = 800 − 200 = 600',  narrationKo: '원가에서 차감.', narrationEn: 'Subtract.' },
+        { math: 'Discount = 800 × 0.25 = 200', narrationKo: '할인 금액.', narrationEn: 'Discount amount.' },
+        { math: 'Sale price = 800 − 200 = 600',  narrationKo: '원가에서 차감.', narrationEn: 'Subtract.' },
       ],
     },
     misconception: {
@@ -328,7 +328,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       ko: '1/3 과 1/2 사이의 유리수 1개 찾기.',
       en: 'Find a rational between 1/3 and 1/2.',
       steps: [
-        { math: '평균 = (1/3 + 1/2)/2 = 5/12', narrationKo: '두 수의 평균은 항상 사이.', narrationEn: 'The mean always lies between.' },
+        { math: 'Mean = (1/3 + 1/2)/2 = 5/12', narrationKo: '두 수의 평균은 항상 사이.', narrationEn: 'The mean always lies between.' },
       ],
     },
     misconception: {
@@ -495,8 +495,8 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       ko: '정육각형의 대칭축 개수와 회전대칭 차수.',
       en: 'Lines of symmetry and order of rotational symmetry of a regular hexagon.',
       steps: [
-        { math: '대칭축 6개', narrationKo: '꼭짓점-꼭짓점 3개 + 변-변 3개.', narrationEn: 'Vertex-to-vertex 3 + edge-to-edge 3.' },
-        { math: '회전대칭 차수 6', narrationKo: '60° 돌릴 때마다 같은 모양.', narrationEn: 'Repeats every 60°.' },
+        { math: '6 lines of symmetry', narrationKo: '꼭짓점-꼭짓점 3개 + 변-변 3개.', narrationEn: 'Vertex-to-vertex 3 + edge-to-edge 3.' },
+        { math: 'Rotational symmetry order 6', narrationKo: '60° 돌릴 때마다 같은 모양.', narrationEn: 'Repeats every 60°.' },
       ],
     },
     misconception: {

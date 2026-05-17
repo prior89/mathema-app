@@ -70,7 +70,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
       en: 'Range of f: ℝ → ℝ, f(x) = x².',
       steps: [
         { math: 'x² ≥ 0',          narrationKo: '제곱은 음수가 아님.', narrationEn: 'Squares are non-negative.' },
-        { math: '치역 = [0, ∞)', narrationKo: '모든 음 아닌 수.',     narrationEn: 'All non-negatives.' },
+        { math: 'Range = [0, ∞)', narrationKo: '모든 음 아닌 수.',     narrationEn: 'All non-negatives.' },
       ],
     },
     misconception: {
@@ -200,7 +200,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
       ko: '풀이: −2x < 6',
       en: 'Solve: −2x < 6',
       steps: [
-        { math: '÷(−2), 부등호 뒤집기', narrationKo: '음수 나눔.', narrationEn: 'Negative division.' },
+        { math: '÷(−2), flip inequality', narrationKo: '음수 나눔.', narrationEn: 'Negative division.' },
         { math: 'x > −3',                narrationKo: '결과.',   narrationEn: 'Result.' },
       ],
     },
@@ -538,8 +538,8 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
       ko: '{2, 4, 4, 6} 의 표준편차.',
       en: 'SD of {2, 4, 4, 6}.',
       steps: [
-        { math: '평균 = 4', narrationKo: '평균.', narrationEn: 'Mean.' },
-        { math: '편차² = 4, 0, 0, 4 ⇒ 합 8', narrationKo: '제곱편차 합.', narrationEn: 'Sum sq dev.' },
+        { math: 'Mean = 4', narrationKo: '평균.', narrationEn: 'Mean.' },
+        { math: 'Sq deviations = 4, 0, 0, 4 ⇒ Sum 8', narrationKo: '제곱편차 합.', narrationEn: 'Sum sq dev.' },
         { math: 'σ² = 2, σ = √2 ≈ 1.41', narrationKo: '√.', narrationEn: '√.' },
       ],
     },
@@ -581,10 +581,10 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
       ko: '52장 카드에서 빨강 또는 그림카드 확률.',
       en: 'P(red or face) from 52 cards.',
       steps: [
-        { math: 'P(빨강) = 26/52', narrationKo: '빨강 절반.', narrationEn: 'Half are red.' },
-        { math: 'P(그림) = 12/52', narrationKo: 'J/Q/K × 4.', narrationEn: 'J/Q/K × 4.' },
-        { math: 'P(둘 다) = 6/52', narrationKo: '빨강 J/Q/K.', narrationEn: 'Red J/Q/K.' },
-        { math: '합 − 교 = 32/52 = 8/13', narrationKo: '포함-배제.', narrationEn: 'Inclusion-exclusion.' },
+        { math: 'P(red) = 26/52', narrationKo: '빨강 절반.', narrationEn: 'Half are red.' },
+        { math: 'P(face) = 12/52', narrationKo: 'J/Q/K × 4.', narrationEn: 'J/Q/K × 4.' },
+        { math: 'P(both) = 6/52', narrationKo: '빨강 J/Q/K.', narrationEn: 'Red J/Q/K.' },
+        { math: 'Sum − Inter = 32/52 = 8/13', narrationKo: '포함-배제.', narrationEn: 'Inclusion-exclusion.' },
       ],
     },
     misconception: {

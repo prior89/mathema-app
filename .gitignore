@@ -32,6 +32,10 @@ server/dist/
 server/scripts/ncert-import/pages/
 server/scripts/ncert-import/problems.json
 server/scripts/ncert-import/exercise-index.json
+# Throwaway diagnostic / one-off scripts written into the server/ root
+# (e.g. _diag.js, _swap-env-to-prod.js, _translate-math.js)
+server/_*.js
+server/.env.local-backup
 # Docker volumes
 pgdata/
 __pycache__/

@@ -111,8 +111,8 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
       ko: '[[1,2],[3,4]] · [[2,0],[1,2]]',
       en: '[[1,2],[3,4]] · [[2,0],[1,2]]',
       steps: [
-        { math: '행 1: (1·2+2·1, 1·0+2·2) = (4, 4)', narrationKo: '첫 행.', narrationEn: 'Row 1.' },
-        { math: '행 2: (3·2+4·1, 3·0+4·2) = (10, 8)', narrationKo: '둘째 행.', narrationEn: 'Row 2.' },
+        { math: 'Row 1: (1·2+2·1, 1·0+2·2) = (4, 4)', narrationKo: '첫 행.', narrationEn: 'Row 1.' },
+        { math: 'Row 2: (3·2+4·1, 3·0+4·2) = (10, 8)', narrationKo: '둘째 행.', narrationEn: 'Row 2.' },
         { math: '[[4,4],[10,8]]',                       narrationKo: '결과.',  narrationEn: 'Result.' },
       ],
     },
@@ -195,9 +195,9 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
       ko: 'f(x) = |x| 의 0 에서 미분가능성.',
       en: 'Differentiability of f(x) = |x| at 0.',
       steps: [
-        { math: '좌극한 (f(0+h)−f(0))/h, h<0 ⇒ −1', narrationKo: '왼쪽 기울기.', narrationEn: 'Left slope.' },
-        { math: '우극한, h>0 ⇒ +1',                  narrationKo: '오른쪽.',  narrationEn: 'Right.' },
-        { math: '−1 ≠ 1 ⇒ 미분 불가',                narrationKo: '결론.',   narrationEn: 'Conclude.' },
+        { math: 'Left limit (f(0+h)−f(0))/h, h<0 ⇒ −1', narrationKo: '왼쪽 기울기.', narrationEn: 'Left slope.' },
+        { math: 'Right limit, h>0 ⇒ +1',                  narrationKo: '오른쪽.',  narrationEn: 'Right.' },
+        { math: '−1 ≠ 1 ⇒ not differentiable',                narrationKo: '결론.',   narrationEn: 'Conclude.' },
       ],
     },
     misconception: {
@@ -410,7 +410,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
       en: 'a = (1, 2, 0), b = (0, 1, 0). a·b and |a×b|.',
       steps: [
         { math: 'a·b = 1·0+2·1+0 = 2', narrationKo: '내적.', narrationEn: 'Dot.' },
-        { math: 'a×b = (0, 0, 1) ⇒ 크기 1', narrationKo: '외적.', narrationEn: 'Cross.' },
+        { math: 'a×b = (0, 0, 1) ⇒ magnitude 1', narrationKo: '외적.', narrationEn: 'Cross.' },
       ],
     },
     misconception: {
@@ -494,9 +494,9 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
       ko: 'max Z = 4x+3y, x≤4, y≤6, x+y≤8.',
       en: 'max Z = 4x+3y, x≤4, y≤6, x+y≤8.',
       steps: [
-        { math: '꼭짓점: (0,0),(4,0),(4,4),(2,6),(0,6)', narrationKo: '교점.', narrationEn: 'Intersections.' },
-        { math: 'Z 값: 0, 16, 28, 26, 18', narrationKo: '대입.', narrationEn: 'Evaluate.' },
-        { math: '최대 = 28 at (4,4)', narrationKo: '최적.', narrationEn: 'Optimal.' },
+        { math: 'Vertices: (0,0),(4,0),(4,4),(2,6),(0,6)', narrationKo: '교점.', narrationEn: 'Intersections.' },
+        { math: 'Z values: 0, 16, 28, 26, 18', narrationKo: '대입.', narrationEn: 'Evaluate.' },
+        { math: 'Max = 28 at (4,4)', narrationKo: '최적.', narrationEn: 'Optimal.' },
       ],
     },
     misconception: {
@@ -537,9 +537,9 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
       ko: '주머니 — 빨강 4, 파랑 6. 빨강 뽑은 조건 하 다시 빨강일 확률 (비복원).',
       en: 'Bag — 4 red, 6 blue. P(2nd red | 1st red), no replacement.',
       steps: [
-        { math: 'P(첫 빨강) = 4/10',           narrationKo: '먼저.', narrationEn: 'First.' },
-        { math: '남은 빨강 3, 전체 9',         narrationKo: '갱신.', narrationEn: 'Update.' },
-        { math: 'P(둘째 빨강 | 첫 빨강) = 3/9 = 1/3', narrationKo: '조건부.', narrationEn: 'Conditional.' },
+        { math: 'P(1st red) = 4/10',           narrationKo: '먼저.', narrationEn: 'First.' },
+        { math: 'Remaining red 3, total 9',         narrationKo: '갱신.', narrationEn: 'Update.' },
+        { math: 'P(2nd red | 1st red) = 3/9 = 1/3', narrationKo: '조건부.', narrationEn: 'Conditional.' },
       ],
     },
     misconception: {

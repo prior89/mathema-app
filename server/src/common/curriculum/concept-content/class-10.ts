@@ -70,9 +70,9 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
       ko: 'x² − 5x + 6 의 근의 합과 곱.',
       en: 'Sum and product of roots of x² − 5x + 6.',
       steps: [
-        { math: '합 = −(−5)/1 = 5',  narrationKo: 'Vieta 합.', narrationEn: 'Sum.' },
-        { math: '곱 = 6/1 = 6',       narrationKo: 'Vieta 곱.', narrationEn: 'Product.' },
-        { math: '확인: 2 + 3 = 5, 2·3 = 6 ✓', narrationKo: '실제 근으로 검증.', narrationEn: 'Verify.' },
+        { math: 'Sum = −(−5)/1 = 5',  narrationKo: 'Vieta 합.', narrationEn: 'Sum.' },
+        { math: 'Product = 6/1 = 6',       narrationKo: 'Vieta 곱.', narrationEn: 'Product.' },
+        { math: 'Check: 2 + 3 = 5, 2·3 = 6 ✓', narrationKo: '실제 근으로 검증.', narrationEn: 'Verify.' },
       ],
     },
     misconception: {
@@ -113,7 +113,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
       ko: '2x + y = 7, 3x − y = 8.',
       en: '2x + y = 7, 3x − y = 8.',
       steps: [
-        { math: '두 식 합: 5x = 15 ⇒ x = 3', narrationKo: 'y 소거.', narrationEn: 'Eliminate y.' },
+        { math: 'Add equations: 5x = 15 ⇒ x = 3', narrationKo: 'y 소거.', narrationEn: 'Eliminate y.' },
         { math: 'y = 7 − 6 = 1',              narrationKo: '대입.',   narrationEn: 'Back-substitute.' },
       ],
     },
@@ -156,7 +156,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
       ko: 'x² − 4x − 5 = 0.',
       en: 'x² − 4x − 5 = 0.',
       steps: [
-        { math: '인수분해: (x − 5)(x + 1) = 0', narrationKo: '곱 = 0.', narrationEn: 'Factor.' },
+        { math: 'Factor: (x − 5)(x + 1) = 0', narrationKo: '곱 = 0.', narrationEn: 'Factor.' },
         { math: 'x = 5 or −1',                   narrationKo: '근.',  narrationEn: 'Roots.' },
       ],
     },
@@ -240,7 +240,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
       ko: '닮음비 2:3, 작은 △ 넓이 12. 큰 △ 넓이?',
       en: 'Similar ratio 2:3, smaller area 12. Larger?',
       steps: [
-        { math: '넓이비 = (2/3)² = 4/9', narrationKo: '제곱비.', narrationEn: 'Squared ratio.' },
+        { math: 'Area ratio = (2/3)² = 4/9', narrationKo: '제곱비.', narrationEn: 'Squared ratio.' },
         { math: '12 / (4/9) = 27',        narrationKo: '큰 넓이.', narrationEn: 'Larger area.' },
       ],
     },
@@ -284,7 +284,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
       steps: [
         { math: 'x = (1·7+2·1)/3 = 3', narrationKo: 'x 좌표.', narrationEn: 'x-coordinate.' },
         { math: 'y = (1·8+2·2)/3 = 4', narrationKo: 'y 좌표.', narrationEn: 'y-coordinate.' },
-        { math: '점 (3, 4)',           narrationKo: '결과.',  narrationEn: 'Result.' },
+        { math: 'Point (3, 4)',           narrationKo: '결과.',  narrationEn: 'Result.' },
       ],
     },
     misconception: {
@@ -326,7 +326,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
       ko: '30°-60°-90° 삼각형에서 sin 30°, cos 30°.',
       en: 'In a 30-60-90 triangle, sin 30°, cos 30°.',
       steps: [
-        { math: '변 비율 1 : √3 : 2', narrationKo: '표준 비.', narrationEn: 'Standard ratios.' },
+        { math: 'Side ratio 1 : √3 : 2', narrationKo: '표준 비.', narrationEn: 'Standard ratios.' },
         { math: 'sin 30° = 1/2',       narrationKo: '대변/빗변.', narrationEn: 'opp/hyp.' },
         { math: 'cos 30° = √3/2',     narrationKo: '인접/빗변.', narrationEn: 'adj/hyp.' },
       ],
@@ -492,9 +492,9 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
       ko: '반구 + 원기둥 (둘 다 r=3). 원기둥 h=5. 총 부피.',
       en: 'Hemisphere + cylinder (both r=3), h_cyl=5. Total volume.',
       steps: [
-        { math: 'V_반구 = (2/3)π·27 = 18π', narrationKo: '반구.', narrationEn: 'Hemisphere.' },
-        { math: 'V_원기둥 = π·9·5 = 45π',   narrationKo: '원기둥.', narrationEn: 'Cylinder.' },
-        { math: '총 = 63π',                 narrationKo: '합.',   narrationEn: 'Sum.' },
+        { math: 'V_hemi = (2/3)π·27 = 18π', narrationKo: '반구.', narrationEn: 'Hemisphere.' },
+        { math: 'V_cyl = π·9·5 = 45π',   narrationKo: '원기둥.', narrationEn: 'Cylinder.' },
+        { math: 'Total = 63π',                 narrationKo: '합.',   narrationEn: 'Sum.' },
       ],
     },
     misconception: {
@@ -537,7 +537,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
       steps: [
         { math: 'Σfx = 10+45+125 = 180', narrationKo: '곱의 합.', narrationEn: 'Sum of products.' },
         { math: 'Σf = 10',                narrationKo: '도수 합.', narrationEn: 'Sum of freq.' },
-        { math: '평균 = 18',              narrationKo: '나눔.',   narrationEn: 'Divide.' },
+        { math: 'Mean = 18',              narrationKo: '나눔.',   narrationEn: 'Divide.' },
       ],
     },
     misconception: {
