@@ -12,6 +12,7 @@ import jwtConfig from './config/jwt.config';
 import aiApiConfig from './config/ai-api.config';
 import storageConfig from './config/storage.config';
 import mathHelperConfig from './config/math-helper.config';
+import mathpixConfig from './config/mathpix.config';
 
 // infrastructure (전역)
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
@@ -54,7 +55,7 @@ import { MathHelperModule } from './modules/math-helper/math-helper.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, dbConfig, redisConfig, jwtConfig, aiApiConfig, storageConfig, mathHelperConfig],
+      load: [appConfig, dbConfig, redisConfig, jwtConfig, aiApiConfig, storageConfig, mathHelperConfig, mathpixConfig],
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),

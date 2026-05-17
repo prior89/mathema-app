@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   solveMathHelper,
+  ocrSolveMathHelper,
   type MathHelperSolveResponse,
 } from '../../lib/mathHelper';
 import { Glyph } from '../onboarding/Glyph';
@@ -17,6 +18,8 @@ export function MathHelperScreen() {
   const [studentAnswer, setStudentAnswer] = useState('');
   const [solveResult, setSolveResult] = useState<MathHelperSolveResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploadName, setUploadName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const solve = useMutation({
     mutationFn: () => solveMathHelper({
@@ -25,10 +28,40 @@ export function MathHelperScreen() {
       studentAnswer: studentAnswer.trim() || undefined,
     }),
     onSuccess: (data) => { setSolveResult(data); setError(null); },
-    onError: (e: any) => setError(e?.response?.data?.error?.message ?? 'Solver is unavailable right now. Please try again in a moment.'),
+    onError: (e: any) => setError(extractErrorMessage(e) ?? 'Solver is unavailable right now. Please try again in a moment.'),
   });
 
-  const busy = solve.isPending;
+  const ocrSolve = useMutation({
+    mutationFn: (file: File) => ocrSolveMathHelper({
+      file,
+      classLevel,
+      studentAnswer: studentAnswer.trim() || undefined,
+    }),
+    onSuccess: (data) => {
+      setQuestion(data.extractedText);
+      setSolveResult(data.result);
+      setError(null);
+    },
+    onError: (e: any) => setError(extractErrorMessage(e) ?? 'OCR solve is unavailable right now. Please try again in a moment.'),
+  });
+
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const pasted = Array.from(e.clipboardData?.files ?? []).find((item) => item.type.startsWith('image/'));
+      if (pasted) handleOcrFile(pasted);
+    };
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  });
+
+  const handleOcrFile = (file: File | null) => {
+    if (!file) return;
+    setUploadName(file.name);
+    setError(null);
+    ocrSolve.mutate(file);
+  };
+
+  const busy = solve.isPending || ocrSolve.isPending;
 
   return (
     <div className="screen">
@@ -61,8 +94,39 @@ export function MathHelperScreen() {
           <label style={{ ...fieldLabel, marginTop: 10 }}>Question
             <textarea value={question} onChange={(e) => setQuestion(e.target.value)} rows={5} style={{ ...inputStyle, resize: 'vertical' }} placeholder="Paste a Class 7-12 math question..." />
           </label>
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              handleOcrFile(e.dataTransfer.files?.[0] ?? null);
+            }}
+            style={{
+              marginTop: 10,
+              border: '1px dashed var(--p-line)',
+              borderRadius: 10,
+              padding: 12,
+              background: 'var(--p-bg)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>Upload or paste image/PDF</div>
+              <div style={muted}>{ocrSolve.isPending ? `Reading ${uploadName ?? 'file'}...` : 'Drop a file here, paste a screenshot, or choose a file.'}</div>
+            </div>
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={busy} style={{ ...smallButton, opacity: busy ? 0.65 : 1 }}>Choose</button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              style={{ display: 'none' }}
+              onChange={(e) => handleOcrFile(e.target.files?.[0] ?? null)}
+            />
+          </div>
           <button className="btn" disabled={question.trim().length < 3 || busy} onClick={() => solve.mutate()} style={{ marginTop: 10 }}>
-            {solve.isPending ? 'Solving...' : 'Solve'}
+            {busy ? 'Solving...' : 'Solve'}
           </button>
         </div>
 
@@ -73,6 +137,13 @@ export function MathHelperScreen() {
       <TabBar />
     </div>
   );
+}
+
+function extractErrorMessage(e: unknown): string | null {
+  const data = (e as { response?: { data?: any } })?.response?.data;
+  const message = data?.error?.message ?? data?.message ?? (e as Error)?.message;
+  if (Array.isArray(message)) return message.join('; ');
+  return typeof message === 'string' ? message : null;
 }
 
 function SolveResult({ data }: { data: MathHelperSolveResponse }) {
@@ -117,3 +188,4 @@ const muted: React.CSSProperties = { fontSize: 11.5, color: 'var(--p-muted)' };
 const fieldLabel: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 5, fontSize: 10.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' };
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid var(--p-line)', background: 'var(--p-surface)', color: 'var(--p-ink)', font: 'inherit', fontSize: 12.5 };
 const pill: React.CSSProperties = { marginTop: 10, padding: 10, borderRadius: 8, fontSize: 12, lineHeight: 1.45, color: 'var(--p-ink)' };
+const smallButton: React.CSSProperties = { padding: '8px 12px', borderRadius: 8, border: '1px solid var(--p-line)', background: 'var(--p-surface)', color: 'var(--p-ink)', cursor: 'pointer', fontSize: 12, fontWeight: 600 };

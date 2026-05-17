@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Difficulty } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { MathpixService } from '../../infrastructure/mathpix/mathpix.service';
 import { AttemptsService } from '../attempts/attempts.service';
 import { ChapterTestDto, WeeklyAssessmentDto } from './dto/assessment.dto';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
@@ -43,6 +44,7 @@ export class MathHelperService {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly attempts: AttemptsService,
+    private readonly mathpix: MathpixService,
   ) {}
 
   async health() {
@@ -67,6 +69,23 @@ export class MathHelperService {
     });
 
     return response;
+  }
+
+  async ocrSolve(userId: string, file: Express.Multer.File, dto: Omit<SolveMathHelperDto, 'question'>) {
+    const ocr = await this.mathpix.extract(file);
+    const result = await this.solve(userId, {
+      classLevel: dto.classLevel,
+      question: ocr.text,
+      studentAnswer: dto.studentAnswer,
+    });
+
+    return {
+      extractedText: ocr.text,
+      latex: ocr.latex ?? null,
+      confidence: ocr.confidence ?? null,
+      source: ocr.source,
+      result,
+    };
   }
 
   async chapterTest(userId: string, dto: ChapterTestDto) {

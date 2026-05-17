@@ -427,15 +427,17 @@ export type ProblemListItem = {
 export const fetchPracticeProblems = (chapterCode: string) =>
   get<ProblemListItem[]>(`/concept-lessons/${chapterCode}/practice-problems`);
 
-/** Student-uploaded problem analysis result (vision LLM + 3-step MC draft persisted as PENDING). */
+/** Student-uploaded problem OCR result solved through the math helper. */
 export type UploadAnalysisResult = {
   extractedText: string;
-  analysis: { concept: string; formula: string; solutionSteps: string[]; answer: string };
-  draftId: string;
-  ncertClassGuess: string | null;
+  latex?: string | null;
+  confidence?: number | null;
+  source: 'mathpix';
+  result: import('./mathHelper').MathHelperSolveResponse;
 };
-export const uploadProblemImage = (file: File) => {
+export const uploadProblemImage = (file: File, studentAnswer?: string) => {
   const fd = new FormData();
   fd.append('file', file);
-  return post<UploadAnalysisResult>('/uploads/problem-image', fd, { isMultipart: true });
+  if (studentAnswer?.trim()) fd.append('studentAnswer', studentAnswer.trim());
+  return post<UploadAnalysisResult>('/math-helper/ocr-solve', fd, { isMultipart: true });
 };

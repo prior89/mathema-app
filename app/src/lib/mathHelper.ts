@@ -34,6 +34,14 @@ export type MathHelperSolveResponse = {
   };
 };
 
+export type MathHelperOcrSolveResponse = {
+  extractedText: string;
+  latex?: string | null;
+  confidence?: number | null;
+  source: 'mathpix';
+  result: MathHelperSolveResponse;
+};
+
 export type MathHelperAssessmentQuestion = {
   questionId: string;
   source: string;
@@ -65,6 +73,14 @@ export type MathHelperAssessmentResponse = {
 
 export const solveMathHelper = (body: MathHelperSolveRequest) =>
   post<MathHelperSolveResponse>('/math-helper/solve', body);
+
+export const ocrSolveMathHelper = (body: { file: File; classLevel?: number; studentAnswer?: string }) => {
+  const fd = new FormData();
+  fd.append('file', body.file);
+  if (body.classLevel) fd.append('classLevel', String(body.classLevel));
+  if (body.studentAnswer?.trim()) fd.append('studentAnswer', body.studentAnswer.trim());
+  return post<MathHelperOcrSolveResponse>('/math-helper/ocr-solve', fd, { isMultipart: true });
+};
 
 export const generateChapterTest = (body: {
   classLevel?: number;

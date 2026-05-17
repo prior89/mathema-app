@@ -1,7 +1,5 @@
-/* UploadProblemModal — student picks/takes a photo of a problem (or a PDF),
- * we POST to /uploads/problem-image; backend returns analysis + draftId.
- * Draft already persisted PENDING — "save" button is just a UX confirmation that
- * the student wants it kept in their wrong-notes pipeline (no extra POST needed).
+/* UploadProblemModal — student picks/takes/drops/pastes a problem photo or PDF;
+ * backend OCR extracts the math text and sends it through the normal solver.
  */
 import { useEffect, useRef, useState } from 'react';
 import { uploadProblemImage, UploadAnalysisResult } from '../../lib/queries';
@@ -18,7 +16,7 @@ export function UploadProblemModal({ open, onClose }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [result, setResult] = useState<UploadAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [studentAnswer, setStudentAnswer] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -27,7 +25,7 @@ export function UploadProblemModal({ open, onClose }: Props) {
       setFile(null);
       setResult(null);
       setError(null);
-      setSaved(false);
+      setStudentAnswer('');
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
@@ -40,17 +38,28 @@ export function UploadProblemModal({ open, onClose }: Props) {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
+    const onPaste = (e: ClipboardEvent) => {
+      const pasted = Array.from(e.clipboardData?.files ?? []).find((item) => item.type.startsWith('image/'));
+      if (pasted) onPick(pasted);
+    };
+    document.addEventListener('paste', onPaste);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
+      document.removeEventListener('paste', onPaste);
       document.body.style.overflow = '';
     };
-  }, [open, onClose]);
+  }, [open, onClose, previewUrl]);
 
   if (!open) return null;
 
   const onPick = (f: File | null) => {
-    if (!f) return;
+    if (!f) {
+      setFile(null);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      return;
+    }
     setFile(f);
     setError(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -66,12 +75,11 @@ export function UploadProblemModal({ open, onClose }: Props) {
     setPhase('analyzing');
     setError(null);
     try {
-      const r = await uploadProblemImage(file);
+      const r = await uploadProblemImage(file, studentAnswer);
       setResult(r);
       setPhase('result');
     } catch (e) {
-      const msg = (e as { response?: { data?: { message?: string } }; message?: string })
-        ?.response?.data?.message ?? (e as Error)?.message ?? 'Upload failed';
+      const msg = extractErrorMessage(e) ?? 'Upload failed';
       setError(msg);
       setPhase('error');
     }
@@ -123,6 +131,8 @@ export function UploadProblemModal({ open, onClose }: Props) {
             previewUrl={previewUrl}
             onPick={onPick}
             onAnalyze={analyze}
+            studentAnswer={studentAnswer}
+            onStudentAnswer={setStudentAnswer}
             fileInputRef={fileInputRef}
           />
         )}
@@ -132,8 +142,6 @@ export function UploadProblemModal({ open, onClose }: Props) {
         {phase === 'result' && result && (
           <ResultPhase
             result={result}
-            saved={saved}
-            onSave={() => setSaved(true)}
             onRetry={retry}
             onClose={onClose}
           />
@@ -147,23 +155,37 @@ export function UploadProblemModal({ open, onClose }: Props) {
   );
 }
 
+function extractErrorMessage(e: unknown): string | null {
+  const data = (e as { response?: { data?: any } })?.response?.data;
+  const message = data?.error?.message ?? data?.message ?? (e as Error)?.message;
+  if (Array.isArray(message)) return message.join('; ');
+  return typeof message === 'string' ? message : null;
+}
+
 function PickPhase({
-  file, previewUrl, onPick, onAnalyze, fileInputRef,
+  file, previewUrl, onPick, onAnalyze, studentAnswer, onStudentAnswer, fileInputRef,
 }: {
   file: File | null;
   previewUrl: string | null;
   onPick: (f: File | null) => void;
   onAnalyze: () => void;
+  studentAnswer: string;
+  onStudentAnswer: (value: string) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
 }) {
   return (
     <div>
       <p style={{ fontSize: 13, color: 'var(--p-ink-2)', margin: '0 0 14px' }}>
-        Take a photo of the problem you're stuck on, or upload an image / PDF. AI will recognize the text, concept, and formula — then save it to your wrong notes for review.
+        Take a photo, upload a PDF, drag a file here, or paste a screenshot. Add your answer if you want it checked and saved to wrong notes when it is wrong.
       </p>
 
       {/* Preview area */}
       <div
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          onPick(e.dataTransfer.files?.[0] ?? null);
+        }}
         style={{
           border: '1.5px dashed var(--p-border)', borderRadius: 12,
           padding: 18, textAlign: 'center', background: 'var(--p-bg)', minHeight: 120,
@@ -185,10 +207,19 @@ function PickPhase({
           </div>
         ) : (
           <div style={{ color: 'var(--p-muted)', fontSize: 13 }}>
-            Take a photo or pick a file below.
+            Drop, paste, take a photo, or pick a file below.
           </div>
         )}
       </div>
+
+      <label style={{ ...fieldLabel, marginTop: 12 }}>Your answer optional
+        <input
+          value={studentAnswer}
+          onChange={(e) => onStudentAnswer(e.target.value)}
+          style={inputStyle}
+          placeholder="e.g. x = 4"
+        />
+      </label>
 
       {/* Two-button picker — capture forces the camera on mobile, the other
           opens gallery / Files / Finder. capture is ignored on desktop. */}
@@ -273,21 +304,21 @@ function AnalyzingPhase({ fileName }: { fileName: string }) {
         {fileName}
       </div>
       <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 10 }}>
-        Reading text, identifying concept, solving step-by-step. Usually 5–15 s.
+        Reading text, identifying concept, solving step-by-step. PDFs may take a little longer.
       </div>
     </div>
   );
 }
 
 function ResultPhase({
-  result, saved, onSave, onRetry, onClose,
+  result, onRetry, onClose,
 }: {
   result: UploadAnalysisResult;
-  saved: boolean;
-  onSave: () => void;
   onRetry: () => void;
   onClose: () => void;
 }) {
+  const solve = result.result;
+  const checked = solve.isStudentCorrect !== undefined && solve.isStudentCorrect !== null;
   return (
     <div>
       <Section label="Problem">
@@ -295,25 +326,11 @@ function ResultPhase({
       </Section>
 
       <Section label="Concept">
-        <MathText text={result.analysis.concept || '—'} />
-      </Section>
-
-      <Section label="Formula">
-        <MathText text={result.analysis.formula || '—'} />
+        <MathText text={[solve.detected.chapter, solve.detected.topic].filter(Boolean).join(' · ') || '—'} />
       </Section>
 
       <Section label="Solution steps">
-        {result.analysis.solutionSteps.length === 0 ? (
-          <span style={{ color: 'var(--p-muted)' }}>—</span>
-        ) : (
-          <ol style={{ margin: 0, paddingLeft: 20 }}>
-            {result.analysis.solutionSteps.map((s, i) => (
-              <li key={i} style={{ marginBottom: 4 }}>
-                <MathText text={s} />
-              </li>
-            ))}
-          </ol>
-        )}
+        <MathText text={solve.explanation || '—'} />
       </Section>
 
       <div style={{
@@ -324,14 +341,14 @@ function ResultPhase({
           Answer
         </div>
         <div style={{ marginTop: 4, fontSize: 15 }}>
-          <MathText text={result.analysis.answer || '—'} />
+          <MathText text={solve.answer || '—'} />
         </div>
       </div>
 
-      {saved && (
-        <div style={{ marginTop: 12, padding: 10, background: '#E8F5E9', border: '1px solid #C8E6C9', borderRadius: 8, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Glyph.Check accent="#2E7D32" size={14} />
-          <span>Saved to wrong notes. A reviewer will publish it for practice after a quick check.</span>
+      {checked && (
+        <div style={{ marginTop: 12, padding: 10, background: solve.isStudentCorrect ? '#E8F5E9' : '#FFF8E1', border: '1px solid #EAD8A4', borderRadius: 8, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Glyph.Check accent={solve.isStudentCorrect ? '#2E7D32' : '#9A6A00'} size={14} />
+          <span>{solve.isStudentCorrect ? 'Your answer looks correct.' : 'Your answer looks wrong, so it was added to wrong notes for review.'}</span>
         </div>
       )}
 
@@ -343,27 +360,20 @@ function ResultPhase({
             padding: '9px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 13,
           }}
         >Try another</button>
-        {!saved ? (
-          <button
-            onClick={onSave}
-            style={{
-              background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
-              padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-            }}
-          >Save to wrong notes</button>
-        ) : (
-          <button
-            onClick={onClose}
-            style={{
-              background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
-              padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-            }}
-          >Done</button>
-        )}
+        <button
+          onClick={onClose}
+          style={{
+            background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
+            padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+          }}
+        >Done</button>
       </div>
     </div>
   );
 }
+
+const fieldLabel: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 5, fontSize: 10.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' };
+const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid var(--p-border)', background: 'var(--p-surface)', color: 'var(--p-ink)', font: 'inherit', fontSize: 12.5 };
 
 function ErrorPhase({ error, onRetry, onClose }: { error: string; onRetry: () => void; onClose: () => void }) {
   return (
