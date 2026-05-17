@@ -11,6 +11,7 @@ import redisConfig from './config/redis.config';
 import jwtConfig from './config/jwt.config';
 import aiApiConfig from './config/ai-api.config';
 import storageConfig from './config/storage.config';
+import mathHelperConfig from './config/math-helper.config';
 
 // infrastructure (전역)
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
@@ -47,12 +48,13 @@ import { StudentsModule } from './modules/students/students.module';
 import { DiagnosticModule } from './modules/diagnostic/diagnostic.module';
 import { ContentIngestModule } from './modules/content-ingest/content-ingest.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { MathHelperModule } from './modules/math-helper/math-helper.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, dbConfig, redisConfig, jwtConfig, aiApiConfig, storageConfig],
+      load: [appConfig, dbConfig, redisConfig, jwtConfig, aiApiConfig, storageConfig, mathHelperConfig],
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
@@ -93,6 +95,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     DiagnosticModule,
     ContentIngestModule,
     UploadsModule,
+    MathHelperModule,
   ],
 })
 export class AppModule {}

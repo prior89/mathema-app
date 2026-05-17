@@ -82,6 +82,19 @@ export function HomeScreen() {
                   deltaDown={false} />
           </div>
 
+          <div className="section-h">
+            <span className="label">AI helper</span>
+            <span className="more">LangGraph</span>
+          </div>
+          <div className="plan-card" onClick={() => { track('math-helper.open'); nav('/app/helper'); }}>
+            <div className="badge" style={{ background: 'var(--p-primary-tint)', color: 'var(--p-primary)' }}>∴</div>
+            <div className="info">
+              <div className="ttl">Solve or build an adaptive test</div>
+              <div className="sub">Uses your DB weak concepts, frequent units, and wrong notes</div>
+            </div>
+            <span className="chip" style={{ fontSize: 10.5 }}>AI</span>
+          </div>
+
           {/* Today's plan */}
           <div className="section-h">
             <span className="label">Today’s plan</span>

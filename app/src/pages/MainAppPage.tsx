@@ -9,6 +9,7 @@ import { LearnScreen } from '../components/main/LearnScreen';
 import { ConceptLessonScreen } from '../components/main/ConceptLessonScreen';
 import { NotesListScreen } from '../components/main/NotesListScreen';
 import { MocksScreen } from '../components/main/MocksScreen';
+import { MathHelperScreen } from '../components/main/MathHelperScreen';
 import { MockExamPlayScreen } from '../components/main/MockExamPlayScreen';
 import { MockResultDetailScreen } from '../components/main/MockResultDetailScreen';
 import { MeScreen } from '../components/main/MeScreen';
@@ -40,6 +41,7 @@ export default function MainAppPage() {
             <Route path="learn/:code" element={<ConceptLessonScreen />} />
             <Route path="notes" element={<NotesListScreen />} />
             <Route path="mocks" element={<MocksScreen />} />
+            <Route path="helper" element={<MathHelperScreen />} />
             <Route path="mocks/play/:resultId" element={<MockExamPlayScreen />} />
             <Route path="mocks/result/:resultId" element={<MockResultDetailScreen />} />
             <Route path="me" element={<MeScreen />} />
