@@ -18,7 +18,11 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # `id-token: write` is required for OIDC federation — the runner exchanges
+    # a short-lived GitHub OIDC token for an Azure AD access token. No
+    # long-lived client secret in GH.
     permissions:
+      id-token: write
       contents: read
     steps:
       - uses: actions/checkout@v4
@@ -39,15 +43,15 @@ jobs:
           VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
         run: npm -w app run build
 
-      # Fetch the canonical deployment token from Azure directly using the
-      # same service principal we use for the backend. This removes any
-      # chance that the stored AZURE_STATIC_WEB_APPS_API_TOKEN secret has
-      # drifted from the actual SWA (rotation, recreate, wrong copy, etc.)
-      # and is the root cause of the "An unknown exception" messages.
-      - name: Login to Azure
+      # OIDC login — fetches the canonical SWA deployment token from Azure so
+      # the stored GH secret can't drift from the actual SWA (rotation,
+      # recreate, wrong copy, etc.).
+      - name: Login to Azure (OIDC)
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Resolve SWA deployment token
         id: swa
