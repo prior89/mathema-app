@@ -11,7 +11,7 @@ npm run dev:math-helper
 
 The root `npm run dev` starts this service together with the backend and frontend.
 
-The NestJS backend calls it through `MATH_HELPER_URL`, defaulting to `http://localhost:8000`.
+The NestJS backend calls it through `MATH_HELPER_URL`, defaulting to `http://127.0.0.1:8000`.
 
 ## Data Sources
 

@@ -1,0 +1,3082 @@
+{
+  "version": "ncert-math-7-12@2026-05",
+  "country": "IN",
+  "board": "NCERT",
+  "subject": "MATH",
+  "generatedAt": "2026-05-14T13:41:01.912158+00:00",
+  "coverageNote": "Grade-wise NCERT Mathematics curriculum map for Classes 7 to 12. Chapter and topic coverage is source-aligned and implementation-ready. Problems are NCERT-aligned generated seed items, not verbatim textbook exercise extraction.",
+  "classes": [
+    {
+      "classLevel": 7,
+      "ncertClass": "CLASS_7",
+      "title": "Class 7 Mathematics",
+      "chapters": [
+        {
+          "chapterCode": "C7-CH01-LARGE-NUMBERS-AROUND-US",
+          "chapterNumber": 1,
+          "titleEn": "Large Numbers Around Us",
+          "titleHi": "",
+          "unitName": "Large Numbers Around Us",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 1,
+          "prerequisiteChapterCodes": [],
+          "topics": [
+            {
+              "topicCode": "C7-CH01-T01",
+              "title": "Indian and international place value systems",
+              "order": 1,
+              "conceptCodes": [
+                "C7_INDIAN_AND_INTERNATIONAL_PLACE_VALUE"
+              ]
+            },
+            {
+              "topicCode": "C7-CH01-T02",
+              "title": "Reading and writing large numbers",
+              "order": 2,
+              "conceptCodes": [
+                "C7_READING_AND_WRITING_LARGE_NUMBERS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH01-T03",
+              "title": "Estimation, comparison and rounding",
+              "order": 3,
+              "conceptCodes": [
+                "C7_ESTIMATION_COMPARISON_AND_ROUNDING"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH02-ARITHMETIC-EXPRESSIONS",
+          "chapterNumber": 2,
+          "titleEn": "Arithmetic Expressions",
+          "titleHi": "",
+          "unitName": "Arithmetic Expressions",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 1,
+          "prerequisiteChapterCodes": [
+            "C7-CH01-LARGE-NUMBERS-AROUND-US"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH02-T01",
+              "title": "Order of operations",
+              "order": 1,
+              "conceptCodes": [
+                "C7_ORDER_OF_OPERATIONS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH02-T02",
+              "title": "Using brackets to remove ambiguity",
+              "order": 2,
+              "conceptCodes": [
+                "C7_USING_BRACKETS_TO_REMOVE_AMBIGUITY"
+              ]
+            },
+            {
+              "topicCode": "C7-CH02-T03",
+              "title": "Evaluating multi-operation expressions",
+              "order": 3,
+              "conceptCodes": [
+                "C7_EVALUATING_MULTI_OPERATION_EXPRESSIONS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH03-A-PEEK-BEYOND-THE",
+          "chapterNumber": 3,
+          "titleEn": "A Peek Beyond the Point",
+          "titleHi": "",
+          "unitName": "A Peek Beyond the Point",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 1,
+          "prerequisiteChapterCodes": [
+            "C7-CH02-ARITHMETIC-EXPRESSIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH03-T01",
+              "title": "Decimal place value",
+              "order": 1,
+              "conceptCodes": [
+                "C7_DECIMAL_PLACE_VALUE"
+              ]
+            },
+            {
+              "topicCode": "C7-CH03-T02",
+              "title": "Comparing and locating decimals",
+              "order": 2,
+              "conceptCodes": [
+                "C7_COMPARING_AND_LOCATING_DECIMALS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH03-T03",
+              "title": "Addition and subtraction of decimals",
+              "order": 3,
+              "conceptCodes": [
+                "C7_ADDITION_AND_SUBTRACTION_OF_DECIMALS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH04-EXPRESSIONS-USING-LETTER-NUMBERS",
+          "chapterNumber": 4,
+          "titleEn": "Expressions using Letter-Numbers",
+          "titleHi": "",
+          "unitName": "Expressions using Letter-Numbers",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 1,
+          "prerequisiteChapterCodes": [
+            "C7-CH03-A-PEEK-BEYOND-THE"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH04-T01",
+              "title": "Variables and letter-numbers",
+              "order": 1,
+              "conceptCodes": [
+                "C7_VARIABLES_AND_LETTER_NUMBERS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH04-T02",
+              "title": "Writing algebraic expressions",
+              "order": 2,
+              "conceptCodes": [
+                "C7_WRITING_ALGEBRAIC_EXPRESSIONS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH04-T03",
+              "title": "Substitution in expressions",
+              "order": 3,
+              "conceptCodes": [
+                "C7_SUBSTITUTION_IN_EXPRESSIONS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH05-PARALLEL-AND-INTERSECTING-LINES",
+          "chapterNumber": 5,
+          "titleEn": "Parallel and Intersecting Lines",
+          "titleHi": "",
+          "unitName": "Parallel and Intersecting Lines",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 1,
+          "prerequisiteChapterCodes": [
+            "C7-CH04-EXPRESSIONS-USING-LETTER-NUMBERS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH05-T01",
+              "title": "Pairs of lines",
+              "order": 1,
+              "conceptCodes": [
+                "C7_PAIRS_OF_LINES"
+              ]
+            },
+            {
+              "topicCode": "C7-CH05-T02",
+              "title": "Vertically opposite and linear pair angles",
+              "order": 2,
+              "conceptCodes": [
+                "C7_VERTICALLY_OPPOSITE_AND_LINEAR_PAIR"
+              ]
+            },
+            {
+              "topicCode": "C7-CH05-T03",
+              "title": "Parallel lines and transversals",
+              "order": 3,
+              "conceptCodes": [
+                "C7_PARALLEL_LINES_AND_TRANSVERSALS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH06-NUMBER-PLAY",
+          "chapterNumber": 6,
+          "titleEn": "Number Play",
+          "titleHi": "",
+          "unitName": "Number Play",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 1,
+          "prerequisiteChapterCodes": [
+            "C7-CH05-PARALLEL-AND-INTERSECTING-LINES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH06-T01",
+              "title": "Parity and patterns",
+              "order": 1,
+              "conceptCodes": [
+                "C7_PARITY_AND_PATTERNS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH06-T02",
+              "title": "Fibonacci-type sequences",
+              "order": 2,
+              "conceptCodes": [
+                "C7_FIBONACCI_TYPE_SEQUENCES"
+              ]
+            },
+            {
+              "topicCode": "C7-CH06-T03",
+              "title": "Cryptarithms and logical number puzzles",
+              "order": 3,
+              "conceptCodes": [
+                "C7_CRYPTARITHMS_AND_LOGICAL_NUMBER_PUZZLES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH07-A-TALE-OF-THREE",
+          "chapterNumber": 7,
+          "titleEn": "A Tale of Three Intersecting Lines",
+          "titleHi": "",
+          "unitName": "A Tale of Three Intersecting Lines",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 1,
+          "prerequisiteChapterCodes": [
+            "C7-CH06-NUMBER-PLAY"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH07-T01",
+              "title": "Triangle angle relationships",
+              "order": 1,
+              "conceptCodes": [
+                "C7_TRIANGLE_ANGLE_RELATIONSHIPS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH07-T02",
+              "title": "Angle sum property",
+              "order": 2,
+              "conceptCodes": [
+                "C7_ANGLE_SUM_PROPERTY"
+              ]
+            },
+            {
+              "topicCode": "C7-CH07-T03",
+              "title": "Using parallel lines to reason about triangles",
+              "order": 3,
+              "conceptCodes": [
+                "C7_USING_PARALLEL_LINES_TO_REASON"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH08-WORKING-WITH-FRACTIONS",
+          "chapterNumber": 8,
+          "titleEn": "Working with Fractions",
+          "titleHi": "",
+          "unitName": "Working with Fractions",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 1,
+          "prerequisiteChapterCodes": [
+            "C7-CH07-A-TALE-OF-THREE"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH08-T01",
+              "title": "Multiplication of fractions",
+              "order": 1,
+              "conceptCodes": [
+                "C7_MULTIPLICATION_OF_FRACTIONS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH08-T02",
+              "title": "Division of fractions",
+              "order": 2,
+              "conceptCodes": [
+                "C7_DIVISION_OF_FRACTIONS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH08-T03",
+              "title": "Fraction operations in word problems",
+              "order": 3,
+              "conceptCodes": [
+                "C7_FRACTION_OPERATIONS_IN_WORD_PROBLEMS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH09-GEOMETRIC-TWINS",
+          "chapterNumber": 9,
+          "titleEn": "Geometric Twins",
+          "titleHi": "",
+          "unitName": "Geometric Twins",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 1,
+          "prerequisiteChapterCodes": [
+            "C7-CH08-WORKING-WITH-FRACTIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH09-T01",
+              "title": "Congruent figures",
+              "order": 1,
+              "conceptCodes": [
+                "C7_CONGRUENT_FIGURES"
+              ]
+            },
+            {
+              "topicCode": "C7-CH09-T02",
+              "title": "Constructing exact copies",
+              "order": 2,
+              "conceptCodes": [
+                "C7_CONSTRUCTING_EXACT_COPIES"
+              ]
+            },
+            {
+              "topicCode": "C7-CH09-T03",
+              "title": "Triangle congruence intuition",
+              "order": 3,
+              "conceptCodes": [
+                "C7_TRIANGLE_CONGRUENCE_INTUITION"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH10-OPERATIONS-WITH-INTEGERS",
+          "chapterNumber": 10,
+          "titleEn": "Operations with Integers",
+          "titleHi": "",
+          "unitName": "Operations with Integers",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C7-CH09-GEOMETRIC-TWINS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH10-T01",
+              "title": "Integer addition and subtraction",
+              "order": 1,
+              "conceptCodes": [
+                "C7_INTEGER_ADDITION_AND_SUBTRACTION"
+              ]
+            },
+            {
+              "topicCode": "C7-CH10-T02",
+              "title": "Integer multiplication and division",
+              "order": 2,
+              "conceptCodes": [
+                "C7_INTEGER_MULTIPLICATION_AND_DIVISION"
+              ]
+            },
+            {
+              "topicCode": "C7-CH10-T03",
+              "title": "Sign rules in expressions",
+              "order": 3,
+              "conceptCodes": [
+                "C7_SIGN_RULES_IN_EXPRESSIONS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH11-FINDING-COMMON-GROUND",
+          "chapterNumber": 11,
+          "titleEn": "Finding Common Ground",
+          "titleHi": "",
+          "unitName": "Finding Common Ground",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C7-CH10-OPERATIONS-WITH-INTEGERS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH11-T01",
+              "title": "Factors and multiples",
+              "order": 1,
+              "conceptCodes": [
+                "C7_FACTORS_AND_MULTIPLES"
+              ]
+            },
+            {
+              "topicCode": "C7-CH11-T02",
+              "title": "Common factors and common multiples",
+              "order": 2,
+              "conceptCodes": [
+                "C7_COMMON_FACTORS_AND_COMMON_MULTIPLES"
+              ]
+            },
+            {
+              "topicCode": "C7-CH11-T03",
+              "title": "Prime factorisation for common measures",
+              "order": 3,
+              "conceptCodes": [
+                "C7_PRIME_FACTORISATION_FOR_COMMON_MEASURES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH12-ANOTHER-PEEK-BEYOND-THE",
+          "chapterNumber": 12,
+          "titleEn": "Another Peek Beyond the Point",
+          "titleHi": "",
+          "unitName": "Another Peek Beyond the Point",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C7-CH11-FINDING-COMMON-GROUND"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH12-T01",
+              "title": "Decimal multiplication",
+              "order": 1,
+              "conceptCodes": [
+                "C7_DECIMAL_MULTIPLICATION"
+              ]
+            },
+            {
+              "topicCode": "C7-CH12-T02",
+              "title": "Decimal division",
+              "order": 2,
+              "conceptCodes": [
+                "C7_DECIMAL_DIVISION"
+              ]
+            },
+            {
+              "topicCode": "C7-CH12-T03",
+              "title": "Decimal operations in measurement and money",
+              "order": 3,
+              "conceptCodes": [
+                "C7_DECIMAL_OPERATIONS_IN_MEASUREMENT_AND"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH13-CONNECTING-THE-DOTS",
+          "chapterNumber": 13,
+          "titleEn": "Connecting the Dots...",
+          "titleHi": "",
+          "unitName": "Connecting the Dots...",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C7-CH12-ANOTHER-PEEK-BEYOND-THE"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH13-T01",
+              "title": "Mean and median",
+              "order": 1,
+              "conceptCodes": [
+                "C7_MEAN_AND_MEDIAN"
+              ]
+            },
+            {
+              "topicCode": "C7-CH13-T02",
+              "title": "Organising data",
+              "order": 2,
+              "conceptCodes": [
+                "C7_ORGANISING_DATA"
+              ]
+            },
+            {
+              "topicCode": "C7-CH13-T03",
+              "title": "Interpreting tables and visual data",
+              "order": 3,
+              "conceptCodes": [
+                "C7_INTERPRETING_TABLES_AND_VISUAL_DATA"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH14-CONSTRUCTIONS-AND-TILINGS",
+          "chapterNumber": 14,
+          "titleEn": "Constructions and Tilings",
+          "titleHi": "",
+          "unitName": "Constructions and Tilings",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C7-CH13-CONNECTING-THE-DOTS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH14-T01",
+              "title": "Basic constructions",
+              "order": 1,
+              "conceptCodes": [
+                "C7_BASIC_CONSTRUCTIONS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH14-T02",
+              "title": "Tessellations and tilings",
+              "order": 2,
+              "conceptCodes": [
+                "C7_TESSELLATIONS_AND_TILINGS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH14-T03",
+              "title": "Angle and side constraints in constructions",
+              "order": 3,
+              "conceptCodes": [
+                "C7_ANGLE_AND_SIDE_CONSTRAINTS_IN"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C7-CH15-FINDING-THE-UNKNOWN",
+          "chapterNumber": 15,
+          "titleEn": "Finding the Unknown",
+          "titleHi": "",
+          "unitName": "Finding the Unknown",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C7-CH14-CONSTRUCTIONS-AND-TILINGS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C7-CH15-T01",
+              "title": "Simple equations",
+              "order": 1,
+              "conceptCodes": [
+                "C7_SIMPLE_EQUATIONS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH15-T02",
+              "title": "Forming equations from situations",
+              "order": 2,
+              "conceptCodes": [
+                "C7_FORMING_EQUATIONS_FROM_SITUATIONS"
+              ]
+            },
+            {
+              "topicCode": "C7-CH15-T03",
+              "title": "Solving one-step and two-step equations",
+              "order": 3,
+              "conceptCodes": [
+                "C7_SOLVING_ONE_STEP_AND_TWO"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "classLevel": 8,
+      "ncertClass": "CLASS_8",
+      "title": "Class 8 Mathematics",
+      "chapters": [
+        {
+          "chapterCode": "C8-CH01-A-SQUARE-AND-A",
+          "chapterNumber": 1,
+          "titleEn": "A Square and A Cube",
+          "titleHi": "",
+          "unitName": "A Square and A Cube",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [],
+          "topics": [
+            {
+              "topicCode": "C8-CH01-T01",
+              "title": "Square numbers",
+              "order": 1,
+              "conceptCodes": [
+                "C8_SQUARE_NUMBERS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH01-T02",
+              "title": "Cube numbers",
+              "order": 2,
+              "conceptCodes": [
+                "C8_CUBE_NUMBERS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH01-T03",
+              "title": "Patterns in squares and cubes",
+              "order": 3,
+              "conceptCodes": [
+                "C8_PATTERNS_IN_SQUARES_AND_CUBES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH02-POWER-PLAY",
+          "chapterNumber": 2,
+          "titleEn": "Power Play",
+          "titleHi": "",
+          "unitName": "Power Play",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C8-CH01-A-SQUARE-AND-A"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH02-T01",
+              "title": "Powers and exponents",
+              "order": 1,
+              "conceptCodes": [
+                "C8_POWERS_AND_EXPONENTS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH02-T02",
+              "title": "Laws of exponents",
+              "order": 2,
+              "conceptCodes": [
+                "C8_LAWS_OF_EXPONENTS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH02-T03",
+              "title": "Negative powers and scientific notation",
+              "order": 3,
+              "conceptCodes": [
+                "C8_NEGATIVE_POWERS_AND_SCIENTIFIC_NOTATION"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH03-A-STORY-OF-NUMBERS",
+          "chapterNumber": 3,
+          "titleEn": "A Story of Numbers",
+          "titleHi": "",
+          "unitName": "A Story of Numbers",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C8-CH02-POWER-PLAY"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH03-T01",
+              "title": "Number systems",
+              "order": 1,
+              "conceptCodes": [
+                "C8_NUMBER_SYSTEMS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH03-T02",
+              "title": "Factors, multiples and divisibility",
+              "order": 2,
+              "conceptCodes": [
+                "C8_FACTORS_MULTIPLES_AND_DIVISIBILITY"
+              ]
+            },
+            {
+              "topicCode": "C8-CH03-T03",
+              "title": "Rational and irrational number ideas",
+              "order": 3,
+              "conceptCodes": [
+                "C8_RATIONAL_AND_IRRATIONAL_NUMBER_IDEAS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH04-QUADRILATERALS",
+          "chapterNumber": 4,
+          "titleEn": "Quadrilaterals",
+          "titleHi": "",
+          "unitName": "Quadrilaterals",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C8-CH03-A-STORY-OF-NUMBERS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH04-T01",
+              "title": "Properties of quadrilaterals",
+              "order": 1,
+              "conceptCodes": [
+                "C8_PROPERTIES_OF_QUADRILATERALS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH04-T02",
+              "title": "Angle sums",
+              "order": 2,
+              "conceptCodes": [
+                "C8_ANGLE_SUMS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH04-T03",
+              "title": "Parallelograms and special quadrilaterals",
+              "order": 3,
+              "conceptCodes": [
+                "C8_PARALLELOGRAMS_AND_SPECIAL_QUADRILATERALS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH05-NUMBER-PLAY",
+          "chapterNumber": 5,
+          "titleEn": "Number Play",
+          "titleHi": "",
+          "unitName": "Number Play",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C8-CH04-QUADRILATERALS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH05-T01",
+              "title": "Divisibility games",
+              "order": 1,
+              "conceptCodes": [
+                "C8_DIVISIBILITY_GAMES"
+              ]
+            },
+            {
+              "topicCode": "C8-CH05-T02",
+              "title": "Patterns and puzzles",
+              "order": 2,
+              "conceptCodes": [
+                "C8_PATTERNS_AND_PUZZLES"
+              ]
+            },
+            {
+              "topicCode": "C8-CH05-T03",
+              "title": "Reasoning with numbers",
+              "order": 3,
+              "conceptCodes": [
+                "C8_REASONING_WITH_NUMBERS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH06-WE-DISTRIBUTE-YET-THINGS",
+          "chapterNumber": 6,
+          "titleEn": "We Distribute, Yet Things Multiply",
+          "titleHi": "",
+          "unitName": "We Distribute, Yet Things Multiply",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C8-CH05-NUMBER-PLAY"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH06-T01",
+              "title": "Distributive property",
+              "order": 1,
+              "conceptCodes": [
+                "C8_DISTRIBUTIVE_PROPERTY"
+              ]
+            },
+            {
+              "topicCode": "C8-CH06-T02",
+              "title": "Products of sums",
+              "order": 2,
+              "conceptCodes": [
+                "C8_PRODUCTS_OF_SUMS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH06-T03",
+              "title": "Area models for multiplication",
+              "order": 3,
+              "conceptCodes": [
+                "C8_AREA_MODELS_FOR_MULTIPLICATION"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH07-PROPORTIONAL-REASONING-1",
+          "chapterNumber": 7,
+          "titleEn": "Proportional Reasoning-1",
+          "titleHi": "",
+          "unitName": "Proportional Reasoning-1",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C8-CH06-WE-DISTRIBUTE-YET-THINGS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH07-T01",
+              "title": "Ratio and proportion",
+              "order": 1,
+              "conceptCodes": [
+                "C8_RATIO_AND_PROPORTION"
+              ]
+            },
+            {
+              "topicCode": "C8-CH07-T02",
+              "title": "Direct proportion",
+              "order": 2,
+              "conceptCodes": [
+                "C8_DIRECT_PROPORTION"
+              ]
+            },
+            {
+              "topicCode": "C8-CH07-T03",
+              "title": "Unitary method",
+              "order": 3,
+              "conceptCodes": [
+                "C8_UNITARY_METHOD"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH08-FRACTIONS-IN-DISGUISE",
+          "chapterNumber": 8,
+          "titleEn": "Fractions in Disguise",
+          "titleHi": "",
+          "unitName": "Fractions in Disguise",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C8-CH07-PROPORTIONAL-REASONING-1"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH08-T01",
+              "title": "Equivalent fractions",
+              "order": 1,
+              "conceptCodes": [
+                "C8_EQUIVALENT_FRACTIONS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH08-T02",
+              "title": "Rational numbers as fractions",
+              "order": 2,
+              "conceptCodes": [
+                "C8_RATIONAL_NUMBERS_AS_FRACTIONS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH08-T03",
+              "title": "Operations with fractional forms",
+              "order": 3,
+              "conceptCodes": [
+                "C8_OPERATIONS_WITH_FRACTIONAL_FORMS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH09-THE-BAUDHAYANA-PYTHAGORAS-THEOREM",
+          "chapterNumber": 9,
+          "titleEn": "The Baudhayana-Pythagoras Theorem",
+          "titleHi": "",
+          "unitName": "The Baudhayana-Pythagoras Theorem",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C8-CH08-FRACTIONS-IN-DISGUISE"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH09-T01",
+              "title": "Right triangles",
+              "order": 1,
+              "conceptCodes": [
+                "C8_RIGHT_TRIANGLES"
+              ]
+            },
+            {
+              "topicCode": "C8-CH09-T02",
+              "title": "Pythagoras theorem",
+              "order": 2,
+              "conceptCodes": [
+                "C8_PYTHAGORAS_THEOREM"
+              ]
+            },
+            {
+              "topicCode": "C8-CH09-T03",
+              "title": "Applications of distance in geometry",
+              "order": 3,
+              "conceptCodes": [
+                "C8_APPLICATIONS_OF_DISTANCE_IN_GEOMETRY"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH10-PROPORTIONAL-REASONING-2",
+          "chapterNumber": 10,
+          "titleEn": "Proportional Reasoning-2",
+          "titleHi": "",
+          "unitName": "Proportional Reasoning-2",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C8-CH09-THE-BAUDHAYANA-PYTHAGORAS-THEOREM"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH10-T01",
+              "title": "Percentages",
+              "order": 1,
+              "conceptCodes": [
+                "C8_PERCENTAGES"
+              ]
+            },
+            {
+              "topicCode": "C8-CH10-T02",
+              "title": "Change, discount and tax",
+              "order": 2,
+              "conceptCodes": [
+                "C8_CHANGE_DISCOUNT_AND_TAX"
+              ]
+            },
+            {
+              "topicCode": "C8-CH10-T03",
+              "title": "Compound comparison",
+              "order": 3,
+              "conceptCodes": [
+                "C8_COMPOUND_COMPARISON"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH11-EXPLORING-SOME-GEOMETRIC-THEMES",
+          "chapterNumber": 11,
+          "titleEn": "Exploring Some Geometric Themes",
+          "titleHi": "",
+          "unitName": "Exploring Some Geometric Themes",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C8-CH10-PROPORTIONAL-REASONING-2"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH11-T01",
+              "title": "Angles and lines",
+              "order": 1,
+              "conceptCodes": [
+                "C8_ANGLES_AND_LINES"
+              ]
+            },
+            {
+              "topicCode": "C8-CH11-T02",
+              "title": "Symmetry and transformations",
+              "order": 2,
+              "conceptCodes": [
+                "C8_SYMMETRY_AND_TRANSFORMATIONS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH11-T03",
+              "title": "Geometric reasoning",
+              "order": 3,
+              "conceptCodes": [
+                "C8_GEOMETRIC_REASONING"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH12-TALES-BY-DOTS-AND",
+          "chapterNumber": 12,
+          "titleEn": "Tales by Dots and Lines",
+          "titleHi": "",
+          "unitName": "Tales by Dots and Lines",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C8-CH11-EXPLORING-SOME-GEOMETRIC-THEMES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH12-T01",
+              "title": "Graphs and networks",
+              "order": 1,
+              "conceptCodes": [
+                "C8_GRAPHS_AND_NETWORKS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH12-T02",
+              "title": "Coordinate representation",
+              "order": 2,
+              "conceptCodes": [
+                "C8_COORDINATE_REPRESENTATION"
+              ]
+            },
+            {
+              "topicCode": "C8-CH12-T03",
+              "title": "Interpreting relationships visually",
+              "order": 3,
+              "conceptCodes": [
+                "C8_INTERPRETING_RELATIONSHIPS_VISUALLY"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH13-ALGEBRA-PLAY",
+          "chapterNumber": 13,
+          "titleEn": "Algebra Play",
+          "titleHi": "",
+          "unitName": "Algebra Play",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C8-CH12-TALES-BY-DOTS-AND"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH13-T01",
+              "title": "Algebraic expressions",
+              "order": 1,
+              "conceptCodes": [
+                "C8_ALGEBRAIC_EXPRESSIONS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH13-T02",
+              "title": "Identities",
+              "order": 2,
+              "conceptCodes": [
+                "C8_IDENTITIES"
+              ]
+            },
+            {
+              "topicCode": "C8-CH13-T03",
+              "title": "Linear equations",
+              "order": 3,
+              "conceptCodes": [
+                "C8_LINEAR_EQUATIONS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C8-CH14-AREA",
+          "chapterNumber": 14,
+          "titleEn": "Area",
+          "titleHi": "",
+          "unitName": "Area",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C8-CH13-ALGEBRA-PLAY"
+          ],
+          "topics": [
+            {
+              "topicCode": "C8-CH14-T01",
+              "title": "Area of plane figures",
+              "order": 1,
+              "conceptCodes": [
+                "C8_AREA_OF_PLANE_FIGURES"
+              ]
+            },
+            {
+              "topicCode": "C8-CH14-T02",
+              "title": "Composite areas",
+              "order": 2,
+              "conceptCodes": [
+                "C8_COMPOSITE_AREAS"
+              ]
+            },
+            {
+              "topicCode": "C8-CH14-T03",
+              "title": "Surface area intuition",
+              "order": 3,
+              "conceptCodes": [
+                "C8_SURFACE_AREA_INTUITION"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "classLevel": 9,
+      "ncertClass": "CLASS_9",
+      "title": "Class 9 Mathematics",
+      "chapters": [
+        {
+          "chapterCode": "C9-CH01-ORIENTING-YOURSELF-THE-USE",
+          "chapterNumber": 1,
+          "titleEn": "Orienting Yourself: The Use of Coordinates",
+          "titleHi": "",
+          "unitName": "Orienting Yourself: The Use of Coordinates",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [],
+          "topics": [
+            {
+              "topicCode": "C9-CH01-T01",
+              "title": "Cartesian plane",
+              "order": 1,
+              "conceptCodes": [
+                "C9_CARTESIAN_PLANE"
+              ]
+            },
+            {
+              "topicCode": "C9-CH01-T02",
+              "title": "Plotting ordered pairs",
+              "order": 2,
+              "conceptCodes": [
+                "C9_PLOTTING_ORDERED_PAIRS"
+              ]
+            },
+            {
+              "topicCode": "C9-CH01-T03",
+              "title": "Distance and movement on grids",
+              "order": 3,
+              "conceptCodes": [
+                "C9_DISTANCE_AND_MOVEMENT_ON_GRIDS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C9-CH02-INTRODUCTION-TO-LINEAR-POLYNOMIALS",
+          "chapterNumber": 2,
+          "titleEn": "Introduction to Linear Polynomials",
+          "titleHi": "",
+          "unitName": "Introduction to Linear Polynomials",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C9-CH01-ORIENTING-YOURSELF-THE-USE"
+          ],
+          "topics": [
+            {
+              "topicCode": "C9-CH02-T01",
+              "title": "Linear expressions",
+              "order": 1,
+              "conceptCodes": [
+                "C9_LINEAR_EXPRESSIONS"
+              ]
+            },
+            {
+              "topicCode": "C9-CH02-T02",
+              "title": "Graphs of linear polynomials",
+              "order": 2,
+              "conceptCodes": [
+                "C9_GRAPHS_OF_LINEAR_POLYNOMIALS"
+              ]
+            },
+            {
+              "topicCode": "C9-CH02-T03",
+              "title": "Zeroes and simple modelling",
+              "order": 3,
+              "conceptCodes": [
+                "C9_ZEROES_AND_SIMPLE_MODELLING"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C9-CH03-THE-WORLD-OF-NUMBERS",
+          "chapterNumber": 3,
+          "titleEn": "The World of Numbers",
+          "titleHi": "",
+          "unitName": "The World of Numbers",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C9-CH02-INTRODUCTION-TO-LINEAR-POLYNOMIALS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C9-CH03-T01",
+              "title": "Natural, integer and rational numbers",
+              "order": 1,
+              "conceptCodes": [
+                "C9_NATURAL_INTEGER_AND_RATIONAL_NUMBERS"
+              ]
+            },
+            {
+              "topicCode": "C9-CH03-T02",
+              "title": "Irrational numbers",
+              "order": 2,
+              "conceptCodes": [
+                "C9_IRRATIONAL_NUMBERS"
+              ]
+            },
+            {
+              "topicCode": "C9-CH03-T03",
+              "title": "Real number line",
+              "order": 3,
+              "conceptCodes": [
+                "C9_REAL_NUMBER_LINE"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C9-CH04-EXPLORING-ALGEBRAIC-IDENTITIES",
+          "chapterNumber": 4,
+          "titleEn": "Exploring Algebraic Identities",
+          "titleHi": "",
+          "unitName": "Exploring Algebraic Identities",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C9-CH03-THE-WORLD-OF-NUMBERS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C9-CH04-T01",
+              "title": "Square identities",
+              "order": 1,
+              "conceptCodes": [
+                "C9_SQUARE_IDENTITIES"
+              ]
+            },
+            {
+              "topicCode": "C9-CH04-T02",
+              "title": "Factorisation using identities",
+              "order": 2,
+              "conceptCodes": [
+                "C9_FACTORISATION_USING_IDENTITIES"
+              ]
+            },
+            {
+              "topicCode": "C9-CH04-T03",
+              "title": "Geometric meaning of identities",
+              "order": 3,
+              "conceptCodes": [
+                "C9_GEOMETRIC_MEANING_OF_IDENTITIES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C9-CH05-I-M-UP-AND",
+          "chapterNumber": 5,
+          "titleEn": "I’m Up and Down, and Round and Round",
+          "titleHi": "",
+          "unitName": "I’m Up and Down, and Round and Round",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 2,
+          "prerequisiteChapterCodes": [
+            "C9-CH04-EXPLORING-ALGEBRAIC-IDENTITIES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C9-CH05-T01",
+              "title": "Circle terminology",
+              "order": 1,
+              "conceptCodes": [
+                "C9_CIRCLE_TERMINOLOGY"
+              ]
+            },
+            {
+              "topicCode": "C9-CH05-T02",
+              "title": "Symmetry of circles",
+              "order": 2,
+              "conceptCodes": [
+                "C9_SYMMETRY_OF_CIRCLES"
+              ]
+            },
+            {
+              "topicCode": "C9-CH05-T03",
+              "title": "Chords, arcs and angles",
+              "order": 3,
+              "conceptCodes": [
+                "C9_CHORDS_ARCS_AND_ANGLES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C9-CH06-MEASURING-SPACE-PERIMETER-AND",
+          "chapterNumber": 6,
+          "titleEn": "Measuring Space: Perimeter and Area",
+          "titleHi": "",
+          "unitName": "Measuring Space: Perimeter and Area",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C9-CH05-I-M-UP-AND"
+          ],
+          "topics": [
+            {
+              "topicCode": "C9-CH06-T01",
+              "title": "Circumference and arcs",
+              "order": 1,
+              "conceptCodes": [
+                "C9_CIRCUMFERENCE_AND_ARCS"
+              ]
+            },
+            {
+              "topicCode": "C9-CH06-T02",
+              "title": "Area of circles and sectors",
+              "order": 2,
+              "conceptCodes": [
+                "C9_AREA_OF_CIRCLES_AND_SECTORS"
+              ]
+            },
+            {
+              "topicCode": "C9-CH06-T03",
+              "title": "Perimeter and area of composite figures",
+              "order": 3,
+              "conceptCodes": [
+                "C9_PERIMETER_AND_AREA_OF_COMPOSITE"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C9-CH07-THE-MATHEMATICS-OF-MAYBE",
+          "chapterNumber": 7,
+          "titleEn": "The Mathematics of Maybe: Introduction to Probability",
+          "titleHi": "",
+          "unitName": "The Mathematics of Maybe: Introduction to Probability",
+          "bigIdea": "Data and probability help describe variation, uncertainty and evidence-based decisions.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C9-CH06-MEASURING-SPACE-PERIMETER-AND"
+          ],
+          "topics": [
+            {
+              "topicCode": "C9-CH07-T01",
+              "title": "Experimental probability",
+              "order": 1,
+              "conceptCodes": [
+                "C9_EXPERIMENTAL_PROBABILITY"
+              ]
+            },
+            {
+              "topicCode": "C9-CH07-T02",
+              "title": "Theoretical probability",
+              "order": 2,
+              "conceptCodes": [
+                "C9_THEORETICAL_PROBABILITY"
+              ]
+            },
+            {
+              "topicCode": "C9-CH07-T03",
+              "title": "Sampling and estimates",
+              "order": 3,
+              "conceptCodes": [
+                "C9_SAMPLING_AND_ESTIMATES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C9-CH08-PREDICTING-WHAT-COMES-NEXT",
+          "chapterNumber": 8,
+          "titleEn": "Predicting What Comes Next: Exploring Sequences and Progressions",
+          "titleHi": "",
+          "unitName": "Predicting What Comes Next: Exploring Sequences and Progressions",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C9-CH07-THE-MATHEMATICS-OF-MAYBE"
+          ],
+          "topics": [
+            {
+              "topicCode": "C9-CH08-T01",
+              "title": "Number sequences",
+              "order": 1,
+              "conceptCodes": [
+                "C9_NUMBER_SEQUENCES"
+              ]
+            },
+            {
+              "topicCode": "C9-CH08-T02",
+              "title": "Arithmetic progressions",
+              "order": 2,
+              "conceptCodes": [
+                "C9_ARITHMETIC_PROGRESSIONS"
+              ]
+            },
+            {
+              "topicCode": "C9-CH08-T03",
+              "title": "Geometric progressions",
+              "order": 3,
+              "conceptCodes": [
+                "C9_GEOMETRIC_PROGRESSIONS"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "classLevel": 10,
+      "ncertClass": "CLASS_10",
+      "title": "Class 10 Mathematics",
+      "chapters": [
+        {
+          "chapterCode": "C10-CH01-REAL-NUMBERS",
+          "chapterNumber": 1,
+          "titleEn": "Real Numbers",
+          "titleHi": "",
+          "unitName": "Real Numbers",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [],
+          "topics": [
+            {
+              "topicCode": "C10-CH01-T01",
+              "title": "Euclid division lemma",
+              "order": 1,
+              "conceptCodes": [
+                "C10_EUCLID_DIVISION_LEMMA"
+              ]
+            },
+            {
+              "topicCode": "C10-CH01-T02",
+              "title": "Prime factorisation",
+              "order": 2,
+              "conceptCodes": [
+                "C10_PRIME_FACTORISATION"
+              ]
+            },
+            {
+              "topicCode": "C10-CH01-T03",
+              "title": "Irrationality and decimal expansion",
+              "order": 3,
+              "conceptCodes": [
+                "C10_IRRATIONALITY_AND_DECIMAL_EXPANSION"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH02-POLYNOMIALS",
+          "chapterNumber": 2,
+          "titleEn": "Polynomials",
+          "titleHi": "",
+          "unitName": "Polynomials",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C10-CH01-REAL-NUMBERS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH02-T01",
+              "title": "Zeroes of polynomials",
+              "order": 1,
+              "conceptCodes": [
+                "C10_ZEROES_OF_POLYNOMIALS"
+              ]
+            },
+            {
+              "topicCode": "C10-CH02-T02",
+              "title": "Relationship between zeroes and coefficients",
+              "order": 2,
+              "conceptCodes": [
+                "C10_RELATIONSHIP_BETWEEN_ZEROES_AND_COEFFICIENTS"
+              ]
+            },
+            {
+              "topicCode": "C10-CH02-T03",
+              "title": "Division algorithm for polynomials",
+              "order": 3,
+              "conceptCodes": [
+                "C10_DIVISION_ALGORITHM_FOR_POLYNOMIALS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH03-PAIR-OF-LINEAR-EQUATIONS",
+          "chapterNumber": 3,
+          "titleEn": "Pair of Linear Equations in Two Variables",
+          "titleHi": "",
+          "unitName": "Pair of Linear Equations in Two Variables",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C10-CH02-POLYNOMIALS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH03-T01",
+              "title": "Graphical method",
+              "order": 1,
+              "conceptCodes": [
+                "C10_GRAPHICAL_METHOD"
+              ]
+            },
+            {
+              "topicCode": "C10-CH03-T02",
+              "title": "Substitution and elimination",
+              "order": 2,
+              "conceptCodes": [
+                "C10_SUBSTITUTION_AND_ELIMINATION"
+              ]
+            },
+            {
+              "topicCode": "C10-CH03-T03",
+              "title": "Cross multiplication method",
+              "order": 3,
+              "conceptCodes": [
+                "C10_CROSS_MULTIPLICATION_METHOD"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH04-QUADRATIC-EQUATIONS",
+          "chapterNumber": 4,
+          "titleEn": "Quadratic Equations",
+          "titleHi": "",
+          "unitName": "Quadratic Equations",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C10-CH03-PAIR-OF-LINEAR-EQUATIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH04-T01",
+              "title": "Standard form",
+              "order": 1,
+              "conceptCodes": [
+                "C10_STANDARD_FORM"
+              ]
+            },
+            {
+              "topicCode": "C10-CH04-T02",
+              "title": "Factorisation method",
+              "order": 2,
+              "conceptCodes": [
+                "C10_FACTORISATION_METHOD"
+              ]
+            },
+            {
+              "topicCode": "C10-CH04-T03",
+              "title": "Quadratic formula and discriminant",
+              "order": 3,
+              "conceptCodes": [
+                "C10_QUADRATIC_FORMULA_AND_DISCRIMINANT"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH05-ARITHMETIC-PROGRESSIONS",
+          "chapterNumber": 5,
+          "titleEn": "Arithmetic Progressions",
+          "titleHi": "",
+          "unitName": "Arithmetic Progressions",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C10-CH04-QUADRATIC-EQUATIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH05-T01",
+              "title": "nth term of an AP",
+              "order": 1,
+              "conceptCodes": [
+                "C10_NTH_TERM_OF_AN_AP"
+              ]
+            },
+            {
+              "topicCode": "C10-CH05-T02",
+              "title": "Sum of first n terms",
+              "order": 2,
+              "conceptCodes": [
+                "C10_SUM_OF_FIRST_N_TERMS"
+              ]
+            },
+            {
+              "topicCode": "C10-CH05-T03",
+              "title": "Applications of AP",
+              "order": 3,
+              "conceptCodes": [
+                "C10_APPLICATIONS_OF_AP"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH06-TRIANGLES",
+          "chapterNumber": 6,
+          "titleEn": "Triangles",
+          "titleHi": "",
+          "unitName": "Triangles",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C10-CH05-ARITHMETIC-PROGRESSIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH06-T01",
+              "title": "Similarity of triangles",
+              "order": 1,
+              "conceptCodes": [
+                "C10_SIMILARITY_OF_TRIANGLES"
+              ]
+            },
+            {
+              "topicCode": "C10-CH06-T02",
+              "title": "Criteria for similarity",
+              "order": 2,
+              "conceptCodes": [
+                "C10_CRITERIA_FOR_SIMILARITY"
+              ]
+            },
+            {
+              "topicCode": "C10-CH06-T03",
+              "title": "Areas of similar triangles and Pythagoras",
+              "order": 3,
+              "conceptCodes": [
+                "C10_AREAS_OF_SIMILAR_TRIANGLES_AND"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH07-COORDINATE-GEOMETRY",
+          "chapterNumber": 7,
+          "titleEn": "Coordinate Geometry",
+          "titleHi": "",
+          "unitName": "Coordinate Geometry",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C10-CH06-TRIANGLES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH07-T01",
+              "title": "Distance formula",
+              "order": 1,
+              "conceptCodes": [
+                "C10_DISTANCE_FORMULA"
+              ]
+            },
+            {
+              "topicCode": "C10-CH07-T02",
+              "title": "Section formula",
+              "order": 2,
+              "conceptCodes": [
+                "C10_SECTION_FORMULA"
+              ]
+            },
+            {
+              "topicCode": "C10-CH07-T03",
+              "title": "Area of triangle from coordinates",
+              "order": 3,
+              "conceptCodes": [
+                "C10_AREA_OF_TRIANGLE_FROM_COORDINATES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH08-INTRODUCTION-TO-TRIGONOMETRY",
+          "chapterNumber": 8,
+          "titleEn": "Introduction to Trigonometry",
+          "titleHi": "",
+          "unitName": "Introduction to Trigonometry",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C10-CH07-COORDINATE-GEOMETRY"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH08-T01",
+              "title": "Trigonometric ratios",
+              "order": 1,
+              "conceptCodes": [
+                "C10_TRIGONOMETRIC_RATIOS"
+              ]
+            },
+            {
+              "topicCode": "C10-CH08-T02",
+              "title": "Trigonometric identities",
+              "order": 2,
+              "conceptCodes": [
+                "C10_TRIGONOMETRIC_IDENTITIES"
+              ]
+            },
+            {
+              "topicCode": "C10-CH08-T03",
+              "title": "Ratios of standard angles",
+              "order": 3,
+              "conceptCodes": [
+                "C10_RATIOS_OF_STANDARD_ANGLES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH09-SOME-APPLICATIONS-OF-TRIGONOMETRY",
+          "chapterNumber": 9,
+          "titleEn": "Some Applications of Trigonometry",
+          "titleHi": "",
+          "unitName": "Some Applications of Trigonometry",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 3,
+          "prerequisiteChapterCodes": [
+            "C10-CH08-INTRODUCTION-TO-TRIGONOMETRY"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH09-T01",
+              "title": "Heights and distances",
+              "order": 1,
+              "conceptCodes": [
+                "C10_HEIGHTS_AND_DISTANCES"
+              ]
+            },
+            {
+              "topicCode": "C10-CH09-T02",
+              "title": "Angles of elevation and depression",
+              "order": 2,
+              "conceptCodes": [
+                "C10_ANGLES_OF_ELEVATION_AND_DEPRESSION"
+              ]
+            },
+            {
+              "topicCode": "C10-CH09-T03",
+              "title": "Right triangle modelling",
+              "order": 3,
+              "conceptCodes": [
+                "C10_RIGHT_TRIANGLE_MODELLING"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH10-CIRCLES",
+          "chapterNumber": 10,
+          "titleEn": "Circles",
+          "titleHi": "",
+          "unitName": "Circles",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C10-CH09-SOME-APPLICATIONS-OF-TRIGONOMETRY"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH10-T01",
+              "title": "Tangent to a circle",
+              "order": 1,
+              "conceptCodes": [
+                "C10_TANGENT_TO_A_CIRCLE"
+              ]
+            },
+            {
+              "topicCode": "C10-CH10-T02",
+              "title": "Number of tangents",
+              "order": 2,
+              "conceptCodes": [
+                "C10_NUMBER_OF_TANGENTS"
+              ]
+            },
+            {
+              "topicCode": "C10-CH10-T03",
+              "title": "Tangent length theorem",
+              "order": 3,
+              "conceptCodes": [
+                "C10_TANGENT_LENGTH_THEOREM"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH11-AREAS-RELATED-TO-CIRCLES",
+          "chapterNumber": 11,
+          "titleEn": "Areas Related to Circles",
+          "titleHi": "",
+          "unitName": "Areas Related to Circles",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C10-CH10-CIRCLES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH11-T01",
+              "title": "Area of sector",
+              "order": 1,
+              "conceptCodes": [
+                "C10_AREA_OF_SECTOR"
+              ]
+            },
+            {
+              "topicCode": "C10-CH11-T02",
+              "title": "Area of segment",
+              "order": 2,
+              "conceptCodes": [
+                "C10_AREA_OF_SEGMENT"
+              ]
+            },
+            {
+              "topicCode": "C10-CH11-T03",
+              "title": "Areas of combinations of plane figures",
+              "order": 3,
+              "conceptCodes": [
+                "C10_AREAS_OF_COMBINATIONS_OF_PLANE"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH12-SURFACE-AREAS-AND-VOLUMES",
+          "chapterNumber": 12,
+          "titleEn": "Surface Areas and Volumes",
+          "titleHi": "",
+          "unitName": "Surface Areas and Volumes",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C10-CH11-AREAS-RELATED-TO-CIRCLES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH12-T01",
+              "title": "Surface area of combinations",
+              "order": 1,
+              "conceptCodes": [
+                "C10_SURFACE_AREA_OF_COMBINATIONS"
+              ]
+            },
+            {
+              "topicCode": "C10-CH12-T02",
+              "title": "Volume of combinations",
+              "order": 2,
+              "conceptCodes": [
+                "C10_VOLUME_OF_COMBINATIONS"
+              ]
+            },
+            {
+              "topicCode": "C10-CH12-T03",
+              "title": "Conversion of solids",
+              "order": 3,
+              "conceptCodes": [
+                "C10_CONVERSION_OF_SOLIDS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH13-STATISTICS",
+          "chapterNumber": 13,
+          "titleEn": "Statistics",
+          "titleHi": "",
+          "unitName": "Statistics",
+          "bigIdea": "Data and probability help describe variation, uncertainty and evidence-based decisions.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C10-CH12-SURFACE-AREAS-AND-VOLUMES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH13-T01",
+              "title": "Mean of grouped data",
+              "order": 1,
+              "conceptCodes": [
+                "C10_MEAN_OF_GROUPED_DATA"
+              ]
+            },
+            {
+              "topicCode": "C10-CH13-T02",
+              "title": "Mode of grouped data",
+              "order": 2,
+              "conceptCodes": [
+                "C10_MODE_OF_GROUPED_DATA"
+              ]
+            },
+            {
+              "topicCode": "C10-CH13-T03",
+              "title": "Median of grouped data",
+              "order": 3,
+              "conceptCodes": [
+                "C10_MEDIAN_OF_GROUPED_DATA"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C10-CH14-PROBABILITY",
+          "chapterNumber": 14,
+          "titleEn": "Probability",
+          "titleHi": "",
+          "unitName": "Probability",
+          "bigIdea": "Data and probability help describe variation, uncertainty and evidence-based decisions.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C10-CH13-STATISTICS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C10-CH14-T01",
+              "title": "Theoretical probability",
+              "order": 1,
+              "conceptCodes": [
+                "C10_THEORETICAL_PROBABILITY"
+              ]
+            },
+            {
+              "topicCode": "C10-CH14-T02",
+              "title": "Complementary events",
+              "order": 2,
+              "conceptCodes": [
+                "C10_COMPLEMENTARY_EVENTS"
+              ]
+            },
+            {
+              "topicCode": "C10-CH14-T03",
+              "title": "Simple probability models",
+              "order": 3,
+              "conceptCodes": [
+                "C10_SIMPLE_PROBABILITY_MODELS"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "classLevel": 11,
+      "ncertClass": "CLASS_11",
+      "title": "Class 11 Mathematics",
+      "chapters": [
+        {
+          "chapterCode": "C11-CH01-SETS",
+          "chapterNumber": 1,
+          "titleEn": "Sets",
+          "titleHi": "",
+          "unitName": "Sets",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [],
+          "topics": [
+            {
+              "topicCode": "C11-CH01-T01",
+              "title": "Set representation",
+              "order": 1,
+              "conceptCodes": [
+                "C11_SET_REPRESENTATION"
+              ]
+            },
+            {
+              "topicCode": "C11-CH01-T02",
+              "title": "Subsets and Venn diagrams",
+              "order": 2,
+              "conceptCodes": [
+                "C11_SUBSETS_AND_VENN_DIAGRAMS"
+              ]
+            },
+            {
+              "topicCode": "C11-CH01-T03",
+              "title": "Operations on sets",
+              "order": 3,
+              "conceptCodes": [
+                "C11_OPERATIONS_ON_SETS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH02-RELATIONS-AND-FUNCTIONS",
+          "chapterNumber": 2,
+          "titleEn": "Relations and Functions",
+          "titleHi": "",
+          "unitName": "Relations and Functions",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C11-CH01-SETS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH02-T01",
+              "title": "Cartesian product",
+              "order": 1,
+              "conceptCodes": [
+                "C11_CARTESIAN_PRODUCT"
+              ]
+            },
+            {
+              "topicCode": "C11-CH02-T02",
+              "title": "Relations",
+              "order": 2,
+              "conceptCodes": [
+                "C11_RELATIONS"
+              ]
+            },
+            {
+              "topicCode": "C11-CH02-T03",
+              "title": "Functions and domain-range",
+              "order": 3,
+              "conceptCodes": [
+                "C11_FUNCTIONS_AND_DOMAIN_RANGE"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH03-TRIGONOMETRIC-FUNCTIONS",
+          "chapterNumber": 3,
+          "titleEn": "Trigonometric Functions",
+          "titleHi": "",
+          "unitName": "Trigonometric Functions",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C11-CH02-RELATIONS-AND-FUNCTIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH03-T01",
+              "title": "Angle measure",
+              "order": 1,
+              "conceptCodes": [
+                "C11_ANGLE_MEASURE"
+              ]
+            },
+            {
+              "topicCode": "C11-CH03-T02",
+              "title": "Trigonometric functions",
+              "order": 2,
+              "conceptCodes": [
+                "C11_TRIGONOMETRIC_FUNCTIONS"
+              ]
+            },
+            {
+              "topicCode": "C11-CH03-T03",
+              "title": "Sum and difference formulae",
+              "order": 3,
+              "conceptCodes": [
+                "C11_SUM_AND_DIFFERENCE_FORMULAE"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH04-COMPLEX-NUMBERS-AND-QUADRATIC",
+          "chapterNumber": 4,
+          "titleEn": "Complex Numbers and Quadratic Equations",
+          "titleHi": "",
+          "unitName": "Complex Numbers and Quadratic Equations",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C11-CH03-TRIGONOMETRIC-FUNCTIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH04-T01",
+              "title": "Complex number form",
+              "order": 1,
+              "conceptCodes": [
+                "C11_COMPLEX_NUMBER_FORM"
+              ]
+            },
+            {
+              "topicCode": "C11-CH04-T02",
+              "title": "Algebra of complex numbers",
+              "order": 2,
+              "conceptCodes": [
+                "C11_ALGEBRA_OF_COMPLEX_NUMBERS"
+              ]
+            },
+            {
+              "topicCode": "C11-CH04-T03",
+              "title": "Quadratic equations and roots",
+              "order": 3,
+              "conceptCodes": [
+                "C11_QUADRATIC_EQUATIONS_AND_ROOTS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH05-LINEAR-INEQUALITIES",
+          "chapterNumber": 5,
+          "titleEn": "Linear Inequalities",
+          "titleHi": "",
+          "unitName": "Linear Inequalities",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C11-CH04-COMPLEX-NUMBERS-AND-QUADRATIC"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH05-T01",
+              "title": "Solving inequalities",
+              "order": 1,
+              "conceptCodes": [
+                "C11_SOLVING_INEQUALITIES"
+              ]
+            },
+            {
+              "topicCode": "C11-CH05-T02",
+              "title": "Graphing solution sets",
+              "order": 2,
+              "conceptCodes": [
+                "C11_GRAPHING_SOLUTION_SETS"
+              ]
+            },
+            {
+              "topicCode": "C11-CH05-T03",
+              "title": "Systems of linear inequalities",
+              "order": 3,
+              "conceptCodes": [
+                "C11_SYSTEMS_OF_LINEAR_INEQUALITIES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH06-PERMUTATIONS-AND-COMBINATIONS",
+          "chapterNumber": 6,
+          "titleEn": "Permutations and Combinations",
+          "titleHi": "",
+          "unitName": "Permutations and Combinations",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C11-CH05-LINEAR-INEQUALITIES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH06-T01",
+              "title": "Fundamental counting principle",
+              "order": 1,
+              "conceptCodes": [
+                "C11_FUNDAMENTAL_COUNTING_PRINCIPLE"
+              ]
+            },
+            {
+              "topicCode": "C11-CH06-T02",
+              "title": "Permutations",
+              "order": 2,
+              "conceptCodes": [
+                "C11_PERMUTATIONS"
+              ]
+            },
+            {
+              "topicCode": "C11-CH06-T03",
+              "title": "Combinations",
+              "order": 3,
+              "conceptCodes": [
+                "C11_COMBINATIONS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH07-BINOMIAL-THEOREM",
+          "chapterNumber": 7,
+          "titleEn": "Binomial Theorem",
+          "titleHi": "",
+          "unitName": "Binomial Theorem",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C11-CH06-PERMUTATIONS-AND-COMBINATIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH07-T01",
+              "title": "Binomial expansion",
+              "order": 1,
+              "conceptCodes": [
+                "C11_BINOMIAL_EXPANSION"
+              ]
+            },
+            {
+              "topicCode": "C11-CH07-T02",
+              "title": "General term",
+              "order": 2,
+              "conceptCodes": [
+                "C11_GENERAL_TERM"
+              ]
+            },
+            {
+              "topicCode": "C11-CH07-T03",
+              "title": "Middle terms and coefficients",
+              "order": 3,
+              "conceptCodes": [
+                "C11_MIDDLE_TERMS_AND_COEFFICIENTS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH08-SEQUENCES-AND-SERIES",
+          "chapterNumber": 8,
+          "titleEn": "Sequences and Series",
+          "titleHi": "",
+          "unitName": "Sequences and Series",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C11-CH07-BINOMIAL-THEOREM"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH08-T01",
+              "title": "Arithmetic progression",
+              "order": 1,
+              "conceptCodes": [
+                "C11_ARITHMETIC_PROGRESSION"
+              ]
+            },
+            {
+              "topicCode": "C11-CH08-T02",
+              "title": "Geometric progression",
+              "order": 2,
+              "conceptCodes": [
+                "C11_GEOMETRIC_PROGRESSION"
+              ]
+            },
+            {
+              "topicCode": "C11-CH08-T03",
+              "title": "Special series",
+              "order": 3,
+              "conceptCodes": [
+                "C11_SPECIAL_SERIES"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH09-STRAIGHT-LINES",
+          "chapterNumber": 9,
+          "titleEn": "Straight Lines",
+          "titleHi": "",
+          "unitName": "Straight Lines",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C11-CH08-SEQUENCES-AND-SERIES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH09-T01",
+              "title": "Slope of a line",
+              "order": 1,
+              "conceptCodes": [
+                "C11_SLOPE_OF_A_LINE"
+              ]
+            },
+            {
+              "topicCode": "C11-CH09-T02",
+              "title": "Forms of line equation",
+              "order": 2,
+              "conceptCodes": [
+                "C11_FORMS_OF_LINE_EQUATION"
+              ]
+            },
+            {
+              "topicCode": "C11-CH09-T03",
+              "title": "Distance from a point to a line",
+              "order": 3,
+              "conceptCodes": [
+                "C11_DISTANCE_FROM_A_POINT_TO"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH10-CONIC-SECTIONS",
+          "chapterNumber": 10,
+          "titleEn": "Conic Sections",
+          "titleHi": "",
+          "unitName": "Conic Sections",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C11-CH09-STRAIGHT-LINES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH10-T01",
+              "title": "Circle",
+              "order": 1,
+              "conceptCodes": [
+                "C11_CIRCLE"
+              ]
+            },
+            {
+              "topicCode": "C11-CH10-T02",
+              "title": "Parabola",
+              "order": 2,
+              "conceptCodes": [
+                "C11_PARABOLA"
+              ]
+            },
+            {
+              "topicCode": "C11-CH10-T03",
+              "title": "Ellipse and hyperbola",
+              "order": 3,
+              "conceptCodes": [
+                "C11_ELLIPSE_AND_HYPERBOLA"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH11-INTRODUCTION-TO-THREE-DIMENSIONAL",
+          "chapterNumber": 11,
+          "titleEn": "Introduction to Three Dimensional Geometry",
+          "titleHi": "",
+          "unitName": "Introduction to Three Dimensional Geometry",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C11-CH10-CONIC-SECTIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH11-T01",
+              "title": "Coordinate axes and planes",
+              "order": 1,
+              "conceptCodes": [
+                "C11_COORDINATE_AXES_AND_PLANES"
+              ]
+            },
+            {
+              "topicCode": "C11-CH11-T02",
+              "title": "Coordinates in space",
+              "order": 2,
+              "conceptCodes": [
+                "C11_COORDINATES_IN_SPACE"
+              ]
+            },
+            {
+              "topicCode": "C11-CH11-T03",
+              "title": "Distance between two points",
+              "order": 3,
+              "conceptCodes": [
+                "C11_DISTANCE_BETWEEN_TWO_POINTS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH12-LIMITS-AND-DERIVATIVES",
+          "chapterNumber": 12,
+          "titleEn": "Limits and Derivatives",
+          "titleHi": "",
+          "unitName": "Limits and Derivatives",
+          "bigIdea": "Calculus describes change and accumulation through limits, derivatives and integrals.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C11-CH11-INTRODUCTION-TO-THREE-DIMENSIONAL"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH12-T01",
+              "title": "Limits",
+              "order": 1,
+              "conceptCodes": [
+                "C11_LIMITS"
+              ]
+            },
+            {
+              "topicCode": "C11-CH12-T02",
+              "title": "Limits of trigonometric functions",
+              "order": 2,
+              "conceptCodes": [
+                "C11_LIMITS_OF_TRIGONOMETRIC_FUNCTIONS"
+              ]
+            },
+            {
+              "topicCode": "C11-CH12-T03",
+              "title": "Derivative as rate of change",
+              "order": 3,
+              "conceptCodes": [
+                "C11_DERIVATIVE_AS_RATE_OF_CHANGE"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH13-STATISTICS",
+          "chapterNumber": 13,
+          "titleEn": "Statistics",
+          "titleHi": "",
+          "unitName": "Statistics",
+          "bigIdea": "Data and probability help describe variation, uncertainty and evidence-based decisions.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C11-CH12-LIMITS-AND-DERIVATIVES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH13-T01",
+              "title": "Measures of dispersion",
+              "order": 1,
+              "conceptCodes": [
+                "C11_MEASURES_OF_DISPERSION"
+              ]
+            },
+            {
+              "topicCode": "C11-CH13-T02",
+              "title": "Mean deviation",
+              "order": 2,
+              "conceptCodes": [
+                "C11_MEAN_DEVIATION"
+              ]
+            },
+            {
+              "topicCode": "C11-CH13-T03",
+              "title": "Variance and standard deviation",
+              "order": 3,
+              "conceptCodes": [
+                "C11_VARIANCE_AND_STANDARD_DEVIATION"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C11-CH14-PROBABILITY",
+          "chapterNumber": 14,
+          "titleEn": "Probability",
+          "titleHi": "",
+          "unitName": "Probability",
+          "bigIdea": "Data and probability help describe variation, uncertainty and evidence-based decisions.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C11-CH13-STATISTICS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C11-CH14-T01",
+              "title": "Random experiments and events",
+              "order": 1,
+              "conceptCodes": [
+                "C11_RANDOM_EXPERIMENTS_AND_EVENTS"
+              ]
+            },
+            {
+              "topicCode": "C11-CH14-T02",
+              "title": "Axiomatic probability",
+              "order": 2,
+              "conceptCodes": [
+                "C11_AXIOMATIC_PROBABILITY"
+              ]
+            },
+            {
+              "topicCode": "C11-CH14-T03",
+              "title": "Operations on events",
+              "order": 3,
+              "conceptCodes": [
+                "C11_OPERATIONS_ON_EVENTS"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "classLevel": 12,
+      "ncertClass": "CLASS_12",
+      "title": "Class 12 Mathematics",
+      "chapters": [
+        {
+          "chapterCode": "C12-CH01-RELATIONS-AND-FUNCTIONS",
+          "chapterNumber": 1,
+          "titleEn": "Relations and Functions",
+          "titleHi": "",
+          "unitName": "Relations and Functions",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [],
+          "topics": [
+            {
+              "topicCode": "C12-CH01-T01",
+              "title": "Types of relations",
+              "order": 1,
+              "conceptCodes": [
+                "C12_TYPES_OF_RELATIONS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH01-T02",
+              "title": "Types of functions",
+              "order": 2,
+              "conceptCodes": [
+                "C12_TYPES_OF_FUNCTIONS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH01-T03",
+              "title": "Composition and invertibility",
+              "order": 3,
+              "conceptCodes": [
+                "C12_COMPOSITION_AND_INVERTIBILITY"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH02-INVERSE-TRIGONOMETRIC-FUNCTIONS",
+          "chapterNumber": 2,
+          "titleEn": "Inverse Trigonometric Functions",
+          "titleHi": "",
+          "unitName": "Inverse Trigonometric Functions",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C12-CH01-RELATIONS-AND-FUNCTIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH02-T01",
+              "title": "Principal values",
+              "order": 1,
+              "conceptCodes": [
+                "C12_PRINCIPAL_VALUES"
+              ]
+            },
+            {
+              "topicCode": "C12-CH02-T02",
+              "title": "Graphs of inverse trigonometric functions",
+              "order": 2,
+              "conceptCodes": [
+                "C12_GRAPHS_OF_INVERSE_TRIGONOMETRIC_FUNCTIONS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH02-T03",
+              "title": "Identities involving inverse trigonometric functions",
+              "order": 3,
+              "conceptCodes": [
+                "C12_IDENTITIES_INVOLVING_INVERSE_TRIGONOMETRIC_FUNCTIONS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH03-MATRICES",
+          "chapterNumber": 3,
+          "titleEn": "Matrices",
+          "titleHi": "",
+          "unitName": "Matrices",
+          "bigIdea": "Number systems and operations extend earlier arithmetic and support exact and approximate reasoning.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C12-CH02-INVERSE-TRIGONOMETRIC-FUNCTIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH03-T01",
+              "title": "Types of matrices",
+              "order": 1,
+              "conceptCodes": [
+                "C12_TYPES_OF_MATRICES"
+              ]
+            },
+            {
+              "topicCode": "C12-CH03-T02",
+              "title": "Matrix operations",
+              "order": 2,
+              "conceptCodes": [
+                "C12_MATRIX_OPERATIONS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH03-T03",
+              "title": "Elementary transformations",
+              "order": 3,
+              "conceptCodes": [
+                "C12_ELEMENTARY_TRANSFORMATIONS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH04-DETERMINANTS",
+          "chapterNumber": 4,
+          "titleEn": "Determinants",
+          "titleHi": "",
+          "unitName": "Determinants",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C12-CH03-MATRICES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH04-T01",
+              "title": "Determinant of a matrix",
+              "order": 1,
+              "conceptCodes": [
+                "C12_DETERMINANT_OF_A_MATRIX"
+              ]
+            },
+            {
+              "topicCode": "C12-CH04-T02",
+              "title": "Properties of determinants",
+              "order": 2,
+              "conceptCodes": [
+                "C12_PROPERTIES_OF_DETERMINANTS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH04-T03",
+              "title": "Adjoint and inverse of a matrix",
+              "order": 3,
+              "conceptCodes": [
+                "C12_ADJOINT_AND_INVERSE_OF_A"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH05-CONTINUITY-AND-DIFFERENTIABILITY",
+          "chapterNumber": 5,
+          "titleEn": "Continuity and Differentiability",
+          "titleHi": "",
+          "unitName": "Continuity and Differentiability",
+          "bigIdea": "Calculus describes change and accumulation through limits, derivatives and integrals.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C12-CH04-DETERMINANTS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH05-T01",
+              "title": "Continuity",
+              "order": 1,
+              "conceptCodes": [
+                "C12_CONTINUITY"
+              ]
+            },
+            {
+              "topicCode": "C12-CH05-T02",
+              "title": "Differentiability",
+              "order": 2,
+              "conceptCodes": [
+                "C12_DIFFERENTIABILITY"
+              ]
+            },
+            {
+              "topicCode": "C12-CH05-T03",
+              "title": "Chain rule and implicit differentiation",
+              "order": 3,
+              "conceptCodes": [
+                "C12_CHAIN_RULE_AND_IMPLICIT_DIFFERENTIATION"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH06-APPLICATIONS-OF-DERIVATIVES",
+          "chapterNumber": 6,
+          "titleEn": "Applications of Derivatives",
+          "titleHi": "",
+          "unitName": "Applications of Derivatives",
+          "bigIdea": "Calculus describes change and accumulation through limits, derivatives and integrals.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C12-CH05-CONTINUITY-AND-DIFFERENTIABILITY"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH06-T01",
+              "title": "Rate of change",
+              "order": 1,
+              "conceptCodes": [
+                "C12_RATE_OF_CHANGE"
+              ]
+            },
+            {
+              "topicCode": "C12-CH06-T02",
+              "title": "Tangents and normals",
+              "order": 2,
+              "conceptCodes": [
+                "C12_TANGENTS_AND_NORMALS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH06-T03",
+              "title": "Maxima and minima",
+              "order": 3,
+              "conceptCodes": [
+                "C12_MAXIMA_AND_MINIMA"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH07-INTEGRALS",
+          "chapterNumber": 7,
+          "titleEn": "Integrals",
+          "titleHi": "",
+          "unitName": "Integrals",
+          "bigIdea": "Calculus describes change and accumulation through limits, derivatives and integrals.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C12-CH06-APPLICATIONS-OF-DERIVATIVES"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH07-T01",
+              "title": "Indefinite integrals",
+              "order": 1,
+              "conceptCodes": [
+                "C12_INDEFINITE_INTEGRALS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH07-T02",
+              "title": "Definite integrals",
+              "order": 2,
+              "conceptCodes": [
+                "C12_DEFINITE_INTEGRALS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH07-T03",
+              "title": "Methods of integration",
+              "order": 3,
+              "conceptCodes": [
+                "C12_METHODS_OF_INTEGRATION"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH08-APPLICATIONS-OF-INTEGRALS",
+          "chapterNumber": 8,
+          "titleEn": "Applications of Integrals",
+          "titleHi": "",
+          "unitName": "Applications of Integrals",
+          "bigIdea": "Calculus describes change and accumulation through limits, derivatives and integrals.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 4,
+          "prerequisiteChapterCodes": [
+            "C12-CH07-INTEGRALS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH08-T01",
+              "title": "Area under curves",
+              "order": 1,
+              "conceptCodes": [
+                "C12_AREA_UNDER_CURVES"
+              ]
+            },
+            {
+              "topicCode": "C12-CH08-T02",
+              "title": "Area between curves",
+              "order": 2,
+              "conceptCodes": [
+                "C12_AREA_BETWEEN_CURVES"
+              ]
+            },
+            {
+              "topicCode": "C12-CH08-T03",
+              "title": "Simple geometric applications",
+              "order": 3,
+              "conceptCodes": [
+                "C12_SIMPLE_GEOMETRIC_APPLICATIONS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH09-DIFFERENTIAL-EQUATIONS",
+          "chapterNumber": 9,
+          "titleEn": "Differential Equations",
+          "titleHi": "",
+          "unitName": "Differential Equations",
+          "bigIdea": "Calculus describes change and accumulation through limits, derivatives and integrals.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C12-CH08-APPLICATIONS-OF-INTEGRALS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH09-T01",
+              "title": "Order and degree",
+              "order": 1,
+              "conceptCodes": [
+                "C12_ORDER_AND_DEGREE"
+              ]
+            },
+            {
+              "topicCode": "C12-CH09-T02",
+              "title": "Formation of differential equations",
+              "order": 2,
+              "conceptCodes": [
+                "C12_FORMATION_OF_DIFFERENTIAL_EQUATIONS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH09-T03",
+              "title": "Solving first order differential equations",
+              "order": 3,
+              "conceptCodes": [
+                "C12_SOLVING_FIRST_ORDER_DIFFERENTIAL_EQUATIONS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH10-VECTOR-ALGEBRA",
+          "chapterNumber": 10,
+          "titleEn": "Vector Algebra",
+          "titleHi": "",
+          "unitName": "Vector Algebra",
+          "bigIdea": "Algebra expresses patterns and relationships with symbols so that unknowns can be reasoned about systematically.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C12-CH09-DIFFERENTIAL-EQUATIONS"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH10-T01",
+              "title": "Vectors and scalars",
+              "order": 1,
+              "conceptCodes": [
+                "C12_VECTORS_AND_SCALARS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH10-T02",
+              "title": "Dot product",
+              "order": 2,
+              "conceptCodes": [
+                "C12_DOT_PRODUCT"
+              ]
+            },
+            {
+              "topicCode": "C12-CH10-T03",
+              "title": "Cross product",
+              "order": 3,
+              "conceptCodes": [
+                "C12_CROSS_PRODUCT"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH11-THREE-DIMENSIONAL-GEOMETRY",
+          "chapterNumber": 11,
+          "titleEn": "Three Dimensional Geometry",
+          "titleHi": "",
+          "unitName": "Three Dimensional Geometry",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C12-CH10-VECTOR-ALGEBRA"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH11-T01",
+              "title": "Direction cosines",
+              "order": 1,
+              "conceptCodes": [
+                "C12_DIRECTION_COSINES"
+              ]
+            },
+            {
+              "topicCode": "C12-CH11-T02",
+              "title": "Line in space",
+              "order": 2,
+              "conceptCodes": [
+                "C12_LINE_IN_SPACE"
+              ]
+            },
+            {
+              "topicCode": "C12-CH11-T03",
+              "title": "Plane in space",
+              "order": 3,
+              "conceptCodes": [
+                "C12_PLANE_IN_SPACE"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH12-LINEAR-PROGRAMMING",
+          "chapterNumber": 12,
+          "titleEn": "Linear Programming",
+          "titleHi": "",
+          "unitName": "Linear Programming",
+          "bigIdea": "Geometry studies shapes, measurement and spatial reasoning through definitions, properties and logical arguments.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C12-CH11-THREE-DIMENSIONAL-GEOMETRY"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH12-T01",
+              "title": "Linear constraints",
+              "order": 1,
+              "conceptCodes": [
+                "C12_LINEAR_CONSTRAINTS"
+              ]
+            },
+            {
+              "topicCode": "C12-CH12-T02",
+              "title": "Feasible region",
+              "order": 2,
+              "conceptCodes": [
+                "C12_FEASIBLE_REGION"
+              ]
+            },
+            {
+              "topicCode": "C12-CH12-T03",
+              "title": "Optimisation using corner points",
+              "order": 3,
+              "conceptCodes": [
+                "C12_OPTIMISATION_USING_CORNER_POINTS"
+              ]
+            }
+          ]
+        },
+        {
+          "chapterCode": "C12-CH13-PROBABILITY",
+          "chapterNumber": 13,
+          "titleEn": "Probability",
+          "titleHi": "",
+          "unitName": "Probability",
+          "bigIdea": "Data and probability help describe variation, uncertainty and evidence-based decisions.",
+          "estimatedMinutes": 225,
+          "difficultyLevel": 5,
+          "prerequisiteChapterCodes": [
+            "C12-CH12-LINEAR-PROGRAMMING"
+          ],
+          "topics": [
+            {
+              "topicCode": "C12-CH13-T01",
+              "title": "Conditional probability",
+              "order": 1,
+              "conceptCodes": [
+                "C12_CONDITIONAL_PROBABILITY"
+              ]
+            },
+            {
+              "topicCode": "C12-CH13-T02",
+              "title": "Bayes theorem",
+              "order": 2,
+              "conceptCodes": [
+                "C12_BAYES_THEOREM"
+              ]
+            },
+            {
+              "topicCode": "C12-CH13-T03",
+              "title": "Random variables and binomial distribution",
+              "order": 3,
+              "conceptCodes": [
+                "C12_RANDOM_VARIABLES_AND_BINOMIAL_DISTRIBUTION"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

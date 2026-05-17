@@ -195,32 +195,46 @@ export function MocksScreen() {
             <span className="label">Adaptive assessments</span>
             <span className="more">personalized</span>
           </div>
-          <div className="card" style={{ padding: 12 }}>
-            <div style={{ fontSize: 12.5, color: 'var(--p-muted)', lineHeight: 1.45 }}>
-              Generate a quick weekly assessment or a chapter-focused test from your learning history.
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div
+              className="card"
+              style={{ padding: 12, background: 'var(--p-primary-tint)', borderColor: 'transparent', cursor: assessmentBusy ? 'wait' : 'pointer', opacity: weeklyAssessment.isPending ? 0.5 : 1 }}
+              onClick={() => !assessmentBusy && weeklyAssessment.mutate()}
+            >
+              <div style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', color: 'var(--p-primary)', fontWeight: 700 }}>ADAPTIVE</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginTop: 4, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
+                {weeklyAssessment.isPending ? 'Building...' : 'Weekly check'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>{questionCount} · weak areas</div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 8, marginTop: 10 }}>
-              <input
-                value={chapter}
-                onChange={(e) => setChapter(e.target.value)}
-                placeholder="Chapter name or NCERT code"
-                style={inputStyle}
-              />
-              <input
-                type="number"
-                min={1}
-                max={30}
-                value={questionCount}
-                onChange={(e) => setQuestionCount(Number(e.target.value))}
-                style={inputStyle}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <button className="btn outline" disabled={assessmentBusy} onClick={() => weeklyAssessment.mutate()}>
-                {weeklyAssessment.isPending ? 'Generating...' : 'Weekly'}
-              </button>
-              <button className="btn" disabled={assessmentBusy || !chapter.trim()} onClick={() => chapterAssessment.mutate()}>
-                {chapterAssessment.isPending ? 'Generating...' : 'Chapter test'}
+            <div className="card" style={{ padding: 12, background: 'var(--p-accent-tint)', borderColor: 'transparent', opacity: chapterAssessment.isPending ? 0.5 : 1 }}>
+              <div style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', color: 'var(--p-accent)', fontWeight: 700 }}>FOCUS</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginTop: 4, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
+                {chapterAssessment.isPending ? 'Building...' : 'Chapter test'}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 48px', gap: 6, marginTop: 8 }}>
+                <input
+                  value={chapter}
+                  onChange={(e) => setChapter(e.target.value)}
+                  placeholder="Chapter"
+                  style={inputStyle}
+                />
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={questionCount}
+                  onChange={(e) => setQuestionCount(Number(e.target.value))}
+                  style={inputStyle}
+                />
+              </div>
+              <button
+                className="btn"
+                disabled={assessmentBusy || !chapter.trim()}
+                onClick={() => chapterAssessment.mutate()}
+                style={{ marginTop: 8, width: '100%', padding: '8px 10px', fontSize: 12 }}
+              >
+                Generate
               </button>
             </div>
           </div>

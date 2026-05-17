@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 from llm import structured
-from deterministic_check import deterministic_check, normalize
+from deterministic_check import compare_answers, deterministic_check, normalize
 from curriculum_data import retrieve_context
 from student_store import get_student_profile, record_attempt
 
@@ -13,7 +13,7 @@ class Classification(BaseModel):
     chapterCode: str | None = None
     topicCode: str | None = None
     concepts: List[str]
-    conceptCodes: List[str] = []
+    conceptCodes: List[str | None] = []
 
 
 class SolutionDraft(BaseModel):
@@ -27,6 +27,11 @@ class AiVerification(BaseModel):
     issues: List[str]
     confidence: float
     correctedAnswer: str | None = None
+
+
+class AnswerEquivalence(BaseModel):
+    isEquivalent: bool
+    reason: str
 
 
 async def classify(state):
@@ -54,6 +59,8 @@ Question: {state["question"]}
 
     if state.get("classLevel"):
         result.classLevel = state["classLevel"]
+
+    result.conceptCodes = [code for code in result.conceptCodes if code]
 
     return {"detected": result.model_dump()}
 
@@ -309,7 +316,9 @@ async def format_response(state):
     student_answer = state.get("studentAnswer")
     is_correct = None
     if student_answer:
-        is_correct = normalize(student_answer) == normalize(answer)
+        is_correct = compare_answers(answer, student_answer)
+        if is_correct is False:
+            is_correct = await _ai_answer_equivalence(state["question"], answer, student_answer)
 
     mistake = None
     if student_answer and not is_correct:
@@ -362,6 +371,37 @@ def _mistake_diagnosis(state):
             return f"Likely concept gap: {m.get('wrongIdea')} Correction: {m.get('correction')}"
 
     return "Your answer does not match the verified answer. Recheck the concept and each simplification step."
+
+
+async def _ai_answer_equivalence(question: str, expected_answer: str, student_answer: str) -> bool:
+    prompt = f"""
+Decide whether the student's answer is mathematically equivalent to the expected answer.
+
+Return JSON only:
+{{
+  "isEquivalent": true,
+  "reason": "brief reason"
+}}
+
+Rules:
+- Treat algebraically equivalent expressions as the same, e.g. -(3a + 3b + 32) and -3a - 3b - 32.
+- Ignore harmless formatting, spaces, expanded vs factored form, and equivalent fractions/decimals.
+- Do not mark equivalent if variables, signs, domains, units, or required solution sets differ.
+
+Question:
+{question}
+
+Expected answer:
+{expected_answer}
+
+Student answer:
+{student_answer}
+"""
+    try:
+        result = await structured(prompt, AnswerEquivalence)
+        return result.isEquivalent
+    except Exception:
+        return False
 
 
 def _next_practice(state):

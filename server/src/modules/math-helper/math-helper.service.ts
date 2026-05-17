@@ -56,7 +56,7 @@ export class MathHelperService {
     ]);
 
     const response = await this.request('POST', '/solve', this.withoutUndefined({
-      classLevel,
+      classLevel: classLevel ?? 12,
       question: dto.question,
       studentAnswer: dto.studentAnswer,
       studentProfile: profile,
@@ -76,7 +76,7 @@ export class MathHelperService {
     ]);
 
     return this.request('POST', '/assessments/chapter-test', this.withoutUndefined({
-      classLevel,
+      classLevel: classLevel ?? 12,
       chapterCode: dto.chapterCode,
       chapter: dto.chapter,
       questionCount: dto.questionCount,
@@ -98,8 +98,8 @@ export class MathHelperService {
   }
 
   private async request(method: 'GET' | 'POST', path: string, body?: unknown) {
-    const baseUrl = (this.config.get<string>('mathHelper.url') ?? 'http://localhost:8000').replace(/\/$/, '');
-    const timeoutMs = this.config.get<number>('mathHelper.timeoutMs') ?? 30000;
+    const baseUrl = (this.config.get<string>('mathHelper.url') ?? 'http://127.0.0.1:8000').replace(/\/$/, '');
+    const timeoutMs = this.config.get<number>('mathHelper.timeoutMs') ?? 120000;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -114,15 +114,19 @@ export class MathHelperService {
       const text = await res.text();
       const payload = this.parseJson(text);
       if (!res.ok) {
-        const detail = payload?.detail ?? payload?.message ?? (text || res.statusText);
+        const detail = this.formatRemoteError(payload?.detail ?? payload?.message ?? (text || res.statusText));
         throw new HttpException({ message: `Solver failed: ${detail}` }, res.status);
       }
       return payload;
     } catch (err) {
       if (err instanceof HttpException) throw err;
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.warn(`Math helper ${method} ${path} failed: ${message}`);
-      throw new HttpException({ message: 'Solver is unavailable right now. Please try again in a moment.' }, HttpStatus.SERVICE_UNAVAILABLE);
+      const name = err instanceof Error ? err.name : 'Error';
+      this.logger.warn(`Math helper ${method} ${path} failed at ${baseUrl}: ${name}: ${message}`);
+      throw new HttpException(
+        { message: `Solver request failed: ${name}: ${message}` },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     } finally {
       clearTimeout(timeout);
     }
@@ -133,7 +137,7 @@ export class MathHelperService {
       where: { id: userId },
       select: { gradeLevel: true },
     });
-    return user?.gradeLevel ? GRADE_TO_CLASS[user.gradeLevel] : undefined;
+    return user?.gradeLevel ? GRADE_TO_CLASS[user.gradeLevel] : 12;
   }
 
   private async buildStudentProfile(userId: string): Promise<DbStudentProfile> {
@@ -227,6 +231,27 @@ export class MathHelperService {
     } catch {
       return null;
     }
+  }
+
+  private formatRemoteError(value: unknown): string {
+    if (value == null) return 'unknown error';
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) {
+      return value.map((item) => this.formatRemoteError(item)).join('; ');
+    }
+    if (typeof value === 'object') {
+      const obj = value as Record<string, unknown>;
+      const loc = Array.isArray(obj.loc) ? obj.loc.join('.') : null;
+      const msg = typeof obj.msg === 'string' ? obj.msg : null;
+      const type = typeof obj.type === 'string' ? obj.type : null;
+      if (msg) return [loc, msg, type].filter(Boolean).join(': ');
+      try {
+        return JSON.stringify(obj);
+      } catch {
+        return String(value);
+      }
+    }
+    return String(value);
   }
 
   private async recordWrongSolveAttempt(

@@ -30,19 +30,50 @@ def _blueprint(code: str) -> dict[str, Any]:
 
 def _chapter_by_request(req: ChapterTestRequest) -> dict[str, Any] | None:
     data = load_ncert_data()
-    chapters = data["chapterByCode"].values()
+    chapters = list(data["chapterByCode"].values())
     if req.chapterCode:
-        return data["chapterByCode"].get(req.chapterCode)
+        exact = data["chapterByCode"].get(req.chapterCode)
+        if exact:
+            return exact
+        req = req.model_copy(update={"chapter": req.chapter or req.chapterCode})
     if req.chapter:
-        ranked = [
-            (_score(req.chapter, f"{chapter.get('titleEn', '')} {chapter.get('unitName', '')}"), chapter)
-            for chapter in chapters
-            if chapter.get("classLevel") == req.classLevel
-        ]
+        ranked = []
+        for chapter in chapters:
+            topic_text = " ".join(
+                f"{topic.get('titleEn', '')} {topic.get('topicCode', '')}"
+                for topic in chapter.get("topics", [])
+            )
+            haystack = " ".join([
+                str(chapter.get("chapterCode", "")),
+                str(chapter.get("titleEn", "")),
+                str(chapter.get("titleKo", "")),
+                str(chapter.get("titleHi", "")),
+                str(chapter.get("unitName", "")),
+                topic_text,
+            ])
+            score = _score(req.chapter, haystack)
+            if chapter.get("classLevel") == req.classLevel:
+                score += 0.15
+            ranked.append((score, chapter))
         ranked.sort(key=lambda item: item[0], reverse=True)
-        if ranked and ranked[0][0] > 0:
+        if ranked and ranked[0][0] >= 0.12:
             return ranked[0][1]
+    label = req.chapter or req.chapterCode
+    if label:
+        return {
+            "chapterCode": f"CUSTOM-C{req.classLevel}-{_slug(label)}",
+            "chapterNumber": 0,
+            "titleEn": label,
+            "unitName": label,
+            "classLevel": req.classLevel,
+            "topics": [],
+            "custom": True,
+        }
     return None
+
+
+def _slug(value: str) -> str:
+    return "-".join(value.strip().upper().replace("_", "-").split())[:60] or "CHAPTER"
 
 
 def _concept_name(code: str) -> str:
@@ -168,7 +199,7 @@ Chapter: {chapter}
 Allowed concept codes and names: {concept_names}
 Student profile for adaptation: {profile}
 
-Use only the provided concept codes. Keep answers concise and include a clear solution object.
+Use only the provided concept codes. If none are provided, use an empty conceptCodes array. Keep answers concise and include a clear solution object.
 """
     generated = await structured(prompt, GeneratedQuestions)
     questions = []
@@ -212,13 +243,14 @@ async def generate_chapter_test(req: ChapterTestRequest) -> dict[str, Any]:
     profile = req.studentProfile or get_student_profile(req.userId)
     chapter = _chapter_by_request(req)
     if not chapter:
-        raise ValueError("chapterCode or chapter must match a known NCERT chapter for the selected classLevel")
+        raise ValueError("chapterCode or chapter is required")
 
     question_count = req.questionCount or blueprint.get("questionCount", 10)
     chapter_code = chapter.get("chapterCode")
+    class_level = chapter.get("classLevel") or req.classLevel
     candidates = [
         problem for problem in data["problems"].get("problems", [])
-        if problem.get("classLevel") == req.classLevel and problem.get("chapterCode") == chapter_code
+        if problem.get("classLevel") == class_level and problem.get("chapterCode") == chapter_code
     ]
     difficulties = _target_difficulties(blueprint.get("difficultyDistribution", {}), question_count)
     selected = _select_questions(candidates, question_count, difficulties, profile, chapter_code)
@@ -228,7 +260,7 @@ async def generate_chapter_test(req: ChapterTestRequest) -> dict[str, Any]:
         concept_codes.extend(topic.get("conceptCodes", []))
     selected.extend(await _generate_fill_questions(
         "CHAPTER_TEST",
-        req.classLevel,
+        class_level,
         question_count - len(selected),
         concept_codes,
         chapter,
@@ -238,7 +270,7 @@ async def generate_chapter_test(req: ChapterTestRequest) -> dict[str, Any]:
     return {
         "assessmentType": "CHAPTER_TEST",
         "title": f"{chapter.get('titleEn', chapter_code)} Adaptive Chapter Test",
-        "classLevel": req.classLevel,
+        "classLevel": class_level,
         "chapterCode": chapter_code,
         "durationMinutes": blueprint.get("durationMinutes", 20),
         "questionCount": len(selected),

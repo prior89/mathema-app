@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
-  generateChapterTest,
-  generateWeeklyAssessment,
   solveMathHelper,
-  type MathHelperAssessmentResponse,
   type MathHelperSolveResponse,
 } from '../../lib/mathHelper';
 import { Glyph } from '../onboarding/Glyph';
@@ -18,10 +15,7 @@ export function MathHelperScreen() {
   const [classLevel, setClassLevel] = useState(12);
   const [question, setQuestion] = useState('');
   const [studentAnswer, setStudentAnswer] = useState('');
-  const [chapter, setChapter] = useState('');
-  const [questionCount, setQuestionCount] = useState(10);
   const [solveResult, setSolveResult] = useState<MathHelperSolveResponse | null>(null);
-  const [assessment, setAssessment] = useState<MathHelperAssessmentResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const solve = useMutation({
@@ -34,24 +28,7 @@ export function MathHelperScreen() {
     onError: (e: any) => setError(e?.response?.data?.error?.message ?? 'Solver is unavailable right now. Please try again in a moment.'),
   });
 
-  const weekly = useMutation({
-    mutationFn: () => generateWeeklyAssessment({ classLevel, questionCount }),
-    onSuccess: (data) => { setAssessment(data); setError(null); },
-    onError: (e: any) => setError(e?.response?.data?.error?.message ?? 'Assessment generation failed.'),
-  });
-
-  const chapterTest = useMutation({
-    mutationFn: () => generateChapterTest({
-      classLevel,
-      chapter: chapter.trim() || undefined,
-      chapterCode: chapter.trim().startsWith('NCERT-') ? chapter.trim() : undefined,
-      questionCount,
-    }),
-    onSuccess: (data) => { setAssessment(data); setError(null); },
-    onError: (e: any) => setError(e?.response?.data?.error?.message ?? 'Chapter test generation failed.'),
-  });
-
-  const busy = solve.isPending || weekly.isPending || chapterTest.isPending;
+  const busy = solve.isPending;
 
   return (
     <div className="screen">
@@ -62,7 +39,7 @@ export function MathHelperScreen() {
           </button>
           <div>
             <div style={eyebrow}>SOLVE</div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>AI Solver</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>Problem solver</div>
           </div>
         </div>
       </div>
@@ -89,22 +66,8 @@ export function MathHelperScreen() {
           </button>
         </div>
 
-        <div className="card" style={{ padding: 14, marginTop: 10 }}>
-          <div style={sectionTitle}>Adaptive assessments</div>
-          <div style={muted}>Weekly tests use DB weak concepts and wrong-note history. Chapter tests can use a chapter name or NCERT chapter code.</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px', gap: 8, marginTop: 12 }}>
-            <input value={chapter} onChange={(e) => setChapter(e.target.value)} style={inputStyle} placeholder="Chapter name or NCERT code" />
-            <input type="number" min={1} max={30} value={questionCount} onChange={(e) => setQuestionCount(Number(e.target.value))} style={inputStyle} />
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-            <button className="btn outline" disabled={busy} onClick={() => weekly.mutate()}>Weekly</button>
-            <button className="btn" disabled={busy || !chapter.trim()} onClick={() => chapterTest.mutate()}>Chapter test</button>
-          </div>
-        </div>
-
         {error && <div className="card" style={{ padding: 12, marginTop: 10, color: 'var(--p-danger)', fontSize: 12 }}>{error}</div>}
         {solveResult && <SolveResult data={solveResult} />}
-        {assessment && <AssessmentResult data={assessment} />}
         <div style={{ height: 16 }} />
       </div>
       <TabBar />
@@ -113,10 +76,14 @@ export function MathHelperScreen() {
 }
 
 function SolveResult({ data }: { data: MathHelperSolveResponse }) {
+  const checked = data.isStudentCorrect !== undefined && data.isStudentCorrect !== null;
   return (
     <div className="card" style={{ padding: 14, marginTop: 10 }}>
       <div style={eyebrow}>{data.detected.chapter} · {data.detected.topic}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, marginTop: 4 }}>{data.answer}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 4 }}>
+        <div style={{ fontSize: 20, fontWeight: 700 }}>{data.answer}</div>
+        {checked && <span className="chip" style={{ background: data.isStudentCorrect ? 'oklch(0.92 0.07 145)' : 'oklch(0.95 0.05 55)' }}>{data.isStudentCorrect ? 'Correct' : 'Review'}</span>}
+      </div>
       <p style={{ ...muted, color: 'var(--p-ink)', lineHeight: 1.6 }}>{data.explanation}</p>
       {data.personalizedLearning && <Pill text={data.personalizedLearning} />}
       {data.mistakeDiagnosis && <Pill text={data.mistakeDiagnosis} tone="warn" />}
@@ -124,26 +91,6 @@ function SolveResult({ data }: { data: MathHelperSolveResponse }) {
       <MiniList title="Next practice" items={data.nextPractice} />
       <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 10 }}>
         Verified by {data.verification.method} · confidence {Math.round(data.verification.confidence * 100)}%
-      </div>
-    </div>
-  );
-}
-
-function AssessmentResult({ data }: { data: MathHelperAssessmentResponse }) {
-  return (
-    <div style={{ marginTop: 10 }}>
-      <div className="section-h">
-        <span className="label">{data.title}</span>
-        <span className="more">{data.questionCount} Q · {data.durationMinutes}m</span>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {data.questions.map((q, i) => (
-          <div key={q.questionId ?? i} className="card" style={{ padding: 12 }}>
-            <div style={eyebrow}>Q{i + 1} · difficulty {q.difficultyLevel}/5 · {q.source}</div>
-            <div style={{ fontSize: 13, lineHeight: 1.5, marginTop: 6 }}>{q.body}</div>
-            {q.adaptiveReason && <div style={{ ...muted, marginTop: 8 }}>{q.adaptiveReason}</div>}
-          </div>
-        ))}
       </div>
     </div>
   );
