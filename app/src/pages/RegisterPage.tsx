@@ -1,24 +1,27 @@
 /**
- * RegisterPage — Sage 톤 3 단계 회원가입.
+ * RegisterPage — Mathēma 폰-프레임 3단계 회원가입.
  *
  *   명세서 §1 — 역할별 분기 (STUDENT / PARENT / TEACHER).
- *   참조 디자인: Downloads/App onboarding/screens-a.jsx (sage palette).
  *
  *   단계 구성:
- *     01 · 역할 + 기본 정보 (email/password/name + 역할 카드)
- *     02 · 프로필
+ *     0 · 역할 + 기본 정보 (역할 카드 + email/password/name + Google Sign-In)
+ *     1 · 프로필
  *          - STUDENT: NCERT 학년 6개 (Class 7~12) + 시험 날짜 + 목표 등급
  *          - PARENT : 자녀 이메일
  *          - TEACHER: 학원 코드 (선택)
- *     03 · 동의 (DPDP 2023 · GDPR — 필수/분석/AI훈련/마케팅)
+ *     2 · 동의 (DPDP 2023 · GDPR — 필수/분석/AI훈련/마케팅)
  *
- *   sage palette CSS 변수와 클래스(.sage-scope ...)는 index.html 의 <style> 에 등록.
+ *   디자인: .mathema-app phone frame (LoginPage / 온보딩 / 메인 앱과 통일).
  */
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, GradeLevel, RegisterRole } from '../context/AuthContext';
 import { useT } from '../lib/i18n';
+import { Glyph } from '../components/onboarding/Glyph';
+import '../styles/onboarding.css';
+
+const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
 
 type NcertClass = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12';
 
@@ -33,7 +36,7 @@ const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
 };
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const { t, lang, setLang } = useT();
   const navigate = useNavigate();
 
@@ -95,152 +98,198 @@ export default function RegisterPage() {
     } finally { setBusy(false); }
   };
 
+  // Google Identity Services — Step 0 에서만 노출.
+  const gsiRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (step !== 0 || !GOOGLE_CLIENT_ID || !gsiRef.current) return;
+    const init = () => {
+      const g = (window as any).google;
+      if (!g?.accounts?.id) return;
+      g.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async (resp: { credential: string }) => {
+          setErr(null);
+          setBusy(true);
+          try {
+            await loginWithGoogle(resp.credential);
+            navigate('/');
+          } catch (e: any) {
+            setErr(e?.response?.data?.error?.message ?? t('auth.register.failed'));
+          } finally {
+            setBusy(false);
+          }
+        },
+      });
+      g.accounts.id.renderButton(gsiRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 280,
+        text: 'signup_with',
+      });
+    };
+    if ((window as any).google?.accounts?.id) {
+      init();
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.defer = true;
+    s.onload = init;
+    document.body.appendChild(s);
+  }, [step, loginWithGoogle, navigate, t]);
+
   return (
-    <div className="sage-scope" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 16px' }}>
-      <div style={{
-        width: '100%', maxWidth: 440,
-        background: 'var(--sage-surface)',
-        border: '1px solid var(--sage-border)',
-        borderRadius: 'var(--sage-radius-lg)',
-        padding: '28px 28px 24px',
-        boxShadow: '0 1px 0 oklch(0 0 0 / 0.02)',
-      }}>
-        {/* 헤더 — 브랜드 + 언어 토글 */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <div>
-            <img src="/matheo-logo.png" alt="Mathēma" style={{ height: 40, width: 'auto', objectFit: 'contain', mixBlendMode: 'multiply', display: 'block' }} />
-            <div className="caption" style={{ marginTop: 4 }}>{t('reg.welcome.tagline')}</div>
+    <div className="mathema-app">
+      <div className="mathema-viewport">
+        <div className="mathema-phone">
+          <div className="screen">
+            {/* Top: brand + lang toggle */}
+            <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Glyph.Logo accent="var(--p-ink)" />
+              <LangToggle lang={lang} setLang={setLang} />
+            </div>
+
+            {/* Progress dots */}
+            <div className="steps" style={{ padding: '14px 24px 0' }}>
+              {[0, 1, 2].map((i) => (
+                <div key={i} className={`dot ${i === step ? 'active' : i < step ? 'done' : ''}`} />
+              ))}
+            </div>
+
+            <div className="screen-body" style={{ gap: 18, paddingTop: 16 }}>
+              <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {step === 0 && (
+                  <StepRoleAndCredentials
+                    role={role} setRole={setRole}
+                    email={email} setEmail={setEmail}
+                    password={password} setPassword={setPassword}
+                    name={name} setName={setName}
+                    gsiRef={gsiRef}
+                    t={t}
+                  />
+                )}
+                {step === 1 && role === 'STUDENT' && (
+                  <StepStudent
+                    ncertClass={ncertClass} setNcertClass={setNcertClass}
+                    examDate={examDate} setExamDate={setExamDate}
+                    targetGrade={targetGrade} setTargetGrade={setTargetGrade}
+                    t={t}
+                  />
+                )}
+                {step === 1 && role === 'PARENT' && (
+                  <StepParent childEmail={childEmail} setChildEmail={setChildEmail} t={t} />
+                )}
+                {step === 1 && role === 'TEACHER' && (
+                  <StepTeacher tenantCode={tenantCode} setTenantCode={setTenantCode} t={t} />
+                )}
+                {step === 2 && (
+                  <StepConsent
+                    analytics={consentAnalytics} setAnalytics={setConsentAnalytics}
+                    aiTraining={consentAiTraining} setAiTraining={setConsentAiTraining}
+                    marketing={consentMarketing} setMarketing={setConsentMarketing}
+                    t={t}
+                  />
+                )}
+
+                {err && <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>}
+
+                {/* 액션 버튼 — step 마다 다름 */}
+                {step < 2 && (
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={step === 0 ? !canStep1Next : !canStep2Next}
+                    onClick={() => setStep(((step + 1) as 0 | 1 | 2))}
+                    style={{ marginTop: 4 }}
+                  >
+                    {t('reg.next')}
+                    <Glyph.ChevronR />
+                  </button>
+                )}
+                {step === 2 && (
+                  <button type="submit" className="btn" disabled={busy} style={{ marginTop: 4 }}>
+                    {busy ? t('auth.login.busy') : t('reg.finish')}
+                    <Glyph.ChevronR />
+                  </button>
+                )}
+
+                {/* 뒤로 / 로그인 링크 */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
+                  {step > 0 ? (
+                    <button type="button" className="btn text" style={{ width: 'auto', padding: '6px 4px' }} onClick={() => setStep((step - 1) as 0 | 1 | 2)}>
+                      ← {t('reg.back')}
+                    </button>
+                  ) : <span />}
+                  <span style={{ fontSize: 13, color: 'var(--p-muted)' }}>
+                    {t('auth.register.haveAccount')}{' '}
+                    <Link to="/login" style={{ color: 'var(--p-primary)', fontWeight: 600, textDecoration: 'none' }}>
+                      {t('auth.register.goLogin')}
+                    </Link>
+                  </span>
+                </div>
+
+                {step === 2 && (
+                  <p className="caption" style={{ textAlign: 'center', fontSize: 11.5, marginTop: 2 }}>
+                    {t('reg.policy')}
+                  </p>
+                )}
+              </form>
+            </div>
           </div>
-          <LangToggle lang={lang} setLang={setLang} />
         </div>
-
-        {/* 진행 dot */}
-        <div className="steps">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className={`dot ${i === step ? 'active' : i < step ? 'done' : ''}`} />
-          ))}
-        </div>
-
-        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {step === 0 && (
-            <StepRoleAndCredentials
-              role={role} setRole={setRole}
-              email={email} setEmail={setEmail}
-              password={password} setPassword={setPassword}
-              name={name} setName={setName}
-              t={t}
-            />
-          )}
-          {step === 1 && role === 'STUDENT' && (
-            <StepStudent
-              ncertClass={ncertClass} setNcertClass={setNcertClass}
-              examDate={examDate} setExamDate={setExamDate}
-              targetGrade={targetGrade} setTargetGrade={setTargetGrade}
-              t={t}
-            />
-          )}
-          {step === 1 && role === 'PARENT' && (
-            <StepParent childEmail={childEmail} setChildEmail={setChildEmail} t={t} />
-          )}
-          {step === 1 && role === 'TEACHER' && (
-            <StepTeacher tenantCode={tenantCode} setTenantCode={setTenantCode} t={t} />
-          )}
-          {step === 2 && (
-            <StepConsent
-              analytics={consentAnalytics} setAnalytics={setConsentAnalytics}
-              aiTraining={consentAiTraining} setAiTraining={setConsentAiTraining}
-              marketing={consentMarketing} setMarketing={setConsentMarketing}
-              t={t}
-            />
-          )}
-
-          {err && <div style={{ color: 'var(--sage-danger)', fontSize: 13 }}>{err}</div>}
-
-          {/* 액션 버튼 — step 마다 다름 */}
-          {step < 2 && (
-            <button
-              type="button"
-              className="btn"
-              disabled={step === 0 ? !canStep1Next : !canStep2Next}
-              onClick={() => setStep(((step + 1) as 0 | 1 | 2))}
-            >
-              {t('reg.next')}
-            </button>
-          )}
-          {step === 2 && (
-            <button type="submit" className="btn" disabled={busy}>
-              {busy ? t('auth.login.busy') : t('reg.finish')}
-            </button>
-          )}
-
-          {/* 뒤로 / 로그인 링크 */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-            {step > 0 ? (
-              <button type="button" className="btn text" style={{ width: 'auto', padding: '6px 4px' }} onClick={() => setStep((step - 1) as 0 | 1 | 2)}>
-                ← {t('reg.back')}
-              </button>
-            ) : <span />}
-            <span style={{ fontSize: 13, color: 'var(--sage-muted)' }}>
-              {t('auth.register.haveAccount')}{' '}
-              <Link to="/login" style={{ color: 'var(--sage-primary)', fontWeight: 600, textDecoration: 'none' }}>
-                {t('auth.register.goLogin')}
-              </Link>
-            </span>
-          </div>
-
-          {step === 2 && (
-            <p className="caption" style={{ textAlign: 'center', fontSize: 11.5, marginTop: 4 }}>
-              {t('reg.policy')}
-            </p>
-          )}
-        </form>
       </div>
     </div>
   );
 }
 
-// ─── Step 0 : 역할 + 기본 정보 ────────────────────────────────
-function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setPassword, name, setName, t }: any) {
-  const roles: { id: RegisterRole; icon: string; label: string; sub: string; popular?: boolean }[] = [
-    { id: 'STUDENT', icon: '✦', label: t('reg.role.student'), sub: t('reg.role.student.sub'), popular: true },
-    { id: 'PARENT',  icon: '◇', label: t('reg.role.parent'),  sub: t('reg.role.parent.sub') },
-    { id: 'TEACHER', icon: '◈', label: t('reg.role.teacher'), sub: t('reg.role.teacher.sub') },
+// ─── Step 0 : 역할 + 기본 정보 + Google ───────────────────────
+function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setPassword, name, setName, gsiRef, t }: any) {
+  const roles: { id: RegisterRole; Icon: any; label: string; sub: string; popular?: boolean }[] = [
+    { id: 'STUDENT', Icon: Glyph.Person,  label: t('reg.role.student'), sub: t('reg.role.student.sub'), popular: true },
+    { id: 'PARENT',  Icon: Glyph.Parent,  label: t('reg.role.parent'),  sub: t('reg.role.parent.sub') },
+    { id: 'TEACHER', Icon: Glyph.Teacher, label: t('reg.role.teacher'), sub: t('reg.role.teacher.sub') },
   ];
   return (
     <>
       <div>
         <span className="eyebrow">{t('reg.step1.eyebrow')}</span>
-        <h2 className="title">{t('reg.step1.title')}</h2>
+        <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step1.title')}</h2>
         <p className="subtitle">{t('reg.step1.sub')}</p>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {roles.map((r) => (
-          <div
-            key={r.id}
-            className={`option-card ${role === r.id ? 'selected' : ''}`}
-            onClick={() => setRole(r.id)}
-            role="button" tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setRole(r.id); }}
-          >
-            <div style={{
-              width: 44, height: 44, borderRadius: 12,
-              background: role === r.id ? 'var(--sage-surface)' : 'var(--sage-surface-2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: role === r.id ? 'var(--sage-primary)' : 'var(--sage-ink-2)',
-              border: role === r.id ? '1.5px solid var(--sage-primary)' : '1px solid var(--sage-border)',
-              fontFamily: 'var(--sage-font-display)', fontSize: 20, flexShrink: 0,
-            }}>{r.icon}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--sage-ink)' }}>{r.label}</span>
-                {r.popular && <span className="chip">{t('reg.role.popular')}</span>}
+        {roles.map((r) => {
+          const selected = role === r.id;
+          return (
+            <div
+              key={r.id}
+              className={`option-card ${selected ? 'selected' : ''}`}
+              onClick={() => setRole(r.id)}
+              role="button" tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setRole(r.id); }}
+            >
+              <div style={{
+                width: 44, height: 44, borderRadius: 12, padding: 10,
+                background: selected ? 'var(--p-surface)' : 'var(--p-surface-2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: selected ? 'var(--p-primary)' : 'var(--p-ink-2)',
+                border: selected ? '1.5px solid var(--p-primary)' : '1px solid var(--p-border)',
+                flexShrink: 0,
+              }}>
+                <r.Icon accent="currentColor" />
               </div>
-              <div style={{ fontSize: 13, color: 'var(--sage-muted)', marginTop: 2 }}>{r.sub}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--p-ink)' }}>{r.label}</span>
+                  {r.popular && <span className="chip primary">{t('reg.role.popular')}</span>}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
+              </div>
+              <div className="check">{selected && <Glyph.Check size={12} />}</div>
             </div>
-            <div className="check">{role === r.id && <Tick />}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="field">
@@ -255,6 +304,17 @@ function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setP
         <label>{t('auth.name')}</label>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Aarav Sharma" />
       </div>
+
+      {GOOGLE_CLIENT_ID && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
+            <span className="caption" style={{ fontSize: 11 }}>OR</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
+          </div>
+          <div ref={gsiRef} style={{ display: 'flex', justifyContent: 'center' }} />
+        </div>
+      )}
     </>
   );
 }
@@ -273,7 +333,7 @@ function StepStudent({ ncertClass, setNcertClass, examDate, setExamDate, targetG
     <>
       <div>
         <span className="eyebrow">{t('reg.step2.eyebrow')}</span>
-        <h2 className="title">{t('reg.step2.title')}</h2>
+        <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step2.title')}</h2>
       </div>
       <div className="field">
         <label>{t('reg.student.classQ')}</label>
@@ -310,7 +370,7 @@ function StepParent({ childEmail, setChildEmail, t }: any) {
     <>
       <div>
         <span className="eyebrow">{t('reg.step2.eyebrow')}</span>
-        <h2 className="title">{t('reg.step2.title')}</h2>
+        <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step2.title')}</h2>
       </div>
       <div className="field">
         <label>{t('reg.parent.childEmail')}</label>
@@ -327,7 +387,7 @@ function StepTeacher({ tenantCode, setTenantCode, t }: any) {
     <>
       <div>
         <span className="eyebrow">{t('reg.step2.eyebrow')}</span>
-        <h2 className="title">{t('reg.step2.title')}</h2>
+        <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step2.title')}</h2>
       </div>
       <div className="field">
         <label>{t('reg.teacher.tenantCode')}</label>
@@ -354,15 +414,12 @@ function StepConsent({ analytics, setAnalytics, aiTraining, setAiTraining, marke
     <>
       <div>
         <span className="eyebrow">{t('reg.step3.eyebrow')}</span>
-        <h2 className="title">{t('reg.step3.title')}</h2>
+        <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step3.title')}</h2>
         <p className="subtitle">{t('reg.step3.sub')}</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {items.map((it) => (
-          <div key={it.id} style={{
-            display: 'flex', gap: 14, padding: '14px 0',
-            borderBottom: '1px solid var(--sage-border)',
-          }}>
+          <div key={it.id} className="consent-row">
             <div
               className={`ck ${it.checked ? 'checked' : ''}`}
               style={{ opacity: it.required ? 0.85 : 1, cursor: it.required ? 'default' : 'pointer' }}
@@ -372,25 +429,14 @@ function StepConsent({ analytics, setAnalytics, aiTraining, setAiTraining, marke
               tabIndex={it.required ? -1 : 0}
               onKeyDown={(e) => { if (!it.required && (e.key === 'Enter' || e.key === ' ')) it.set(); }}
             >
-              {it.checked && <Tick size={12} />}
+              {it.checked && <Glyph.Check size={12} />}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14.5, fontWeight: 600, color: 'var(--sage-ink)' }}>
+            <div className="info">
+              <div className="name">
                 <span>{it.name}</span>
-                {it.required && (
-                  <span style={{
-                    fontFamily: 'var(--sage-font-mono)', fontSize: 9.5, letterSpacing: '0.1em',
-                    textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4,
-                    background: 'var(--sage-surface-2)', color: 'var(--sage-muted)',
-                    border: '1px solid var(--sage-border)',
-                  }}>
-                    {t('reg.consent.required')}
-                  </span>
-                )}
+                {it.required && <span className="req-pill">{t('reg.consent.required')}</span>}
               </div>
-              <div style={{ fontSize: 12.5, color: 'var(--sage-muted)', marginTop: 4, lineHeight: 1.45 }}>
-                {it.desc}
-              </div>
+              <div className="desc">{it.desc}</div>
             </div>
           </div>
         ))}
@@ -403,8 +449,8 @@ function LangToggle({ lang, setLang }: { lang: 'ko' | 'en' | 'hi'; setLang: (l: 
   return (
     <div style={{
       display: 'flex', gap: 0, padding: 2,
-      background: 'var(--sage-surface-2)', borderRadius: 6,
-      border: '1px solid var(--sage-border)',
+      background: 'var(--p-surface-2)', borderRadius: 6,
+      border: '1px solid var(--p-border)',
     }}>
       {(['hi', 'en', 'ko'] as const).map((l) => (
         <button
@@ -412,21 +458,13 @@ function LangToggle({ lang, setLang }: { lang: 'ko' | 'en' | 'hi'; setLang: (l: 
           style={{
             padding: '4px 8px', fontSize: 11, fontWeight: 600,
             letterSpacing: '0.1em', textTransform: 'uppercase',
-            background: lang === l ? 'var(--sage-primary)' : 'transparent',
-            color: lang === l ? 'var(--sage-primary-fg)' : 'var(--sage-muted)',
+            background: lang === l ? 'var(--p-primary)' : 'transparent',
+            color: lang === l ? 'var(--p-primary-fg)' : 'var(--p-muted)',
             border: 'none', borderRadius: 4, cursor: 'pointer',
-            fontFamily: 'var(--sage-font-mono)',
+            fontFamily: 'var(--font-mono)',
           }}
         >{l.toUpperCase()}</button>
       ))}
     </div>
-  );
-}
-
-function Tick({ size = 13 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3.5 8.5l3 3 6-6" />
-    </svg>
   );
 }
