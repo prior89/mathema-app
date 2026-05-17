@@ -16,8 +16,10 @@ const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin');
-  const [password, setPassword] = useState('admin');
+  // PoC dev-login은 DEV 빌드에서만 prefill — production은 빈 폼 (admin/admin 누른 사용자가
+  // /auth/dev-login → "dev-login disabled in production" 에러를 받지 않도록).
+  const [email, setEmail] = useState(import.meta.env.DEV ? 'admin' : '');
+  const [password, setPassword] = useState(import.meta.env.DEV ? 'admin' : '');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const gsiRef = useRef<HTMLDivElement | null>(null);
@@ -27,8 +29,8 @@ export default function LoginPage() {
     setErr(null);
     setBusy(true);
     try {
-      // PoC: admin/admin → dev-login (no real account needed).
-      if (email.trim().toLowerCase() === 'admin' && password === 'admin') {
+      // PoC: admin/admin → dev-login (DEV 빌드 전용; production은 항상 normal /auth/login).
+      if (import.meta.env.DEV && email.trim().toLowerCase() === 'admin' && password === 'admin') {
         const tk = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
         tokens.set(tk.accessToken, tk.refreshToken);
         await get<Me>('/users/me');
@@ -112,7 +114,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="username"
-                    placeholder="admin"
+                    placeholder="you@example.com"
                   />
                 </div>
                 <div className="field">
