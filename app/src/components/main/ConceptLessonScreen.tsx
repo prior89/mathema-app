@@ -245,13 +245,57 @@ function ConceptStepBlock({ step }: { step: ConceptStep }) {
       </div>
       {step.body && (
         <div className="card" style={{ padding: 14, background: tone.tint, borderColor: 'transparent', whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
-          <MathText text={step.body} />
+          <BulletizedMathText text={step.body} />
         </div>
       )}
       {step.kind === 'MISCONCEPTION' && hasMisconception && <Misconception data={step.misconception} />}
       {step.kind === 'WORKED_EXAMPLE' && hasWorked && <WorkedExample steps={step.workedSteps!} />}
       {step.kind === 'REFLECT' && hasReflect && <ReflectPrompts prompts={reflectList} />}
     </div>
+  );
+}
+
+/**
+ * Body 텍스트의 줄 시작 이모지(❌/💡/✅)를 빨강·노랑·초록 작은 동그라미로 치환.
+ * LLM이 생성한 ConceptStep body 가 이 세 이모지를 "wrong / hint / correct" 토큰으로
+ * 일관되게 쓰고 있어서 UI 측에서 dot 으로 표시. 그 외 줄은 MathText 로 그대로 렌더.
+ */
+function BulletizedMathText({ text }: { text: string }) {
+  const TOKENS: { ch: string; color: string }[] = [
+    { ch: '❌', color: 'var(--p-danger)' },
+    { ch: '💡', color: '#E0A800' },
+    { ch: '✅', color: 'var(--p-success)' },
+  ];
+  return (
+    <>
+      {text.split('\n').map((line, i) => {
+        const trimmed = line.trimStart();
+        const hit = TOKENS.find((t) => trimmed.startsWith(t.ch));
+        const rest = hit ? line.replace(hit.ch, '').replace(/^\s+/, '') : line;
+        const empty = rest.trim() === '';
+        return (
+          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, minHeight: empty ? 6 : undefined }}>
+            {hit && (
+              <span
+                aria-hidden
+                style={{
+                  display: 'inline-block',
+                  width: 9,
+                  height: 9,
+                  borderRadius: '50%',
+                  background: hit.color,
+                  flexShrink: 0,
+                  marginTop: 7,
+                }}
+              />
+            )}
+            <span style={{ flex: 1, minWidth: 0 }}>
+              {empty ? ' ' : <MathText text={rest} />}
+            </span>
+          </div>
+        );
+      })}
+    </>
   );
 }
 
