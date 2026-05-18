@@ -382,8 +382,10 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'WEB_ORIGIN',          value: 'https://${swa.properties.defaultHostname}' }
             { name: 'ADMIN_ORIGIN',        value: 'https://${swa.properties.defaultHostname}' }
             // Math-helper Python sidecar (internal ingress, same Container Apps Environment).
-            // mathHelperApp 가 같은 env 안에 있어서 internal FQDN 으로 호출 가능.
-            { name: 'MATH_HELPER_URL',         value: 'http://${mathHelperApp.properties.configuration.ingress.fqdn}' }
+            // https:// 필수 — http 로 가면 ACA ingress 가 301 redirect 하고 Node fetch 가
+            // redirect 시 POST→GET 으로 메서드 변환해 Python /solve 가 405 반환. ACA 내부
+            // 호출도 TLS 자동 인증서 발급되므로 https 가 정상 경로.
+            { name: 'MATH_HELPER_URL',         value: 'https://${mathHelperApp.properties.configuration.ingress.fqdn}' }
             { name: 'MATH_HELPER_TIMEOUT_MS',  value: '120000' }
             // Mathpix OCR — KV 시크릿 ref. 시크릿 값이 비어 있으면 mathpix.service 의 호출이
             // 401 로 실패 → OCR 만 자연스럽게 비활성화, 다른 기능에 영향 X.
