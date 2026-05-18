@@ -74,10 +74,13 @@ step "4. Cleanup test user"
 curl -s -X DELETE "$API/users/me" -H "Authorization: Bearer $TOKEN" > /dev/null || true
 printf "  deleted %s\n" "$EMAIL"
 
-if [ "$CODE" = "200" ]; then
-  printf "\n\033[1;32m✅ /math-helper/solve = 200. Karvy AI solve is live in production.\033[0m\n"
-  exit 0
-else
-  printf "\n\033[1;31m✗ Expected 200, got %s. Check backend logs:\033[0m\n  az containerapp logs show -n mathema-backend -g %s --tail 80 --type=console\n" "$CODE" "$RG"
-  exit 1
-fi
+# NestJS 의 POST 핸들러는 기본 status 201 Created. /solve 도 데이터 생성은 안 하지만
+# 그 기본을 따름. 200·201 둘 다 성공 — Python 까지 가서 응답을 받았다는 뜻.
+case "$CODE" in
+  200|201)
+    printf "\n\033[1;32m✅ /math-helper/solve = %s. Karvy AI solve is live in production.\033[0m\n" "$CODE"
+    exit 0 ;;
+  *)
+    printf "\n\033[1;31m✗ Expected 200/201, got %s. Check backend logs:\033[0m\n  az containerapp logs show -n mathema-backend -g %s --tail 80 --type=console\n" "$CODE" "$RG"
+    exit 1 ;;
+esac
