@@ -1,0 +1,97 @@
+name: Math-helper — build & deploy to Azure Container Apps
+
+# Build the Python FastAPI image, push to ACR, update the
+# mathema-math-helper Container App revision. Triggered on pushes to main
+# that touch services/math-helper/ or services/data/ or this workflow.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/math-helper/**'
+      - 'services/data/**'
+      - '.github/workflows/math-helper-deploy.yml'
+  workflow_dispatch:
+
+env:
+  ACR_NAME: mathemaacr7ehvzqcd6c436
+  RESOURCE_GROUP: mathema-prod-cin
+  CONTAINER_APP: mathema-math-helper
+  IMAGE_NAME: mathema-math-helper
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    # OIDC federation — same pattern as backend-deploy.yml.
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR login
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Compute image tag
+        id: tag
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      # Build context = repo root so the Dockerfile can COPY both
+      # services/math-helper/ and services/data/.
+      - name: Docker build & push
+        run: |
+          docker build \
+            -f services/math-helper/Dockerfile \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest \
+            .
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+
+      - name: Install containerapp extension
+        run: az extension add --name containerapp --upgrade -y
+
+      - name: Container App revision update
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+
+      # math-helper has internal ingress (external: false), so GitHub
+      # runners can't curl it directly. We verify health by polling
+      # backend's /api/v1/math-helper/health which proxies through the
+      # internal URL — this also confirms NestJS → Python wiring works.
+      - name: Smoke test (via backend proxy)
+        run: |
+          BACKEND_FQDN=$(az containerapp show \
+            -n mathema-backend -g ${{ env.RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          ok=0
+          for i in $(seq 1 18); do
+            sleep 10
+            # /api/v1/math-helper/health requires JWT, so 401 = backend up
+            # and routing the request (which means proxy module loaded).
+            # 200 = math-helper up and replying. 502/503 = math-helper down.
+            code=$(curl -s -o /dev/null --max-time 8 -w "%{http_code}" \
+              "https://$BACKEND_FQDN/api/v1/math-helper/health" || echo "000")
+            echo "attempt $i -> HTTP $code"
+            if [ "$code" = "200" ] || [ "$code" = "401" ]; then ok=1; break; fi
+          done
+          if [ "$ok" = "1" ]; then
+            echo "::notice::math-helper revision is up (HTTP $code from /math-helper/health proxy)."
+            exit 0
+          fi
+          echo "::error::math-helper did not become healthy within 3 min — dumping container logs"
+          az containerapp logs show \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --type=console --tail 100 || true
+          exit 1

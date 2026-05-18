@@ -15,6 +15,10 @@
     "openaiApiKey":          { "value": "FILL_AT_DEPLOY_TIME_OR_KEYVAULT_REF" },
     "anthropicApiKey":       { "value": "" },
     "jwtAccessSecret":       { "value": "FILL_AT_DEPLOY_TIME_OR_KEYVAULT_REF" },
-    "jwtRefreshSecret":      { "value": "FILL_AT_DEPLOY_TIME_OR_KEYVAULT_REF" }
+    "jwtRefreshSecret":      { "value": "FILL_AT_DEPLOY_TIME_OR_KEYVAULT_REF" },
+    "bootstrapMode":         { "value": false },
+    "mathpixAppId":          { "value": "" },
+    "mathpixAppKey":         { "value": "" },
+    "mathHelperBootstrap":   { "value": true }
   }
 }

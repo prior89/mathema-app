@@ -88,12 +88,24 @@ param jwtAccessSecret string
 @secure()
 param jwtRefreshSecret string
 
+@description('Mathpix OCR app_id — used by NestJS mathpix.service for PDF/이미지 → LaTeX.')
+@secure()
+param mathpixAppId string = ''
+
+@description('Mathpix OCR app_key (64-char hex from mathpix.com console).')
+@secure()
+param mathpixAppKey string = ''
+
+@description('Bootstrap mode for math-helper Container App — true on first deploy (placeholder image), false after the real Python image is pushed to ACR.')
+param mathHelperBootstrap bool = true
+
 var uniqueSuffix = uniqueString(resourceGroup().id)
 var registryName = toLower('${namePrefix}acr${uniqueSuffix}')
 var logAnalyticsName = '${namePrefix}-logs'
 var appInsightsName = '${namePrefix}-ai'
 var containerEnvName = '${namePrefix}-cae'
 var backendAppName = '${namePrefix}-backend'
+var mathHelperAppName = '${namePrefix}-math-helper'
 var dbServerName = '${namePrefix}-pg-${uniqueSuffix}'
 var dbName = 'mathema'
 var redisName = '${namePrefix}-redis-${uniqueSuffix}'
@@ -265,6 +277,21 @@ resource kvAoaiKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (provisio
   properties: { value: aoai.listKeys().key1 }
 }
 
+// Mathpix 시크릿은 항상 생성 — 미설정 시 빈 문자열로 KV 에 저장.
+// 빈 문자열이 secretRef 로 주입되면 NestJS mathpix.service 가 헤더로 보내고
+// Mathpix API 가 401 을 반환 → OCR 기능만 자연스럽게 비활성화 (다른 기능에 영향 X).
+resource kvMathpixId 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'mathpix-app-id'
+  properties: { value: mathpixAppId }
+}
+
+resource kvMathpixKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'mathpix-app-key'
+  properties: { value: mathpixAppKey }
+}
+
 // ---------- Container Apps Environment ----------
 
 resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
@@ -315,6 +342,8 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
         { name: 'jwt-access-secret',    keyVaultUrl: kvJwtAccess.properties.secretUri,     identity: 'system' }
         { name: 'jwt-refresh-secret',   keyVaultUrl: kvJwtRefresh.properties.secretUri,    identity: 'system' }
         { name: 'openai-api-key',       keyVaultUrl: kvOpenai.properties.secretUri,        identity: 'system' }
+        { name: 'mathpix-app-id',       keyVaultUrl: kvMathpixId.properties.secretUri,     identity: 'system' }
+        { name: 'mathpix-app-key',      keyVaultUrl: kvMathpixKey.properties.secretUri,    identity: 'system' }
       ]
     }
     template: {
@@ -352,6 +381,15 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             // own SWA, change ADMIN_ORIGIN to that hostname.
             { name: 'WEB_ORIGIN',          value: 'https://${swa.properties.defaultHostname}' }
             { name: 'ADMIN_ORIGIN',        value: 'https://${swa.properties.defaultHostname}' }
+            // Math-helper Python sidecar (internal ingress, same Container Apps Environment).
+            // mathHelperApp 가 같은 env 안에 있어서 internal FQDN 으로 호출 가능.
+            { name: 'MATH_HELPER_URL',         value: 'http://${mathHelperApp.properties.configuration.ingress.fqdn}' }
+            { name: 'MATH_HELPER_TIMEOUT_MS',  value: '120000' }
+            // Mathpix OCR — KV 시크릿 ref. 시크릿 값이 비어 있으면 mathpix.service 의 호출이
+            // 401 로 실패 → OCR 만 자연스럽게 비활성화, 다른 기능에 영향 X.
+            { name: 'MATHPIX_APP_ID',          secretRef: 'mathpix-app-id' }
+            { name: 'MATHPIX_APP_KEY',         secretRef: 'mathpix-app-key' }
+            { name: 'MATHPIX_TIMEOUT_MS',      value: '180000' }
           ]
           probes: [
             {
@@ -394,6 +432,92 @@ resource kvSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' 
   }
 }
 
+// ---------- Math-helper Container App (Python FastAPI · internal) ----------
+//
+// Karvy 의 LangGraph 서비스. /math-helper/solve, /assessments/* 호출 시
+// NestJS backend 가 internal FQDN 으로 HTTP 호출.
+//
+// - ingress.external: false  → 인터넷 노출 X, 같은 ACA Environment 안에서만 도달.
+// - minReplicas: 0          → idle 시 scale-to-zero (cold start ~3s).
+// - OPENAI_API_KEY          → backend 와 동일한 KV secret 재사용 (Karvy llm.py 가
+//                              langchain-openai.ChatOpenAI 로 호출).
+resource mathHelperApp 'Microsoft.App/containerApps@2024-03-01' = {
+  name: mathHelperAppName
+  location: location
+  identity: { type: 'SystemAssigned' }
+  properties: {
+    environmentId: containerEnv.id
+    configuration: {
+      ingress: {
+        external: false
+        targetPort: 8000
+        transport: 'http'
+      }
+      registries: [
+        {
+          server: acr.properties.loginServer
+          username: acr.name
+          passwordSecretRef: 'acr-password'
+        }
+      ]
+      secrets: [
+        { name: 'acr-password',  value: acr.listCredentials().passwords[0].value }
+        { name: 'openai-api-key', keyVaultUrl: kvOpenai.properties.secretUri, identity: 'system' }
+      ]
+    }
+    template: {
+      containers: [
+        {
+          name: 'math-helper'
+          // bootstrap: first deploy 시 ACR 에 mathema-math-helper 이미지가 없으니
+          // hello-world 로 자원 provision 만 하고, az acr build 후 image 스왑.
+          image: mathHelperBootstrap ? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest' : '${acr.properties.loginServer}/mathema-math-helper:${containerImageTag}'
+          resources: { cpu: json('0.5'), memory: '1.0Gi' }
+          env: [
+            { name: 'OPENAI_API_KEY',   secretRef: 'openai-api-key' }
+            { name: 'PYTHONUNBUFFERED', value: '1' }
+          ]
+          probes: [
+            {
+              type: 'liveness'
+              httpGet: { path: '/health', port: 8000 }
+              initialDelaySeconds: 20
+              periodSeconds: 30
+            }
+            {
+              type: 'readiness'
+              httpGet: { path: '/health', port: 8000 }
+              initialDelaySeconds: 5
+              periodSeconds: 15
+            }
+          ]
+        }
+      ]
+      scale: {
+        minReplicas: 0
+        maxReplicas: 3
+        rules: [
+          {
+            name: 'http-scale'
+            http: { metadata: { concurrentRequests: '20' } }
+          }
+        ]
+      }
+    }
+  }
+}
+
+// math-helper managed identity 에도 Key Vault Secrets User 부여 (OPENAI_API_KEY 읽기 위해)
+resource kvSecretsUserRoleForMathHelper 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: keyVault
+  name: guid(keyVault.id, mathHelperApp.id, 'kv-secrets-user')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+    principalId: mathHelperApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // ---------- Static Web App (frontend Vite SPA) ----------
 
 resource swa 'Microsoft.Web/staticSites@2023-12-01' = {
@@ -417,6 +541,7 @@ resource swa 'Microsoft.Web/staticSites@2023-12-01' = {
 // ---------- Outputs ----------
 
 output backendUrl       string = 'https://${backendApp.properties.configuration.ingress.fqdn}'
+output mathHelperInternalUrl string = 'http://${mathHelperApp.properties.configuration.ingress.fqdn}'
 output appInsightsKey   string = appInsights.properties.ConnectionString
 output acrLoginServer   string = acr.properties.loginServer
 output keyVaultName     string = keyVault.name
