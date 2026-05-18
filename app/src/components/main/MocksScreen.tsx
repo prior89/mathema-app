@@ -1,7 +1,7 @@
 /* Mock exams — features-b.jsx ScreenMocks ported with real backend data. */
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { fetchMockSummary, fetchTrajectory, fetchExamResults } from '../../lib/queries';
+import { fetchMockSummary, fetchTrajectory, fetchExamResults, fetchConceptLessons, type NcertClass } from '../../lib/queries';
 import { generateChapterTest, generateWeeklyAssessment, type MathHelperAssessmentResponse } from '../../lib/mathHelper';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
@@ -27,12 +27,22 @@ export function MocksScreen() {
   const nav = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [classLevel, setClassLevel] = useState<NcertClass>('CLASS_10');
   const [chapter, setChapter] = useState('');
-  const [questionCount, setQuestionCount] = useState(10);
+  const [questionCount] = useState(10);
   const [assessment, setAssessment] = useState<MathHelperAssessmentResponse | null>(null);
   const summary = useQuery({ queryKey: ['mock-summary'], queryFn: fetchMockSummary });
   const traj = useQuery({ queryKey: ['traj'], queryFn: fetchTrajectory });
   const results = useQuery({ queryKey: ['exam-results'], queryFn: fetchExamResults });
+  // FOCUS Chapter test — selected class 의 챕터 목록 (NCERT concept-lessons).
+  const chapters = useQuery({
+    queryKey: ['concept-lessons', classLevel],
+    queryFn: () => fetchConceptLessons(classLevel),
+  });
+  // 학년 바뀌면 chapter 초기화 — 이전 학년 챕터가 신학년 목록에 없을 수 있음.
+  function changeClass(v: NcertClass) { setClassLevel(v); setChapter(''); }
+  // CLASS_10 → 10 (number) for generateChapterTest 의 classLevel.
+  const classLevelNum = Number(classLevel.replace('CLASS_', ''));
 
   // chart geometry
   const W = 320, H = 110, P = 20;
@@ -75,6 +85,7 @@ export function MocksScreen() {
 
   const chapterAssessment = useMutation({
     mutationFn: () => generateChapterTest({
+      classLevel: classLevelNum,
       chapter: chapter.trim().startsWith('NCERT-') ? undefined : chapter.trim(),
       chapterCode: chapter.trim().startsWith('NCERT-') ? chapter.trim() : undefined,
       questionCount,
@@ -212,25 +223,40 @@ export function MocksScreen() {
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginTop: 4, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
                 {chapterAssessment.isPending ? 'Building...' : 'Chapter test'}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 48px', gap: 6, marginTop: 8 }}>
-                <input
+              {/* [Class | Chapter] — 둘 다 native <select> 라 클릭하면 세로 드롭다운 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: 6, marginTop: 8 }}>
+                <select
+                  value={classLevel}
+                  onChange={(e) => changeClass(e.target.value as NcertClass)}
+                  style={inputStyle}
+                  aria-label="Class"
+                >
+                  {(['CLASS_7','CLASS_8','CLASS_9','CLASS_10','CLASS_11','CLASS_12'] as const).map((c) => (
+                    <option key={c} value={c}>Class {c.replace('CLASS_', '')}</option>
+                  ))}
+                </select>
+                <select
                   value={chapter}
                   onChange={(e) => setChapter(e.target.value)}
-                  placeholder="Chapter"
                   style={inputStyle}
-                />
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={questionCount}
-                  onChange={(e) => setQuestionCount(Number(e.target.value))}
-                  style={inputStyle}
-                />
+                  aria-label="Chapter"
+                  disabled={chapters.isLoading}
+                >
+                  <option value="">
+                    {chapters.isLoading
+                      ? 'Loading…'
+                      : (chapters.data && chapters.data.length > 0 ? 'Pick a chapter' : 'No chapters')}
+                  </option>
+                  {(chapters.data ?? []).map((c) => (
+                    <option key={c.chapterCode} value={c.chapterCode}>
+                      {c.chapterNumber}. {c.title}
+                    </option>
+                  ))}
+                </select>
               </div>
               <button
                 className="btn"
-                disabled={assessmentBusy || !chapter.trim()}
+                disabled={assessmentBusy || !chapter}
                 onClick={() => chapterAssessment.mutate()}
                 style={{ marginTop: 8, width: '100%', padding: '8px 10px', fontSize: 12 }}
               >
