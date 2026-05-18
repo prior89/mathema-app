@@ -1,0 +1,29 @@
+name: Reopen site (re-enable + trigger frontend-deploy)
+
+# Undoes "Close site" — re-enables the auto-deploy workflow and triggers it
+# once so the real React SPA gets rebuilt and replaces the maintenance page.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions:  write   # enable + dispatch the frontend-deploy workflow
+
+jobs:
+  reopen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable frontend-deploy.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow enable frontend-deploy.yml -R "$GITHUB_REPOSITORY" || true
+
+      - name: Trigger frontend-deploy.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run frontend-deploy.yml -R "$GITHUB_REPOSITORY"
+
+      - name: Result
+        run: |
+          echo "::notice::Reopen kicked off. Real SPA back online in ~3 min once frontend-deploy finishes."

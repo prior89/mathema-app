@@ -1,0 +1,91 @@
+name: Close site (deploy maintenance page + disable frontend auto-deploy)
+
+# Manually-triggered teardown for the public SWA frontend.
+# Replaces the React SPA with a single "Service Paused" page and disables
+# frontend-deploy.yml so any push to app/** doesn't reopen the site.
+# Reverse with the "Reopen site" workflow.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write        # OIDC login to Azure
+  contents: read
+  actions:  write        # disable the frontend-deploy workflow
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build maintenance dist
+        run: |
+          mkdir -p /tmp/closed-dist
+          cat > /tmp/closed-dist/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Mathēma — Service Paused</title>
+          <style>
+            body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+              font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+              background: #f7f7f5; color: #2a3340; }
+            main { max-width: 440px; padding: 40px 24px; text-align: center; }
+            h1 { font-family: 'Lora', Georgia, serif; font-weight: 400;
+                 margin: 0 0 14px; font-size: 32px; font-style: italic;
+                 color: #1d4a44; letter-spacing: -0.01em; }
+            p  { color: #5c6770; line-height: 1.55; margin: 0; font-size: 15px; }
+          </style>
+          </head>
+          <body>
+            <main>
+              <h1>Mathēma</h1>
+              <p>This service is currently paused. Please check back later.</p>
+            </main>
+          </body>
+          </html>
+          HTML
+          # SPA fallback so /app, /login, /onboarding etc. all hit the maintenance
+          # page instead of 404.
+          cat > /tmp/closed-dist/staticwebapp.config.json <<'JSON'
+          {
+            "navigationFallback": { "rewrite": "/index.html", "exclude": [] },
+            "globalHeaders": { "cache-control": "no-cache, no-store, must-revalidate" }
+          }
+          JSON
+
+      - name: Fetch SWA deployment token
+        id: token
+        run: |
+          TOKEN=$(az staticwebapp secrets list \
+            --name mathema-swa --resource-group mathema-prod-cin \
+            --query "properties.apiKey" -o tsv)
+          [ -z "$TOKEN" ] && { echo "::error::Could not fetch SWA token"; exit 1; }
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy maintenance page
+        run: |
+          npx -y @azure/static-web-apps-cli@latest deploy /tmp/closed-dist \
+            --deployment-token "${{ steps.token.outputs.token }}" \
+            --env production \
+            --verbose silly
+
+      - name: Disable frontend-deploy.yml workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow disable frontend-deploy.yml -R "$GITHUB_REPOSITORY" || true
+
+      - name: Result
+        run: |
+          echo "::notice::Site closed. https://black-wave-093b02b00.7.azurestaticapps.net now shows maintenance page."
