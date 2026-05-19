@@ -127,7 +127,7 @@ export class SimilarProblemService {
       requested: TARGET_COUNT,
       returned: items.length,
       ...(items.length < TARGET_COUNT && {
-        shortfallReason: `해당 개념(${conceptIds.length}개)의 적정 난이도 후보가 ${candidates.length}개 — 5개를 모두 채우지 못했습니다.`,
+        shortfallReason: `Only ${candidates.length} suitable-difficulty candidate(s) for the ${conceptIds.length} concept(s) — could not fill all 5.`,
       }),
     };
   }
@@ -135,8 +135,8 @@ export class SimilarProblemService {
   private buildReason(problem: { commonErrorCodes: string[] }, errorCodes: string[]): string {
     const shared = errorCodes.filter((ec) => problem.commonErrorCodes.includes(ec));
     if (shared.length > 0) {
-      return `같은 개념이고 ${shared.join(', ')} 오류를 교정하기 위한 문제입니다.`;
+      return `Same concept — targets the ${shared.join(', ')} error pattern.`;
     }
-    return '같은 개념을 다른 표현으로 다시 풀어보는 문제입니다.';
+    return 'Same concept, presented in a different form so you can practise again.';
   }
 }

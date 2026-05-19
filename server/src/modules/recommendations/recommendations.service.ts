@@ -73,7 +73,7 @@ export class RecommendationsService {
    * 오늘의 추천 카드 — 데이터 있는 만큼만 반환 (최대 3, 최소 0).
    * frontend 는 length 로 empty state 분기.
    */
-  async today(userId: string, lang: Lang = 'ko') {
+  async today(userId: string, lang: Lang = 'en') {
     const exclude: string[] = [];
     const cards: any[] = [];
 

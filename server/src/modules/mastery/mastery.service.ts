@@ -14,7 +14,7 @@ function localizeUnit(name: string, lang: Lang): string {
 export class MasteryService {
   constructor(private readonly repo: MasteryRepository) {}
 
-  async all(userId: string, lang: Lang = 'ko') {
+  async all(userId: string, lang: Lang = 'en') {
     const list = await this.repo.findAll(userId);
     return list
       .sort((a: any, b: any) => a.unit.order - b.unit.order)

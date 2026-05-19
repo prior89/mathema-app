@@ -41,7 +41,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-function sanitizeForExam(p: any, lang: Lang = 'ko'): any {
+function sanitizeForExam(p: any, lang: Lang = 'en'): any {
   if (!p) return p;
   const { answer, ...rest } = p;
   if (lang !== 'ko') {
@@ -82,7 +82,7 @@ export class MockExamsService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async trajectory(userId: string, count: number, lang: Lang = 'ko') {
+  async trajectory(userId: string, count: number, lang: Lang = 'en') {
     const rows = await this.repo.findTrajectory(userId, count);
     // 목표선 — 사용자 targetGrade 기반 동적 환산. 가짜 고정값 80 제거.
     // 등급당 ~8점 (1등급=96, 2등급=88, 3등급=80, 4등급=72 ...)
@@ -98,7 +98,7 @@ export class MockExamsService {
     }));
   }
 
-  async recentResults(userId: string, count: number, lang: Lang = 'ko') {
+  async recentResults(userId: string, count: number, lang: Lang = 'en') {
     const rows = await this.repo.findRecent(userId, count);
     return rows.map((r: any) => {
       const iso = r.takenAt.toISOString().slice(0, 10);
@@ -119,7 +119,7 @@ export class MockExamsService {
    * 단일 결과 상세 — Recent results 카드 클릭 시 review 페이지에 표시.
    * 응시 attempt 별 problem 이름·정답 여부·내가 고른 보기까지 포함.
    */
-  async getResultById(userId: string, resultId: string, lang: Lang = 'ko') {
+  async getResultById(userId: string, resultId: string, lang: Lang = 'en') {
     const r = await this.prisma.mockExamResult.findFirst({
       where: { id: resultId, userId },
       include: {
@@ -249,7 +249,7 @@ export class MockExamsService {
   private async beginSession(userId: string, p: {
     name: string; type: any; totalMinutes: number;
     problems: Array<{ id: string; source: string; difficulty: string }>;
-  }, lang: Lang = 'ko') {
+  }, lang: Lang = 'en') {
     if (!p.problems || p.problems.length === 0) {
       return { resultId: null, name: p.name, totalMinutes: p.totalMinutes, problems: [] };
     }
@@ -265,7 +265,7 @@ export class MockExamsService {
     };
   }
 
-  private async fetchFullProblems(ids: string[], lang: Lang = 'ko') {
+  private async fetchFullProblems(ids: string[], lang: Lang = 'en') {
     if (ids.length === 0) return [];
     const ps = await this.prisma.problem.findMany({
       where: { id: { in: ids } },
@@ -291,7 +291,7 @@ export class MockExamsService {
   async submitStepAnswer(userId: string, resultId: string, dto: {
     problemId: string; choiceId: string;
     stepIndex: number; durationSec: number; confidence?: number;
-  }, lang: Lang = 'ko') {
+  }, lang: Lang = 'en') {
     const attempt = await this.attempts.create(userId, {
       problemId: dto.problemId,
       answer: '',

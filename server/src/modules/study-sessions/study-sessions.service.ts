@@ -24,7 +24,7 @@ export class StudySessionsService {
    * 명세서 §4 Flow 1 — 세션 시작 시 Adaptive Engine 추천 문제 1개를 함께 반환.
    *   { session-row, nextProblem: { problemId, reason, ... } | null }
    */
-  async start(userId: string, dto: StartSessionDto, _lang: Lang = 'ko') {
+  async start(userId: string, dto: StartSessionDto, _lang: Lang = 'en') {
     const session = await this.repo.create(userId, dto);
     let nextProblem: any = null;
     try {
@@ -34,7 +34,7 @@ export class StudySessionsService {
     }
     return { ...session, nextProblem };
   }
-  get(userId: string, id: string, _lang: Lang = 'ko') { return this.repo.findOne(userId, id); }
+  get(userId: string, id: string, _lang: Lang = 'en') { return this.repo.findOne(userId, id); }
 
   /** 특정 문제로 학습 세션 시작 — 그 문제의 단원으로 세션을 만들고 focusProblemId 도 함께 반환. */
   async startFromProblem(userId: string, problemId: string) {
@@ -51,7 +51,7 @@ export class StudySessionsService {
    * weight = α·(100-mastery) + β·wrongNoteCount + γ·(timeBudget - timeSpent)
    * 학년 필터(grade) 가 주어지면 해당 학년 단원만, 아니면 사용자 자신의 학년.
    */
-  async recommendedUnits(userId: string, count = 3, gradeOverride?: string, lang: Lang = 'ko') {
+  async recommendedUnits(userId: string, count = 3, gradeOverride?: string, lang: Lang = 'en') {
     const user = await this.prisma.user.findUnique({ where: { id: userId } }) as any;
     const grade = (gradeOverride && gradeOverride !== '__all__' && gradeOverride !== '__mine__')
       ? gradeOverride
@@ -168,7 +168,7 @@ export class StudySessionsService {
     }));
   }
 
-  getAiGuide(userId: string, id: string, perspective: string, lang: Lang = 'ko') {
+  getAiGuide(userId: string, id: string, perspective: string, lang: Lang = 'en') {
     return this.aiGuide.generate(userId, id, perspective, lang);
   }
 
@@ -178,7 +178,7 @@ export class StudySessionsService {
    *   - 오답: { isCorrect: false, choice: { text, distractorType, rationale } } → 학습용 즉시 피드백
    *   - isRetry: 같은 step의 N번째 시도면 true (BKT 무효화됨)
    */
-  async submitAnswer(userId: string, id: string, dto: SubmitAnswerDto, lang: Lang = 'ko') {
+  async submitAnswer(userId: string, id: string, dto: SubmitAnswerDto, lang: Lang = 'en') {
     const attempt = await this.attempts.create(userId, {
       problemId: dto.problemId,
       answer: dto.answer,

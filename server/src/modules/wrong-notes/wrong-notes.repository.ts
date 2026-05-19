@@ -67,7 +67,7 @@ const formatDueIn = (next: Date | null, lang: Lang): string | null => {
   return `${days}일 후`;
 };
 
-const toCardShape = (n: any, lang: Lang = 'ko') => {
+const toCardShape = (n: any, lang: Lang = 'en') => {
   const unitKo = n.problem.unit.name;
   const subUnitKo = n.problem.subUnit?.name ?? '';
   const sourceKo = n.problem.source;
@@ -157,7 +157,7 @@ export class WrongNotesRepository {
     };
   }
 
-  async findDue(userId: string, limit?: number, lang: Lang = 'ko') {
+  async findDue(userId: string, limit?: number, lang: Lang = 'en') {
     const now = new Date();
     const rows = await this.prisma.wrongNote.findMany({
       where: {
@@ -192,7 +192,7 @@ export class WrongNotesRepository {
     });
   }
 
-  async findRecent(userId: string, limit: number, lang: Lang = 'ko') {
+  async findRecent(userId: string, limit: number, lang: Lang = 'en') {
     const rows = await this.prisma.wrongNote.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -202,7 +202,7 @@ export class WrongNotesRepository {
     return rows.map((r) => toCardShape(r, lang));
   }
 
-  async list(userId: string, query: any, lang: Lang = 'ko') {
+  async list(userId: string, query: any, lang: Lang = 'en') {
     const rows = await this.prisma.wrongNote.findMany({
       where: { userId, ...this.buildWhere(query) },
       orderBy: this.buildOrderBy(query),
@@ -211,7 +211,7 @@ export class WrongNotesRepository {
     return rows.map((r) => toCardShape(r, lang));
   }
 
-  async findOne(userId: string, id: string, lang: Lang = 'ko') {
+  async findOne(userId: string, id: string, lang: Lang = 'en') {
     const n = await this.prisma.wrongNote.findFirstOrThrow({
       where: { id, userId },
       include: { problem: { include: { unit: true, subUnit: true, conceptLesson: { select: { chapterCode: true } } } } },

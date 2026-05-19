@@ -12,7 +12,7 @@ export class ReinforceWeaknessStrategy {
   private static readonly PEER_AVG = 71;
   constructor(private readonly prisma: PrismaService) {}
 
-  async recommend(userId: string, excludeUnitIds: string[] = [], lang: Lang = 'ko') {
+  async recommend(userId: string, excludeUnitIds: string[] = [], lang: Lang = 'en') {
     const masteries = await this.prisma.masterySnapshot.findMany({
       where: { userId, ...(excludeUnitIds.length ? { unitId: { notIn: excludeUnitIds } } : {}) },
       include: { unit: true },
@@ -57,7 +57,7 @@ export class ReinforceWeaknessStrategy {
     };
   }
 
-  private estimateTime(score: number, lang: Lang = 'ko'): string {
+  private estimateTime(score: number, lang: Lang = 'en'): string {
     if (lang === 'hi') {
       if (score < 40) return '30 मिनट';
       if (score < 60) return '20 मिनट';

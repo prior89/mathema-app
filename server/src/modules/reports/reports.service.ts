@@ -60,7 +60,7 @@ export class ReportsService {
    * 약점 단원 Top 3 — mastery 낮은 순. impact 는 실 mastery gap 기반.
    * priority 는 단순히 순위 라벨; impact 는 객관적인 '점수 여력' (100-score).
    */
-  async nextFocus(userId: string, lang: Lang = 'ko') {
+  async nextFocus(userId: string, lang: Lang = 'en') {
     const masteries = await this.prisma.masterySnapshot.findMany({
       where: { userId, samples: { gte: 3 } },     // 표본 부족한 단원은 제외 — 실제 약점 식별 신뢰도 확보
       include: { unit: true },
@@ -93,7 +93,7 @@ export class ReportsService {
    *   3) 단원 마스터 (mastery ≥ 90)
    *   4) 오답노트 정복 (status=MASTERED count ≥ 5)
    */
-  async achievements(userId: string, lang: Lang = 'ko') {
+  async achievements(userId: string, lang: Lang = 'en') {
     const isEn = lang !== 'ko';
     const cards: Array<{ icon: string; title: string; sub: string; color: string }> = [];
 
@@ -206,7 +206,7 @@ export class ReportsService {
    *     완벽한 캘리브레이션은 y=x 대각선.
    *   - over/under-confidence 진단 + 권장 행동.
    */
-  async calibration(userId: string, lang: Lang = 'ko') {
+  async calibration(userId: string, lang: Lang = 'en') {
     const attempts = await this.prisma.attempt.findMany({
       where: { userId, confidence: { not: null } },
       select: { confidence: true, isCorrect: true, createdAt: true },

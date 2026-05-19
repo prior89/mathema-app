@@ -20,13 +20,13 @@ function localizeSub(name: string, lang: Lang): string {
 export class CurriculumService {
   constructor(private readonly repo: CurriculumRepository) {}
 
-  async tree(lang: Lang = 'ko', grade?: string) {
+  async tree(lang: Lang = 'en', grade?: string) {
     const g = this.normalizeGrade(grade);
     const units = await this.repo.findUnitsWithSubUnits(g);
     return units.map((u: any) => this.shape(u, lang));
   }
 
-  async unitsForUser(userId: string, lang: Lang = 'ko', queryGrade?: string) {
+  async unitsForUser(userId: string, lang: Lang = 'en', queryGrade?: string) {
     // "__all__" → 학년 필터 해제 (전체 단원)
     let g: GradeLevel | null = null;
     if (queryGrade !== '__all__') {

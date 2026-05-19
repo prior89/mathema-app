@@ -13,15 +13,15 @@ export class ProblemsService {
     private readonly repo: ProblemsRepository,
     private readonly prisma: PrismaService,
   ) {}
-  list(q: any, lang: Lang = 'ko') { return this.repo.list(q, lang); }
-  one(id: string, lang: Lang = 'ko') { return this.repo.findById(id, lang); }
+  list(q: any, lang: Lang = 'en') { return this.repo.list(q, lang); }
+  one(id: string, lang: Lang = 'en') { return this.repo.findById(id, lang); }
   hint(id: string) { return this.repo.findHint(id); }
 
   /**
    * 풀이 공개 — 오답노트·복습 등 이미 풀어본 문제에 대해 정답까지 포함한 전체 풀이를 반환.
    * sanitizeForClient 가 숨기는 answer / isCorrect / rationale 도 포함.
    */
-  async solution(id: string, lang: Lang = 'ko') {
+  async solution(id: string, lang: Lang = 'en') {
     const p = await this.prisma.problem.findUnique({
       where: { id },
       include: {
@@ -63,7 +63,7 @@ export class ProblemsService {
     };
   }
 
-  async recommendedFor(userId: string, unitId: string, lang: Lang = 'ko') {
+  async recommendedFor(userId: string, unitId: string, lang: Lang = 'en') {
     const mastery = await this.prisma.masterySnapshot.findUnique({
       where: { userId_unitId: { userId, unitId } },
     });

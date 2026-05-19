@@ -129,7 +129,7 @@ export class AdminService {
   }
 
   // ===== 사용자 상세 =====
-  async userDetail(userId: string, lang: Lang = 'ko') {
+  async userDetail(userId: string, lang: Lang = 'en') {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -216,7 +216,7 @@ export class AdminService {
   }
 
   // ===== 콘텐츠 커버리지 — Class × Unit × (problems / stepped / with concept / with formula) =====
-  async contentCoverage(lang: Lang = 'ko') {
+  async contentCoverage(lang: Lang = 'en') {
     const units = await this.prisma.unit.findMany({
       orderBy: { order: 'asc' },
       include: { problems: { include: { _count: { select: { steps: true } } } } },
@@ -260,7 +260,7 @@ export class AdminService {
   }
 
   // ===== Distractor 선택 분포 — 콘텐츠 품질 + 학습자 misconception 시그널 =====
-  async distractorInsights(days = 30, lang: Lang = 'ko') {
+  async distractorInsights(days = 30, lang: Lang = 'en') {
     const since = new Date(); since.setDate(since.getDate() - days);
     const wrongAttempts = await this.prisma.attempt.findMany({
       where: { isCorrect: false, choiceId: { not: null }, createdAt: { gte: since } },

@@ -21,7 +21,7 @@ const shuffle = <T>(arr: T[]): T[] => {
   return a;
 };
 
-const sanitizeForClient = (p: any, lang: Lang = 'ko') => {
+const sanitizeForClient = (p: any, lang: Lang = 'en') => {
   if (!p) return p;
   const { answer, ...rest } = p;
   if (lang !== 'ko') {
@@ -58,7 +58,7 @@ const sanitizeForClient = (p: any, lang: Lang = 'ko') => {
 export class ProblemsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(q: any, lang: Lang = 'ko') {
+  async list(q: any, lang: Lang = 'en') {
     const rows = await this.prisma.problem.findMany({
       where: this.buildWhere(q),
       include: { steps: { orderBy: { stepIndex: 'asc' }, include: { choices: { orderBy: { choiceIndex: 'asc' } } } } },
@@ -67,7 +67,7 @@ export class ProblemsRepository {
     return rows.map((p) => sanitizeForClient(p, lang));
   }
 
-  async findById(id: string, lang: Lang = 'ko') {
+  async findById(id: string, lang: Lang = 'en') {
     const row = await this.prisma.problem.findUnique({
       where: { id },
       include: { steps: { orderBy: { stepIndex: 'asc' }, include: { choices: { orderBy: { choiceIndex: 'asc' } } } } },

@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { translations, TranslationKey } from './translations';
 
+// Future expansion: add 'es' (Latin America) when ready. Keep in sync with
+// `server/src/common/i18n/current-lang.decorator.ts` and `translations.ts`.
 export type Lang = 'ko' | 'en' | 'hi';
 
 type I18nContext = {
@@ -28,8 +30,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return 'en';
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'ko' || saved === 'en' || saved === 'hi') return saved;
-    // 인도 PoC 디폴트 = EN. 브라우저 언어가 hi 이면 hi, 그 외 (ko 포함)는 모두 EN.
-    // KO 는 사용자가 토글로 명시 선택해야만 활성화 (한국인 개발자 편의용 — 제품 타깃은 인도 EN/HI).
+    // Default = EN. Browser language pick: hi / ko then EN fallback.
+    // KO requires explicit user toggle (KO market not primary; only dev convenience).
     const nav = navigator.language.toLowerCase();
     if (nav.startsWith('hi')) return 'hi';
     return 'en';

@@ -181,11 +181,11 @@ export class WeeklyReportService {
     const goals: string[] = [];
     const weakest = mastery.filter((m) => m.evidenceCount >= 3).sort((a, b) => a.masteryScore - b.masteryScore)[0];
     if (weakest) {
-      goals.push(`${weakest.concept.name} 숙련도 ${Math.round(weakest.masteryScore)}% → 다음 주 +10% 목표`);
+      goals.push(`Raise ${weakest.concept.name} mastery from ${Math.round(weakest.masteryScore)}% → +10% target next week`);
     }
     const activePattern = patterns.find((p) => p.status === ErrorPatternStatus.ACTIVE);
     if (activePattern) {
-      goals.push(`${activePattern.concept.name} 의 ${activePattern.errorCode} 오류 줄이기 (단계별 풀이 입력 습관)`);
+      goals.push(`Reduce ${activePattern.errorCode} errors in ${activePattern.concept.name} (write out each solution step)`);
     }
     return goals.slice(0, 3);
   }
@@ -195,17 +195,17 @@ export class WeeklyReportService {
     improvedNames: string[]; weakNames: string[]; nextGoal: string | null;
   }): string {
     if (s.totalAttempts === 0) {
-      return '이번 주 학습 데이터가 없네요. 한 문제부터 시작해 봅시다.';
+      return "No study data for this week yet. Let's start with one problem.";
     }
     const parts: string[] = [];
-    parts.push(`이번 주 ${s.totalAttempts}문제 풀이, 정답률 ${s.averageAccuracyPct}%.`);
+    parts.push(`This week: ${s.totalAttempts} problems solved, ${s.averageAccuracyPct}% accuracy.`);
     if (s.improvedNames.length > 0) {
-      parts.push(`${s.improvedNames[0]} 가 눈에 띄게 안정됐어요.`);
+      parts.push(`${s.improvedNames[0]} has noticeably stabilised.`);
     }
     if (s.nextGoal) {
-      parts.push(`다음 목표: ${s.nextGoal}`);
+      parts.push(`Next goal: ${s.nextGoal}`);
     } else if (s.weakNames.length > 0) {
-      parts.push(`다음 주는 ${s.weakNames[0]} 에 시간을 좀 더 써볼게요.`);
+      parts.push(`Next week: spend more time on ${s.weakNames[0]}.`);
     }
     return parts.join(' ');
   }
@@ -217,11 +217,11 @@ export class WeeklyReportService {
   }): string {
     const minPerSession = Math.round(s.averageStudyDurationSec / 60);
     const parts: string[] = [
-      `이번 주 학습 횟수 ${s.totalSessions}회, 평균 ${minPerSession}분/회.`,
-      `푼 문제 ${s.totalAttempts}개, 정답률 ${s.averageAccuracyPct}%.`,
+      `Sessions this week: ${s.totalSessions}, average ${minPerSession} min/session.`,
+      `Problems solved: ${s.totalAttempts}, accuracy ${s.averageAccuracyPct}%.`,
     ];
-    if (s.weakNames.length > 0) parts.push(`주요 취약 단원: ${s.weakNames.join(', ')}.`);
-    if (s.repeatedPatternCount > 0) parts.push(`반복 실수 패턴 ${s.repeatedPatternCount}건이 active 상태입니다.`);
+    if (s.weakNames.length > 0) parts.push(`Main weak units: ${s.weakNames.join(', ')}.`);
+    if (s.repeatedPatternCount > 0) parts.push(`${s.repeatedPatternCount} repeated mistake pattern(s) currently active.`);
     return parts.join(' ');
   }
 
@@ -232,17 +232,17 @@ export class WeeklyReportService {
     recommendations: { total: number; accepted: number; solved: number; acceptRate: number };
   }): string {
     const parts: string[] = [
-      `학생 주간 정답률 ${s.averageAccuracyPct}% (${s.totalAttempts}문제).`,
+      `Student weekly accuracy: ${s.averageAccuracyPct}% (${s.totalAttempts} problems).`,
     ];
     if (s.weakConcepts.length > 0) {
-      parts.push(`취약 단원: ${s.weakConcepts.map((c) => c.name).join(', ')}.`);
+      parts.push(`Weak units: ${s.weakConcepts.map((c) => c.name).join(', ')}.`);
     }
     if (s.activeErrorPatterns.length > 0) {
       const top = s.activeErrorPatterns[0];
-      parts.push(`주요 오답 원인: ${top.conceptName} 의 ${top.errorCode} (${top.severity}).`);
+      parts.push(`Top error pattern: ${top.errorCode} in ${top.conceptName} (${top.severity}).`);
     }
-    parts.push(`AI 추천 ${s.recommendations.total}건 — 수락 ${s.recommendations.acceptRate}%, 해결 ${s.recommendations.solved}건.`);
-    parts.push(`Teacher Override 필요 여부는 ErrorPattern severity / 추천 수락률 결합 후 판단을 권장합니다.`);
+    parts.push(`AI recommendations: ${s.recommendations.total} (accept ${s.recommendations.acceptRate}%, resolved ${s.recommendations.solved}).`);
+    parts.push('Consider a Teacher Override only after combining ErrorPattern severity with the recommendation accept rate.');
     return parts.join(' ');
   }
 }

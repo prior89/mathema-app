@@ -29,7 +29,7 @@ export class AiGuideService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async generate(userId: string, sessionId: string, perspective: string, lang: Lang = 'ko') {
+  async generate(userId: string, sessionId: string, perspective: string, lang: Lang = 'en') {
     const persp = this.normalizePerspective(perspective);
 
     // 1) 세션 → unit → 추천 문제 lookup. 추천이 있으면 그 problemId, 없으면 unit 의 첫 문제.

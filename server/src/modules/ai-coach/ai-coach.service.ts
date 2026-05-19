@@ -32,7 +32,7 @@ function pickErrorType(key: string, lang: Lang): string {
 export class AiCoachService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async diagnosis(userId: string, lang: Lang = 'ko') {
+  async diagnosis(userId: string, lang: Lang = 'en') {
     const weakest = await this.prisma.masterySnapshot.findFirst({
       where: { userId }, orderBy: { score: 'asc' }, include: { unit: true },
     });
@@ -71,7 +71,7 @@ export class AiCoachService {
     };
   }
 
-  async errorDna(userId: string, lang: Lang = 'ko') {
+  async errorDna(userId: string, lang: Lang = 'en') {
     const since = new Date(); since.setDate(since.getDate() - 30);
     const rows = await this.prisma.wrongNote.groupBy({
       by: ['errorType'],
@@ -141,7 +141,7 @@ export class AiCoachService {
     return `${top.name}가 ${top.value}%로 가장 높아요. 추천 처방: ${r.advice}. 예상 효과: ${r.expected}.`;
   }
 
-  async patterns(userId: string, lang: Lang = 'ko') {
+  async patterns(userId: string, lang: Lang = 'en') {
     const since = new Date(); since.setDate(since.getDate() - 30);
 
     const wrongChoiceAttempts = await this.prisma.attempt.findMany({
@@ -307,7 +307,7 @@ export class AiCoachService {
     return `${unit} 단원에서 ${b.count}회 누적 — ${ETYPE_DESC[b.errorType] ?? ETYPE_DESC.OTHER}`;
   }
 
-  async mentorMessage(userId: string, week: string, lang: Lang = 'ko') {
+  async mentorMessage(userId: string, week: string, lang: Lang = 'en') {
     const r = await this.prisma.weeklyReport.findFirst({
       where: { userId }, orderBy: { weekStart: 'desc' },
     });

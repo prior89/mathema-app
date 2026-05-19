@@ -73,7 +73,7 @@ export function MeScreen() {
                 <div className="badge" style={{ background: 'var(--p-primary-tint)', color: 'var(--p-primary)', fontStyle: 'normal', fontSize: 16 }}>↑</div>
                 <div className="info">
                   <div className="ttl">Content ingestion</div>
-                  <div className="sub">PDF 업로드 / API source / draft 검수</div>
+                  <div className="sub">PDF upload / API source / draft review</div>
                 </div>
                 <Glyph.ChevronR accent="var(--p-muted)" size={16} />
               </div>

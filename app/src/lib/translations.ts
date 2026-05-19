@@ -1137,5 +1137,6 @@ const hi: Partial<typeof ko> = {
   'study.gate.toConcept': 'पहले अवधारणा: {title}',
 };
 
+// Future: add `es` (Latin America) — keep `Lang` type in `i18n.tsx` in sync.
 export const translations = { ko, en, hi };
 export type TranslationKey = keyof typeof ko;

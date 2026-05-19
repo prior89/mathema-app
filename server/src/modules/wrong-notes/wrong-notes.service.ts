@@ -25,16 +25,16 @@ export class WrongNotesService {
   ) {}
 
   getStats(userId: string) { return this.repo.aggregateStats(userId); }
-  getRecent(userId: string, limit: number, lang: Lang = 'ko') { return this.repo.findRecent(userId, limit, lang); }
-  list(userId: string, query: QueryWrongNotesDto, lang: Lang = 'ko') { return this.repo.list(userId, query, lang); }
-  getDue(userId: string, limit?: number, lang: Lang = 'ko') { return this.repo.findDue(userId, limit, lang); }
-  async getOne(userId: string, id: string, lang: Lang = 'ko') {
+  getRecent(userId: string, limit: number, lang: Lang = 'en') { return this.repo.findRecent(userId, limit, lang); }
+  list(userId: string, query: QueryWrongNotesDto, lang: Lang = 'en') { return this.repo.list(userId, query, lang); }
+  getDue(userId: string, limit?: number, lang: Lang = 'en') { return this.repo.findDue(userId, limit, lang); }
+  async getOne(userId: string, id: string, lang: Lang = 'en') {
     const note = await this.repo.findOne(userId, id, lang);
     const similar = await this.similar.findSimilar(note.problemId, 5);
     return { ...note, similar };
   }
   create(userId: string, dto: CreateWrongNoteDto) { return this.repo.create(userId, dto); }
-  async uploadPhoto(_userId: string, file: Express.Multer.File, lang: Lang = 'ko') {
+  async uploadPhoto(_userId: string, file: Express.Multer.File, lang: Lang = 'en') {
     if (!file) return { ok: false, message: 'file required' };
     const visionConfigured = !!(process.env.AI_VISION_API_KEY && process.env.AI_VISION_API_KEY !== 'api입력칸');
     if (!visionConfigured) {
@@ -44,7 +44,7 @@ export class WrongNotesService {
     }
     return { ok: true, message: lang !== 'ko' ? STATIC_FALLBACK_EN.uploadPhotoOk : '사진이 등록되었습니다.' };
   }
-  async uploadPdf(_userId: string, file: Express.Multer.File, lang: Lang = 'ko') {
+  async uploadPdf(_userId: string, file: Express.Multer.File, lang: Lang = 'en') {
     if (!file) return { ok: false, message: 'file required' };
     const llmConfigured = !!(process.env.AI_LLM_API_KEY && process.env.AI_LLM_API_KEY !== 'api입력칸');
     if (!llmConfigured) {

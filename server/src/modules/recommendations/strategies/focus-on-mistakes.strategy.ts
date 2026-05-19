@@ -11,7 +11,7 @@ import { UNIT_NAME_HI, SUB_UNIT_NAME_HI, RECOMMENDATION_HI } from '../../../comm
 export class FocusOnMistakesStrategy {
   constructor(private readonly prisma: PrismaService) {}
 
-  async recommend(userId: string, lang: Lang = 'ko') {
+  async recommend(userId: string, lang: Lang = 'en') {
     const notes = await this.prisma.wrongNote.findMany({
       where: { userId, status: { not: 'MASTERED' } },
       include: { problem: { include: { unit: true, subUnit: true } } },
@@ -77,7 +77,7 @@ export class FocusOnMistakesStrategy {
     };
   }
 
-  private estimateTime(occurrences: number, lang: Lang = 'ko'): string {
+  private estimateTime(occurrences: number, lang: Lang = 'en'): string {
     // 한 문제 마스터 ≈ 4분 + 누적당 +2분, 최대 45분
     const min = Math.min(45, 8 + occurrences * 2);
     if (lang === 'hi') return `${min} मिनट`;

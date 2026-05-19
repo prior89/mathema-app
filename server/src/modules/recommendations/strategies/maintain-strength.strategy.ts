@@ -11,7 +11,7 @@ import { UNIT_NAME_HI, RECOMMENDATION_HI } from '../../../common/i18n/content-hi
 export class MaintainStrengthStrategy {
   constructor(private readonly prisma: PrismaService) {}
 
-  async recommend(userId: string, excludeUnitIds: string[] = [], lang: Lang = 'ko') {
+  async recommend(userId: string, excludeUnitIds: string[] = [], lang: Lang = 'en') {
     const masteries = await this.prisma.masterySnapshot.findMany({
       where: { userId, ...(excludeUnitIds.length ? { unitId: { notIn: excludeUnitIds } } : {}) },
       include: { unit: true },
