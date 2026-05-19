@@ -21,7 +21,7 @@ class DeterministicResult:
 
 
 def clean_question(question: str) -> str:
-    return (
+    q = (
         question.replace("−", "-")
         .replace("–", "-")
         .replace("—", "-")
@@ -31,6 +31,19 @@ def clean_question(question: str) -> str:
         .replace("³", "^3")
         .strip()
     )
+    # Strip common imperative prefixes the per-equation checkers don't want:
+    #   "Solve for x:", "Solve x =", "Find x:", "Find the value of x:", "Solve:",
+    #   "Find the roots of:" etc. Idempotent — leaves bare equations untouched.
+    q = re.sub(
+        r"^(?:solve|find|compute|evaluate|determine|calculate)"
+        r"(?:\s+(?:for|the\s+(?:value|roots?|zeros?)\s+of))?"
+        r"(?:\s+[a-zA-Z](?:\s*=\s*[^,]+)?)?"  # optional " x" or " x = 0" target
+        r"\s*[:\-]?\s*",
+        "",
+        q,
+        flags=re.IGNORECASE,
+    )
+    return q.strip()
 
 
 def normalize(value: str | None) -> str:

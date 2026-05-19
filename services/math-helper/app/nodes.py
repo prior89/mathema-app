@@ -128,6 +128,27 @@ async def solve(state):
     personalized_context = state.get("personalizedContext", {})
     matched_problem = context.get("matchedProblem")
 
+    # Trust deterministic solvers ahead of NCERT lookup. The lookup matches
+    # similar-shaped problems by text, which can pick a wrong neighbour
+    # (e.g. "2x+7=15" matched "2x+5=17" and answered x=6 instead of x=4).
+    # Hand-rolled solvers in deterministic_check.py operate on the actual
+    # equation and are exact when they can parse it.
+    deterministic = deterministic_check(state["question"])
+    if deterministic and not personalized_context.get("hasProfile"):
+        steps = deterministic.get("steps", []) or []
+        concepts = ", ".join(deterministic.get("concepts", []) or [])
+        explanation_lines = []
+        if concepts:
+            explanation_lines.append(f"This is a {concepts.lower()} problem.")
+        explanation_lines.extend(steps)
+        return {
+            "solutionDraft": {
+                "answer": deterministic["answer"],
+                "steps": steps,
+                "explanation": " ".join(explanation_lines),
+            }
+        }
+
     if matched_problem and matched_problem.get("solution") and not personalized_context.get("hasProfile"):
         solution = matched_problem["solution"]
         return {
@@ -216,9 +237,38 @@ Question:
 
 async def verify(state):
     attempts = state.get("retryCount", 0) + 1
+    draft_answer = state["solutionDraft"]["answer"]
+
+    # 1. Deterministic check FIRST. When a hand-rolled solver parses the
+    #    question, its answer is authoritative — overrides both the LLM
+    #    draft and the NCERT lookup (lookup can match a similar-shaped but
+    #    numerically different problem and give the wrong answer).
+    deterministic = deterministic_check(state["question"])
+    if deterministic:
+        verified_answer = deterministic["answer"]
+        same = normalize(draft_answer) == normalize(verified_answer)
+        return {
+            "verification": {
+                "isVerified": True,  # deterministic IS the source of truth — skip retry
+                "method": "deterministic",
+                "issues": (
+                    []
+                    if same
+                    else [
+                        f"Draft answer {draft_answer} did not match deterministic answer {verified_answer} — using deterministic."
+                    ]
+                ),
+                "confidence": deterministic["confidence"],
+                "verifiedAnswer": verified_answer,
+                "attempts": attempts,
+            }
+        }
+
+    # 2. Fall back to NCERT lookup only when no deterministic solver applies
+    #    (e.g. word problems, geometry proofs). Confidence is bounded since
+    #    lookup is a similarity match, not a real solve.
     matched_problem = state.get("curriculumContext", {}).get("matchedProblem")
     if matched_problem and matched_problem.get("answer"):
-        draft_answer = state["solutionDraft"]["answer"]
         verified_answer = matched_problem["answer"]
         same = normalize(draft_answer) == normalize(verified_answer)
         return {
@@ -232,31 +282,7 @@ async def verify(state):
                         f"Draft answer {draft_answer} did not match stored answer {verified_answer}"
                     ]
                 ),
-                "confidence": 1.0,
-                "verifiedAnswer": verified_answer,
-                "attempts": attempts,
-            }
-        }
-
-    deterministic = deterministic_check(state["question"])
-
-    if deterministic:
-        draft_answer = state["solutionDraft"]["answer"]
-        verified_answer = deterministic["answer"]
-        same = normalize(draft_answer) == normalize(verified_answer)
-
-        return {
-            "verification": {
-                "isVerified": same,
-                "method": "deterministic",
-                "issues": (
-                    []
-                    if same
-                    else [
-                        f"Draft answer {draft_answer} did not match verified answer {verified_answer}"
-                    ]
-                ),
-                "confidence": deterministic["confidence"],
+                "confidence": 0.7,  # similarity match — not as trustworthy as deterministic
                 "verifiedAnswer": verified_answer,
                 "attempts": attempts,
             }
