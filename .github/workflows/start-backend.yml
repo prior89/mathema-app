@@ -1,0 +1,47 @@
+name: Start backend (restore Container Apps scale)
+
+# Undoes stop-backend.yml: restores mathema-backend to min=1/max=5 (always-on,
+# auto-scaling) and mathema-math-helper to min=0/max=3 (scale-to-zero idle).
+# Matches the values set in infra/bicep/main.bicep.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install containerapp extension
+        run: az extension add --name containerapp --upgrade -y
+
+      - name: Scale backend → 1/5
+        run: |
+          az containerapp update -n mathema-backend -g mathema-prod-cin \
+            --min-replicas 1 --max-replicas 5
+
+      - name: Scale math-helper → 0/3
+        run: |
+          az containerapp update -n mathema-math-helper -g mathema-prod-cin \
+            --min-replicas 0 --max-replicas 3
+
+      - name: Wait for backend healthy
+        run: |
+          for i in $(seq 1 18); do
+            sleep 10
+            code=$(curl -s -o /dev/null --max-time 8 -w "%{http_code}" \
+              "https://mathema-backend.redcoast-6e6508a7.centralindia.azurecontainerapps.io/api/v1/health/live" || echo "000")
+            echo "attempt $i → HTTP $code"
+            [ "$code" = "200" ] && exit 0
+          done
+          echo "::warning::Backend did not become healthy within 3 min"

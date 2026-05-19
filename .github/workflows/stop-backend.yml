@@ -1,0 +1,43 @@
+name: Stop backend (scale Container Apps to 0)
+
+# Manually-triggered teardown for the compute layer.
+# Scales mathema-backend and mathema-math-helper to min=0/max=0 so no
+# replicas run and consumption-tier billing drops to zero. Definitions,
+# secrets, images, env vars are preserved — bring back with start-backend.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install containerapp extension
+        run: az extension add --name containerapp --upgrade -y
+
+      - name: Scale backend → 0/0
+        run: |
+          az containerapp update -n mathema-backend -g mathema-prod-cin \
+            --min-replicas 0 --max-replicas 0 \
+            --query "properties.template.scale" -o json
+
+      - name: Scale math-helper → 0/0
+        run: |
+          az containerapp update -n mathema-math-helper -g mathema-prod-cin \
+            --min-replicas 0 --max-replicas 0 \
+            --query "properties.template.scale" -o json
+
+      - name: Result
+        run: |
+          echo "::notice::Both Container Apps scaled to 0/0. No replicas running."
