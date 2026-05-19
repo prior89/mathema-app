@@ -25,10 +25,20 @@ jobs:
       - name: Install containerapp extension
         run: az extension add --name containerapp --upgrade -y
 
+      - name: Re-enable backend ingress (external, port 4000)
+        run: |
+          az containerapp ingress enable -n mathema-backend -g mathema-prod-cin \
+            --type external --target-port 4000 --transport auto --allow-insecure false || true
+
       - name: Scale backend → 1/5
         run: |
           az containerapp update -n mathema-backend -g mathema-prod-cin \
             --min-replicas 1 --max-replicas 5
+
+      - name: Re-enable math-helper ingress (internal, port 8000)
+        run: |
+          az containerapp ingress enable -n mathema-math-helper -g mathema-prod-cin \
+            --type internal --target-port 8000 --transport http --allow-insecure false || true
 
       - name: Scale math-helper → 0/3
         run: |
