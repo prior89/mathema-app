@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from typing import List
 from llm import structured
 from deterministic_check import compare_answers, deterministic_check, normalize
@@ -12,8 +12,15 @@ class Classification(BaseModel):
     topic: str
     chapterCode: str | None = None
     topicCode: str | None = None
-    concepts: List[str]
-    conceptCodes: List[str | None] = []
+    concepts: List[str] = Field(default_factory=list)
+    conceptCodes: List[str | None] = Field(default_factory=list)
+
+    # gpt-4o-mini occasionally returns `null` for empty list fields instead of `[]`.
+    # Coerce to empty list so model validation doesn't blow up on edge questions.
+    @field_validator('concepts', 'conceptCodes', mode='before')
+    @classmethod
+    def _none_to_empty_list(cls, v):
+        return v if v is not None else []
 
 
 class SolutionDraft(BaseModel):

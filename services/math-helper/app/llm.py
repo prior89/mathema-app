@@ -1,4 +1,3 @@
-import json
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
@@ -13,11 +12,14 @@ llm = ChatOpenAI(
 
 
 async def structured(prompt: str, schema: type[BaseModel]):
-    response = await llm.ainvoke(prompt)
-    text = response.content.strip()
+    """Schema-constrained LLM call.
 
-    if text.startswith("```"):
-        text = text.replace("```json", "").replace("```", "").strip()
-
-    data = json.loads(text)
-    return schema.model_validate(data)
+    `with_structured_output()` makes the model use OpenAI's JSON schema
+    enforced decoding — the response is guaranteed to be a valid `schema`
+    instance, so we never have to hand-parse JSON or worry about gpt-4o-mini
+    occasionally returning `null` where the schema expects a list. If the
+    upstream model fails to satisfy the schema entirely (rare), the call
+    raises and the caller handles it via LangGraph's normal error path.
+    """
+    constrained = llm.with_structured_output(schema)
+    return await constrained.ainvoke(prompt)
