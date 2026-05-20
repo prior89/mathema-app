@@ -49,8 +49,9 @@ export function StudyScreen() {
         setMsg("You've already solved every problem in this chapter — pick another to keep going.");
         return;
       }
-      // `origin: study` so the play / result screens know where Back goes.
-      nav(`/app/mocks/play/${r.resultId}`, { state: { ...r, origin: 'study' } });
+      // Single-step Study screen — different UI from the multi-step
+      // MockExamPlayScreen which is reserved for Mastery / real mocks.
+      nav(`/app/practice-set/${r.resultId}`, { state: { ...r, origin: 'study' } });
     },
     onError: (e: any) => setMsg(`Could not start: ${e?.response?.data?.error?.message ?? 'backend error'}`),
   });

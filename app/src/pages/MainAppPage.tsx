@@ -16,6 +16,7 @@ import { ReviewQueueScreen } from '../components/main/ReviewQueueScreen';
 import { SoloProblemScreen } from '../components/main/SoloProblemScreen';
 import { MockExamPlayScreen } from '../components/main/MockExamPlayScreen';
 import { MockResultDetailScreen } from '../components/main/MockResultDetailScreen';
+import { StudyPracticeScreen } from '../components/main/StudyPracticeScreen';
 import { MeScreen } from '../components/main/MeScreen';
 import { ReportScreen } from '../components/main/ReportScreen';
 import { SettingsScreen } from '../components/main/SettingsScreen';
@@ -48,6 +49,8 @@ export default function MainAppPage() {
             <Route path="review" element={<ReviewQueueScreen />} />
             <Route path="notes" element={<NotesListScreen />} />
             <Route path="practice/:problemId" element={<SoloProblemScreen />} />
+            {/* Study tab single-step practice (5-choice MC + handwriting pad). */}
+            <Route path="practice-set/:resultId" element={<StudyPracticeScreen />} />
             {/* Internal session routes — shared by Study + Test. Keep mocks/* path
                 stable so existing localStorage session keys keep working. */}
             <Route path="mocks/play/:resultId" element={<MockExamPlayScreen />} />
