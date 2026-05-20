@@ -44,7 +44,7 @@ export class DraftPublisher {
       manualSource ?? buildNcertAttribution(d.sourceLabel ?? '');
     if (!attribution || !isAcceptableAttribution(attribution)) {
       throw new BadRequestException(
-        'Cannot publish without attribution. Add "SOURCE: NCERT Class N Mathematics, Ch.X Ex.Y Q.Z (derived for Mathēma, Reprint 2024-25)" ' +
+        'Cannot publish without attribution. Add "SOURCE: NCERT Class N Mathematics, Ch.X Ex.Y Q.Z (derived for matheo, Reprint 2024-25)" ' +
           'to reviewerNote, or ensure sourceLabel follows the auto-extract pattern.',
       );
     }

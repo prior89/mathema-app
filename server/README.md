@@ -1,6 +1,6 @@
-# Mathēma Server
+# matheo Server
 
-NestJS 10 + Prisma 5 + PostgreSQL backend for the Mathēma math learning app.
+NestJS 10 + Prisma 5 + PostgreSQL backend for the matheo math learning app.
 Exposes a REST API under `/api/v1/*` for the React/Vite client in `../app/`.
 
 For repository-wide setup (docker compose, workspaces, scripts), see the

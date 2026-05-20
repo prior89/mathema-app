@@ -16,10 +16,34 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Release signing — credentials read from environment so the keystore
+    // passphrase never lives in the tree. Set MATHEO_KEYSTORE_PASSWORD,
+    // MATHEO_KEY_PASSWORD (often the same), MATHEO_KEY_ALIAS, and optionally
+    // MATHEO_KEYSTORE_PATH before invoking `./gradlew bundleRelease`. The
+    // local dev workflow loads these from app/../.keystore.env (gitignored).
+    signingConfigs {
+        release {
+            def storePath = System.getenv('MATHEO_KEYSTORE_PATH') ?: 'matheo-release.jks'
+            storeFile file(storePath)
+            storePassword System.getenv('MATHEO_KEYSTORE_PASSWORD') ?: ''
+            keyAlias System.getenv('MATHEO_KEY_ALIAS') ?: 'matheo'
+            keyPassword System.getenv('MATHEO_KEY_PASSWORD') ?: ''
+        }
+    }
     buildTypes {
         release {
-            minifyEnabled false
+            // R8 minify + resource shrink trim the AAB ~30% on a Capacitor 8
+            // shell. Keep rules for Capacitor / Sentry / firebase-admin live
+            // in proguard-rules.pro alongside this gradle file.
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Only sign release with the matheo key when the env vars are
+            // present — local debug builds (e.g. ./gradlew assembleDebug) and
+            // CI smoke jobs without secrets can still complete.
+            if (System.getenv('MATHEO_KEYSTORE_PASSWORD')) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

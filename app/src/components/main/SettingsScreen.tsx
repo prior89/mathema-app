@@ -36,6 +36,7 @@ export function SettingsScreen() {
   });
 
   const [deletingConfirm, setDeletingConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
   const deleteAccount = useMutation({
     mutationFn: () => del('/users/me'),
     onSuccess: () => {
@@ -43,6 +44,7 @@ export function SettingsScreen() {
       nav('/login');
     },
   });
+  const confirmOk = confirmText === 'DELETE';
 
   const items: Array<{ kind: Consent['kind']; name: string; desc: string; req?: boolean }> = [
     { kind: 'DATA_PROCESSING', name: 'Essential data', desc: 'Required to run the app. Revoke = delete account.', req: true },
@@ -139,22 +141,48 @@ export function SettingsScreen() {
           ) : (
             <div className="card" style={{ padding: 14, borderColor: 'var(--p-danger)' }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--p-danger)' }}>
-                This will permanently delete your account.
+                This permanently and irreversibly deletes your account.
               </div>
-              <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 4 }}>
-                You can re-register later but progress and notes will be lost.
+              <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 4, lineHeight: 1.5 }}>
+                Every attempt, wrong note, mock-exam result, mastery snapshot,
+                and consent record is purged. You can register again with the
+                same email but no progress can be restored.
               </div>
+              <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 10, fontFamily: 'var(--font-mono)' }}>
+                Type DELETE to confirm
+              </div>
+              <input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoFocus
+                style={{
+                  marginTop: 4, width: '100%', boxSizing: 'border-box', padding: '10px 12px',
+                  borderRadius: 8, border: '1px solid var(--p-border-strong)',
+                  background: 'var(--p-surface)', color: 'var(--p-ink)',
+                  fontFamily: 'var(--font-mono)', fontSize: 13, outline: 'none',
+                }}
+              />
               <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button className="btn outline" onClick={() => setDeletingConfirm(false)} style={{ flex: 1 }}>
+                <button
+                  className="btn outline"
+                  onClick={() => { setDeletingConfirm(false); setConfirmText(''); }}
+                  style={{ flex: 1 }}
+                >
                   Cancel
                 </button>
                 <button
                   className="btn"
                   onClick={() => deleteAccount.mutate()}
-                  disabled={deleteAccount.isPending}
-                  style={{ flex: 1, background: 'var(--p-danger)' }}
+                  disabled={deleteAccount.isPending || !confirmOk}
+                  style={{
+                    flex: 1,
+                    background: confirmOk ? 'var(--p-danger)' : 'var(--p-border)',
+                    color: confirmOk ? 'white' : 'var(--p-muted)',
+                    cursor: confirmOk && !deleteAccount.isPending ? 'pointer' : 'not-allowed',
+                  }}
                 >
-                  {deleteAccount.isPending ? 'Deleting…' : 'Delete'}
+                  {deleteAccount.isPending ? 'Deleting…' : 'Delete permanently'}
                 </button>
               </div>
             </div>
@@ -163,7 +191,7 @@ export function SettingsScreen() {
 
         {/* About */}
         <div style={{ marginTop: 24, padding: 12, textAlign: 'center', fontSize: 11, color: 'var(--p-muted)' }}>
-          Mathēma PoC · Policy v2026.05.01
+          matheo PoC · Policy v2026.05.01
         </div>
       </div>
       <TabBar />

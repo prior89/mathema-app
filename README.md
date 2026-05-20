@@ -1,4 +1,4 @@
-# Mathēma
+# matheo
 
 AI-powered NCERT math learning app for Indian Class 7-12 students (CBSE / JEE prep).
 Monorepo:
@@ -266,7 +266,7 @@ preserved. The `DraftPublisher` refuses to publish any `Problem` without a
 valid `source` string:
 
 ```
-NCERT Class 8 Mathematics, Ch.1 Ex.1.1 Q.3 (derived for Mathēma, Reprint 2024-25)
+NCERT Class 8 Mathematics, Ch.1 Ex.1.1 Q.3 (derived for matheo, Reprint 2024-25)
 ```
 
 Two paths to a valid attribution:
@@ -274,7 +274,7 @@ Two paths to a valid attribution:
    (e.g. `AUTO · CLASS_8 · Ch1 · Ex1.1 · Q3`) is parsed by
    `buildNcertAttribution()` and a canonical attribution is generated.
 2. **Manual override** — the reviewer writes
-   `SOURCE: NCERT Class N Mathematics, Ch.X Ex.Y Q.Z (derived for Mathēma, Reprint 2024-25)`
+   `SOURCE: NCERT Class N Mathematics, Ch.X Ex.Y Q.Z (derived for matheo, Reprint 2024-25)`
    at the start of `reviewerNote`. Used for cases where the auto label is
    incomplete (e.g. Ganita Prakash "Figure it Out" blocks with no canonical
    exercise number).
@@ -285,10 +285,10 @@ brand (`NCERT|EBS|CBSE|ICSE`) and a `(derived ...)` tail. See
 
 `buildNcertAttribution()` has two precision tiers:
 - **full** — class + chapter + exerciseId + qIndex all known →
-  `"NCERT Class 10 Mathematics, Ch.1 Ex.1.1 Q.4 (derived for Mathēma, Reprint 2024-25)"`
+  `"NCERT Class 10 Mathematics, Ch.1 Ex.1.1 Q.4 (derived for matheo, Reprint 2024-25)"`
 - **chapter-level** — only class + chapter known (Ganita Manjari Grade 9
   inline narrative activities have no exercise number) →
-  `"NCERT Class 9 Mathematics, Ch.1 inline activity (derived for Mathēma, Reprint 2024-25)"`
+  `"NCERT Class 9 Mathematics, Ch.1 inline activity (derived for matheo, Reprint 2024-25)"`
 
 Both pass `isAcceptableAttribution()`. Only when even chapter is unknown
 does publish abort and demand a manual `SOURCE:` override.

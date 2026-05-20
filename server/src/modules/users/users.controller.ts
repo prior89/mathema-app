@@ -26,8 +26,11 @@ export class UsersController {
   }
 
   /**
-   * 자기계정 삭제 — Play Console 2024 정책 필수.
-   * Soft delete: deletedAt 마킹, JWT 차단 처리됨 (JwtStrategy.validate).
+   * Self account deletion — DPDP §12 / Play Console 2024 policy.
+   * Hard delete: the User row and every owned child record are purged in
+   * a single transaction (see UsersRepository.hardDelete). AnalyticsEvent
+   * rows have their userId anonymised so aggregate funnels survive without
+   * personal trace. AdminAccessLog rows are kept for the audit window.
    */
   @Delete('me')
   async deleteAccount(@CurrentUser('id') id: string) {

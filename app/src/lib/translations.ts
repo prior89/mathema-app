@@ -69,7 +69,7 @@ const ko = {
   'auth.gradeLevel.placeholder': '학년 선택',
   // ── Sage 톤 회원가입 (3 단계: 역할 → 프로필 → 동의) ────────────
   'reg.step1.eyebrow': '01단계 · 역할',
-  'reg.step1.title': 'Mathēma를 어떻게 쓰시나요?',
+  'reg.step1.title': 'matheo를 어떻게 쓰시나요?',
   'reg.step1.sub': '역할에 맞춰 홈 화면과 리포트가 달라집니다.',
   'reg.role.student': '학생',
   'reg.role.student.sub': '수학을 공부하고 문제를 풀러 왔어요.',
@@ -529,7 +529,7 @@ const en: typeof ko = {
   'auth.gradeLevel.placeholder': 'Select grade',
   // ── Sage onboarding (3 steps: role → profile → consent) ──
   'reg.step1.eyebrow': 'Step 01 · You',
-  'reg.step1.title': 'Who\'s using Mathēma?',
+  'reg.step1.title': 'Who\'s using matheo?',
   'reg.step1.sub': 'We tailor the home screen and reports to your role.',
   'reg.role.student': 'Student',
   'reg.role.student.sub': 'I\'m here to learn and practice math.',
@@ -991,7 +991,7 @@ const hi: Partial<typeof ko> = {
   'auth.gradeLevel.placeholder': 'श्रेणी चुनें',
   // ── Sage onboarding (3 steps: role → profile → consent) ──
   'reg.step1.eyebrow': 'चरण 01 · आप',
-  'reg.step1.title': 'Mathēma का उपयोग कौन कर रहा है?',
+  'reg.step1.title': 'matheo का उपयोग कौन कर रहा है?',
   'reg.step1.sub': 'हम आपकी भूमिका के अनुसार होम स्क्रीन और रिपोर्ट तैयार करते हैं।',
   'reg.role.student': 'विद्यार्थी',
   'reg.role.student.sub': 'मैं गणित सीखने और अभ्यास करने यहाँ हूँ।',

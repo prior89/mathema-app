@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
  * 실제 로그인 후 흐름은 별도 spec 에서 fixture 로 분리.
  */
 
-test.describe('Mathēma — public smoke', () => {
+test.describe('matheo — public smoke', () => {
   test('lands on login + can toggle language', async ({ page }) => {
     await page.goto('/');
     // 로그인 페이지로 redirect 되거나 노출

@@ -5,11 +5,13 @@
     "exclude": [
       "/api/*",
       "/assets/*",
-      "*.{css,js,mjs,svg,png,gif,jpg,jpeg,webp,ico,woff,woff2,ttf,otf,map,json,txt,xml}"
+      "/legal/*",
+      "*.{css,js,mjs,svg,png,gif,jpg,jpeg,webp,ico,woff,woff2,ttf,otf,map,json,txt,xml,md}"
     ]
   },
   "mimeTypes": {
-    ".json": "application/json"
+    ".json": "application/json",
+    ".md": "text/markdown; charset=utf-8"
   },
   "globalHeaders": {
     "Cache-Control": "no-cache, must-revalidate"

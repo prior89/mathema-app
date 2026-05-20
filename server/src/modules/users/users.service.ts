@@ -29,12 +29,21 @@ export class UsersService {
   }
 
   /**
-   * 자기계정 삭제 — Play Console 정책상 앱 안에서 가능해야 함.
-   * Soft delete: deletedAt 마킹 + 이메일 충돌 회피용 shadowing.
-   * 분석 데이터 보존 — 같은 이메일로 재가입 시 통계 영향 없음.
+   * Self-deletion of the user's own account.
+   *
+   * Implements DPDP §12 (right to erasure) and matches the Privacy Policy's
+   * promise of permanent purge. Hard delete via UsersRepository.hardDelete —
+   * Attempt / WrongNote / Mock / Mastery / DailyActivity / WeeklyReport /
+   * tokens are wiped, cascade-marked tables (Consent, DeviceToken, Concept
+   * progress, etc.) follow, AnalyticsEvent.userId is anonymised. AdminAccessLog
+   * is intentionally retained for the legal audit window.
+   *
+   * The earlier soft-delete approach (deletedAt + email shadowing) preserved
+   * analytics but violated the "purge within 30 days" commitment in
+   * PRIVACY_POLICY.md §6 and the Play 2024 deletion policy.
    */
   async deleteSelf(id: string) {
-    const result = await this.repo.softDelete(id);
+    const result = await this.repo.hardDelete(id);
     if (!result) throw new NotFoundException('User not found');
     return { ok: true, deletedAt: result.deletedAt };
   }

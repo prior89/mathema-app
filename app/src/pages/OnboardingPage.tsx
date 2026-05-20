@@ -1,4 +1,4 @@
-/* OnboardingPage — Mathēma 9-screen onboarding flow.
+/* OnboardingPage — matheo 9-screen onboarding flow.
  * Ported from `App onboarding/screens-a.jsx` + `screens-b.jsx`.
  * Phone Auth option hidden (no backend); Goal stored in localStorage; Diagnostic state in-memory.
  */
@@ -294,7 +294,7 @@ function ScreenAuth({
       <div className="screen-body" style={{ gap: 20 }}>
         <div>
           <span className="eyebrow">Step 01 · Account</span>
-          <h2 className="title" style={{ marginTop: 10 }}>Create your Mathēma account</h2>
+          <h2 className="title" style={{ marginTop: 10 }}>Create your matheo account</h2>
           <p className="subtitle">Email and password — you can add Google later.</p>
         </div>
 
@@ -373,7 +373,7 @@ function ScreenRole({
       <div className="screen-body" style={{ gap: 24 }}>
         <div>
           <span className="eyebrow">Step 02 · You</span>
-          <h2 className="title" style={{ marginTop: 10 }}>Who’s using Mathēma?</h2>
+          <h2 className="title" style={{ marginTop: 10 }}>Who’s using matheo?</h2>
           <p className="subtitle">We tailor the home screen and reports to your role.</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

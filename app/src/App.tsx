@@ -6,7 +6,7 @@ import { LoadingSplash } from './components/Brand';
 import { trackPageView } from './lib/analytics';
 
 /**
- * Mathēma — Sage 통합 앱 라우팅 (인도 PoC).
+ * matheo — Sage 통합 앱 라우팅 (인도 PoC).
  *   /          → /app  (인증 후 단일 앱 진입점)
  *   /onboarding → 9 화면 sage 온보딩 → /app
  *   /login      → sage 로그인 (admin/admin PoC dev-login)

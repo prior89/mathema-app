@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network security config — Google Play 2026 hardening + Play Family Policy.
+  Production builds disallow ALL cleartext traffic. The Capacitor WebView
+  loads its own bundled assets via androidScheme=https (capacitor.config.ts),
+  so no HTTP is ever needed at runtime.
+
+  Debug builds additionally trust user-installed CAs so that Charles /
+  mitmproxy / Android Studio's network profiler can inspect TLS during
+  development. This block is stripped from release APKs by the build system.
+
+  Certificate pinning intentionally not configured at v1.0 — Azure Container
+  Apps certificates rotate automatically and a stale pin would brick the
+  installed app. Add a hash-pin block here only after we have a documented
+  cert-rotation procedure with a fallback set.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

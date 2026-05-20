@@ -105,7 +105,7 @@ export function MeScreen() {
           </div>
 
           <div style={{ marginTop: 18, padding: 12, textAlign: 'center', fontSize: 11, color: 'var(--p-muted)' }}>
-            Mathēma PoC · v2026.05.13
+            matheo PoC · v2026.05.13
           </div>
           <div style={{ height: 16 }} />
         </div>

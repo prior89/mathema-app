@@ -11,17 +11,57 @@ export class UsersRepository {
   update(id: string, data: any) { return this.prisma.user.update({ where: { id }, data }); }
 
   /**
-   * Soft delete — deletedAt 표시. 분석 데이터(attempts, events) 보존.
-   * 이메일은 충돌 회피를 위해 deleted-{uuid}-{원본} 형태로 변경.
+   * Hard delete — PRIVACY_POLICY.md §6 promises 30-day-max purge and Play
+   * 2024 deletion policy expects the data to actually be gone, not just
+   * deactivated. We do it immediately under transactional control because:
+   *
+   *   1. The User model's relations to Attempt / WrongNote / StudySession /
+   *      MockExamResult / DailyActivity / MasterySnapshot / WeeklyReport
+   *      were authored WITHOUT an `onDelete` clause, so they default to
+   *      Restrict (Prisma) and a naive `user.delete()` would FK-fail. We
+   *      run an explicit deleteMany on each before deleting the User row.
+   *
+   *   2. AnalyticsEvent has `onDelete: SetNull` — that anonymises the row
+   *      automatically and lets us preserve aggregate funnel signal without
+   *      keeping per-user trace.
+   *
+   *   3. PasswordResetToken / EmailVerificationToken hold a userId without
+   *      a Prisma relation, so they aren't auto-cascaded — delete them by
+   *      userId explicitly so no dangling token outlives the account.
+   *
+   *   4. AdminAccessLog is intentionally NOT touched — it records
+   *      operator actions and must survive for the legal retention window.
+   *      It does not have a relation back to User, so it isn't tied to the
+   *      deleted account's identity once email + name are gone.
+   *
+   * Returns { deletedAt } for the response envelope. The User row itself
+   * is gone, but we return a timestamp so the client can show "deleted at".
    */
-  async softDelete(id: string) {
-    const u = await this.prisma.user.findUnique({ where: { id }, select: { email: true } });
-    if (!u) return null;
-    const shadowed = `deleted-${id}-${u.email}`.slice(0, 320);
-    return this.prisma.user.update({
-      where: { id },
-      data: { deletedAt: new Date(), email: shadowed },
-    });
+  async hardDelete(id: string) {
+    const exists = await this.prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!exists) return null;
+    const deletedAt = new Date();
+    await this.prisma.$transaction([
+      // Tables whose relation lacks onDelete:Cascade — must clear first.
+      this.prisma.attempt.deleteMany({ where: { userId: id } }),
+      this.prisma.wrongNote.deleteMany({ where: { userId: id } }),
+      this.prisma.studySession.deleteMany({ where: { userId: id } }),
+      this.prisma.mockExamResult.deleteMany({ where: { userId: id } }),
+      this.prisma.dailyActivity.deleteMany({ where: { userId: id } }),
+      this.prisma.masterySnapshot.deleteMany({ where: { userId: id } }),
+      this.prisma.weeklyReport.deleteMany({ where: { userId: id } }),
+      // Tokens that hold userId without a relation — cascade them manually.
+      this.prisma.passwordResetToken.deleteMany({ where: { userId: id } }),
+      this.prisma.emailVerificationToken.deleteMany({ where: { userId: id } }),
+      // Cascade-marked tables (Consent, DeviceToken, ConceptProgress,
+      // MasteryTrajectory, MasteryEvent, ErrorPatternProfile, LLMAnalysisLog,
+      // RecommendationLog, Feedback, TeacherOverride) are wiped automatically
+      // when the User row below is deleted. AnalyticsEvent.userId is set to
+      // NULL (SetNull) so aggregate analytics retain their shape minus the
+      // personal identifier.
+      this.prisma.user.delete({ where: { id } }),
+    ]);
+    return { deletedAt };
   }
 
   /**

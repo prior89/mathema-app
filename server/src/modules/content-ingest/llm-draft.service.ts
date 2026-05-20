@@ -44,7 +44,7 @@ export type DraftResult = {
   model: string;
 };
 
-const SYSTEM_PROMPT = `You are an expert math educator transforming NCERT (Indian Class 7-12) and similar problems into a strict 3-step multiple-choice format for the Mathēma learning app.
+const SYSTEM_PROMPT = `You are an expert math educator transforming NCERT (Indian Class 7-12) and similar problems into a strict 3-step multiple-choice format for the matheo learning app.
 
 You MUST return a single JSON object with this exact schema (no markdown, no commentary):
 

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Mathēma — E2E config.
+ * matheo — E2E config.
  *
  * 실행:
  *   npm run e2e             # 전체

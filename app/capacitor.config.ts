@@ -18,6 +18,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
  *   - signing key 별도 관리 (.gitignore)
  *   - Play Console 에서 Internal Testing → Closed → Open → Production
  */
+// Brand decision (locked 2026-05-21):
+//   Display name (Play Store + launcher + in-app UI) = "matheo"
+//   Internal handle (appId, code identifiers, internal docs)  = "matheo"
+// Both stay grep-able. The macron 'ē' is dropped in any place that needs
+// ASCII; Play indexes "matheo" and "Mathema" interchangeably.
 const config: CapacitorConfig = {
   appId: 'ai.matheo.app',
   appName: 'matheo',

@@ -60,9 +60,9 @@ export function buildNcertAttribution(label: string): string | null {
 
   if (p.exerciseId && p.qIndex !== null) {
     const exDisplay = /^\d+\.\d+/.test(p.exerciseId) ? `Ex.${p.exerciseId}` : p.exerciseId;
-    return `NCERT Class ${p.ncertClass} Mathematics, Ch.${p.chapter} ${exDisplay} Q.${p.qIndex} (derived for Mathēma, Reprint ${NCERT_REPRINT_YEAR})`;
+    return `NCERT Class ${p.ncertClass} Mathematics, Ch.${p.chapter} ${exDisplay} Q.${p.qIndex} (derived for matheo, Reprint ${NCERT_REPRINT_YEAR})`;
   }
-  return `NCERT Class ${p.ncertClass} Mathematics, Ch.${p.chapter} inline activity (derived for Mathēma, Reprint ${NCERT_REPRINT_YEAR})`;
+  return `NCERT Class ${p.ncertClass} Mathematics, Ch.${p.chapter} inline activity (derived for matheo, Reprint ${NCERT_REPRINT_YEAR})`;
 }
 
 /**

@@ -49,3 +49,11 @@ __pycache__/
 *.pyc
 # Python virtualenvs (per-service isolation, never committed)
 **/.venv/
+
+# Android release signing — keep keystores + passphrases out of git.
+# Loss of these means we cannot ship app updates under the same upload key.
+# Back them up to a password manager / KeyVault.
+*.jks
+*.keystore
+.keystore.env
+

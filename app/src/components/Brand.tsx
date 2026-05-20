@@ -1,7 +1,7 @@
 import { CSSProperties } from 'react';
 
 /**
- * Mathēma official logo (matheo-logo.png, public/).
+ * matheo official logo (matheo-logo.png, public/).
  *
  * Single source of truth — replaces the legacy <Glyph.Logo /> SVG fallback so
  * every brand placement in the app uses the same image asset. Sizes are tuned
@@ -26,7 +26,7 @@ export function BrandLogo({ size = 'sm', style }: { size?: Size; style?: CSSProp
   return (
     <img
       src="/matheo-logo.png"
-      alt="Mathēma"
+      alt="matheo"
       style={{
         height: HEIGHTS[size],
         width: 'auto',
