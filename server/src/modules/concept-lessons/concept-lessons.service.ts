@@ -388,69 +388,28 @@ export class ConceptLessonsService {
 
   // ---------- PRACTICE PROBLEMS (chapter → 3-step MC problem list) ----------
   /**
-   * 한 ConceptLesson 에 매핑된 Problem 목록 — 단원 학습 끝나면 3-step 객관식 풀이 대상.
-   * Problem.conceptLessonId = lesson.id 로 시드/마이그레이션에서 채움.
+   * Problems mapped to THIS ConceptLesson only (Problem.conceptLessonId =
+   * lesson.id). Fallbacks to same-class and any-mapped problems were
+   * removed because every attempt those generated landed under the
+   * fallback chapter's conceptLessonId, splitting dashboard.chapterProgress
+   * across chapters the user never knowingly opened. If the chapter is
+   * short on practice problems, the empty state is honest.
    */
   async practiceProblems(chapterCode: string, _lang: Lang = 'en') {
     const lesson = await this.prisma.conceptLesson.findUnique({
       where: { chapterCode },
-      select: { id: true, ncertClass: true },
+      select: { id: true },
     });
     if (!lesson) throw new NotFoundException();
 
-    const select = {
-      id: true, source: true, unitId: true, subUnitId: true,
-      difficulty: true, difficultyLevel: true, body: true,
-    } as const;
-    const TARGET = 5; // 최소 노출 문제 수 — 직접 매핑 + same-class 누적.
-
-    // 1) 직접 매핑된 problem 모두 (Problem.conceptLessonId = lesson.id)
-    const direct = await this.prisma.problem.findMany({
+    return this.prisma.problem.findMany({
       where: { conceptLessonId: lesson.id, steps: { some: { stepIndex: 1 } } },
       orderBy: { source: 'asc' },
-      select,
+      select: {
+        id: true, source: true, unitId: true, subUnitId: true,
+        difficulty: true, difficultyLevel: true, body: true,
+      },
     });
-    const out: typeof direct = [...direct];
-    const seen = new Set(out.map((p) => p.id));
-
-    // 2) 부족하면 같은 NCERT class 내 다른 chapter 문제로 채움.
-    if (out.length < TARGET) {
-      const sameClassLessonIds = (await this.prisma.conceptLesson.findMany({
-        where: { ncertClass: lesson.ncertClass, id: { not: lesson.id } },
-        select: { id: true },
-      })).map((l) => l.id);
-      if (sameClassLessonIds.length > 0) {
-        const sameClass = await this.prisma.problem.findMany({
-          where: {
-            conceptLessonId: { in: sameClassLessonIds },
-            steps: { some: { stepIndex: 1 } },
-          },
-          orderBy: { source: 'asc' },
-          select,
-          take: TARGET * 2,
-        });
-        for (const p of sameClass) {
-          if (out.length >= TARGET) break;
-          if (!seen.has(p.id)) { out.push(p); seen.add(p.id); }
-        }
-      }
-    }
-
-    // 3) 그래도 부족하면 영문 매핑된 모든 problem 에서 채움 (마지막 폴백).
-    if (out.length < TARGET) {
-      const anyMapped = await this.prisma.problem.findMany({
-        where: { conceptLessonId: { not: null }, steps: { some: { stepIndex: 1 } } },
-        orderBy: { source: 'asc' },
-        select,
-        take: TARGET * 2,
-      });
-      for (const p of anyMapped) {
-        if (out.length >= TARGET) break;
-        if (!seen.has(p.id)) { out.push(p); seen.add(p.id); }
-      }
-    }
-
-    return out;
   }
 
   // ---------- UNIT GATING ----------

@@ -101,8 +101,14 @@ export function NotesListScreen() {
                 className="note-card"
                 onClick={() => nav(`/app/practice/${n.problemId}`)}
               >
-                <div className="src">{n.problem || n.unit}</div>
-                <div className="body"><MathText text={n.problemBody || n.insight} /></div>
+                {/* Attribution (e.g. "NCERT Class 11 Mathematics, Ch.8 Ex.8.2
+                    Q.11 (derived for matheo, Reprint 2024-25)") lives on
+                    Problem.source for licence-safety reasons but isn't
+                    user-facing — it dominated the card visually and added no
+                    value to a student picking which note to retry. */}
+                <div className="body">
+                  <MathText text={stripTrailingDot(n.problemBody || n.insight)} />
+                </div>
                 <div className="foot">
                   {/* Backend serialises wrong-note status as lowercase
                       ('pending' / 'analyzing' / 'mastered'). Earlier code
@@ -140,6 +146,13 @@ export function NotesListScreen() {
       <TabBar />
     </div>
   );
+}
+
+// Wrong-note bodies sometimes end with a question full-stop (e.g. "Find x.")
+// which looks redundant once the card already frames it as a problem prompt.
+// Strip any trailing whitespace + period combination so the card reads cleaner.
+function stripTrailingDot(s: string | undefined | null): string {
+  return (s ?? '').replace(/[\s.]+$/u, '');
 }
 
 function StatMini({ k, v }: { k: string; v: number }) {

@@ -65,10 +65,6 @@ export function LearnScreen() {
                 <div className="info">
                   <div className="ttl">{l.title}</div>
                   <div className="sub">{l.bigIdea}</div>
-                  <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                    <span className="chip" style={{ fontSize: 10.5 }}>~{l.estimatedMin} min</span>
-                    <span className="chip" style={{ fontSize: 10.5 }}>load {l.cognitiveLoad}</span>
-                  </div>
                 </div>
                 <Glyph.ChevronR accent="var(--p-muted)" size={16} />
               </div>

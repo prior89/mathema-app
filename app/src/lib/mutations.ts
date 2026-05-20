@@ -21,6 +21,14 @@ export const reviewWrongNote = (id: string, quality: ReviewQuality) =>
 export const createWrongNote = (body: { problemId: string; errorType: string; insight?: string }) =>
   post<{ id: string }>('/wrong-notes', body);
 
+/** Graduation by problem id — called by SoloProblemScreen after a perfect
+ *  (no-mistake) solve cycle on a multi-step problem. Backend flips every
+ *  un-mastered wrong note this user holds for the problem to MASTERED. */
+export const masterWrongNoteByProblem = (problemId: string) =>
+  post<{ ok: boolean; mastered: number }>(
+    `/wrong-notes/by-problem/${problemId}/master`,
+  );
+
 async function uploadFormFile<T>(url: string, field: 'image' | 'pdf', file: File): Promise<T> {
   const fd = new FormData();
   fd.append(field, file);

@@ -1,4 +1,5 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Difficulty } from '@prisma/client';
 import { MockExamsRepository } from './mock-exams.repository';
 import { GradingService } from './services/grading.service';
 import { AiRecommendExamService } from './services/ai-recommend-exam.service';
@@ -9,6 +10,7 @@ import { SessionContext } from '../../common/enums/session-context.enum';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { PROBLEM_EN, STEP_PROMPT_EN, CHOICE_EN, SOURCE_EN, HINT_EN, CONCEPT_EN, FORMULA_EN } from '../../common/i18n/content-en';
+import { LlmDraftService, DraftPayload } from '../content-ingest/llm-draft.service';
 
 /**
  * MockExam name → English short label.
@@ -74,12 +76,15 @@ function sanitizeForExam(p: any, lang: Lang = 'en'): any {
 
 @Injectable()
 export class MockExamsService {
+  private readonly logger = new Logger(MockExamsService.name);
+
   constructor(
     private readonly repo: MockExamsRepository,
     private readonly grading: GradingService,
     private readonly aiRec: AiRecommendExamService,
     private readonly attempts: AttemptsService,
     private readonly prisma: PrismaService,
+    private readonly llmDraft: LlmDraftService,
   ) {}
 
   async trajectory(userId: string, count: number, lang: Lang = 'en') {
@@ -258,31 +263,31 @@ export class MockExamsService {
    * have; AI augmentation lands as a follow-up (P16).
    */
   async startChapter(userId: string, chapterCode: string, lang: Lang = 'en') {
+    const TARGET = 20;
     const lesson = await this.prisma.conceptLesson.findUnique({
       where: { chapterCode },
-      select: { id: true, ncertClass: true, chapterNumber: true, titleEn: true },
+      select: { id: true, ncertClass: true, chapterNumber: true, titleEn: true, unitId: true, subUnitId: true },
     });
     if (!lesson) throw new NotFoundException(`Chapter not found: ${chapterCode}`);
 
-    // Class-level guard — StudyScreen's UI only surfaces chapters matching
-    // user.gradeLevel, but a direct API call could otherwise start a Class 12
-    // chapter test for a Class 7 user. user.gradeLevel may be null right
-    // after a Google signup (onboarding not yet completed) — we let those
-    // through so the user can still explore until they pick a class.
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId }, select: { gradeLevel: true },
+    // Mastery gate — practice is unlocked the moment the user has mastered
+    // the concept lesson for this chapter, regardless of which NCERT class
+    // it belongs to. A Class 11 student who has mastered a Class 9 review
+    // chapter can drill it in Study; conversely an unattempted chapter is
+    // blocked even if it is in the user's own class.
+    const progress = await this.prisma.conceptProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId: lesson.id } },
+      select: { masteredAt: true },
     });
-    if (user?.gradeLevel && user.gradeLevel !== lesson.ncertClass) {
+    if (!progress?.masteredAt) {
       throw new ForbiddenException(
-        `Chapter ${chapterCode} belongs to ${lesson.ncertClass}, but your account is on ${user.gradeLevel}.`,
+        `Finish the concept lesson for ${chapterCode} in Mastery before practising.`,
       );
     }
 
     // "Never show the same problem twice" applies only to Study/practice
     // history. Pure mock-exam attempts (EXAM context) and diagnostic seeds
-    // stay eligible — students should be able to drill chapters even after
-    // a problem appeared in a full mock. PRACTICE covers SoloProblemScreen
-    // + math-helper-recorded attempts.
+    // stay eligible.
     const attemptedRows = await this.prisma.attempt.findMany({
       where: { userId, context: { in: [SessionContext.STUDY, SessionContext.PRACTICE] } },
       select: { problemId: true },
@@ -290,19 +295,34 @@ export class MockExamsService {
     });
     const attemptedIds = attemptedRows.map((a) => a.problemId);
 
-    // Pool: problems mapped to this lesson that have at least one step + that
-    // this user has never touched. Random order via Postgres random().
+    // Pool: SINGLE-STEP problems only — the Study tab is single-question
+    // practice (5-choice MC + handwriting pad). Multi-step (3-step MC)
+    // problems are reserved for Mastery (ConceptLessonScreen practice
+    // phase), so we filter to problems whose ProblemStep count is exactly 1.
+    // Problem.id is text (not uuid) → cast the user's attempted-ids array
+    // as text[].
     const candidates = await this.prisma.$queryRawUnsafe<Array<{ id: string; source: string; difficulty: string }>>(
       `SELECT p.id, p.source, p.difficulty::text AS difficulty
        FROM "Problem" p
        WHERE p."conceptLessonId" = $1
          AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 1)
-         ${attemptedIds.length > 0 ? `AND p.id <> ALL($2::uuid[])` : ''}
+         AND NOT EXISTS (SELECT 1 FROM "ProblemStep" s2 WHERE s2."problemId" = p.id AND s2."stepIndex" >= 2)
+         ${attemptedIds.length > 0 ? `AND p.id <> ALL($2::text[])` : ''}
        ORDER BY random()
        LIMIT 20`,
       lesson.id,
       ...(attemptedIds.length > 0 ? [attemptedIds] : []),
     );
+
+    // Top-up with LLM-generated single-step problems when the pool is short.
+    // Newly generated problems persist as Problem rows (conceptLessonId set),
+    // so future users for the same chapter draw from the enriched pool —
+    // average LLM cost per chapter trends down with each session.
+    const shortfall = TARGET - candidates.length;
+    if (shortfall > 0) {
+      const generated = await this.generateSingleStepProblems(lesson, shortfall);
+      candidates.push(...generated);
+    }
 
     const name = `Class ${lesson.ncertClass.replace('CLASS_', '')} · ${lesson.titleEn}`;
     return this.beginSession(userId, {
@@ -311,6 +331,133 @@ export class MockExamsService {
       totalMinutes: 25,
       problems: candidates,
     }, lang);
+  }
+
+  /**
+   * Top up a chapter's single-step pool by generating `count` fresh problems
+   * via the LLM and persisting them as Problem rows (conceptLessonId set).
+   * Runs in 5-way parallel chunks per the BULK-LLM policy. Each failed
+   * generation/persist is logged and skipped — partial top-up is acceptable
+   * (the caller falls back to whatever it managed to grab).
+   */
+  private async generateSingleStepProblems(
+    lesson: {
+      id: string;
+      ncertClass: string;
+      chapterNumber: number;
+      titleEn: string;
+      unitId: string | null;
+      subUnitId: string | null;
+    },
+    count: number,
+  ): Promise<Array<{ id: string; source: string; difficulty: string }>> {
+    // Problem.unitId is non-null in the schema, so a chapter whose
+    // ConceptLesson lost its unit mapping (legacy seed glitch) can't host
+    // new Problem rows. Skip top-up rather than crash; the user gets the
+    // already-pooled candidates and a fix-up migration can backfill unitId.
+    if (!lesson.unitId) {
+      this.logger.warn(`Skipping LLM top-up: chapter ${lesson.id} has no unitId`);
+      return [];
+    }
+    const unitId = lesson.unitId;
+    const classLabel = lesson.ncertClass.replace('CLASS_', 'Class ');
+    const attribution = `AI generated for matheo · ${classLabel} Chapter ${lesson.chapterNumber} (${lesson.titleEn}) — derived from NCERT syllabus`;
+    const chapterRef = `${classLabel} · Chapter ${lesson.chapterNumber} · ${lesson.titleEn}`;
+    // Per-variant prompt nudges the LLM to vary the problems even when
+    // called in parallel. The seed integer + difficulty hint avoids
+    // collapsing into the same canonical question N times.
+    const variants = Array.from({ length: count }, (_, i) =>
+      `Generate a fresh single-step practice problem for NCERT ${chapterRef}. ` +
+      `Variation #${i + 1} (out of ${count}). Mix difficulty across the batch (MIDDLE → KILLER). ` +
+      `Make it pedagogically distinct from any earlier variation.`,
+    );
+
+    const CHUNK = 5;
+    const results: Array<{ id: string; source: string; difficulty: string }> = [];
+    for (let i = 0; i < variants.length; i += CHUNK) {
+      const slice = variants.slice(i, i + CHUNK);
+      const drafts = await Promise.all(
+        slice.map((text) =>
+          this.llmDraft
+            .generate(
+              {
+                ncertClass: lesson.ncertClass,
+                chapterNumber: lesson.chapterNumber,
+                chapterTitleHint: lesson.titleEn,
+                text,
+              },
+              { mode: 'single-step' },
+            )
+            .catch((err) => {
+              this.logger.warn(`Single-step LLM gen failed: ${(err as Error).message}`);
+              return null;
+            }),
+        ),
+      );
+      for (const draft of drafts) {
+        if (!draft) continue;
+        try {
+          const persisted = await this.persistSingleStepProblem(
+            { id: lesson.id, unitId, subUnitId: lesson.subUnitId },
+            draft.payload,
+            attribution,
+          );
+          results.push(persisted);
+        } catch (err) {
+          this.logger.warn(`Persist single-step problem failed: ${(err as Error).message}`);
+        }
+      }
+    }
+    return results;
+  }
+
+  /**
+   * Materialise a validated single-step DraftPayload as a Problem (+ its
+   * single ProblemStep + 5 ProblemChoice rows). The conceptLessonId binds
+   * it to the chapter so subsequent users for the same chapter pull it
+   * from the shared pool — this is the cost-amortisation lever for AI
+   * top-up.
+   */
+  private async persistSingleStepProblem(
+    lesson: { id: string; unitId: string; subUnitId: string | null },
+    payload: DraftPayload,
+    attribution: string,
+  ): Promise<{ id: string; source: string; difficulty: string }> {
+    const step0 = payload.steps[0];
+    const correctChoice = step0.choices.find((c) => c.isCorrect);
+    const problem = await this.prisma.problem.create({
+      data: {
+        source: attribution,
+        unitId: lesson.unitId,
+        ...(lesson.subUnitId ? { subUnitId: lesson.subUnitId } : {}),
+        difficulty: payload.difficulty as Difficulty,
+        difficultyLevel: payload.difficultyLevel,
+        body: payload.problemBody,
+        hint: payload.hint,
+        concept: payload.concept,
+        answer: correctChoice?.text ?? '',
+        expectedTimeSec: payload.expectedTimeSec,
+        conceptLessonId: lesson.id,
+        steps: {
+          create: payload.steps.map((s, i) => ({
+            stepIndex: i + 1,
+            stepType: s.stepType,
+            prompt: s.prompt,
+            choices: {
+              create: s.choices.map((c, ci) => ({
+                choiceIndex: ci + 1,
+                text: c.text,
+                isCorrect: c.isCorrect,
+                ...(c.distractorType ? { distractorType: c.distractorType as any } : {}),
+                ...(c.rationale ? { rationale: c.rationale } : {}),
+              })),
+            },
+          })),
+        },
+      },
+      select: { id: true, source: true, difficulty: true },
+    });
+    return { id: problem.id, source: problem.source, difficulty: problem.difficulty };
   }
 
   private async beginSession(userId: string, p: {

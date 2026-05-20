@@ -84,6 +84,24 @@ export class WrongNotesController {
     return this.service.updateStatus(userId, id, status);
   }
 
+  /**
+   * Mastery graduation by problem id.
+   *
+   * Called by SoloProblemScreen when a student lands the done phase of a
+   * 3-step MC walkthrough with ZERO wrong picks across all steps. The
+   * client-side cycle tracker is the authority here — backend just flips
+   * the wrong note(s) for this user × problem to MASTERED. Multi-step
+   * attempts.create no longer auto-graduates, so this endpoint is the
+   * single path for multi-step problems to leave the queue.
+   */
+  @Post('by-problem/:problemId/master')
+  masterByProblem(
+    @CurrentUser('id') userId: string,
+    @Param('problemId') problemId: string,
+  ) {
+    return this.service.masterByProblem(userId, problemId);
+  }
+
   @Post(':id/review')
   review(
     @CurrentUser('id') userId: string,

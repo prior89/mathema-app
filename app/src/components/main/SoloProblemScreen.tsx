@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchProblem } from '../../lib/queries';
+import { masterWrongNoteByProblem } from '../../lib/mutations';
 import { post } from '../../lib/api';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
@@ -40,6 +41,11 @@ export function SoloProblemScreen() {
   const [result, setResult] = useState<StepResult | null>(null);
   const [startedAt, setStartedAt] = useState(() => Date.now());
   const [done, setDone] = useState(false);
+  // Cycle-level mistake tracker — any wrong pick anywhere across CONCEPT /
+  // PROCESS / ANSWER counts against this cycle. Mastery graduation requires
+  // mistakesThisCycle === 0 at done-phase entry. Stays true once a mistake
+  // happens; not reset by retry().
+  const [mistakesThisCycle, setMistakesThisCycle] = useState(0);
 
   const problem = useQuery({
     queryKey: ['problem', problemId],
@@ -64,6 +70,7 @@ export function SoloProblemScreen() {
     }),
     onSuccess: (r) => {
       setResult({ isCorrect: r.isCorrect, selectedChoice: r.selectedChoice, correctChoice: r.correctChoice });
+      if (!r.isCorrect) setMistakesThisCycle((n) => n + 1);
       // Refresh wrong notes / dashboard so the Notes tab + Home stats pick up
       // the new attempt + wrongNote occurrence immediately.
       qc.invalidateQueries({ queryKey: ['wn-list'] });
@@ -76,6 +83,18 @@ export function SoloProblemScreen() {
     onError: () => setResult({ isCorrect: false, selectedChoice: null, correctChoice: null }),
   });
 
+  // Mastery graduation — fire-and-forget on a perfect cycle (no mistakes
+  // across every step). Backend flips every un-mastered wrong note for this
+  // user × problem to MASTERED. Idempotent.
+  const graduate = useMutation({
+    mutationFn: () => masterWrongNoteByProblem(problemId!),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['wn-list'] });
+      qc.invalidateQueries({ queryKey: ['wn-stats'] });
+      qc.invalidateQueries({ queryKey: ['queue-next'] });
+    },
+  });
+
   function advance() {
     if (stepIdx + 1 < steps.length) {
       setStepIdx(stepIdx + 1);
@@ -85,6 +104,13 @@ export function SoloProblemScreen() {
       return;
     }
     setDone(true);
+    // Perfect-cycle graduation — every step was right on the first pick.
+    // Wrong notes for this problem flip to MASTERED. Any mistake during
+    // the cycle blocks graduation; the user can re-enter the note later
+    // and try for a clean run.
+    if (problemId && mistakesThisCycle === 0) {
+      graduate.mutate();
+    }
   }
 
   function retry() {
@@ -193,12 +219,31 @@ export function SoloProblemScreen() {
       {/* Completion view — all steps done. */}
       {done && (
         <div style={{ flex: 1, overflow: 'auto', padding: '24px 22px', minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', textAlign: 'center', gap: 14 }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-primary)' }}>✓</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--p-ink)' }}>Nicely done.</div>
-          <div style={{ fontSize: 13.5, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
-            Your attempt is saved. We'll resurface this problem when it's due
-            again per your spaced-repetition schedule.
-          </div>
+          {mistakesThisCycle === 0 ? (
+            <>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-primary)' }}>✓</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--p-ink)' }}>
+                Mastered — clean sweep.
+              </div>
+              <div style={{ fontSize: 13.5, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
+                Every step right on the first try. This problem is graduating
+                from your wrong-note book.
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-danger)' }}>↻</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--p-ink)' }}>
+                Not quite this time.
+              </div>
+              <div style={{ fontSize: 13.5, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
+                {mistakesThisCycle} step{mistakesThisCycle === 1 ? '' : 's'} missed
+                this cycle, so the problem stays in your Notes. Re-open it from
+                Notes whenever you want — graduate only on a perfect 3-step
+                sweep.
+              </div>
+            </>
+          )}
         </div>
       )}
 

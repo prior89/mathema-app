@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
-  fetchDashboardSummary, fetchMe, fetchHeatmap, fetchToday,
+  fetchDashboardSummary, fetchMe, fetchToday,
   fetchConceptLessonsForUnit, fetchErrorDna, fetchChapterProgress,
   type RecommendCard, type ChapterProgressRow,
 } from '../../lib/queries';
@@ -26,7 +26,6 @@ export function HomeScreen() {
   const nav = useNavigate();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const summary = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboardSummary });
-  const heatmap = useQuery({ queryKey: ['heatmap', 12], queryFn: () => fetchHeatmap(12) });
   const today = useQuery({ queryKey: ['today'], queryFn: fetchToday });
   const errorDna = useQuery({ queryKey: ['error-dna'], queryFn: fetchErrorDna });
   const chapterProgress = useQuery({ queryKey: ['chapter-progress'], queryFn: fetchChapterProgress });
@@ -40,10 +39,6 @@ export function HomeScreen() {
 
   const userName = me.data?.name ?? 'Aarav';
   const dateStr = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
-
-  // Backend returns Heatmap = Array<{day, intensity}>. Convert to 12×7 grid.
-  const heat = (heatmap.data ?? []).map((d) => d.intensity ?? 0);
-  while (heat.length < 12 * 7) heat.push(0);
 
   return (
     <div className="screen">
@@ -74,16 +69,10 @@ export function HomeScreen() {
             />
           )}
 
-          {/* 2 stats — Today + Streak. Accuracy/Predicted dropped because both
-              are misleading in the first week of usage (4 attempts ⇒ 25%
-              accuracy; no mock exam ⇒ "E" predicted). Re-introduce only when
-              they carry real signal. */}
-          <div className="stat-grid" style={{ marginTop: 12 }}>
-            <Stat k="Today" v={`${summary.data?.todayMinutes ?? 0}`} u="m"
-                  delta={summary.data && summary.data.todayMinutes > 0 ? `↑ logged today` : 'No study yet'} />
-            <Stat k="Streak" v={`${summary.data?.streakDays ?? 0}`} u="d"
-                  delta={(summary.data?.streakDays ?? 0) >= 7 ? '↑ keep it up' : 'Start your streak'} />
-          </div>
+          {/* Today / Streak stat grid removed per user request — the "No study
+              yet" / "Start your streak" placeholders were dead weight on cold
+              starts. Streak still surfaces in the 12-week heatmap header
+              below, so the signal isn't lost. */}
 
           {/* Today's plan */}
           <div className="section-h">
@@ -159,14 +148,16 @@ export function HomeScreen() {
             </>
           )}
 
-          {/* Chapter progress — only this user's own class, and only chapters
-              they HAVEN'T finished yet. Mastered/full-progress chapters drop
-              off the home screen so the dashboard surfaces "what's left to do",
-              not a victory lap. */}
+          {/* Chapter progress — every in-progress chapter the user has
+              touched, regardless of NCERT class. The previous filter pinned
+              the dashboard to the user's onboarded class, so a Class 11
+              student who reviewed a Class 8 chapter never saw it surfaced
+              here even though Mastery + Study both treat any mastered
+              chapter as fair game. 100%-done chapters still drop off so
+              the card stays "what's left to do" rather than a victory lap. */}
           {(() => {
-            const myClass = me.data?.gradeLevel;
             const active = (chapterProgress.data ?? []).filter(
-              (row) => row.ncertClass === myClass && row.progress < 1,
+              (row) => row.progress < 1,
             );
             if (active.length === 0) return null;
             return (
@@ -177,36 +168,29 @@ export function HomeScreen() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {active.slice(0, 5).map((row) => (
-                    <ChapterProgressCard key={row.chapterCode} row={row} onClick={() => nav(`/app/learn/${row.chapterCode}`)} />
+                    <ChapterProgressCard
+                      key={row.chapterCode}
+                      row={row}
+                      onClick={() => {
+                        // Deep-link into the next unattempted problem when the
+                        // backend knows which one it is — otherwise fall back
+                        // to the chapter root so ConceptLessonScreen can decide
+                        // (typically lands on the concept phase).
+                        const url = row.nextProblemId
+                          ? `/app/learn/${row.chapterCode}?problemId=${row.nextProblemId}`
+                          : `/app/learn/${row.chapterCode}`;
+                        nav(url);
+                      }}
+                    />
                   ))}
                 </div>
               </>
             );
           })()}
 
-          {/* Heatmap */}
-          <div className="section-h">
-            <span className="label">12-week calendar</span>
-            <span className="more">{summary.data?.streakDays ?? 0} day streak</span>
-          </div>
-          <div className="card" style={{ padding: 14 }}>
-            <div className="heatmap">
-              {heat.map((v, i) => (
-                <div key={i} className={`cell ${v === 1 ? 'l1' : v === 2 ? 'l2' : v === 3 ? 'l3' : ''}`} />
-              ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 10.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>
-              {(() => {
-                const m = new Date();
-                const labels: string[] = [];
-                for (let i = 3; i >= 0; i--) {
-                  const d = new Date(m); d.setMonth(d.getMonth() - i);
-                  labels.push(d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase());
-                }
-                return labels.map((l, i) => <span key={i}>{l}</span>);
-              })()}
-            </div>
-          </div>
+          {/* 12-week heatmap removed per user request — was always-zero on
+              cold starts and the month labels read as dead chrome. Streak +
+              activity surface in the per-chapter progress cards instead. */}
 
           <div style={{ height: 16 }} />
         </div>

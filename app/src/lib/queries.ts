@@ -113,6 +113,12 @@ export type ChapterProgressRow = {
   /** 0–1 — correct attempts out of all attempts on this chapter. */
   accuracy: number;
   lastAttemptAt: string | null;
+  /** First reachable problem in this chapter that the user has never
+   *  attempted. Use it for resume-deep-links — Home's Chapter progress card
+   *  passes it as `?problemId=<id>` so ConceptLessonScreen jumps to the
+   *  practice step instead of restarting the concept walkthrough. Null when
+   *  every reachable problem has been attempted (chapter is at 100%). */
+  nextProblemId: string | null;
 };
 export const fetchChapterProgress = () =>
   get<ChapterProgressRow[]>('/dashboard/chapter-progress');

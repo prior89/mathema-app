@@ -27,6 +27,14 @@ export type DraftStep = {
   prompt: string;
   choices: DraftChoice[];
 };
+
+/**
+ * One draft payload covers both Mastery (3-step MC) and Study (single 5-choice
+ * MC) — the only difference is `steps.length`. Mastery has [CONCEPT, PROCESS,
+ * ANSWER]; Study has just [ANSWER]. Splitting the schema in two would force
+ * every downstream consumer (draft-publisher, validation, admin review UI) to
+ * branch — keeping a single shape and varying the array length is cheaper.
+ */
 export type DraftPayload = {
   problemBody: string;
   hint: string;
@@ -34,7 +42,7 @@ export type DraftPayload = {
   difficulty: 'MIDDLE' | 'UPPER_MIDDLE' | 'SEMI_KILLER' | 'KILLER';
   difficultyLevel: 1 | 2 | 3 | 4 | 5;
   expectedTimeSec: number;
-  steps: [DraftStep, DraftStep, DraftStep];
+  steps: DraftStep[]; // length 1 (Study) or 3 (Mastery)
 };
 
 export type DraftResult = {
@@ -44,7 +52,16 @@ export type DraftResult = {
   model: string;
 };
 
-const SYSTEM_PROMPT = `You are an expert math educator transforming NCERT (Indian Class 7-12) and similar problems into a strict 3-step multiple-choice format for the matheo learning app.
+/**
+ * `multi-step` — 3-step CONCEPT/PROCESS/ANSWER (Mastery / ConceptLessonScreen
+ *                practice phase). Used for variation problems that probe each
+ *                stage of the reasoning.
+ * `single-step` — one 5-choice MC + handwriting canvas (Study tab). Solve the
+ *                 whole problem at once.
+ */
+export type DraftMode = 'multi-step' | 'single-step';
+
+const SYSTEM_PROMPT_MULTI_STEP = `You are an expert math educator transforming NCERT (Indian Class 7-12) and similar problems into a strict 3-step multiple-choice format for the matheo learning app.
 
 You MUST return a single JSON object with this exact schema (no markdown, no commentary):
 
@@ -81,6 +98,41 @@ Rules:
 - All strings in English (the app's primary content language is English for Indian users).
 - Output JSON ONLY. No leading/trailing prose.`;
 
+const SYSTEM_PROMPT_SINGLE_STEP = `You are an expert math educator generating a single-step multiple-choice question for matheo (Indian NCERT Class 7-12 students).
+
+Return a single JSON object with this exact schema (no markdown, no commentary):
+
+{
+  "problemBody": "<the cleaned problem statement, preserving LaTeX where present>",
+  "hint": "<one-sentence hint that nudges the student toward the right concept without giving away the answer>",
+  "concept": "<one or two sentences naming the key idea/formula the student must apply>",
+  "difficulty": "MIDDLE" | "UPPER_MIDDLE" | "SEMI_KILLER" | "KILLER",
+  "difficultyLevel": 1-5,
+  "expectedTimeSec": integer (60-600),
+  "steps": [
+    {
+      "stepType": "ANSWER",
+      "prompt": "Solve the problem and pick the answer.",
+      "choices": [
+        { "text": "...", "isCorrect": true,  "distractorType": null,                  "rationale": null },
+        { "text": "...", "isCorrect": false, "distractorType": "CONCEPT_CONFUSION",   "rationale": "why a student might pick this" },
+        { "text": "...", "isCorrect": false, "distractorType": "PROCESS_SKIP",        "rationale": "..." },
+        { "text": "...", "isCorrect": false, "distractorType": "CALC_ERROR",          "rationale": "..." },
+        { "text": "...", "isCorrect": false, "distractorType": "TIME_PRESSURE_GUESS", "rationale": "..." }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Exactly ONE step with stepType="ANSWER". No CONCEPT or PROCESS step — Study tab is for whole-problem practice with a scratch pad, not staged reasoning.
+- Exactly 5 choices. Exactly one isCorrect:true.
+- distractorType MUST be one of: CONCEPT_CONFUSION, CALC_ERROR, PROCESS_SKIP, TIME_PRESSURE_GUESS (null only for the correct choice).
+- The answer choices must be concrete final answers (numbers / expressions / coordinates), not procedural fragments.
+- The four distractors must each represent a plausible mistake a real Class 7-12 student would make — never random or absurd wrong values.
+- Match the requested NCERT class + chapter difficulty band. Do not exceed the chapter's topic boundary.
+- All strings in English. Output JSON ONLY.`;
+
 @Injectable()
 export class LlmDraftService {
   private readonly logger = new Logger(LlmDraftService.name);
@@ -90,7 +142,18 @@ export class LlmDraftService {
     private readonly config: ConfigService,
   ) {}
 
-  async generate(input: { ncertClass?: string; chapterNumber?: number; chapterTitleHint?: string; exerciseId?: string; qIndex?: number; text: string }): Promise<DraftResult> {
+  async generate(
+    input: {
+      ncertClass?: string;
+      chapterNumber?: number;
+      chapterTitleHint?: string;
+      exerciseId?: string;
+      qIndex?: number;
+      text: string;
+    },
+    opts: { mode?: DraftMode } = {},
+  ): Promise<DraftResult> {
+    const mode: DraftMode = opts.mode ?? 'multi-step';
     const ctxLine = [
       input.ncertClass ? `Class: ${input.ncertClass}` : null,
       input.chapterNumber ? `Chapter: ${input.chapterNumber}` : null,
@@ -101,14 +164,18 @@ export class LlmDraftService {
 
     const prompt = `${ctxLine ? ctxLine + '\n\n' : ''}Source problem:\n"""\n${input.text}\n"""\n\nReturn the strict JSON draft now.`;
 
+    const system = mode === 'multi-step' ? SYSTEM_PROMPT_MULTI_STEP : SYSTEM_PROMPT_SINGLE_STEP;
+    // Single-step payload is ~1/3 the token budget of multi-step.
+    const maxTokens = mode === 'multi-step' ? 4000 : 1500;
+
     const res = await this.ai.generateText({
       prompt,
-      system: SYSTEM_PROMPT,
-      maxTokens: 4000,        // 3-step MC + 15 choices + rationale often runs 1600-2400; 2200 caused frequent truncation
+      system,
+      maxTokens,
       temperature: 0.2,
       jsonObject: true,       // OpenAI: response_format=json_object — provider-side JSON guarantee
     });
-    const payload = this.parseAndValidate(res.text);
+    const payload = this.parseAndValidate(res.text, mode);
     return {
       payload,
       tokensIn: res.inputTokens,
@@ -118,7 +185,7 @@ export class LlmDraftService {
   }
 
   /** Extract JSON from the LLM response (handle markdown-fenced output) and validate the schema. */
-  private parseAndValidate(raw: string): DraftPayload {
+  private parseAndValidate(raw: string, mode: DraftMode): DraftPayload {
     const t = raw.trim();
     const jsonStr = this.stripFences(t);
     let parsed: unknown;
@@ -133,11 +200,16 @@ export class LlmDraftService {
     if (typeof p.problemBody !== 'string' || p.problemBody.length < 5) throw new Error('problemBody missing/short');
     if (!['MIDDLE', 'UPPER_MIDDLE', 'SEMI_KILLER', 'KILLER'].includes(p.difficulty)) throw new Error(`bad difficulty: ${p.difficulty}`);
     if (!Number.isInteger(p.difficultyLevel) || p.difficultyLevel < 1 || p.difficultyLevel > 5) throw new Error('bad difficultyLevel');
-    if (!Array.isArray(p.steps) || p.steps.length !== 3) throw new Error('steps must be length 3');
 
-    const expected = ['CONCEPT', 'PROCESS', 'ANSWER'] as const;
+    const expectedSteps: ReadonlyArray<DraftStep['stepType']> =
+      mode === 'multi-step' ? ['CONCEPT', 'PROCESS', 'ANSWER'] : ['ANSWER'];
+    if (!Array.isArray(p.steps) || p.steps.length !== expectedSteps.length) {
+      throw new Error(`steps must be length ${expectedSteps.length} (mode=${mode})`);
+    }
     p.steps.forEach((s, i) => {
-      if (s.stepType !== expected[i]) throw new Error(`step[${i}] stepType must be ${expected[i]}`);
+      if (s.stepType !== expectedSteps[i]) {
+        throw new Error(`step[${i}] stepType must be ${expectedSteps[i]} (mode=${mode})`);
+      }
       if (!s.prompt || typeof s.prompt !== 'string') throw new Error(`step[${i}] prompt missing`);
       if (!Array.isArray(s.choices) || s.choices.length !== 5) throw new Error(`step[${i}] must have exactly 5 choices`);
       const correct = s.choices.filter((c) => c.isCorrect === true);

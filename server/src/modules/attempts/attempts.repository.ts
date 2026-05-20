@@ -26,7 +26,10 @@ export class AttemptsRepository {
   async create(userId: string, dto: any) {
     const problem = await this.prisma.problem.findUniqueOrThrow({
       where: { id: dto.problemId },
-      include: { concepts: { select: { conceptId: true } } },
+      include: {
+        concepts: { select: { conceptId: true } },
+        steps: { select: { stepIndex: true } },
+      },
     });
 
     // 두 모드 지원:
@@ -135,10 +138,20 @@ export class AttemptsRepository {
       });
     }
 
-    // 정답이면 동일 problemId 의 미마스터 WrongNote 가 있으면 자동으로
-    // MASTERED 로 전환. SoloProblemScreen·Study·Mock 어디서 풀든 정답 하나로
-    // 큐에서 빠지도록 — 같은 문제를 두 번 마주치지 않는 사용자 약속을 지킴.
-    if (isCorrect) {
+    // Auto-MASTERED policy.
+    //
+    // Multi-step problems (ConceptLesson practice / mock exam / Study chapter
+    // test — anything that submits stepIndex 1, 2, 3 separately) NEVER
+    // graduate a wrong note here. The user must clear the whole problem in
+    // a single solve cycle with zero mistakes — SoloProblemScreen tracks
+    // the cycle client-side and calls POST /wrong-notes/by-problem/:id/master
+    // explicitly when the user lands the done phase with no wrong picks.
+    //
+    // Single-shot problems (text answers without a stepIndex — e.g. the
+    // ReviewQueue's /wrong-notes/:id/check, math-helper's recordSolveAttempt)
+    // still graduate immediately on a correct attempt: there are no
+    // intermediate steps to "perfect", so the answer itself is the cycle.
+    if (isCorrect && typeof dto.stepIndex !== 'number') {
       await this.prisma.wrongNote.updateMany({
         where: { userId, problemId: dto.problemId, status: { not: 'MASTERED' } },
         data: { status: 'MASTERED', masteredAt: new Date() },

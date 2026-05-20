@@ -154,6 +154,22 @@ export class WrongNotesService {
   // returned `{ok:true}` — they made the UI look like it had registered
   // something while the server did nothing. Removed entirely.
 
+  /**
+   * Graduate every un-mastered wrong note this user holds for `problemId`.
+   * Called when SoloProblemScreen completes a perfect solve cycle (every
+   * step correct on the first try). Idempotent — no-op when nothing matches.
+   */
+  async masterByProblem(userId: string, problemId: string) {
+    const result = await this.prisma.wrongNote.updateMany({
+      where: { userId, problemId, status: { not: 'MASTERED' } },
+      data: { status: 'MASTERED', masteredAt: new Date() },
+    });
+    if (result.count > 0) {
+      this.events.emit('wrong-note.mastered', { userId, problemId });
+    }
+    return { ok: true, mastered: result.count };
+  }
+
   async updateStatus(userId: string, id: string, status: string) {
     const updated = await this.repo.updateStatus(userId, id, status as any);
     if (status === 'MASTERED') {

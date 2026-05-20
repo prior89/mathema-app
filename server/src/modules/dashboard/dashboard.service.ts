@@ -81,12 +81,28 @@ export class DashboardService {
       total_attempts: bigint;
       correct_attempts: bigint;
       last_attempt_at: Date | null;
+      next_problem_id: string | null;
     }>>(
       // Only count problems that actually have a first ProblemStep — those are
       // the ones ConceptLessonsService.practiceProblems exposes to the UI.
       // Without this guard a problem can be mapped to a chapter (Problem.conceptLessonId)
       // yet be unreachable (no ProblemStep rows), making the card stick at e.g.
       // 6/7 = 86% forever while the student already solved every reachable one.
+      //
+      // Attempt counting is scoped to context IN ('STUDY', 'PRACTICE'): the
+      // chapter card represents *learning* progress, not mock-exam or
+      // diagnostic performance. An EXAM attempt on a chapter problem leaves
+      // the chapter card untouched (next_problem_id still treats that
+      // problem as un-tried so the user gets to "first-encounter" it in
+      // the lesson flow), and the accuracy figure won't be diluted by a
+      // diagnostic where the student was guessing.
+      //
+      // next_problem_id resolves to the first reachable problem in this chapter
+      // that this user has never attempted in a learning context — used by
+      // the Home → Chapter progress card to deep-link with ?problemId=<id>
+      // straight into the next question instead of restarting from problem 1.
+      // Returns NULL when every reachable problem has been attempted under
+      // STUDY/PRACTICE (chapter is 100%).
       `SELECT cl."chapterCode"    AS chapter_code,
               cl."titleEn"        AS title_en,
               cl."ncertClass"     AS ncert_class,
@@ -95,14 +111,32 @@ export class DashboardService {
               COUNT(DISTINCT CASE WHEN a.id IS NOT NULL THEN p.id END)            AS problems_attempted,
               COUNT(a.id)                                                         AS total_attempts,
               SUM(CASE WHEN a."isCorrect" THEN 1 ELSE 0 END)                      AS correct_attempts,
-              MAX(a."createdAt")                                                   AS last_attempt_at
+              MAX(a."createdAt")                                                  AS last_attempt_at,
+              (
+                SELECT p2.id FROM "Problem" p2
+                WHERE p2."conceptLessonId" = cl.id
+                  AND EXISTS (
+                    SELECT 1 FROM "ProblemStep" ps2
+                    WHERE ps2."problemId" = p2.id AND ps2."stepIndex" = 1
+                  )
+                  AND NOT EXISTS (
+                    SELECT 1 FROM "Attempt" a2
+                    WHERE a2."problemId" = p2.id
+                      AND a2."userId" = $1
+                      AND a2."context" IN ('STUDY', 'PRACTICE')
+                  )
+                ORDER BY p2.source ASC
+                LIMIT 1
+              )                                                                    AS next_problem_id
        FROM "ConceptLesson" cl
        LEFT JOIN "Problem"   p ON p."conceptLessonId" = cl.id
                               AND EXISTS (
                                 SELECT 1 FROM "ProblemStep" ps
                                 WHERE ps."problemId" = p.id AND ps."stepIndex" = 1
                               )
-       LEFT JOIN "Attempt"   a ON a."problemId" = p.id AND a."userId" = $1
+       LEFT JOIN "Attempt"   a ON a."problemId" = p.id
+                              AND a."userId" = $1
+                              AND a."context" IN ('STUDY', 'PRACTICE')
        GROUP BY cl.id, cl."chapterCode", cl."titleEn", cl."ncertClass", cl."chapterNumber"
        HAVING COUNT(a.id) > 0
        ORDER BY MAX(a."createdAt") DESC NULLS LAST
@@ -127,6 +161,7 @@ export class DashboardService {
         progress: problemsTotal > 0 ? problemsAttempted / problemsTotal : 0,
         accuracy: totalAttempts > 0 ? correctAttempts / totalAttempts : 0,
         lastAttemptAt: r.last_attempt_at?.toISOString() ?? null,
+        nextProblemId: r.next_problem_id,
       };
     });
   }
