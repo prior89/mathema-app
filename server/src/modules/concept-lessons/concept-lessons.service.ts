@@ -539,11 +539,22 @@ export class ConceptLessonsService {
     const classLabel = lesson.ncertClass.replace('CLASS_', 'Class ');
     const attribution = `AI generated for matheo · ${classLabel} Chapter ${lesson.chapterNumber} (${lesson.titleEn}) — derived from NCERT syllabus`;
     const chapterRef = `${classLabel} · Chapter ${lesson.chapterNumber} · ${lesson.titleEn}`;
-    const variants = Array.from({ length: count }, (_, i) =>
-      `Generate a fresh 3-step (CONCEPT / PROCESS / ANSWER) variation for NCERT ${chapterRef}. ` +
-      `Variation #${i + 1} (out of ${count}). Mix difficulty across the batch (MIDDLE → KILLER). ` +
-      `Make it pedagogically distinct from any earlier variation.`,
-    );
+    // Per-variant difficulty quota + random seed beat the LLM's habit of
+    // collapsing same-prompt parallel calls onto the same canonical
+    // problem. The seed string is meaningless to the model semantically
+    // but reliably forces it to pick different numeric values and
+    // phrasing for each slot.
+    const difficulties = ['MIDDLE', 'UPPER_MIDDLE', 'SEMI_KILLER', 'KILLER'] as const;
+    const variants = Array.from({ length: count }, (_, i) => {
+      const targetDiff = difficulties[i % difficulties.length];
+      const seed = Math.random().toString(36).slice(2, 8);
+      return (
+        `[seed=${seed}] Generate a fresh 3-step (CONCEPT / PROCESS / ANSWER) variation for NCERT ${chapterRef}. ` +
+        `Aim for difficulty=${targetDiff}. Variation #${i + 1} (out of ${count}). ` +
+        `Pick numeric values that have not appeared in any earlier variation in this batch — change every constant. ` +
+        `Make it pedagogically distinct.`
+      );
+    });
 
     const CHUNK = 5;
     const results: Array<{ id: string; source: string; unitId: string | null; subUnitId: string | null; difficulty: Difficulty; difficultyLevel: number | null; body: string }> = [];

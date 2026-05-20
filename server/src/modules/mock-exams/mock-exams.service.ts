@@ -439,11 +439,21 @@ export class MockExamsService {
     // Per-variant prompt nudges the LLM to vary the problems even when
     // called in parallel. The seed integer + difficulty hint avoids
     // collapsing into the same canonical question N times.
-    const variants = Array.from({ length: count }, (_, i) =>
-      `Generate a fresh single-step practice problem for NCERT ${chapterRef}. ` +
-      `Variation #${i + 1} (out of ${count}). Mix difficulty across the batch (MIDDLE → KILLER). ` +
-      `Make it pedagogically distinct from any earlier variation.`,
-    );
+    // Difficulty quota + random seed prevent the LLM from emitting near-
+    // duplicate problems in same-prompt parallel batches (see the post-
+    // mortem in dedupe-problems where 5-way calls produced exact body
+    // collisions).
+    const difficulties = ['MIDDLE', 'UPPER_MIDDLE', 'SEMI_KILLER', 'KILLER'] as const;
+    const variants = Array.from({ length: count }, (_, i) => {
+      const targetDiff = difficulties[i % difficulties.length];
+      const seed = Math.random().toString(36).slice(2, 8);
+      return (
+        `[seed=${seed}] Generate a fresh single-step practice problem for NCERT ${chapterRef}. ` +
+        `Aim for difficulty=${targetDiff}. Variation #${i + 1} (out of ${count}). ` +
+        `Pick numeric values that have not appeared in any earlier variation in this batch — change every constant. ` +
+        `Make it pedagogically distinct.`
+      );
+    });
 
     const CHUNK = 5;
     const results: Array<{ id: string; source: string; difficulty: string }> = [];

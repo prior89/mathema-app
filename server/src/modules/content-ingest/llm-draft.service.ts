@@ -168,11 +168,18 @@ export class LlmDraftService {
     // Single-step payload is ~1/3 the token budget of multi-step.
     const maxTokens = mode === 'multi-step' ? 4000 : 1500;
 
+    // Temperature 0.4 trades a little determinism for measurably more
+    // variety across same-prompt batches — the 0.2 default produced near-
+    // identical questions in 5-way parallel prewarms (370 exact-body
+    // duplicates discovered post-mortem). 0.4 keeps schema compliance
+    // (parseAndValidate still passes virtually 100% of payloads) while
+    // shifting wording, numeric values and distractor choices enough that
+    // the dedupe pass no longer finds collisions on the same chapter.
     const res = await this.ai.generateText({
       prompt,
       system,
       maxTokens,
-      temperature: 0.2,
+      temperature: 0.4,
       jsonObject: true,       // OpenAI: response_format=json_object — provider-side JSON guarantee
     });
     const payload = this.parseAndValidate(res.text, mode);
