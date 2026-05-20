@@ -8,12 +8,31 @@ import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { UploadProblemModal } from './UploadProblemModal';
 
+type StatusFilter = 'active' | 'mastered' | 'all';
+
+const FILTERS: Array<{ id: StatusFilter; label: string }> = [
+  { id: 'active', label: 'In progress' },
+  { id: 'mastered', label: 'Mastered' },
+  { id: 'all', label: 'All' },
+];
+
 export function NotesListScreen() {
   const nav = useNavigate();
   const [uploadOpen, setUploadOpen] = useState(false);
+  // Default to 'active' so the grid surfaces what still needs attention.
+  // Without a filter every MASTERED note stays visible forever, so heavy users
+  // ended up scrolling past months of done items to reach their open queue.
+  const [filter, setFilter] = useState<StatusFilter>('active');
   const stats = useQuery({ queryKey: ['wn-stats'], queryFn: fetchWrongNotesStats });
   const notes = useQuery({ queryKey: ['wn-list'], queryFn: () => fetchWrongNotes() });
   const patterns = useQuery({ queryKey: ['patterns'], queryFn: fetchPatterns });
+
+  const visibleNotes = (notes.data ?? []).filter((n) => {
+    const s = (n.status ?? '').toLowerCase();
+    if (filter === 'all') return true;
+    if (filter === 'mastered') return s === 'mastered';
+    return s !== 'mastered';
+  });
 
   return (
     <div className="screen" style={{ position: 'relative' }}>
@@ -48,11 +67,35 @@ export function NotesListScreen() {
             </div>
           )}
 
+          {/* Status filter — defaults to "In progress" so the user reaches
+              what still needs work without scrolling past every MASTERED card. */}
+          <div className="filter-row" style={{ marginTop: 10, marginBottom: 4 }}>
+            {FILTERS.map((f) => (
+              <span
+                key={f.id}
+                className={`filter-chip ${filter === f.id ? 'active' : ''}`}
+                style={{ flex: '0 0 calc((100% - 12px) / 3)', textAlign: 'center' }}
+                onClick={() => setFilter(f.id)}
+              >
+                {f.label}
+              </span>
+            ))}
+          </div>
+
           {/* Notes grid */}
           {notes.isLoading && <Empty msg="Loading wrong notes…" />}
           {notes.data && notes.data.length === 0 && <Empty msg="No wrong notes yet — practice problems to start building." />}
+          {notes.data && notes.data.length > 0 && visibleNotes.length === 0 && (
+            <Empty msg={
+              filter === 'mastered'
+                ? 'No mastered notes yet — solve a wrong-note review to graduate one.'
+                : filter === 'active'
+                  ? 'All caught up — every wrong note is mastered. Practice more chapters to grow the queue.'
+                  : 'No wrong notes match this filter.'
+            } />
+          )}
           <div className="notes-grid">
-            {(notes.data ?? []).map((n) => (
+            {visibleNotes.map((n) => (
               <div
                 key={n.id}
                 className="note-card"

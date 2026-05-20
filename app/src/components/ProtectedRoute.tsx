@@ -7,8 +7,13 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
   const location = useLocation();
   if (!ready) return <LoadingSplash />;
   if (!user) {
-    // 미인증 → /login 으로 (원래 경로 state 로 보존, 로그인 후 복귀).
+    // Unauth → /login (preserve target so we return here after sign-in).
     return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+  // Google sign-up creates users without a class. Force them through the
+  // NCERT picker (CLASS_7..CLASS_12) before /app/* is reachable.
+  if (!user.gradeLevel) {
+    return <Navigate to="/onboarding" replace />;
   }
   return children;
 }

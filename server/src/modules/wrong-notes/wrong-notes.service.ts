@@ -11,7 +11,6 @@ import { CreateWrongNoteDto } from './dto/create-wrong-note.dto';
 import { QueryWrongNotesDto } from './dto/query-wrong-notes.dto';
 import { ReviewWrongNoteDto } from './dto/review-wrong-note.dto';
 import { Lang } from '../../common/i18n/current-lang.decorator';
-import { STATIC_FALLBACK_EN } from '../../common/i18n/content-en';
 
 @Injectable()
 export class WrongNotesService {
@@ -147,26 +146,13 @@ export class WrongNotesService {
     return { ...note, similar };
   }
   create(userId: string, dto: CreateWrongNoteDto) { return this.repo.create(userId, dto); }
-  async uploadPhoto(_userId: string, file: Express.Multer.File, lang: Lang = 'en') {
-    if (!file) return { ok: false, message: 'file required' };
-    const visionConfigured = !!(process.env.AI_VISION_API_KEY && process.env.AI_VISION_API_KEY !== 'api입력칸');
-    if (!visionConfigured) {
-      return { ok: false, message: lang !== 'ko'
-        ? 'Photo OCR not available right now.'
-        : '사진 자동 인식 서비스가 현재 사용 불가입니다.' };
-    }
-    return { ok: true, message: lang !== 'ko' ? STATIC_FALLBACK_EN.uploadPhotoOk : '사진이 등록되었습니다.' };
-  }
-  async uploadPdf(_userId: string, file: Express.Multer.File, lang: Lang = 'en') {
-    if (!file) return { ok: false, message: 'file required' };
-    const llmConfigured = !!(process.env.AI_LLM_API_KEY && process.env.AI_LLM_API_KEY !== 'api입력칸');
-    if (!llmConfigured) {
-      return { ok: false, message: lang !== 'ko'
-        ? 'PDF batch extraction not available right now.'
-        : 'PDF 자동 분리 서비스가 현재 사용 불가입니다.' };
-    }
-    return { ok: true, message: lang !== 'ko' ? STATIC_FALLBACK_EN.uploadPdfOk : 'PDF 가 등록되었습니다.' };
-  }
+
+  // Photo + PDF upload now goes through /math-helper/ocr-solve (Mathpix OCR →
+  // math-helper solve → recordSolveAttempt creates the Problem + Attempt +
+  // WrongNote in one shot). The old /wrong-notes/upload-photo and
+  // /wrong-notes/upload-pdf endpoints were stubs that ignored the file and
+  // returned `{ok:true}` — they made the UI look like it had registered
+  // something while the server did nothing. Removed entirely.
 
   async updateStatus(userId: string, id: string, status: string) {
     const updated = await this.repo.updateStatus(userId, id, status as any);

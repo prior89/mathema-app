@@ -58,8 +58,12 @@ export function HomeScreen() {
         <div style={{ padding: '0 22px' }}>
 
           {/* Cold-start hero — only when the user has zero study activity yet.
-              Replaces the silent zero-stats wall with two clear first-step CTAs. */}
+              The !today.isLoading guard prevents a flicker: when `summary`
+              resolves before `today`, today.data is still undefined and the
+              `?? 0 === 0` check passed, briefly showing the hero before the
+              recommend cards arrived and hid it again. */}
           {summary.data
+            && !today.isLoading
             && summary.data.todayMinutes === 0
             && summary.data.streakDays === 0
             && (today.data?.length ?? 0) === 0 && (

@@ -1,5 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Query, Param, UploadedFile, UseInterceptors, UseGuards } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Get, Post, Patch, Body, Query, Param, UseGuards } from '@nestjs/common';
 import { WrongNotesService } from './wrong-notes.service';
 import { CreateWrongNoteDto } from './dto/create-wrong-note.dto';
 import { QueryWrongNotesDto } from './dto/query-wrong-notes.dto';
@@ -72,17 +71,9 @@ export class WrongNotesController {
     return this.service.create(userId, dto);
   }
 
-  @Post('upload-photo')
-  @UseInterceptors(FileInterceptor('image'))
-  uploadPhoto(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang, @UploadedFile() file: Express.Multer.File) {
-    return this.service.uploadPhoto(userId, file, lang);
-  }
-
-  @Post('upload-pdf')
-  @UseInterceptors(FileInterceptor('pdf'))
-  uploadPdf(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang, @UploadedFile() file: Express.Multer.File) {
-    return this.service.uploadPdf(userId, file, lang);
-  }
+  // POST /upload-photo and /upload-pdf removed — they were stubs. Photo + PDF
+  // upload now lives at POST /math-helper/ocr-solve, which actually persists
+  // a Problem + Attempt + WrongNote via recordSolveAttempt.
 
   @Patch(':id/status')
   updateStatus(

@@ -320,7 +320,7 @@ export class ConceptLessonsService {
     }
 
     const check = (step.retrievalCheck as any) ?? {};
-    // 5지선다 객관식 우선 — choiceIndex 가 오면 그 정답성으로 채점.
+    // MCQ first — when choiceIndex is provided, grade by ProblemChoice.isCorrect.
     let passed = false;
     const choices: Array<{ choiceIndex: number; isCorrect: boolean }> = check.choices ?? [];
     const trimmed = (answer ?? '').trim();
@@ -329,27 +329,52 @@ export class ConceptLessonsService {
       const sel = choices.find((c) => c.choiceIndex === idx);
       passed = !!sel?.isCorrect;
     } else {
-      // 텍스트 입력 (이전 모드) 호환 — accept 배열과 비교
+      // Legacy text answer mode — compare against the accept array.
       const accept: string[] = check.accept ?? [];
       passed = accept.some((a) => answersMatch(a, answer));
     }
 
-    const progress = await this.prisma.conceptProgress.upsert({
+    // Ensure a progress row exists for this user × lesson.
+    await this.prisma.conceptProgress.upsert({
       where: { userId_lessonId: { userId, lessonId: lesson.id } },
       update: {},
       create: { userId, lessonId: lesson.id },
     });
 
-    // 점수: 정답이면 100, 아니면 기존 유지
-    const newScore = passed ? 100 : progress.retrievalScore ?? 0;
+    // Race-free append: Prisma's atomic `push` for Int[] survives concurrent
+    // submits. The earlier fetch-then-write pattern could lose a stepIndex
+    // when two tabs submitted RETRIEVAL answers at the same time.
+    if (passed) {
+      await this.prisma.conceptProgress.update({
+        where: { userId_lessonId: { userId, lessonId: lesson.id } },
+        data: { completedSteps: { push: stepIndex } },
+      });
+    }
+
+    // Aggregate retrievalScore from how many RETRIEVAL steps the user has
+    // cleared in this lesson — earlier code locked retrievalScore at 100 the
+    // moment ONE retrieval step passed, so a 5-step retrieval that the user
+    // half-completed still read as fully mastered.
+    const refreshed = await this.prisma.conceptProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId: lesson.id } },
+    });
+    const retrievalIndexes = lesson.steps
+      .filter((s) => s.kind === ConceptStepKind.RETRIEVAL)
+      .map((s) => s.stepIndex);
+    const completedSet = new Set(refreshed?.completedSteps ?? []);
+    const passedRetrievals = retrievalIndexes.filter((i) => completedSet.has(i)).length;
+    const newScore = retrievalIndexes.length > 0
+      ? Math.round((passedRetrievals / retrievalIndexes.length) * 100)
+      : 0;
+
+    // masteredAt stays sticky — only stamp on the FIRST time retrieval hits 100.
+    const shouldStamp = newScore === 100 && !refreshed?.masteredAt;
+
     const updated = await this.prisma.conceptProgress.update({
-      where: { id: progress.id },
+      where: { userId_lessonId: { userId, lessonId: lesson.id } },
       data: {
         retrievalScore: newScore,
-        masteredAt: passed ? new Date() : progress.masteredAt,
-        completedSteps: passed
-          ? Array.from(new Set([...progress.completedSteps, stepIndex])).sort((a, b) => a - b)
-          : progress.completedSteps,
+        ...(shouldStamp ? { masteredAt: new Date() } : {}),
       },
     });
 

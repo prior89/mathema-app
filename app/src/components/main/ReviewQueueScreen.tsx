@@ -71,10 +71,22 @@ export function ReviewQueueScreen() {
           key={queue.data.wrongNote.wrongNoteId}
           note={queue.data.wrongNote}
           onMastered={async () => {
-            // Refresh — the next-up problem will load automatically.
-            await qc.invalidateQueries({ queryKey: ['queue-next'] });
-            await qc.invalidateQueries({ queryKey: ['wn-list'] });
-            await qc.invalidateQueries({ queryKey: ['wn-stats'] });
+            // Mirror SoloProblemScreen's invalidate set — a MASTERED wrong
+            // note also changes Home dashboard (streak / today minutes /
+            // weekly accuracy), heatmap, chapter-progress, and the wn-recent
+            // / wn-due lists rendered elsewhere. Earlier only the queue +
+            // notes-list + wn-stats refreshed, so Home stayed stale until
+            // a route change.
+            await Promise.all([
+              qc.invalidateQueries({ queryKey: ['queue-next'] }),
+              qc.invalidateQueries({ queryKey: ['wn-list'] }),
+              qc.invalidateQueries({ queryKey: ['wn-stats'] }),
+              qc.invalidateQueries({ queryKey: ['wn-recent'] }),
+              qc.invalidateQueries({ queryKey: ['wn-due'] }),
+              qc.invalidateQueries({ queryKey: ['dashboard'] }),
+              qc.invalidateQueries({ queryKey: ['heatmap'] }),
+              qc.invalidateQueries({ queryKey: ['chapter-progress'] }),
+            ]);
           }}
         />
       )}

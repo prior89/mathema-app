@@ -8,6 +8,7 @@ import { post, patch, tokens, get } from '../lib/api';
 import { Glyph } from '../components/onboarding/Glyph';
 import { BrandLogo } from '../components/Brand';
 import type { Me } from '../lib/queries';
+import { useAuth } from '../context/AuthContext';
 import '../styles/onboarding.css';
 
 const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
@@ -842,6 +843,7 @@ function ScreenReady({
   consents: ConsentMap; notif: boolean; onFinish: () => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const { refreshUser } = useAuth();
 
   async function finalize() {
     if (busy) return;
@@ -875,10 +877,14 @@ function ScreenReady({
       localStorage.setItem('mathema.onboarding', JSON.stringify({
         role, grade, goal, notif, completedAt: new Date().toISOString(),
       }));
-      try { await get<Me>('/users/me'); } catch { /* ignore */ }
+      // Refresh AuthContext.user so ProtectedRoute drops the !gradeLevel
+      // guard before we navigate into /app. Without this the freshly-saved
+      // gradeLevel sits only on the server and ProtectedRoute bounces the
+      // user right back to /onboarding — infinite loop.
+      await refreshUser();
       onFinish();
     } catch (e) {
-      console.warn('dev-login failed', e);
+      if (import.meta.env.DEV) console.warn('onboarding finalize failed', e);
       onFinish();
     } finally {
       setBusy(false);

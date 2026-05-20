@@ -13,6 +13,9 @@ type AuthState = {
   loginWithGoogle: (idToken: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => void;
+  /** Re-fetch /users/me and replace the cached user. Onboarding calls this
+   *  after PATCH /users/me so ProtectedRoute drops the !gradeLevel guard. */
+  refreshUser: () => Promise<void>;
 };
 
 export type RegisterRole = 'STUDENT' | 'PARENT' | 'TEACHER';
@@ -38,9 +41,14 @@ export type RegisterInput = {
 
 const Ctx = createContext<AuthState | null>(null);
 
-// 데모 자동 로그인 — VITE_ENABLE_DEMO_AUTO_LOGIN 가 'true' 일 때만 활성화.
-// production / Play 빌드에서는 반드시 false (또는 미설정) → /login 화면 진입.
-const DEMO_AUTO_LOGIN = (import.meta as any).env?.VITE_ENABLE_DEMO_AUTO_LOGIN === 'true';
+// Demo auto-login — only honoured in dev builds. The earlier check looked at
+// VITE_ENABLE_DEMO_AUTO_LOGIN alone, which meant a misconfigured CI env var
+// would silently ship a prod bundle that auto-logs every visitor in as the
+// demo admin. import.meta.env.PROD is set by Vite at build time, so this
+// short-circuits to false in any prod build regardless of env vars present.
+const DEMO_AUTO_LOGIN =
+  !import.meta.env.PROD &&
+  (import.meta as any).env?.VITE_ENABLE_DEMO_AUTO_LOGIN === 'true';
 const DEMO_EMAIL = (import.meta as any).env?.VITE_DEMO_EMAIL ?? 'polopot123@gmail.com';
 const DEMO_PASSWORD = (import.meta as any).env?.VITE_DEMO_PASSWORD ?? 'password1234';
 
@@ -134,7 +142,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     navigate('/login');
   };
 
-  return <Ctx.Provider value={{ user, ready, login, loginWithGoogle, register, logout }}>{children}</Ctx.Provider>;
+  const refreshUser = async () => {
+    try {
+      const me = await get<Me>('/users/me');
+      setUser(me);
+    } catch {
+      /* leave existing user — caller likely just made a partial update */
+    }
+  };
+
+  return <Ctx.Provider value={{ user, ready, login, loginWithGoogle, register, logout, refreshUser }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth() {

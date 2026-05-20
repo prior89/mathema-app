@@ -233,9 +233,13 @@ export default function ConceptLessonPage() {
             const session = await startStudySession({ unitId: data.unit.id });
             sessionStorage.setItem(ACTIVE_SESSION_KEY, session.id);
           } catch (e) {
-            // 세션 시작 실패 — placeholder 로 보내 사용자가 수동 선택할 수 있게.
-            // eslint-disable-next-line no-console
-            console.warn('startStudySession after concept finish failed', e);
+            // Session start failed — fall through to the placeholder so the
+            // user can pick a unit manually. Surface only in dev to avoid
+            // production devtools noise.
+            if (import.meta.env.DEV) {
+              // eslint-disable-next-line no-console
+              console.warn('startStudySession after concept finish failed', e);
+            }
           }
           navigate('/app#/study');
         } else {

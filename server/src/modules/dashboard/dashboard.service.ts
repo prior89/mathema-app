@@ -34,8 +34,14 @@ export class DashboardService {
 
     // 예상 등급 — 모의고사 응시 0건이면 null (frontend 가 "—" 로 표시).
     // 이전엔 시험 안 본 신규 사용자에게도 fake "3등급" 이 보였음.
+    // Exclude Study's chapter tests (MockExam.type === 'MINI') — they're a
+    // learning tool, not exam scores, and would otherwise dominate the
+    // "expected grade" signal for any user who has practiced more than
+    // they've sat real mocks.
     const recentResults = await this.prisma.mockExamResult.findMany({
-      where: { userId }, orderBy: { takenAt: 'desc' }, take: 2,
+      where: { userId, mockExam: { type: { not: 'MINI' } } },
+      orderBy: { takenAt: 'desc' },
+      take: 2,
     });
     // Only show a "from → to" delta when there are at least 2 mock results.
     // Falling back to `expectedGrade` itself produced a flat "X → X" UI for

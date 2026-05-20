@@ -5,9 +5,16 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 export class MockExamsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  // The Study tab's "chapter test" feature reuses MockExamResult under
+  // MockExam.type === 'MINI'. It's a learning tool, not a mock score — keep
+  // it out of trajectory / recent / summary aggregates so the score graph,
+  // best/avg/improvement metrics, and dashboard's expectedGrade reflect only
+  // real exams (REAL / RECOMMENDED / WRONG_REDO / DIAGNOSTIC).
+  private readonly EXCLUDE_FROM_MOCK_STATS = { type: { not: 'MINI' as const } };
+
   findTrajectory(userId: string, count: number) {
     return this.prisma.mockExamResult.findMany({
-      where: { userId },
+      where: { userId, mockExam: this.EXCLUDE_FROM_MOCK_STATS },
       orderBy: { takenAt: 'asc' },
       take: count,
       include: { mockExam: true },
@@ -16,7 +23,7 @@ export class MockExamsRepository {
 
   findRecent(userId: string, count: number) {
     return this.prisma.mockExamResult.findMany({
-      where: { userId },
+      where: { userId, mockExam: this.EXCLUDE_FROM_MOCK_STATS },
       orderBy: { takenAt: 'desc' },
       take: count,
       include: { mockExam: true },

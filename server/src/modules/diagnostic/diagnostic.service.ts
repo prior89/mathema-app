@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { GradeLevel, MasteryUpdateSource, ProblemStep } from '@prisma/client';
+import { GradeLevel, ProblemStep } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { AttemptsService } from '../attempts/attempts.service';
 
 /**
  * 4문항 진단 — 온보딩 06번 화면.
@@ -15,7 +16,10 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
  */
 @Injectable()
 export class DiagnosticService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly attempts: AttemptsService,
+  ) {}
 
   async start(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -73,28 +77,23 @@ export class DiagnosticService {
     const session = await this.prisma.studySession.findUnique({ where: { id: body.sessionId } });
     if (!session || session.userId !== userId) throw new NotFoundException('Session not found');
 
-    const choice = await this.prisma.problemChoice.findUnique({
-      where: { id: body.choiceId },
-      select: { id: true, isCorrect: true, text: true, stepId: true },
-    });
-    if (!choice) throw new BadRequestException('Invalid choiceId');
-
-    const attempt = await this.prisma.attempt.create({
-      data: {
-        userId,
-        problemId: body.problemId,
-        choiceId: body.choiceId,
-        context: 'DIAGNOSTIC',
-        answer: choice.text,
-        isCorrect: choice.isCorrect,
-        durationSec: 0,
-        stepIndex: 1,
-        studySessionId: body.sessionId,
-        selfConfidenceScore: typeof body.confidence === 'number' ? body.confidence : null,
-      },
+    // Route through attempts.service so attempt.completed fires — that event
+    // feeds activity (DailyActivity / streak), mastery (snapshot + trajectory),
+    // and llm-analysis (error-pattern profiling). The earlier direct
+    // prisma.attempt.create bypassed every listener, so a user who only ever
+    // sat the diagnostic showed up as "0 minutes studied today" on Home and
+    // never accumulated mastery history.
+    const attempt = await this.attempts.create(userId, {
+      problemId: body.problemId,
+      choiceId: body.choiceId,
+      stepIndex: 1,
+      durationSec: 0,
+      confidence: body.confidence,
+      context: 'DIAGNOSTIC',
+      studySessionId: body.sessionId,
     });
 
-    return { attemptId: attempt.id, isCorrect: choice.isCorrect };
+    return { attemptId: attempt.id, isCorrect: attempt.isCorrect };
   }
 
   async finish(userId: string, sessionId: string) {
@@ -110,7 +109,6 @@ export class DiagnosticService {
     });
     if (!session || session.userId !== userId) throw new NotFoundException('Session not found');
 
-    // 세션 종료 표시.
     await this.prisma.studySession.update({
       where: { id: sessionId },
       data: {
@@ -119,55 +117,33 @@ export class DiagnosticService {
       },
     });
 
-    // concept 별 정답률 집계 → 초기 MasteryTrajectory upsert.
-    // 한 attempt 가 여러 concept 에 weight 로 기여 — 가중 평균.
-    type Acc = { score: number; weight: number };
-    const byConcept = new Map<string, Acc>();
-    for (const a of session.attempts) {
-      for (const pc of a.problem.concepts) {
-        const id = pc.conceptId;
-        const cur = byConcept.get(id) ?? { score: 0, weight: 0 };
-        cur.score += (a.isCorrect ? 100 : 0) * pc.weight;
-        cur.weight += pc.weight;
-        byConcept.set(id, cur);
-      }
-    }
-
-    const masteries = [];
-    for (const [conceptId, acc] of byConcept) {
-      const masteryScore = acc.weight > 0 ? Math.round(acc.score / acc.weight) : 0;
-      const updated = await this.prisma.masteryTrajectory.upsert({
-        where: { userId_conceptId: { userId, conceptId } },
-        update: {
-          masteryScore,
-          evidenceCount: { increment: 1 },
-          updatedBy: MasteryUpdateSource.RULE_BASED,
-          lastAttemptAt: new Date(),
-        },
-        create: {
-          userId,
-          conceptId,
-          masteryScore,
-          evidenceCount: 1,
-          recentAccuracy: masteryScore / 100,
-          updatedBy: MasteryUpdateSource.RULE_BASED,
-          lastAttemptAt: new Date(),
-        },
-        include: { concept: { select: { name: true, code: true } } },
-      });
-      masteries.push({
-        conceptId,
-        conceptName: updated.concept.name,
-        conceptCode: updated.concept.code,
-        score: updated.masteryScore,
-      });
-    }
+    // Mastery trajectories are now maintained by mastery-trajectory.listener
+    // (attempt.completed → updateAfterAttempt per concept). We just read the
+    // current state for the concepts this session touched and ship them back
+    // to the client as the diagnostic summary. Earlier code did its own
+    // weighted-average upsert here, which double-counted evidence (listener
+    // already incremented it) and clobbered the listener's gradient updates
+    // with a flat session score.
+    const conceptIds = Array.from(new Set(
+      session.attempts.flatMap((a) => a.problem.concepts.map((pc) => pc.conceptId)),
+    ));
+    const trajectories = conceptIds.length > 0
+      ? await this.prisma.masteryTrajectory.findMany({
+          where: { userId, conceptId: { in: conceptIds } },
+          include: { concept: { select: { name: true, code: true } } },
+        })
+      : [];
 
     return {
       sessionId,
       attempted: session.attempts.length,
       correct: session.attempts.filter((a) => a.isCorrect).length,
-      masteries,
+      masteries: trajectories.map((t) => ({
+        conceptId: t.conceptId,
+        conceptName: t.concept.name,
+        conceptCode: t.concept.code,
+        score: t.masteryScore,
+      })),
     };
   }
 

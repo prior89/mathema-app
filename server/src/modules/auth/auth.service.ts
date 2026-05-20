@@ -108,12 +108,19 @@ export class AuthService {
   }
 
   /**
-   * PoC dev login — admin/admin (any creds accepted) → admin@mathema.app 토큰 발급.
-   * production 에서는 무조건 거부. 데모/로컬 검증용.
+   * PoC dev login — admin/admin (any creds accepted) → admin@mathema.app token.
+   *
+   * The earlier guard rejected only NODE_ENV === 'production', so any
+   * environment with NODE_ENV unset / 'development' / 'staging' (the common
+   * default on QA boxes) silently handed out admin tokens to anyone hitting
+   * the endpoint. Now requires BOTH NODE_ENV === 'development' AND an explicit
+   * ENABLE_DEV_LOGIN=true env flag — staging must opt in deliberately.
    */
   async devLogin(ctx: { ip?: string; ua?: string } = {}) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new UnauthorizedException('dev-login disabled in production');
+    const isDev = process.env.NODE_ENV === 'development';
+    const optIn = process.env.ENABLE_DEV_LOGIN === 'true';
+    if (!isDev || !optIn) {
+      throw new UnauthorizedException('dev-login disabled in this environment');
     }
     const email = 'admin@mathema.app';
     let user = await this.users.findByEmail(email);
@@ -203,6 +210,10 @@ export class AuthService {
     if (!user) {
       const placeholderExam = new Date();
       placeholderExam.setFullYear(placeholderExam.getFullYear() + 1);
+      // gradeLevel intentionally left null. ProtectedRoute on the frontend
+      // routes any logged-in user with gradeLevel===null to /onboarding, where
+      // the NCERT class picker (Class 7-12) is presented. Hard-coding CLASS_11
+      // here used to give every Google sign-up the wrong-class curriculum.
       user = await this.users.create({
         email,
         passwordHash: await bcrypt.hash(`google:${payload.sub}:${Date.now()}`, 10),
@@ -210,7 +221,6 @@ export class AuthService {
         examDate: placeholderExam,
         targetGrade: 1,
         country: 'IN' as any,
-        gradeLevel: 'CLASS_11' as any,
       });
     }
     return this.issueTokens(user.id);

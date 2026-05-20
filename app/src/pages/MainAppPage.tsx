@@ -1,8 +1,8 @@
 /* MainAppPage — phone-frame shell for the 6-tab learning app.
  * Tabs (Home / Mastery / Study / Notes / Test / Me) map to the PDCA loop.
  * Each tab is its own route under /app/*. The mocks/play|result routes are
- * retained as internal session keys — they back BOTH Study (chapter test)
- * and Test (weekly review).
+ * retained as internal session keys for Study's chapter test only — the Test
+ * tab routes to /app/review (ReviewQueueScreen), not /app/mocks/*.
  */
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';

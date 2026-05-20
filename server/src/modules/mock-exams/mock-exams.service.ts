@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { MockExamsRepository } from './mock-exams.repository';
 import { GradingService } from './services/grading.service';
 import { AiRecommendExamService } from './services/ai-recommend-exam.service';
@@ -264,6 +264,20 @@ export class MockExamsService {
     });
     if (!lesson) throw new NotFoundException(`Chapter not found: ${chapterCode}`);
 
+    // Class-level guard — StudyScreen's UI only surfaces chapters matching
+    // user.gradeLevel, but a direct API call could otherwise start a Class 12
+    // chapter test for a Class 7 user. user.gradeLevel may be null right
+    // after a Google signup (onboarding not yet completed) — we let those
+    // through so the user can still explore until they pick a class.
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId }, select: { gradeLevel: true },
+    });
+    if (user?.gradeLevel && user.gradeLevel !== lesson.ncertClass) {
+      throw new ForbiddenException(
+        `Chapter ${chapterCode} belongs to ${lesson.ncertClass}, but your account is on ${user.gradeLevel}.`,
+      );
+    }
+
     // "Never show the same problem twice" applies only to Study/practice
     // history. Pure mock-exam attempts (EXAM context) and diagnostic seeds
     // stay eligible — students should be able to drill chapters even after
@@ -381,45 +395,28 @@ export class MockExamsService {
   }
 
   /**
-   * 모의고사 종료 — 저장된 attempt 들로부터 점수 산출.
-   * (학습형 per-step 흐름에서 모든 문제 완료 시 호출)
+   * Per-step submit flow ends here. Delegates to grading.service so /submit
+   * and /finalize produce identical scores on the same MockExamResult — they
+   * used to drift (different grade cuts, attempt-level vs problem-level
+   * accuracy, percentile = score vs table lookup).
    */
   async finalize(userId: string, resultId: string) {
-    const result = await this.prisma.mockExamResult.findFirstOrThrow({
+    // Ownership guard — grading.service is user-agnostic so we 404 here.
+    await this.prisma.mockExamResult.findFirstOrThrow({
       where: { id: resultId, userId },
-      include: { attempts: { include: { choice: true } }, mockExam: { select: { totalProblems: true } } },
     });
-    // 한 문제당 모든 단계가 정답이어야 정답으로 카운트 (mock 채점: 부분 점수 X).
-    // 단일 step 만 응시한 경우(예: AI Diagnostic) 도 동일 기준 적용 — totalSteps.size == correctSteps.size.
-    const byProblem = new Map<string, { correctSteps: Set<number>; totalSteps: Set<number> }>();
-    for (const a of result.attempts) {
-      if (!a.stepIndex || !a.choice) continue;
-      const cur = byProblem.get(a.problemId) ?? { correctSteps: new Set(), totalSteps: new Set() };
-      cur.totalSteps.add(a.stepIndex);
-      if (a.choice.isCorrect) cur.correctSteps.add(a.stepIndex);
-      byProblem.set(a.problemId, cur);
-    }
-    let correctCount = 0;
-    for (const [, v] of byProblem) {
-      if (v.totalSteps.size > 0 && v.correctSteps.size === v.totalSteps.size) correctCount += 1;
-    }
-    // totalProblems: 시작 시점 의도된 문제 수 (mockExam.totalProblems) 우선,
-    //   응시 attempt 가 그보다 적으면 attempt 기준.
-    const intendedTotal = result.mockExam?.totalProblems ?? 0;
-    const attemptedTotal = byProblem.size;
-    const totalProblems = Math.max(intendedTotal, attemptedTotal, 1);
-    const score = Math.round((correctCount / totalProblems) * 100);
-    const grade = score >= 96 ? 1 : score >= 88 ? 2 : score >= 78 ? 3 : score >= 65 ? 4 : score >= 50 ? 5 : score >= 33 ? 6 : 7;
-    const percentile = Math.min(99, Math.max(1, score));
-    const durationMin = Math.max(1, Math.round(
-      result.attempts.reduce((s, a) => s + (a.durationSec ?? 0), 0) / 60,
-    ));
-    const saved = await this.repo.saveResult(resultId, { score, grade, percentile, durationMin });
+    const graded = await this.grading.grade(userId, resultId, {});
+    const saved = await this.repo.saveResult(resultId, {
+      score: graded.score,
+      grade: graded.grade,
+      percentile: graded.percentile,
+      durationMin: graded.durationMin,
+    });
     return {
       ...saved,
-      correctCount,
-      totalProblems,
-      attemptedProblems: attemptedTotal,
+      correctCount: graded.correctCount,
+      totalProblems: graded.totalProblems,
+      attemptedProblems: graded.attemptedProblems,
     };
   }
 
@@ -432,10 +429,13 @@ export class MockExamsService {
    * 결과로 mastery score는 단원별로 PFA에 따라 변동, DailyActivity는 풀이수·시간 누적.
    */
   async submit(userId: string, resultId: string, dto: SubmitExamDto) {
-    // 각 답안 → Attempt 생성 (이벤트 발행 → 리스너 연쇄 갱신)
-    // 객관식 모드: 한 문제당 3개 choiceId → 3개 Attempt(stepIndex 1/2/3)
-    // 단일 답안 모드: 1개 Attempt
-    for (const a of dto.answers) {
+    // Each answer → Attempt rows. Multiple-choice with N choiceIds expands to
+    // N attempts (stepIndex 1..N). Steps within one problem must stay
+    // sequential so the mastery listener sees consistent prior state, but
+    // different problems can run in parallel — a 60-problem × 3-step exam
+    // used to walk 180 awaits in series (15+s on a warm DB); parallelising
+    // by-problem brings it back under a second.
+    await Promise.all(dto.answers.map(async (a) => {
       if (a.choiceIds && a.choiceIds.length > 0) {
         const perStepDuration = Math.max(1, Math.round(a.durationSec / a.choiceIds.length));
         for (let i = 0; i < a.choiceIds.length; i++) {
@@ -460,7 +460,7 @@ export class MockExamsService {
           mockExamResultId: resultId,
         });
       }
-    }
+    }));
     const graded = await this.grading.grade(userId, resultId, dto);
     return this.repo.saveResult(resultId, graded);
   }
