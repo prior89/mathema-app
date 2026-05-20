@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { ConceptStepKind, NcertClass } from '@prisma/client';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConceptStepKind, Difficulty, NcertClass } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN } from '../../common/i18n/content-en';
 import { UNIT_NAME_HI } from '../../common/i18n/content-hi';
+import { LlmDraftService, DraftPayload } from '../content-ingest/llm-draft.service';
 
 /**
  * 수학식 답안 비교 — 학생 표기 변이를 흡수.
@@ -72,7 +73,12 @@ function answersMatch(accept: string, given: string): boolean {
  */
 @Injectable()
 export class ConceptLessonsService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ConceptLessonsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly llmDraft: LlmDraftService,
+  ) {}
 
   // ---------- LIST ----------
   async tree(userId: string, lang: Lang, ncertClass?: NcertClass) {
@@ -388,28 +394,219 @@ export class ConceptLessonsService {
 
   // ---------- PRACTICE PROBLEMS (chapter → 3-step MC problem list) ----------
   /**
-   * Problems mapped to THIS ConceptLesson only (Problem.conceptLessonId =
-   * lesson.id). Fallbacks to same-class and any-mapped problems were
-   * removed because every attempt those generated landed under the
-   * fallback chapter's conceptLessonId, splitting dashboard.chapterProgress
-   * across chapters the user never knowingly opened. If the chapter is
-   * short on practice problems, the empty state is honest.
+   * Mastery practice — always returns exactly 20 multi-step problems for
+   * this chapter. Multi-step (ProblemStep length === 3, CONCEPT/PROCESS/
+   * ANSWER) is the Mastery-only format; single-step problems live in the
+   * Study tab pool and are filtered out here.
+   *
+   * Behaviour:
+   *   1. Pull all multi-step problems directly mapped to this chapter
+   *      (Problem.conceptLessonId = lesson.id).
+   *   2. If < 20, LLM-generate the shortfall in multi-step mode and
+   *      persist as new Problem rows (conceptLessonId set). Future users
+   *      hitting the same chapter draw from the enriched pool.
+   *   3. If > 20, return the 20 most pedagogically balanced — see the
+   *      pickBalanced() helper (difficulty spread + concept dedupe).
+   *   4. unitId is required to persist; chapters whose ConceptLesson lost
+   *      their unitId pointer skip top-up rather than crash.
    */
+  private static readonly MASTERY_TARGET = 20;
+
   async practiceProblems(chapterCode: string, _lang: Lang = 'en') {
     const lesson = await this.prisma.conceptLesson.findUnique({
       where: { chapterCode },
-      select: { id: true },
+      select: {
+        id: true, ncertClass: true, chapterNumber: true, titleEn: true,
+        unitId: true, subUnitId: true,
+      },
     });
     if (!lesson) throw new NotFoundException();
 
-    return this.prisma.problem.findMany({
-      where: { conceptLessonId: lesson.id, steps: { some: { stepIndex: 1 } } },
+    // Mastery pool — multi-step only (steps.length === 3, with the
+    // canonical CONCEPT/PROCESS/ANSWER stepIndex sequence).
+    const pool = await this.prisma.problem.findMany({
+      where: {
+        conceptLessonId: lesson.id,
+        steps: { some: { stepIndex: 1 } },
+        // The Mastery-vs-Study split: Mastery needs steps 2 and 3 present
+        // too. Without these the problem is the single-step Study format
+        // and must not surface in the multi-step walkthrough.
+        AND: [
+          { steps: { some: { stepIndex: 2 } } },
+          { steps: { some: { stepIndex: 3 } } },
+        ],
+      },
       orderBy: { source: 'asc' },
       select: {
         id: true, source: true, unitId: true, subUnitId: true,
         difficulty: true, difficultyLevel: true, body: true,
       },
     });
+
+    const target = ConceptLessonsService.MASTERY_TARGET;
+
+    if (pool.length >= target) {
+      return this.pickBalanced(pool, target);
+    }
+
+    // Top-up via LLM multi-step generation (see BULK-LLM chunked policy).
+    const shortfall = target - pool.length;
+    const generated = await this.generateMultiStepProblems(lesson, shortfall);
+    return [...pool, ...generated];
+  }
+
+  /**
+   * Pick `target` problems from `pool` with even difficulty spread.
+   * Difficulty buckets: MIDDLE / UPPER_MIDDLE / SEMI_KILLER / KILLER.
+   * Each bucket aims for target / 4 problems; if a bucket is under-stocked,
+   * the surplus is drawn from neighbouring buckets in difficulty order.
+   * The leftover problems stay in the database — they remain pool members
+   * for the next user, the Study tab can never see them (multi-step), and
+   * the next practiceProblems call will re-pick freshly.
+   */
+  private pickBalanced(
+    pool: Array<{ id: string; source: string; unitId: string | null; subUnitId: string | null; difficulty: Difficulty; difficultyLevel: number | null; body: string }>,
+    target: number,
+  ) {
+    const buckets = new Map<Difficulty, typeof pool>();
+    for (const p of pool) {
+      const arr = buckets.get(p.difficulty) ?? [];
+      arr.push(p);
+      buckets.set(p.difficulty, arr);
+    }
+    const order: Difficulty[] = [Difficulty.MIDDLE, Difficulty.UPPER_MIDDLE, Difficulty.SEMI_KILLER, Difficulty.KILLER];
+    const quota = Math.floor(target / order.length);
+
+    const picked: typeof pool = [];
+    // First pass — quota per bucket.
+    for (const d of order) {
+      const arr = buckets.get(d) ?? [];
+      picked.push(...arr.slice(0, quota));
+    }
+    // Second pass — fill the remainder from whatever buckets still have stock.
+    const remaining = target - picked.length;
+    if (remaining > 0) {
+      const leftovers: typeof pool = [];
+      for (const d of order) {
+        const arr = buckets.get(d) ?? [];
+        leftovers.push(...arr.slice(quota));
+      }
+      picked.push(...leftovers.slice(0, remaining));
+    }
+    return picked;
+  }
+
+  /**
+   * LLM-generate `count` multi-step problems for this chapter and persist
+   * them as Problem rows. Mirrors mock-exams.generateSingleStepProblems
+   * but uses mode='multi-step' so the LLM emits the CONCEPT/PROCESS/
+   * ANSWER triple instead of a single ANSWER step.
+   */
+  private async generateMultiStepProblems(
+    lesson: {
+      id: string;
+      ncertClass: NcertClass;
+      chapterNumber: number;
+      titleEn: string;
+      unitId: string | null;
+      subUnitId: string | null;
+    },
+    count: number,
+  ) {
+    if (!lesson.unitId) {
+      this.logger.warn(`Skipping Mastery LLM top-up: chapter ${lesson.id} has no unitId`);
+      return [];
+    }
+    const unitId = lesson.unitId;
+    const classLabel = lesson.ncertClass.replace('CLASS_', 'Class ');
+    const attribution = `AI generated for matheo · ${classLabel} Chapter ${lesson.chapterNumber} (${lesson.titleEn}) — derived from NCERT syllabus`;
+    const chapterRef = `${classLabel} · Chapter ${lesson.chapterNumber} · ${lesson.titleEn}`;
+    const variants = Array.from({ length: count }, (_, i) =>
+      `Generate a fresh 3-step (CONCEPT / PROCESS / ANSWER) variation for NCERT ${chapterRef}. ` +
+      `Variation #${i + 1} (out of ${count}). Mix difficulty across the batch (MIDDLE → KILLER). ` +
+      `Make it pedagogically distinct from any earlier variation.`,
+    );
+
+    const CHUNK = 5;
+    const results: Array<{ id: string; source: string; unitId: string | null; subUnitId: string | null; difficulty: Difficulty; difficultyLevel: number | null; body: string }> = [];
+    for (let i = 0; i < variants.length; i += CHUNK) {
+      const slice = variants.slice(i, i + CHUNK);
+      const drafts = await Promise.all(
+        slice.map((text) =>
+          this.llmDraft.generate(
+            {
+              ncertClass: lesson.ncertClass,
+              chapterNumber: lesson.chapterNumber,
+              chapterTitleHint: lesson.titleEn,
+              text,
+            },
+            { mode: 'multi-step' },
+          ).catch((err) => {
+            this.logger.warn(`Mastery LLM gen failed: ${(err as Error).message}`);
+            return null;
+          }),
+        ),
+      );
+      for (const draft of drafts) {
+        if (!draft) continue;
+        try {
+          const persisted = await this.persistMultiStepProblem(
+            { id: lesson.id, unitId, subUnitId: lesson.subUnitId },
+            draft.payload,
+            attribution,
+          );
+          results.push(persisted);
+        } catch (err) {
+          this.logger.warn(`Persist Mastery problem failed: ${(err as Error).message}`);
+        }
+      }
+    }
+    return results;
+  }
+
+  private async persistMultiStepProblem(
+    lesson: { id: string; unitId: string; subUnitId: string | null },
+    payload: DraftPayload,
+    attribution: string,
+  ) {
+    const answerStep = payload.steps.find((s) => s.stepType === 'ANSWER') ?? payload.steps[payload.steps.length - 1];
+    const correctChoice = answerStep?.choices.find((c) => c.isCorrect);
+    const problem = await this.prisma.problem.create({
+      data: {
+        source: attribution,
+        unitId: lesson.unitId,
+        ...(lesson.subUnitId ? { subUnitId: lesson.subUnitId } : {}),
+        difficulty: payload.difficulty as Difficulty,
+        difficultyLevel: payload.difficultyLevel,
+        body: payload.problemBody,
+        hint: payload.hint,
+        concept: payload.concept,
+        answer: correctChoice?.text ?? '',
+        expectedTimeSec: payload.expectedTimeSec,
+        conceptLessonId: lesson.id,
+        steps: {
+          create: payload.steps.map((s, i) => ({
+            stepIndex: i + 1,
+            stepType: s.stepType,
+            prompt: s.prompt,
+            choices: {
+              create: s.choices.map((c, ci) => ({
+                choiceIndex: ci + 1,
+                text: c.text,
+                isCorrect: c.isCorrect,
+                ...(c.distractorType ? { distractorType: c.distractorType as any } : {}),
+                ...(c.rationale ? { rationale: c.rationale } : {}),
+              })),
+            },
+          })),
+        },
+      },
+      select: {
+        id: true, source: true, unitId: true, subUnitId: true,
+        difficulty: true, difficultyLevel: true, body: true,
+      },
+    });
+    return problem;
   }
 
   // ---------- UNIT GATING ----------
