@@ -1,8 +1,21 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
 import { post, tokens, get } from '../lib/api';
 import type { Me, GradeLevel } from '../lib/queries';
 import { track } from '../lib/analytics';
+
+// Tag every Sentry event with the current user id so crash reports group
+// per-user. Cleared on logout / token clear so the next anonymous session
+// doesn't inherit the previous user's identity. Hashed-id only — no email,
+// per PRIVACY_POLICY.md §9.
+function tagSentry(user: Me | null) {
+  if (user) {
+    Sentry.setUser({ id: user.id });
+  } else {
+    Sentry.setUser(null);
+  }
+}
 
 export type { GradeLevel };
 
@@ -56,6 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
   const navigate = useNavigate();
+
+  // Mirror auth state into Sentry. Any state transition (login, refresh,
+  // logout, token clear by 401 interceptor) flows through setUser and so
+  // gets tagged or cleared here.
+  useEffect(() => { tagSentry(user); }, [user]);
 
   useEffect(() => {
     const init = async () => {

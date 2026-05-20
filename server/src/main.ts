@@ -75,11 +75,37 @@ async function bootstrap() {
   const config = app.get(ConfigService);
 
   app.use(helmet());
-  // CORS: 메인 앱(5173) + 관리자 앱(5174) 둘 다 허용
+  // CORS allow-list. We include four classes of origin:
+  //   1. The SWA-hosted web frontend (webOrigin).
+  //   2. The admin frontend (adminOrigin).
+  //   3. Capacitor-shipped Android / iOS WebViews — those load the bundled
+  //      assets under https://localhost (androidScheme=https in
+  //      capacitor.config.ts) and capacitor://localhost on iOS. Without
+  //      these the released APK would 404 on every API call because the
+  //      browser blocks CORS preflight.
+  //   4. http://localhost variants for local dev (Vite + emulator).
+  // Comma-separated EXTRA_CORS_ORIGINS env lets ops add staging / preview
+  // domains without a redeploy.
   const webOrigin = config.get<string>('app.webOrigin') ?? 'http://localhost:5173';
   const adminOrigin = config.get<string>('app.adminOrigin') ?? 'http://localhost:5174';
+  const extra = (process.env.EXTRA_CORS_ORIGINS ?? '')
+    .split(',').map((s) => s.trim()).filter(Boolean);
+  const allowedOrigins = new Set<string>([
+    webOrigin,
+    adminOrigin,
+    'https://localhost',     // Capacitor Android (androidScheme=https)
+    'capacitor://localhost', // Capacitor iOS
+    'http://localhost',      // Capacitor dev / iOS simulator
+    ...extra,
+  ]);
   app.enableCors({
-    origin: [webOrigin, adminOrigin],
+    origin: (origin, cb) => {
+      // Allow requests with no Origin header (curl, mobile WebView same-origin
+      // navigation) and any origin explicitly in the allow-list. Reject the
+      // rest with a CORS error rather than silently letting them through.
+      if (!origin || allowedOrigins.has(origin)) return cb(null, true);
+      cb(new Error(`CORS: origin not allowed (${origin})`));
+    },
     credentials: true,
   });
   // X-Forwarded-For 신뢰 — throttler 가 진짜 client IP 로 카운트하도록.

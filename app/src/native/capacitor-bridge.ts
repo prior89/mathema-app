@@ -79,8 +79,10 @@ export async function initCapacitorBridge() {
           } catch { /* network/backend down */ }
         });
         PN.addListener('registrationError', (err: any) => {
-          // eslint-disable-next-line no-console
-          console.warn('FCM registration error', err);
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.warn('FCM registration error', err);
+          }
         });
       }
     } catch { /* plugin not installed */ }
