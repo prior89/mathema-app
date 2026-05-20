@@ -497,6 +497,24 @@ export class ConceptLessonsService {
   }
 
   /**
+   * Admin-callable hook used by scripts/prewarm-mastery.ts to seed a
+   * chapter's multi-step pool offline so the next student avoids the
+   * 30-60s wait. Returns the count actually persisted (≤ requested).
+   */
+  async prewarmChapter(chapterCode: string, count: number): Promise<number> {
+    const lesson = await this.prisma.conceptLesson.findUnique({
+      where: { chapterCode },
+      select: {
+        id: true, ncertClass: true, chapterNumber: true, titleEn: true,
+        unitId: true, subUnitId: true,
+      },
+    });
+    if (!lesson) throw new NotFoundException(`Chapter not found: ${chapterCode}`);
+    const generated = await this.generateMultiStepProblems(lesson, count);
+    return generated.length;
+  }
+
+  /**
    * LLM-generate `count` multi-step problems for this chapter and persist
    * them as Problem rows. Mirrors mock-exams.generateSingleStepProblems
    * but uses mode='multi-step' so the LLM emits the CONCEPT/PROCESS/
