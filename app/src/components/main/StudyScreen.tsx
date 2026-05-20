@@ -10,11 +10,10 @@
  * /mock-exams/chapter/:code/start checks ConceptProgress.masteredAt and
  * rejects unmastered chapters regardless of grade.
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { fetchConceptLessons } from '../../lib/queries';
-import { startChapterTest } from '../../lib/mutations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 
@@ -42,19 +41,14 @@ export function StudyScreen() {
       return a.chapterNumber - b.chapterNumber;
     });
 
-  const start = useMutation({
-    mutationFn: () => startChapterTest(chapter),
-    onSuccess: (r) => {
-      if (!r.resultId || r.problems.length === 0) {
-        setMsg("You've already solved every problem in this chapter — pick another to keep going.");
-        return;
-      }
-      // Single-step Study screen — different UI from the multi-step
-      // MockExamPlayScreen which is reserved for Mastery / real mocks.
-      nav(`/app/practice-set/${r.resultId}`, { state: { ...r, origin: 'study' } });
-    },
-    onError: (e: any) => setMsg(`Could not start: ${e?.response?.data?.error?.message ?? 'backend error'}`),
-  });
+  // Study is stateless one-at-a-time — StudyPracticeScreen owns the fetch
+  // loop. Just navigate with the chapter code; the screen mounts and
+  // pulls its first problem from POST /mock-exams/chapter/:code/next.
+  function startPractice() {
+    if (!chapter) return;
+    setMsg(null);
+    nav(`/app/practice-set/${chapter}`);
+  }
 
   return (
     <div className="screen">
@@ -69,18 +63,18 @@ export function StudyScreen() {
         <div style={{ padding: '12px 22px 0' }}>
           <div className="section-h">
             <span className="label">Pick a chapter</span>
-            <span className="more">20 questions · ~25 min</span>
+            <span className="more">Solve at your pace</span>
           </div>
 
           <div
             className="card"
-            style={{ background: 'var(--p-accent-tint)', borderColor: 'transparent', opacity: start.isPending ? 0.5 : 1 }}
+            style={{ background: 'var(--p-accent-tint)', borderColor: 'transparent' }}
           >
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
-              {start.isPending ? 'Building your set…' : 'New 20 questions'}
+              Practice one at a time
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--p-muted)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
-              From problems you've never seen
+              Solve · Next · Solve · Next — keep going as long as you like
             </div>
 
             <select
@@ -123,11 +117,11 @@ export function StudyScreen() {
 
             <button
               className="btn"
-              disabled={!chapter || start.isPending}
-              onClick={() => start.mutate()}
+              disabled={!chapter}
+              onClick={startPractice}
               style={{ marginTop: 12, height: 46, fontSize: 14 }}
             >
-              {start.isPending ? 'Generating…' : 'Start practice'}
+              Start practice
               <Glyph.ChevronR />
             </button>
           </div>

@@ -49,8 +49,10 @@ export default function MainAppPage() {
             <Route path="review" element={<ReviewQueueScreen />} />
             <Route path="notes" element={<NotesListScreen />} />
             <Route path="practice/:problemId" element={<SoloProblemScreen />} />
-            {/* Study tab single-step practice (5-choice MC + handwriting pad). */}
-            <Route path="practice-set/:resultId" element={<StudyPracticeScreen />} />
+            {/* Study tab single-step practice (5-choice MC + handwriting pad).
+                Stateless — chapterCode in the URL drives the one-at-a-time
+                fetch loop; no resultId / MockExamResult row is needed. */}
+            <Route path="practice-set/:chapterCode" element={<StudyPracticeScreen />} />
             {/* Internal session routes — shared by Study + Test. Keep mocks/* path
                 stable so existing localStorage session keys keep working. */}
             <Route path="mocks/play/:resultId" element={<MockExamPlayScreen />} />

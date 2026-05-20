@@ -217,7 +217,7 @@ function ActiveProblem({
 
         <div>
           <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>WORKINGS</div>
-          <HandwritingCanvas ref={canvasRef} height={280} />
+          <HandwritingCanvas ref={canvasRef} height={420} extendable />
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
             <button
               type="button"

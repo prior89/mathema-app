@@ -334,6 +334,79 @@ export class MockExamsService {
   }
 
   /**
+   * Stateless "next problem" for the Study tab.
+   *
+   * The Study flow generates one problem at a time on demand: the student
+   * solves, the screen asks for the next, and so on. Compared with the
+   * batched startChapter (20 problems up front) this:
+   *   • cuts the LLM bill — a student who quits after 3 problems only ever
+   *     triggers ~3 generations, not 20;
+   *   • feels snappier — first paint is one LLM round trip, not twenty;
+   *   • allows the recommender to react to per-problem performance over
+   *     the course of a session (future hook).
+   *
+   * Returns null when no fresh problem is available (pool dry + LLM
+   * top-up failed or the chapter has no unitId for persistence).
+   * The returned shape is the full exam-ready problem (with its
+   * single ProblemStep + 5 choices) — fetchFullProblems handles the
+   * sanitize (no answer leakage, choices shuffled).
+   */
+  async nextChapterProblem(userId: string, chapterCode: string, lang: Lang = 'en'): Promise<any | null> {
+    const lesson = await this.prisma.conceptLesson.findUnique({
+      where: { chapterCode },
+      select: { id: true, ncertClass: true, chapterNumber: true, titleEn: true, unitId: true, subUnitId: true },
+    });
+    if (!lesson) throw new NotFoundException(`Chapter not found: ${chapterCode}`);
+
+    // Mastery gate — same rule as startChapter.
+    const progress = await this.prisma.conceptProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId: lesson.id } },
+      select: { masteredAt: true },
+    });
+    if (!progress?.masteredAt) {
+      throw new ForbiddenException(
+        `Finish the concept lesson for ${chapterCode} in Mastery before practising.`,
+      );
+    }
+
+    // Skip every problem this user has already touched in a learning context.
+    const attemptedRows = await this.prisma.attempt.findMany({
+      where: { userId, context: { in: [SessionContext.STUDY, SessionContext.PRACTICE] } },
+      select: { problemId: true },
+      distinct: ['problemId'],
+    });
+    const attemptedIds = attemptedRows.map((a) => a.problemId);
+
+    // Pool — single-step, mapped to this chapter, never tried by this user.
+    const pooled = await this.prisma.$queryRawUnsafe<Array<{ id: string; source: string; difficulty: string }>>(
+      `SELECT p.id, p.source, p.difficulty::text AS difficulty
+       FROM "Problem" p
+       WHERE p."conceptLessonId" = $1
+         AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 1)
+         AND NOT EXISTS (SELECT 1 FROM "ProblemStep" s2 WHERE s2."problemId" = p.id AND s2."stepIndex" >= 2)
+         ${attemptedIds.length > 0 ? `AND p.id <> ALL($2::text[])` : ''}
+       ORDER BY random()
+       LIMIT 1`,
+      lesson.id,
+      ...(attemptedIds.length > 0 ? [attemptedIds] : []),
+    );
+
+    let chosenId: string | null = pooled[0]?.id ?? null;
+    if (!chosenId) {
+      // Pool dry — generate one fresh single-step problem.
+      const generated = await this.generateSingleStepProblems(lesson, 1);
+      chosenId = generated[0]?.id ?? null;
+    }
+    if (!chosenId) return null;
+
+    // Return the full exam-ready shape (body + sanitized steps + shuffled
+    // choices, answer field stripped) so the client can render the question
+    // without a second round-trip.
+    const [full] = await this.fetchFullProblems([chosenId], lang);
+    return full ?? null;
+  }
+
+  /**
    * Top up a chapter's single-step pool by generating `count` fresh problems
    * via the LLM and persisting them as Problem rows (conceptLessonId set).
    * Runs in 5-way parallel chunks per the BULK-LLM policy. Each failed

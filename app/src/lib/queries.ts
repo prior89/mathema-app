@@ -480,6 +480,23 @@ export type ProblemListItem = {
 export const fetchPracticeProblems = (chapterCode: string) =>
   get<ProblemListItem[]>(`/concept-lessons/${chapterCode}/practice-problems`);
 
+/** Study tab "next problem" — stateless, one-at-a-time. Returns null when
+ *  pool is dry AND LLM top-up failed (or unitId missing). */
+export type NextStudyProblem = {
+  id: string;
+  source: string;
+  body: string;
+  difficulty: string;
+  hint?: string | null;
+  steps: Array<{
+    id: string;
+    stepIndex: number;
+    stepType: 'CONCEPT' | 'PROCESS' | 'ANSWER';
+    prompt: string;
+    choices: Array<{ id: string; choiceIndex: number; text: string }>;
+  }>;
+} | null;
+
 /** Student-uploaded problem OCR result solved through the math helper. */
 /** `result.problemId` is the id of the Problem row math-helper persisted while
  *  recording the attempt — UploadProblemModal uses it to deep-link into

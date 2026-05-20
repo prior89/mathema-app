@@ -119,6 +119,24 @@ export const startTypedExam = (kind: 'mini' | 'wrong-redo' | 'real') =>
 export const startChapterTest = (chapterCode: string) =>
   post<ExamPackage>(`/mock-exams/chapter/${chapterCode}/start`);
 
+/** Study tab one-at-a-time problem fetch. Server returns null when the
+ *  pool is dry AND LLM top-up failed. Single-step format guaranteed. */
+export const nextStudyProblem = (chapterCode: string) =>
+  post<{
+    id: string;
+    source: string;
+    body: string;
+    difficulty: string;
+    hint?: string | null;
+    steps: Array<{
+      id: string;
+      stepIndex: number;
+      stepType: 'CONCEPT' | 'PROCESS' | 'ANSWER';
+      prompt: string;
+      choices: Array<{ id: string; choiceIndex: number; text: string }>;
+    }>;
+  } | null>(`/mock-exams/chapter/${chapterCode}/next`);
+
 // ===== Concept Lessons (사전 개념학습) =====
 export const startConceptLesson = (code: string) =>
   post<{ id: string; currentStep: number }>(`/concept-lessons/${code}/start`);

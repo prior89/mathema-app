@@ -1,54 +1,44 @@
-/* StudyPracticeScreen — single-step practice for the Study tab.
+/* StudyPracticeScreen — single-step, one-at-a-time practice loop.
  *
- * Receives { resultId, name, totalMinutes, problems[] } via location.state
- * (StudyScreen → startChapter response). Each problem has ProblemStep length
- * exactly 1 (Study only ever serves single-step problems, see backend
- * mock-exams.startChapter pool filter). The student:
+ * Stateless flow:
+ *   1. /mock-exams/chapter/:code/next       → first problem
+ *   2. student answers → POST /attempts (context:'STUDY', no stepIndex so
+ *      attempts.repository's single-shot branch handles MASTERED / PENDING)
+ *   3. student taps "Next" → /next returns the following problem
+ *   4. student taps "Stop" (or "Finish" when the pool runs out) → summary
  *
- *   1. Reads the problem body.
- *   2. Scratches their working on a HandwritingCanvas — never persisted.
- *   3. Picks one of 5 choices and taps Check.
- *   4. Correct → next problem (and the per-problem WrongNote, if any,
- *      auto-MASTERED via attempts.repository's single-shot branch).
- *      Wrong  → still advances; backend's wrongNote.upsert files it as
- *      PENDING so it surfaces in Notes for later review.
- *
- * The screen stops when problems[] is exhausted or the user backs out. There
- * is no "finalize" call on this flow — chapter test scoring isn't surfaced
- * yet (Study is for accumulation, not measurement). The session's
- * MockExamResult row stays at its initial 0/0/0 stub.
+ * Generating one at a time beats a 20-batch up front because:
+ *   • the first paint waits on a single LLM round-trip, not twenty;
+ *   • a student who quits after three problems doesn't burn cost for the
+ *     other seventeen;
+ *   • the server can adapt difficulty to live performance later (future).
  */
-import { useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from 'react-router-dom';
 import { post } from '../../lib/api';
+import { nextStudyProblem } from '../../lib/mutations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
 
 type Choice = { id: string; choiceIndex: number; text: string };
-type Step = {
+type ProblemStep = {
   id: string;
   stepIndex: number;
   stepType: 'CONCEPT' | 'PROCESS' | 'ANSWER';
   prompt: string;
   choices: Choice[];
 };
-type PracticeProblem = {
+type StudyProblem = {
   id: string;
   source: string;
   body: string;
   difficulty: string;
   hint?: string | null;
-  steps: Step[];
+  steps: ProblemStep[];
 };
-type LocState = {
-  resultId: string;
-  name: string;
-  totalMinutes: number;
-  problems: PracticeProblem[];
-} | null;
 
 type AttemptResponse = {
   isCorrect: boolean;
@@ -59,26 +49,50 @@ type AttemptResponse = {
 const LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
 export function StudyPracticeScreen() {
-  const { resultId } = useParams<{ resultId: string }>();
-  const loc = useLocation();
+  const { chapterCode } = useParams<{ chapterCode: string }>();
   const nav = useNavigate();
   const qc = useQueryClient();
 
-  const state = (loc.state as LocState) ?? null;
-  const problems = state?.problems ?? [];
-
-  const [idx, setIdx] = useState(0);
+  const [current, setCurrent] = useState<StudyProblem | null>(null);
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [result, setResult] = useState<AttemptResponse | null>(null);
-  const [done, setDone] = useState(problems.length === 0);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
-  const startedAtRef = useRef<number>(Date.now());
+  const [questionNum, setQuestionNum] = useState(0);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const startedAtRef = useRef(Date.now());
   const canvasRef = useRef<HandwritingCanvasHandle>(null);
 
-  const current = problems[idx];
-  // Study is single-step by construction — the first (and only) step holds
-  // the 5 choices + prompt the student sees.
+  const fetchNext = useMutation({
+    mutationFn: () => nextStudyProblem(chapterCode!),
+    onSuccess: (problem) => {
+      if (!problem) {
+        // Pool is dry and LLM top-up failed (or quota hit). Treat as finish.
+        setDone(true);
+        return;
+      }
+      setCurrent(problem as StudyProblem);
+      setPickedId(null);
+      setResult(null);
+      startedAtRef.current = Date.now();
+      canvasRef.current?.clear();
+      setError(null);
+      setQuestionNum((n) => n + 1);
+    },
+    onError: (e: any) => {
+      setError(e?.response?.data?.error?.message ?? 'Could not fetch the next problem');
+    },
+  });
+
+  // First-load — fetch the first problem when the chapter code is in the URL.
+  useEffect(() => {
+    if (chapterCode) fetchNext.mutate();
+    // fetchNext is stable for our mutation pattern; depending on it would
+    // cause a refetch loop on every state update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapterCode]);
+
   const step = current?.steps?.[0];
 
   const submit = useMutation({
@@ -89,9 +103,8 @@ export function StudyPracticeScreen() {
         choiceId: pickedId,
         durationSec: Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)),
         context: 'STUDY',
-        // stepIndex deliberately omitted — Study is single-shot so attempts.
-        // repository.create's `typeof stepIndex !== 'number'` branch handles
-        // auto-MASTERED on correct and wrongNote.upsert on wrong.
+        // Omit stepIndex — Study is single-shot so attempts.repository
+        // treats `correct → MASTERED` / `wrong → PENDING` automatically.
       });
     },
     onSuccess: (r) => {
@@ -107,41 +120,17 @@ export function StudyPracticeScreen() {
     onError: () => setResult({ isCorrect: false, selectedChoice: null, correctChoice: null }),
   });
 
-  function next() {
-    if (idx + 1 < problems.length) {
-      setIdx(idx + 1);
-      setPickedId(null);
-      setResult(null);
-      startedAtRef.current = Date.now();
-      canvasRef.current?.clear();
-      return;
-    }
-    setDone(true);
-  }
-
   function onSubmit() {
     if (!pickedId || submit.isPending) return;
     submit.mutate();
   }
 
-  // ─────────── empty state ───────────
-  if (problems.length === 0) {
-    return (
-      <div className="screen">
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 22, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 22 }}>No new problems for this chapter.</div>
-          <p style={{ fontSize: 13, color: 'var(--p-muted)', maxWidth: 320, lineHeight: 1.55 }}>
-            You've solved every problem currently in the shared pool. Pick another chapter, or
-            check back later — other students' contributions and AI-generated additions land
-            here continuously.
-          </p>
-          <button className="btn outline" style={{ maxWidth: 200 }} onClick={() => nav('/app/study')}>
-            Back to Study
-          </button>
-        </div>
-        <TabBar />
-      </div>
-    );
+  function onNext() {
+    fetchNext.mutate();
+  }
+
+  function onStop() {
+    setDone(true);
   }
 
   // ─────────── completion view ───────────
@@ -150,13 +139,17 @@ export function StudyPracticeScreen() {
       <div className="screen">
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 14, padding: 22, textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-primary)' }}>✓</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 24 }}>Practice done.</div>
-          <div style={{ fontSize: 14, color: 'var(--p-ink-2)', lineHeight: 1.6 }}>
-            <strong>{correctCount}</strong> right · <strong>{wrongCount}</strong> filed to Notes.
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 24 }}>
+            {correctCount + wrongCount === 0 ? 'No problems solved yet.' : 'Practice done.'}
           </div>
+          {correctCount + wrongCount > 0 && (
+            <div style={{ fontSize: 14, color: 'var(--p-ink-2)', lineHeight: 1.6 }}>
+              <strong>{correctCount}</strong> right · <strong>{wrongCount}</strong> filed to Notes.
+            </div>
+          )}
           <div style={{ fontSize: 12, color: 'var(--p-muted)', maxWidth: 320, lineHeight: 1.55 }}>
-            Wrong answers are now in your wrong-note book. Re-open them from Notes whenever you
-            want — a single perfect retry graduates them.
+            Wrong answers are now in your wrong-note book. Re-open them from Notes
+            whenever you want — a single perfect retry graduates them.
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
             <button className="btn outline" onClick={() => nav('/app/study')}>Back to Study</button>
@@ -164,6 +157,33 @@ export function StudyPracticeScreen() {
               <button className="btn" onClick={() => nav('/app/notes')}>Open Notes</button>
             )}
           </div>
+        </div>
+        <TabBar />
+      </div>
+    );
+  }
+
+  // ─────────── loading / empty / error ───────────
+  if (!current) {
+    return (
+      <div className="screen">
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 22, textAlign: 'center', color: 'var(--p-muted)' }}>
+          {error ? (
+            <>
+              <div style={{ fontSize: 14, color: 'var(--p-danger)' }}>{error}</div>
+              <button className="btn outline" style={{ maxWidth: 200 }} onClick={() => nav('/app/study')}>
+                Back to Study
+              </button>
+            </>
+          ) : (
+            <>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 18 }}>Building your first question…</div>
+              <div style={{ fontSize: 12, lineHeight: 1.6, maxWidth: 320 }}>
+                A new problem is being assembled — usually under 30 seconds. The next ones come
+                from your chapter's shared pool and arrive instantly.
+              </div>
+            </>
+          )}
         </div>
         <TabBar />
       </div>
@@ -181,16 +201,26 @@ export function StudyPracticeScreen() {
           </button>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-              {state?.name ?? 'PRACTICE'}
+              PRACTICE
             </div>
             <div style={{ fontSize: 13, fontWeight: 600 }}>
-              Q {idx + 1} / {problems.length}
+              Q {questionNum} · {correctCount} right / {wrongCount} wrong
             </div>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={onStop}
+          style={{
+            background: 'none', border: '1px solid var(--p-border)', borderRadius: 8,
+            padding: '6px 10px', fontSize: 11, color: 'var(--p-ink-2)', cursor: 'pointer',
+          }}
+        >
+          Stop
+        </button>
       </div>
 
-      {/* Scrollable middle — problem body + canvas + choices */}
+      {/* Scrollable middle */}
       <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
           <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
@@ -201,7 +231,7 @@ export function StudyPracticeScreen() {
 
         <div>
           <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>WORKINGS</div>
-          <HandwritingCanvas ref={canvasRef} height={240} />
+          <HandwritingCanvas ref={canvasRef} height={420} extendable />
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
             <button
               type="button"
@@ -259,8 +289,8 @@ export function StudyPracticeScreen() {
             }}
           >
             {result.isCorrect
-              ? '✓ Correct — moving on.'
-              : '✗ Wrong — filed to your Notes for later review.'}
+              ? '✓ Correct — tap Next for a new problem.'
+              : '✗ Wrong — filed to your Notes. Tap Next when ready.'}
             {result.correctChoice && !result.isCorrect && (
               <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)', fontWeight: 400 }}>
                 Correct answer: <MathText text={result.correctChoice.text} />
@@ -282,8 +312,8 @@ export function StudyPracticeScreen() {
             <Glyph.ChevronR />
           </button>
         ) : (
-          <button className="btn" onClick={next}>
-            {idx + 1 < problems.length ? 'Next problem' : 'Finish'}
+          <button className="btn" onClick={onNext} disabled={fetchNext.isPending}>
+            {fetchNext.isPending ? 'Loading…' : 'Next problem'}
             <Glyph.ChevronR />
           </button>
         )}

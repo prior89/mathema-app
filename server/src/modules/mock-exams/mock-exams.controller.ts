@@ -53,6 +53,20 @@ export class MockExamsController {
     return this.service.startChapter(userId, chapterCode, lang);
   }
 
+  /**
+   * Study tab "next problem" — stateless. Each call returns one single-step
+   * problem the student has not yet attempted (pool first, LLM if empty).
+   * Replaces the 20-problem batch from startChapter for Study sessions.
+   */
+  @Post('chapter/:chapterCode/next')
+  nextChapterProblem(
+    @CurrentUser('id') userId: string,
+    @CurrentLang() lang: Lang,
+    @Param('chapterCode') chapterCode: string,
+  ) {
+    return this.service.nextChapterProblem(userId, chapterCode, lang);
+  }
+
   @Post('results/:id/submit')
   submit(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: SubmitExamDto) {
     return this.service.submit(userId, id, dto);
