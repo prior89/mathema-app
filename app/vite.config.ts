@@ -26,6 +26,12 @@ export default defineConfig({
           'vendor-charts': ['recharts'],
           'vendor-icons': ['lucide-react'],
           'vendor-sentry': ['@sentry/react'],
+          // KaTeX (~260KB) is only needed where MathText renders math —
+          // ConceptLesson, Notes, Review queue, Mock play. Splitting it
+          // explicitly keeps it out of the cold-start payload for Home
+          // (which never touches LaTeX) and makes it cache independently
+          // of the rest of the vendor surface.
+          'vendor-katex': ['katex'],
         },
       },
     },
