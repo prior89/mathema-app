@@ -46,7 +46,17 @@ export class AttemptsRepository {
       answerText = choice.text;
       distractorType = choice.distractorType ?? null;
     } else {
-      isCorrect = problem.answer.trim() === String(dto.answer ?? '').trim();
+      // Math-answer normalization — case-insensitive + all whitespace stripped.
+      // Single source of truth for text grading; wrong-note review queue
+      // (POST /wrong-notes/:id/check) routes through here so the same answer
+      // can't be MASTERED in one flow and isCorrect=false in another.
+      // Guard against null problem.answer (MC-only problems) — never auto-mark
+      // an empty answer correct.
+      const normalize = (s: string | null | undefined) =>
+        (s ?? '').trim().toLowerCase().replace(/\s+/g, '');
+      const expected = normalize(problem.answer);
+      const given = normalize(dto.answer);
+      isCorrect = expected.length > 0 && expected === given;
       answerText = String(dto.answer ?? '');
     }
 

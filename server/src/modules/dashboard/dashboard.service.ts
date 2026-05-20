@@ -37,8 +37,11 @@ export class DashboardService {
     const recentResults = await this.prisma.mockExamResult.findMany({
       where: { userId }, orderBy: { takenAt: 'desc' }, take: 2,
     });
+    // Only show a "from → to" delta when there are at least 2 mock results.
+    // Falling back to `expectedGrade` itself produced a flat "X → X" UI for
+    // brand-new users with a single result — misleading and worse than "—".
     const expectedGrade: number | null = recentResults[0]?.grade ?? null;
-    const expectedGradeFrom: number | null = recentResults[1]?.grade ?? expectedGrade;
+    const expectedGradeFrom: number | null = recentResults[1]?.grade ?? null;
 
     return {
       todayMinutes: todayAct?.durationMin ?? 0,

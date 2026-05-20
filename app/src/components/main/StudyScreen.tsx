@@ -166,7 +166,7 @@ export function StudyScreen() {
           </div>
           <div className="card" style={{ padding: 14, fontSize: 13, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
             Every set is drawn from a shared pool of problems other students have
-            solved. You\'ll never see the same problem twice. Get one wrong and
+            solved. You'll never see the same problem twice. Get one wrong and
             it joins your <strong style={{ color: 'var(--p-ink)' }}>Notes</strong>{' '}
             for a future weekly review.
           </div>

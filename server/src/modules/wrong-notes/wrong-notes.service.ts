@@ -96,16 +96,13 @@ export class WrongNotesService {
    * Replaces the earlier client-side compare which (a) leaked problem.answer
    * to the browser, (b) bypassed Attempt creation, and (c) never ran SM-2.
    *
-   * Behaviour:
-   *   - Look up the wrong note (scoped to userId — 404 otherwise).
-   *   - Create an Attempt (context: PRACTICE) so DailyActivity, streaks, and
-   *     accuracy stats reflect this work.
-   *   - If the student answer matches problem.answer (normalised), mark the
-   *     wrong note MASTERED and stamp masteredAt. The forced-sequential queue
-   *     in ReviewQueueScreen relies on this single source of truth.
-   *
-   * Returns { isCorrect, totalEligible: number } so the client can update the
-   * "N ready" header without a second round-trip.
+   * Grading + auto-MASTERED live in attempts.repository.create (single source
+   * of truth — same normalization rules every flow). This method:
+   *   - 404s if the wrong note isn't this user's
+   *   - delegates to attempts.create (Attempt insert + wrongNote.upsert on
+   *     wrong / wrongNote.updateMany→MASTERED on correct)
+   *   - re-counts the FIFO-eligible queue so the client can update the
+   *     "N ready" header without a second round-trip.
    */
   async checkAnswer(
     userId: string,
@@ -114,38 +111,23 @@ export class WrongNotesService {
   ) {
     const note = await this.prisma.wrongNote.findFirst({
       where: { id: wrongNoteId, userId },
-      include: { problem: { select: { id: true, answer: true } } },
+      include: { problem: { select: { id: true } } },
     });
     if (!note) {
       // Don't reveal "exists but wrong owner" — same NotFound for both cases.
       throw new NotFoundException(`Wrong note not found`);
     }
 
-    const normalize = (s: string) =>
-      (s ?? '').trim().toLowerCase().replace(/\s+/g, '');
-    const isCorrect = normalize(dto.answer) === normalize(note.problem.answer);
     // Clamp duration to a sane range — the canvas/input can stay open
     // arbitrarily long, but we don't want to credit users with hours per problem.
     const durationSec = Math.max(1, Math.min(600, Math.floor(dto.durationSec ?? 60)));
 
-    // attemptsService.create already handles Attempt + (on isCorrect=false)
-    // WrongNote upsert. We pass the problemId so existing wrong-note logic
-    // increments occurrences rather than creating duplicates.
-    // NOTE: status flip below intentionally happens AFTER the attempt, so the
-    // mastery side-effect listeners see the final state.
     const attempt = await this.attempts.create(userId, {
       problemId: note.problem.id,
       answer: dto.answer ?? '',
       durationSec,
       context: 'PRACTICE',
     });
-
-    if (isCorrect) {
-      await this.prisma.wrongNote.update({
-        where: { id: note.id },
-        data: { status: 'MASTERED', masteredAt: new Date() },
-      });
-    }
 
     const COOLDOWN_DAYS = 3;
     const threshold = new Date(Date.now() - COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
@@ -154,7 +136,7 @@ export class WrongNotesService {
     });
 
     return {
-      isCorrect,
+      isCorrect: attempt.isCorrect,
       totalEligible,
       attemptId: attempt.id,
     };
@@ -195,9 +177,12 @@ export class WrongNotesService {
   }
 
   /**
-   * SM-2 복습 처리.
-   * 4단계 quality(AGAIN/HARD/GOOD/EASY) → SM-2 갱신.
-   * 연속 EASY 3회 이상 시 자동 MASTERED 처리.
+   * SM-2 review handler.
+   *   - quality 4 levels (AGAIN / HARD / GOOD / EASY) → SM-2 update.
+   *   - auto-MASTERED when this review is EASY AND repetitionCount >= 3
+   *     AND intervalDays >= 30 (i.e. the note has been passed at least 3
+   *     times and the next interval is 30+ days). Not strictly "3 consecutive
+   *     EASIES" — any 3 passes followed by an EASY clears the bar.
    */
   async review(userId: string, id: string, dto: ReviewWrongNoteDto) {
     const current = await this.prisma.wrongNote.findFirstOrThrow({
