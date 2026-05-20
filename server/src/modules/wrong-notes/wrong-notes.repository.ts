@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { NoteStatus } from '../../common/enums/note-status.enum';
 import { ERROR_TYPE_LABEL_KO } from '../../common/enums/error-type.enum';
@@ -223,11 +223,19 @@ export class WrongNotesRepository {
     return this.prisma.wrongNote.create({ data: { userId, ...dto } });
   }
 
-  updateStatus(userId: string, id: string, status: NoteStatus) {
-    return this.prisma.wrongNote.update({
-      where: { id },
+  async updateStatus(userId: string, id: string, status: NoteStatus) {
+    // Guard ownership BEFORE update — `where: { id }` alone would let any
+    // authenticated user flip another user's wrong-note status if they
+    // guessed/leaked the id. Use updateMany so a count of 0 surfaces as
+    // a NotFoundException instead of silently succeeding.
+    const result = await this.prisma.wrongNote.updateMany({
+      where: { id, userId },
       data: { status, masteredAt: status === NoteStatus.MASTERED ? new Date() : null },
     });
+    if (result.count === 0) {
+      throw new NotFoundException(`Wrong note ${id} not found`);
+    }
+    return this.prisma.wrongNote.findUniqueOrThrow({ where: { id } });
   }
 
   private buildWhere(q: any) {

@@ -2,7 +2,7 @@
  * GET /mock-exams/results/:id → 점수 + 문제별 정·오답 + 내 선택 + rationale.
  */
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { get } from '../../lib/api';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
@@ -56,12 +56,16 @@ export function MockResultDetailScreen() {
 
   const correct = detail.data?.problems.filter((p) => p.allCorrect).length ?? 0;
   const total = detail.data?.problems.length ?? 0;
+  // Where to send the user when they tap Back — preserves the tab they came
+  // from (Study for chapter tests, Test for weekly review).
+  const loc = useLocation();
+  const backTarget = ((loc.state as any)?.origin === 'test') ? '/app/test' : '/app/study';
 
   return (
     <div className="screen">
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <button onClick={() => nav('/app/mocks')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
+          <button onClick={() => nav(backTarget)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
@@ -116,9 +120,9 @@ export function MockResultDetailScreen() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18 }}>{i + 1}.</span>
                     <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--p-muted)' }}>
-                      {p.source.replace(/Class\s+(\d+)/g, 'Grade $1')}
+                      {p.source}
                     </span>
-                    <span className="chip" style={{ marginLeft: 'auto', fontSize: 10.5, background: p.allCorrect ? 'oklch(0.95 0.05 155)' : 'oklch(0.96 0.04 25)', color: p.allCorrect ? 'var(--p-success)' : 'var(--p-danger)' }}>
+                    <span className="chip" style={{ marginLeft: 'auto', fontSize: 10.5, background: p.allCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)', color: p.allCorrect ? 'var(--p-success)' : 'var(--p-danger)' }}>
                       {p.allCorrect ? '✓ ALL' : '✗ MISSED'}
                     </span>
                   </div>

@@ -1,7 +1,12 @@
 /* UploadProblemModal — student picks/takes/drops/pastes a problem photo or PDF;
  * backend OCR extracts the math text and sends it through the normal solver.
- */
+ *
+ * After analysis the modal offers a "Practice now" CTA that deep-links into
+ * SoloProblemScreen for the just-created Problem row. This bypasses the
+ * 3-day cooldown that the Test review queue enforces — direct practice via
+ * Notes is always immediate. */
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { uploadProblemImage, UploadAnalysisResult } from '../../lib/queries';
 import MathText from '../MathText';
 import { Glyph } from '../onboarding/Glyph';
@@ -11,6 +16,7 @@ type Props = { open: boolean; onClose: () => void };
 type Phase = 'pick' | 'analyzing' | 'result' | 'error';
 
 export function UploadProblemModal({ open, onClose }: Props) {
+  const nav = useNavigate();
   const [phase, setPhase] = useState<Phase>('pick');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -18,6 +24,9 @@ export function UploadProblemModal({ open, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [studentAnswer, setStudentAnswer] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Wall-clock time the user spent in the modal before tapping Analyze,
+  // forwarded to math-helper so DailyActivity reflects real engagement.
+  const startedAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
     if (!open) {
@@ -30,6 +39,8 @@ export function UploadProblemModal({ open, onClose }: Props) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
       }
+    } else {
+      startedAtRef.current = Date.now();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -75,7 +86,8 @@ export function UploadProblemModal({ open, onClose }: Props) {
     setPhase('analyzing');
     setError(null);
     try {
-      const r = await uploadProblemImage(file, studentAnswer);
+      const durationSec = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
+      const r = await uploadProblemImage(file, studentAnswer, durationSec);
       setResult(r);
       setPhase('result');
     } catch (e) {
@@ -83,6 +95,13 @@ export function UploadProblemModal({ open, onClose }: Props) {
       setError(msg);
       setPhase('error');
     }
+  };
+
+  const practiceNow = () => {
+    const problemId = result?.result.problemId;
+    if (!problemId) return;
+    onClose();
+    nav(`/app/practice/${problemId}`);
   };
 
   const retry = () => {
@@ -144,6 +163,7 @@ export function UploadProblemModal({ open, onClose }: Props) {
             result={result}
             onRetry={retry}
             onClose={onClose}
+            onPracticeNow={result.result.problemId ? practiceNow : undefined}
           />
         )}
 
@@ -311,11 +331,12 @@ function AnalyzingPhase({ fileName }: { fileName: string }) {
 }
 
 function ResultPhase({
-  result, onRetry, onClose,
+  result, onRetry, onClose, onPracticeNow,
 }: {
   result: UploadAnalysisResult;
   onRetry: () => void;
   onClose: () => void;
+  onPracticeNow?: () => void;
 }) {
   const solve = result.result;
   const checked = solve.isStudentCorrect !== undefined && solve.isStudentCorrect !== null;
@@ -346,13 +367,18 @@ function ResultPhase({
       </div>
 
       {checked && (
-        <div style={{ marginTop: 12, padding: 10, background: solve.isStudentCorrect ? '#E8F5E9' : '#FFF8E1', border: '1px solid #EAD8A4', borderRadius: 8, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Glyph.Check accent={solve.isStudentCorrect ? '#2E7D32' : '#9A6A00'} size={14} />
+        <div style={{
+          marginTop: 12, padding: 10,
+          background: solve.isStudentCorrect ? 'var(--p-success-tint)' : 'var(--p-warning-tint)',
+          border: '1px solid var(--p-border)', borderRadius: 8, fontSize: 12.5,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <Glyph.Check accent={solve.isStudentCorrect ? 'var(--p-success)' : 'var(--p-warning)'} size={14} />
           <span>{solve.isStudentCorrect ? 'Your answer looks correct.' : 'Your answer looks wrong, so it was added to wrong notes for review.'}</span>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
         <button
           onClick={onRetry}
           style={{
@@ -363,10 +389,19 @@ function ResultPhase({
         <button
           onClick={onClose}
           style={{
-            background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
-            padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            background: 'transparent', border: '1px solid var(--p-border)', color: 'var(--p-ink-2)',
+            padding: '9px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 13,
           }}
         >Done</button>
+        {onPracticeNow && (
+          <button
+            onClick={onPracticeNow}
+            style={{
+              background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
+              padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            }}
+          >Practice now →</button>
+        )}
       </div>
     </div>
   );
@@ -379,7 +414,7 @@ function ErrorPhase({ error, onRetry, onClose }: { error: string; onRetry: () =>
   return (
     <div>
       <div style={{
-        background: '#FDECEA', border: '1px solid #F8D7D6', color: '#811E1A',
+        background: 'var(--p-danger-tint)', border: '1px solid var(--p-border)', color: 'var(--p-danger)',
         padding: 12, borderRadius: 10, fontSize: 13,
       }}>
         {error}

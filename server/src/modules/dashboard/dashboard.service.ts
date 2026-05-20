@@ -50,4 +50,75 @@ export class DashboardService {
       expectedGradeFrom,
     };
   }
+
+  /**
+   * Per-chapter progress + accuracy for the current user.
+   *
+   * "progress" = problems attempted / total problems in the chapter (0-1).
+   * "accuracy" = correct attempts / total attempts (0-1).
+   *
+   * Returns chapters where the user has at least one attempt, sorted by
+   * recent activity descending. Capped at 10 rows so the Home dashboard
+   * stays glanceable.
+   */
+  async chapterProgress(userId: string) {
+    const rows = await this.prisma.$queryRawUnsafe<Array<{
+      chapter_code: string;
+      title_en: string;
+      ncert_class: string;
+      chapter_number: number;
+      problems_total: bigint;
+      problems_attempted: bigint;
+      total_attempts: bigint;
+      correct_attempts: bigint;
+      last_attempt_at: Date | null;
+    }>>(
+      // Only count problems that actually have a first ProblemStep — those are
+      // the ones ConceptLessonsService.practiceProblems exposes to the UI.
+      // Without this guard a problem can be mapped to a chapter (Problem.conceptLessonId)
+      // yet be unreachable (no ProblemStep rows), making the card stick at e.g.
+      // 6/7 = 86% forever while the student already solved every reachable one.
+      `SELECT cl."chapterCode"    AS chapter_code,
+              cl."titleEn"        AS title_en,
+              cl."ncertClass"     AS ncert_class,
+              cl."chapterNumber"  AS chapter_number,
+              COUNT(DISTINCT p.id)                                                AS problems_total,
+              COUNT(DISTINCT CASE WHEN a.id IS NOT NULL THEN p.id END)            AS problems_attempted,
+              COUNT(a.id)                                                         AS total_attempts,
+              SUM(CASE WHEN a."isCorrect" THEN 1 ELSE 0 END)                      AS correct_attempts,
+              MAX(a."createdAt")                                                   AS last_attempt_at
+       FROM "ConceptLesson" cl
+       LEFT JOIN "Problem"   p ON p."conceptLessonId" = cl.id
+                              AND EXISTS (
+                                SELECT 1 FROM "ProblemStep" ps
+                                WHERE ps."problemId" = p.id AND ps."stepIndex" = 1
+                              )
+       LEFT JOIN "Attempt"   a ON a."problemId" = p.id AND a."userId" = $1
+       GROUP BY cl.id, cl."chapterCode", cl."titleEn", cl."ncertClass", cl."chapterNumber"
+       HAVING COUNT(a.id) > 0
+       ORDER BY MAX(a."createdAt") DESC NULLS LAST
+       LIMIT 10`,
+      userId,
+    );
+
+    return rows.map((r) => {
+      const problemsTotal = Number(r.problems_total);
+      const problemsAttempted = Number(r.problems_attempted);
+      const totalAttempts = Number(r.total_attempts);
+      const correctAttempts = Number(r.correct_attempts);
+      return {
+        chapterCode: r.chapter_code,
+        titleEn: r.title_en,
+        ncertClass: r.ncert_class,
+        chapterNumber: r.chapter_number,
+        problemsTotal,
+        problemsAttempted,
+        totalAttempts,
+        correctAttempts,
+        progress: problemsTotal > 0 ? problemsAttempted / problemsTotal : 0,
+        accuracy: totalAttempts > 0 ? correctAttempts / totalAttempts : 0,
+        lastAttemptAt: r.last_attempt_at?.toISOString() ?? null,
+      };
+    });
+  }
 }

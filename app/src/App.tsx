@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastHost } from './components/Toast';
+import { LoadingSplash } from './components/Brand';
 import { trackPageView } from './lib/analytics';
 
 /**
@@ -37,21 +38,11 @@ function PageViewTracker() {
   return null;
 }
 
-function PageFallback() {
-  return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      backgroundColor: 'var(--p-bg, #f5f7f3)', color: 'var(--p-muted, #5C6B85)',
-      fontFamily: '"Inter", system-ui, sans-serif', fontSize: 14,
-    }}>—</div>
-  );
-}
-
 export default function App() {
   return (
     <>
       <PageViewTracker />
-      <Suspense fallback={<PageFallback />}>
+      <Suspense fallback={<LoadingSplash />}>
         <Routes>
           {/* Auth flow */}
           <Route path="/login" element={<LoginPage />} />

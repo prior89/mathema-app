@@ -16,16 +16,15 @@
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth, GradeLevel, RegisterRole } from '../context/AuthContext';
+import { useAuth, RegisterRole } from '../context/AuthContext';
+import type { GradeLevel, NcertClass } from '../lib/queries';
 import { useT } from '../lib/i18n';
 import { Glyph } from '../components/onboarding/Glyph';
+import { BrandLogo } from '../components/Brand';
 import '../styles/onboarding.css';
 
 const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
 
-type NcertClass = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12';
-
-/** NCERT class ↔ 기존 GradeLevel 매핑 (인도 학년 → 한국 학년 enum). */
 const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
   CLASS_7:  'CLASS_7',
   CLASS_8:  'CLASS_8',
@@ -146,7 +145,7 @@ export default function RegisterPage() {
           <div className="screen">
             {/* Top: brand + lang toggle */}
             <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Glyph.Logo accent="var(--p-ink)" />
+              <BrandLogo size="sm" />
               <LangToggle lang={lang} setLang={setLang} />
             </div>
 
@@ -245,10 +244,12 @@ export default function RegisterPage() {
 
 // ─── Step 0 : 역할 + 기본 정보 + Google ───────────────────────
 function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setPassword, name, setName, gsiRef, t }: any) {
-  const roles: { id: RegisterRole; Icon: any; label: string; sub: string; popular?: boolean }[] = [
+  // PARENT/TEACHER 가입은 별도 대시보드 출시 전까지 잠금. 카드는 보이되 선택은 불가
+  // — 향후 메뉴 재배치 비용을 줄이고 사용자에게 로드맵을 자연스럽게 노출.
+  const roles: { id: RegisterRole; Icon: any; label: string; sub: string; popular?: boolean; comingSoon?: boolean }[] = [
     { id: 'STUDENT', Icon: Glyph.Person,  label: t('reg.role.student'), sub: t('reg.role.student.sub'), popular: true },
-    { id: 'PARENT',  Icon: Glyph.Parent,  label: t('reg.role.parent'),  sub: t('reg.role.parent.sub') },
-    { id: 'TEACHER', Icon: Glyph.Teacher, label: t('reg.role.teacher'), sub: t('reg.role.teacher.sub') },
+    { id: 'PARENT',  Icon: Glyph.Parent,  label: t('reg.role.parent'),  sub: t('reg.role.parent.sub'), comingSoon: true },
+    { id: 'TEACHER', Icon: Glyph.Teacher, label: t('reg.role.teacher'), sub: t('reg.role.teacher.sub'), comingSoon: true },
   ];
   return (
     <>
@@ -265,9 +266,13 @@ function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setP
             <div
               key={r.id}
               className={`option-card ${selected ? 'selected' : ''}`}
-              onClick={() => setRole(r.id)}
-              role="button" tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setRole(r.id); }}
+              onClick={() => !r.comingSoon && setRole(r.id)}
+              role="button" tabIndex={r.comingSoon ? -1 : 0}
+              aria-disabled={r.comingSoon || undefined}
+              onKeyDown={(e) => {
+                if (!r.comingSoon && (e.key === 'Enter' || e.key === ' ')) setRole(r.id);
+              }}
+              style={r.comingSoon ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
             >
               <div style={{
                 width: 44, height: 44, borderRadius: 12, padding: 10,
@@ -280,9 +285,10 @@ function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setP
                 <r.Icon accent="currentColor" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--p-ink)' }}>{r.label}</span>
                   {r.popular && <span className="chip primary">{t('reg.role.popular')}</span>}
+                  {r.comingSoon && <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>Coming soon</span>}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
               </div>

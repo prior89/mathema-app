@@ -2,7 +2,6 @@ import { BadRequestException, Body, Controller, Get, Post, UploadedFile, UseGuar
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { ChapterTestDto, WeeklyAssessmentDto } from './dto/assessment.dto';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
 import { MathHelperService } from './math-helper.service';
 
@@ -11,11 +10,16 @@ import { MathHelperService } from './math-helper.service';
 export class MathHelperController {
   constructor(private readonly service: MathHelperService) {}
 
+  // CI smoke test target — proxies through to the math-helper container's
+  // /health so deploy scripts can verify the revision is up.
   @Get('health')
   health() {
     return this.service.health();
   }
 
+  // Text-only solve. Kept for verify-math-helper.sh and as a fallback path
+  // for clients that already have the question text; production UI uses
+  // /math-helper/ocr-solve which calls this internally after OCR.
   @Post('solve')
   solve(@CurrentUser('id') userId: string, @Body() dto: SolveMathHelperDto) {
     return this.service.solve(userId, dto);
@@ -41,15 +45,5 @@ export class MathHelperController {
       throw new BadRequestException('classLevel must be an integer between 7 and 12');
     }
     return this.service.ocrSolve(userId, file, { classLevel: parsedClassLevel, studentAnswer });
-  }
-
-  @Post('assessments/chapter-test')
-  chapterTest(@CurrentUser('id') userId: string, @Body() dto: ChapterTestDto) {
-    return this.service.chapterTest(userId, dto);
-  }
-
-  @Post('assessments/weekly')
-  weekly(@CurrentUser('id') userId: string, @Body() dto: WeeklyAssessmentDto) {
-    return this.service.weekly(userId, dto);
   }
 }

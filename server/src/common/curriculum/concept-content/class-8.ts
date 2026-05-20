@@ -21,7 +21,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'a/b ± c/d = (ad ± bc)/bd. ℚ 는 +, −, ×, ÷ 에 대해 닫혀있고 결합·교환·분배법칙 모두 성립.',
-      en: 'a/b ± c/d = (ad ± bc)/bd. ℚ closed under +, −, ×, ÷ (≠0); associative, commutative, distributive all hold.',
+      en: 'Rationals extend integers by allowing division. The four operations on a/b: a/b ± c/d = (ad ± bc)/bd (common denominator for +/−), (a/b)·(c/d) = ac/bd, (a/b) ÷ (c/d) = ad/bc. ℚ is closed under all four operations (excluding ÷0) and obeys associativity, commutativity, and distributivity. Every rational has a terminating or eventually repeating decimal expansion, and vice versa.',
     },
     worked: {
       ko: '계산: −2/3 + 3/5',
@@ -63,7 +63,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '일변수 일차방정식: ax + b = cx + d ⇒ (a − c)x = d − b ⇒ x = (d − b)/(a − c).',
-      en: 'ax + b = cx + d ⇒ (a − c)x = d − b ⇒ x = (d − b)/(a − c).',
+      en: 'When the unknown appears on both sides, the strategy is still balance — but with one extra move: collect all x-terms on one side, all constants on the other. For ax + b = cx + d, subtract cx and b from both sides: (a − c)x = d − b, then divide. A linear (degree-1) equation has exactly one solution when a ≠ c, no solution if a = c with b ≠ d, and infinitely many solutions if both coefficients match.',
     },
     worked: {
       ko: '풀이: 2x − 3 = 5x + 9',
@@ -106,7 +106,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '평행사변형 ⊂ 직사각형 ⊂ 정사각형, 평행사변형 ⊂ 마름모 ⊂ 정사각형. 사각형 내각의 합 = 360°.',
-      en: 'Parallelogram ⊂ rectangle ⊂ square; parallelogram ⊂ rhombus ⊂ square. Sum of interior angles = 360°.',
+      en: 'Quadrilaterals form a strict hierarchy by added constraints — trapezium ⊂ parallelogram ⊂ rectangle ⊂ square, and parallelogram ⊂ rhombus ⊂ square. All four interior angles always sum to 360°, regardless of shape. Each level adds unique diagonal properties: a parallelogram\'s diagonals bisect each other; a rectangle\'s are equal in length; a rhombus\'s are perpendicular. The square satisfies every condition at once and sits at the top of the hierarchy.',
     },
     worked: {
       ko: '평행사변형의 세 내각이 65°, 115°, 65°. 네 번째는?',
@@ -148,7 +148,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '원그래프의 한 부분 = (해당 비율) × 360°. 확률 = 유리한 경우 / 전체 경우 (동일 가능 가정).',
-      en: 'Pie slice = (proportion) × 360°. Probability = favourable / total (equally likely).',
+      en: 'Pie charts show parts of a whole: each slice\'s central angle = (proportion) × 360°. Bar charts compare magnitudes side-by-side; histograms group continuous data into bins. Probability quantifies how likely an event A is from an equally-likely sample space S: P(A) = |A|/|S|, always between 0 (impossible) and 1 (certain). Listing the sample space — as a tree or grid — is the safest first step before counting favourable outcomes.',
     },
     worked: {
       ko: '30% 의 인구는 원그래프에서 몇 도?',
@@ -190,7 +190,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'n 의 제곱근 √n: x² = n 이 되는 음이 아닌 x. n 이 완전제곱수가 아니면 √n 은 무리수.',
-      en: '√n: the non-negative x with x² = n. If n isn\'t a perfect square, √n is irrational.',
+      en: 'The square root √n is the non-negative number whose square is n. When n is a perfect square (1, 4, 9, 16, 25, …) √n is an integer; otherwise √n is irrational — it cannot be written as a fraction of integers. Prime factorisation reveals the structure: pair up squared factors and pull them out (e.g. √200 = √(2³·5²) = 10√2). Roots distribute over multiplication (√(ab) = √a · √b) but never over addition — √(a + b) ≠ √a + √b.',
     },
     worked: {
       ko: '계산: √196 (소인수분해 사용)',
@@ -232,7 +232,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '∛n: x³ = n 이 되는 실수 x (단 한 개). 음수의 세제곱근도 실수 (∛−8 = −2).',
-      en: '∛n: unique real x with x³ = n. Cube root of negatives is real (∛−8 = −2).',
+      en: 'The cube root ∛n is the unique real number whose cube is n. Unlike square roots, cube roots of negatives ARE real: ∛(−27) = −3, because (−3)³ = −27. Odd roots accept any sign; even roots (square, fourth, …) require non-negative radicands in the reals. The most direct geometric meaning: a cube of edge a has volume a³, so given volume V the edge is ∛V.',
     },
     worked: {
       ko: '∛216',
@@ -274,7 +274,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '단리 SI = P·r·t.  복리 A = P(1 + r/n)^(nt). 복리는 지수 성장.',
-      en: 'Simple interest SI = P·r·t.  Compound A = P(1 + r/n)^(nt). Compound is exponential.',
+      en: 'Simple interest grows linearly: SI = P·r·t — earnings depend only on principal, rate, and elapsed time. Compound interest grows exponentially: A = P(1 + r/n)^(nt), where each period\'s interest joins the principal for the next round. The gap between them widens with time — at 10% over 10 years, ₹1,000 becomes ₹2,000 (simple) versus ₹2,594 (compound). Every Indian financial product (FDs, EMIs, mutual funds, credit cards) ultimately reduces to one of these two formulas.',
     },
     worked: {
       ko: 'P=₹1000, r=10%, t=2년 복리(연간복리).',
@@ -316,7 +316,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '(a ± b)² = a² ± 2ab + b².  (a + b)(a − b) = a² − b².',
-      en: '(a ± b)² = a² ± 2ab + b².  (a + b)(a − b) = a² − b².',
+      en: 'Algebraic identities are factoring and expansion shortcuts that hold for all values of the variables. Three essentials: (a + b)² = a² + 2ab + b², (a − b)² = a² − 2ab + b², and (a + b)(a − b) = a² − b². The cross term 2ab is the most commonly dropped piece — never write (a + b)² = a² + b². Identities work both ways: expand a product or factor a recognised pattern back into its compact form.',
     },
     worked: {
       ko: '전개: (x + 5)²',
@@ -358,7 +358,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '직사각형 라벨 = 2πr × h.  원기둥 전체 겉넓이 = 2πr(r + h). 부피 = πr²h.',
-      en: 'Lateral surface = 2πr·h. Total surface = 2πr(r + h). Volume = πr²h.',
+      en: 'Mensuration measures lengths, surface areas, and volumes of 2-D and 3-D shapes. A cylinder of radius r and height h has lateral (curved) surface 2πr·h — the label, unrolled, is a rectangle of base 2πr and height h. Total surface area adds the two circular ends: 2πr(r + h). Volume is πr²h. Composite solids decompose into standard pieces — add their volumes, but subtract any shared surface counted twice.',
     },
     worked: {
       ko: 'r=3, h=10 인 원기둥 부피.',
@@ -400,7 +400,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'a⁰ = 1 (a ≠ 0).  a⁻ⁿ = 1/aⁿ.  aᵐ/aⁿ = a^(m−n).',
-      en: 'a⁰ = 1.  a⁻ⁿ = 1/aⁿ.  aᵐ/aⁿ = a^(m−n).',
+      en: 'Exponent laws extend smoothly to zero and negative exponents. Forcing consistency with aᵐ/aⁿ = a^(m−n) requires a⁰ = 1 (for a ≠ 0) and a⁻ⁿ = 1/aⁿ. The earlier rules then read identically: aᵐ·aⁿ = a^(m+n), (aᵐ)ⁿ = a^(m·n), and (ab)ⁿ = aⁿ·bⁿ. These extensions power scientific notation (3.2 × 10⁸ for 320 million), SI prefixes (mm = 10⁻³ m), and every exponential growth/decay model in physics, biology, and finance.',
     },
     worked: {
       ko: '단순화: 2⁵ / 2⁻²',
@@ -442,7 +442,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '정비례: y = kx (k 상수). 반비례: y = k/x ⇔ xy = k 일정.',
-      en: 'Direct: y = kx. Inverse: y = k/x, equivalently xy = const.',
+      en: 'Two quantities can be related in two basic ways. Direct proportion: y = kx — doubling x doubles y, the ratio y/x stays constant k (graph is a line through the origin). Inverse proportion: y = k/x, equivalently xy = constant — doubling x halves y (graph is a hyperbola). Identify which kind by asking: when one quantity doubles, does the other double (direct) or halve (inverse)? Travel speed vs travel time is inverse; quantity purchased vs total cost is direct.',
     },
     worked: {
       ko: '5명 × 6시간 = 30 인시. 10명은? 30/10 = 3시간.',
@@ -484,7 +484,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '공통인수 → 두제곱차 a²−b²=(a+b)(a−b) → 완전제곱 → 그루핑 순으로 시도.',
-      en: 'Try in order: common factor → diff. of squares → perfect square → grouping.',
+      en: 'Factoring rewrites a sum as a product, immediately exposing zeros and simplifications. Try four techniques in order: (1) pull out the greatest common factor, (2) recognise a difference of squares a² − b² = (a + b)(a − b), (3) check for a perfect-square trinomial a² ± 2ab + b² = (a ± b)², (4) split the middle term or group pairs for general quadratics. Sums of squares a² + b² cannot be factored over the reals — only differences split.',
     },
     worked: {
       ko: '인수분해: x² − 9',
@@ -525,7 +525,7 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '좌표평면: (x, y) — 가로 x, 세로 y. 직선의 기울기 m = (y₂ − y₁)/(x₂ − x₁).',
-      en: 'Coordinates (x, y); x horizontal, y vertical. Line slope m = (y₂ − y₁)/(x₂ − x₁).',
+      en: 'The coordinate plane pairs each point with two numbers (x, y), where x is the horizontal distance from the y-axis and y is the vertical distance from the x-axis. Two points (x₁, y₁) and (x₂, y₂) determine a unique line with slope m = (y₂ − y₁)/(x₂ − x₁) — rise over run. Positive slope rises rightward, negative falls, zero is horizontal, and a vertical line has undefined slope. The line then satisfies y − y₁ = m(x − x₁) in point-slope form.',
     },
     worked: {
       ko: '두 점 (1, 2), (4, 11) 의 기울기.',

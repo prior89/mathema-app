@@ -21,7 +21,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '산술의 기본정리 (FTA): 합성수 = 소수들의 곱 (순서 무시 시 유일). gcd·lcm 도 이 분해로 계산.',
-      en: 'FTA: every composite = unique product of primes (up to order). gcd, lcm follow.',
+      en: 'The Fundamental Theorem of Arithmetic (FTA) states that every composite number factors into primes in exactly one way, up to ordering — primes are the indivisible building blocks of arithmetic. HCF (highest common factor) is the product of shared primes raised to the smallest powers; LCM (least common multiple) uses all primes raised to the largest powers. The identity HCF(a, b) · LCM(a, b) = a · b always holds. FTA also proves √2 is irrational: if √2 = p/q, prime factorisation would force a contradiction.',
     },
     worked: {
       ko: 'HCF(60, 84) 와 LCM(60, 84).',
@@ -64,7 +64,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'ax² + bx + c 의 두 근 α, β: α + β = −b/a, αβ = c/a (Vieta).',
-      en: 'For ax² + bx + c with roots α, β: α + β = −b/a, αβ = c/a.',
+      en: 'A polynomial p(x) = ax² + bx + c has at most two roots; Vieta\'s formulas link them to the coefficients without solving: α + β = −b/a and αβ = c/a. Equivalently, p(x) = a(x − α)(x − β) — knowing the roots gives the polynomial up to a leading constant. The discriminant D = b² − 4ac signals whether roots are real and distinct (D > 0), repeated (D = 0), or complex conjugates (D < 0). These relations scale: for higher-degree polynomials, sums and products of roots still appear directly in the coefficients.',
     },
     worked: {
       ko: 'x² − 5x + 6 의 근의 합과 곱.',
@@ -107,7 +107,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '대입·소거·교차곱셈. a₁/a₂ ? b₁/b₂ ? c₁/c₂ 비교로 해의 종류 판단.',
-      en: 'Substitution, elimination, cross-multiplication. Compare a₁/a₂, b₁/b₂, c₁/c₂.',
+      en: 'A pair of linear equations in two unknowns geometrically represents two lines, with three possible outcomes: they cross at one point (unique solution), they are parallel (no solution), or they coincide (infinitely many solutions). Algebraically, compare the ratios a₁/a₂, b₁/b₂, c₁/c₂ from a₁x + b₁y = c₁ and a₂x + b₂y = c₂ — all three equal means coincident, only the first two equal means parallel, otherwise unique. Substitution, elimination, and cross-multiplication are three reliable solution paths that always agree.',
     },
     worked: {
       ko: '2x + y = 7, 3x − y = 8.',
@@ -150,7 +150,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'x = (−b ± √D)/(2a), D = b² − 4ac. D>0 두 실근, D=0 중근, D<0 허근.',
-      en: 'x = (−b ± √D)/(2a). D > 0: two real. D = 0: repeated. D < 0: complex.',
+      en: 'Every quadratic ax² + bx + c = 0 (a ≠ 0) is solved by the quadratic formula x = (−b ± √D)/(2a), where the discriminant D = b² − 4ac is the deciding quantity. D > 0 yields two distinct real roots; D = 0 a single repeated root; D < 0 two complex-conjugate roots (no real solution). Three solution methods all reach the same answer: factoring (when roots are rational), completing the square (the derivation of the formula itself), and the formula. Geometrically, the parabola y = ax² + bx + c meets the x-axis at the roots, with axis of symmetry x = −b/(2a).',
     },
     worked: {
       ko: 'x² − 4x − 5 = 0.',
@@ -192,7 +192,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'aₙ = a + (n−1)d. Sₙ = n/2 (2a + (n−1)d) = n/2 (a + aₙ).',
-      en: 'aₙ = a + (n−1)d. Sₙ = n/2 (2a + (n−1)d) = n/2 (a + aₙ).',
+      en: 'An arithmetic progression (AP) is a sequence where each term differs from the previous one by a fixed amount d: a, a + d, a + 2d, …. The n-th term is aₙ = a + (n − 1)d, and the sum of the first n terms is Sₙ = (n/2)(a + aₙ) = (n/2)(2a + (n − 1)d) — a result Gauss found at age 9 by pairing the first and last terms. APs model anything that grows or shrinks by equal increments: theater seats per row, simple interest, monthly salary raises. Identifying d is always the first step in any AP problem.',
     },
     worked: {
       ko: '1+2+…+100.',
@@ -234,7 +234,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '닮음 판정: AA, SAS-(닮음), SSS-(닮음). 닮음비 k ⇒ 변비 k, 넓이비 k², 부피비 k³.',
-      en: 'Similarity: AA, SAS, SSS. Ratio k ⇒ sides k, areas k², volumes k³.',
+      en: 'Two figures are similar when one is a scaled copy of the other — same shape, different size. Three classical tests prove triangles similar: AA (two pairs of equal angles), SAS (one angle equal with adjacent sides proportional), and SSS (all three side ratios equal). The similarity ratio k scales every linear dimension by k, every area by k², every volume by k³ — the exponent matches the dimension. Similarity is the engine behind shadow-and-pole height estimates, scale models, and the entire foundation of trigonometry.',
     },
     worked: {
       ko: '닮음비 2:3, 작은 △ 넓이 12. 큰 △ 넓이?',
@@ -276,7 +276,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '내분점: ((m·x₂ + n·x₁)/(m+n), (m·y₂ + n·y₁)/(m+n)). 외분점은 부호만 반전.',
-      en: 'Internal section: ((m·x₂ + n·x₁)/(m+n), (m·y₂ + n·y₁)/(m+n)). External flips signs.',
+      en: 'Two points (x₁, y₁), (x₂, y₂) define a segment whose length is √((x₂ − x₁)² + (y₂ − y₁)²) — the distance formula, a direct consequence of Pythagoras. The point dividing the segment in ratio m : n internally has coordinates ((m·x₂ + n·x₁)/(m + n), (m·y₂ + n·y₁)/(m + n)) — the weights multiply the OPPOSITE-side coordinate (a common mistake to invert). The midpoint (ratio 1 : 1) reduces to the component-wise average. The area of a triangle with given vertices follows the shoelace pattern: ½|x₁(y₂ − y₃) + x₂(y₃ − y₁) + x₃(y₁ − y₂)|.',
     },
     worked: {
       ko: '(1,2), (7,8) 을 1:2 내분.',
@@ -320,7 +320,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '직각삼각형: sin θ = 대변/빗변. cos θ = 인접변/빗변. tan θ = 대변/인접변.',
-      en: 'Right triangle: sin = opp/hyp, cos = adj/hyp, tan = opp/adj.',
+      en: 'Trigonometric ratios encode the angles of a right triangle through side ratios. Relative to angle θ: sin θ = opposite/hypotenuse, cos θ = adjacent/hypotenuse, tan θ = opposite/adjacent (mnemonic SOH-CAH-TOA). The standard triangles 30°-60°-90° (sides 1 : √3 : 2) and 45°-45°-90° (sides 1 : 1 : √2) give exact values for the special angles. The Pythagorean identity sin²θ + cos²θ = 1 holds for every θ — the foundational equation of trigonometry. Reciprocal ratios cosec, sec, cot are simply 1/sin, 1/cos, 1/tan respectively.',
     },
     worked: {
       ko: '30°-60°-90° 삼각형에서 sin 30°, cos 30°.',
@@ -363,7 +363,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '높이 h = (수평거리) × tan(고도각). 두 시점 측정으로 거리 미지일 때도 풀이 가능.',
-      en: 'h = horizontal distance × tan(angle of elevation). Two observations resolve unknown distances.',
+      en: 'Trigonometry lets us measure heights and distances we can\'t reach directly. The angle of elevation is measured upward from the horizontal to a target above; the angle of depression is measured downward to a target below. For a target at horizontal distance d and elevation angle θ, the target\'s height is h = d · tan θ. Two observations from different positions create a system that resolves both an unknown height AND an unknown horizontal distance — the foundation of surveying, navigation, and astronomy.',
     },
     worked: {
       ko: '거리 50 m, 고도각 30° 인 탑의 높이.',
@@ -404,7 +404,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '접선 정리: 외부 점에서 원으로 그은 두 접선의 길이는 같다.',
-      en: 'Tangents from an external point are equal in length.',
+      en: 'A tangent to a circle touches it at exactly one point, and at that point the tangent is perpendicular to the radius — this single fact unlocks half the circle problems in school geometry. From any external point, exactly two tangent lines reach the circle, and they have equal length. The triangle formed by the centre, the tangent point, and the external point is a right triangle, with the radius and tangent as the two legs and the external distance as the hypotenuse. Pythagoras then gives the tangent length: PT² = OP² − r².',
     },
     worked: {
       ko: '외부 점 P 에서 원으로 PA, PB 접선. PA=7. PB=?',
@@ -445,7 +445,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '부채꼴 넓이 = (θ/360°) · πr². 호 길이 = (θ/360°) · 2πr.',
-      en: 'Sector area = (θ/360°)·πr². Arc length = (θ/360°)·2πr.',
+      en: 'A sector is the wedge of a circle bounded by two radii and an arc — a slice of pizza. Both arc length and sector area scale proportionally with the central angle θ: arc length = (θ/360°)·2πr, sector area = (θ/360°)·πr². A segment is the region between a chord and its arc; segment area = sector area − triangle area. In radian measure these formulas simplify to arc = rθ and area = ½r²θ — the forms that carry forward into calculus and physics.',
     },
     worked: {
       ko: 'r=7, θ=60° 부채꼴 넓이.',
@@ -486,7 +486,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '합성 입체의 부피·겉넓이 = 각 표준 입체의 합 (또는 차). 단면 변화를 추적.',
-      en: 'Composite solids: V/S = sum/difference of standard solids; track cross-sections.',
+      en: 'Composite solids decompose into standard shapes — cylinders, cones, spheres, hemispheres, frustums — whose volumes and surface areas are well-known. For volume, add (or subtract for cavities) the standard pieces. For total surface area, sum only the EXPOSED surfaces and subtract any shared interface counted twice (e.g. the circle where a hemisphere caps a cylinder). When one solid is melted and recast into another, equate the two volumes. Sketching cross-sections along an axis is the cleanest way to spot where to decompose.',
     },
     worked: {
       ko: '반구 + 원기둥 (둘 다 r=3). 원기둥 h=5. 총 부피.',
@@ -529,7 +529,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '평균 (도수분포) = Σ(fᵢxᵢ)/Σfᵢ. 중앙값은 누적도수로 구한다.',
-      en: 'Grouped mean = Σ(fᵢxᵢ)/Σfᵢ. Median via cumulative frequency.',
+      en: 'Grouped (frequency-table) data summarises observations by class intervals rather than individual values. The grouped mean weights each class midpoint by its frequency: x̄ = Σ(fᵢ · xᵢ) / Σfᵢ — the denominator is the total observation count, NOT the number of classes. The median class is where cumulative frequency first reaches n/2; the median itself is estimated by linear interpolation within that class. The modal class is the densest; the mode is then estimated from neighbouring class densities. Mean, median, and mode together describe central tendency for binned data.',
     },
     worked: {
       ko: '계급 x: 5, 15, 25 / 도수 f: 2, 3, 5 평균.',
@@ -572,7 +572,7 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'P(A) = |A| / |S| (S = 표본공간, 결과가 동일 가능 가정). 0 ≤ P ≤ 1.',
-      en: 'P(A) = |A|/|S| (equally likely outcomes). 0 ≤ P ≤ 1.',
+      en: 'Probability assigns a number between 0 (impossible) and 1 (certain) to every event. For an equally-likely sample space S, P(A) = |A| / |S| — count favourable outcomes, divide by total. The complement rule P(Aᶜ) = 1 − P(A) is often the fastest path. For mutually exclusive events, P(A ∪ B) = P(A) + P(B). The most common pitfall is the gambler\'s fallacy — independent trials have no memory, so 9 heads in a row doesn\'t change the next flip from 1/2.',
     },
     worked: {
       ko: '주사위 ≥4 확률.',

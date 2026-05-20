@@ -10,14 +10,10 @@ import { UploadProblemModal } from './UploadProblemModal';
 
 export function NotesListScreen() {
   const nav = useNavigate();
-  const [unitFilter, setUnitFilter] = useState<string | undefined>(undefined);
   const [uploadOpen, setUploadOpen] = useState(false);
   const stats = useQuery({ queryKey: ['wn-stats'], queryFn: fetchWrongNotesStats });
-  const notes = useQuery({ queryKey: ['wn-list', unitFilter], queryFn: () => fetchWrongNotes(unitFilter ? { unitName: unitFilter } : undefined) });
+  const notes = useQuery({ queryKey: ['wn-list'], queryFn: () => fetchWrongNotes() });
   const patterns = useQuery({ queryKey: ['patterns'], queryFn: fetchPatterns });
-
-  // Unit list from data
-  const units = Array.from(new Set((notes.data ?? []).map((n) => n.unit))).slice(0, 6);
 
   return (
     <div className="screen" style={{ position: 'relative' }}>
@@ -26,14 +22,6 @@ export function NotesListScreen() {
           <div>
             <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>Library</div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, marginTop: 2, letterSpacing: '-0.01em' }}>Wrong notes</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 12, background: 'var(--p-surface)', border: '1px solid var(--p-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg viewBox="0 0 24 24" width="18" height="18">
-                <circle cx="11" cy="11" r="6" fill="none" stroke="var(--p-ink-2)" strokeWidth="1.8" />
-                <path d="M 16 16 L 20 20" stroke="var(--p-ink-2)" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </div>
           </div>
         </div>
 
@@ -45,16 +33,6 @@ export function NotesListScreen() {
             <StatMini k="MASTERED" v={stats.data?.mastered ?? 0} />
             <StatMini k="REDO %" v={Math.round(stats.data?.retryAccuracy ?? 0)} />
           </div>
-
-          {/* Filters */}
-          {units.length > 0 && (
-            <div className="filter-row" style={{ marginTop: 14 }}>
-              <span className={`filter-chip ${!unitFilter ? 'active' : ''}`} onClick={() => setUnitFilter(undefined)}>All units</span>
-              {units.map((u) => (
-                <span key={u} className={`filter-chip ${unitFilter === u ? 'active' : ''}`} onClick={() => setUnitFilter(u)}>{u}</span>
-              ))}
-            </div>
-          )}
 
           {/* AI pattern banner */}
           {patterns.data && patterns.data.length > 0 && (
@@ -78,20 +56,29 @@ export function NotesListScreen() {
               <div
                 key={n.id}
                 className="note-card"
-                onClick={() => nav(n.chapterCode ? `/app/learn/${n.chapterCode}?problemId=${n.problemId}` : `/app/notes/${n.id}`)}
+                onClick={() => nav(`/app/practice/${n.problemId}`)}
               >
-                <div className="src">{(n.problem || n.unit).replace(/Class\s+(\d+)/g, 'Grade $1')}</div>
+                <div className="src">{n.problem || n.unit}</div>
                 <div className="body"><MathText text={n.problemBody || n.insight} /></div>
                 <div className="foot">
-                  <span className={`status-chip ${n.status?.toLowerCase()}`}>
-                    {n.status === 'PENDING' && '· PENDING'}
-                    {n.status === 'ANALYZING' && '· ANALYZING'}
-                    {n.status === 'MASTERED' && (
-                      <>
-                        <Glyph.Check accent="currentColor" size={10} />MASTERED
-                      </>
-                    )}
-                  </span>
+                  {/* Backend serialises wrong-note status as lowercase
+                      ('pending' / 'analyzing' / 'mastered'). Earlier code
+                      compared against uppercase literals and silently
+                      rendered nothing — normalise once and compare. */}
+                  {(() => {
+                    const s = (n.status ?? '').toLowerCase();
+                    return (
+                      <span className={`status-chip ${s}`}>
+                        {s === 'pending' && '· PENDING'}
+                        {s === 'analyzing' && '· ANALYZING'}
+                        {s === 'mastered' && (
+                          <>
+                            <Glyph.Check accent="currentColor" size={10} />MASTERED
+                          </>
+                        )}
+                      </span>
+                    );
+                  })()}
                   <span style={{ fontSize: 10.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>{n.diff}</span>
                 </div>
               </div>

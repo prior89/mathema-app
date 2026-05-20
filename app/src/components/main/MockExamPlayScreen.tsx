@@ -112,14 +112,18 @@ export function MockExamPlayScreen() {
   const active = problemIdx * 3 + stepIdx;
 
   // 잘못된 진입 (state 없음)
+  // location.state.origin tells us where the user came from so the back
+  // button returns there instead of the deprecated /app/mocks route.
+  const backTarget = ((state as any)?.origin === 'test') ? '/app/test' : '/app/study';
+
   if (!state || !resultId) {
     return (
       <div className="screen">
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22, textAlign: 'center', color: 'var(--p-muted)' }}>
-          Mock exam session not found.
+          Session not found.
           <br />
-          <button className="btn" style={{ marginTop: 16, maxWidth: 200 }} onClick={() => nav('/app/mocks')}>
-            Back to mocks
+          <button className="btn" style={{ marginTop: 16, maxWidth: 200 }} onClick={() => nav('/app/study')}>
+            Back to Study
           </button>
         </div>
         <TabBar />
@@ -185,7 +189,11 @@ export function MockExamPlayScreen() {
       // 시험 끝났으니 localStorage 진행 상태 정리.
       try { localStorage.removeItem(storageKey); } catch { /* ignore */ }
       // Score + per-question review 페이지로 자동 이동.
-      nav(`/app/mocks/result/${resultId}`, { replace: true, state: { fromFinalize: true, ...r } });
+      // Preserve origin so the result detail screen's Back also routes home.
+      nav(`/app/mocks/result/${resultId}`, {
+        replace: true,
+        state: { fromFinalize: true, origin: (state as any)?.origin ?? 'study', ...r },
+      });
     } catch (e: any) {
       setErr(e?.response?.data?.error?.message ?? 'Could not finalise exam.');
       setBusy(false);
@@ -200,7 +208,7 @@ export function MockExamPlayScreen() {
     <div className="screen">
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <button onClick={() => nav('/app/mocks')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
+          <button onClick={() => nav(backTarget)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
@@ -224,7 +232,7 @@ export function MockExamPlayScreen() {
         ) : (
           <>
             <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
-              <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{cur.source.replace(/Class\s+(\d+)/g, 'Grade $1')}</div>
+              <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{cur.source}</div>
               <div className="math-big" style={{ fontSize: 16, marginTop: 8, whiteSpace: 'pre-wrap' }}>
                 <MathText text={cur.body} />
               </div>
@@ -257,7 +265,7 @@ export function MockExamPlayScreen() {
             </div>
 
             {feedback && (
-              <div className="card" style={{ marginTop: 12, padding: 14, background: feedback.isCorrect ? 'oklch(0.95 0.05 155)' : 'oklch(0.96 0.04 25)', borderColor: 'transparent' }}>
+              <div className="card" style={{ marginTop: 12, padding: 14, background: feedback.isCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)', borderColor: 'transparent' }}>
                 <div style={{ fontWeight: 700, color: feedback.isCorrect ? 'var(--p-success)' : 'var(--p-danger)', fontSize: 14 }}>
                   {feedback.isCorrect ? '✓ Correct' : '✗ Not quite — pick a different option and check again'}
                 </div>
@@ -278,7 +286,7 @@ export function MockExamPlayScreen() {
             )}
 
             {err && (
-              <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: 'oklch(0.96 0.04 25)', color: 'var(--p-danger)', fontSize: 12 }}>{err}</div>
+              <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: 'var(--p-danger-tint)', color: 'var(--p-danger)', fontSize: 12 }}>{err}</div>
             )}
           </>
         )}

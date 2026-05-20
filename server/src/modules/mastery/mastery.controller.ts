@@ -15,26 +15,18 @@ export class MasteryController {
     private readonly errorPattern: ErrorPatternService,
   ) {}
 
-  // ---- 기존 (Unit 단위, 호환 유지) ----
+  // Unit-level snapshot — listed by Home/Mastery dashboards.
   @Get()
   all(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang) {
     return this.service.all(userId, lang);
   }
 
-  @Get('unit/:unitId')
-  byUnit(@CurrentUser('id') userId: string, @Param('unitId') unitId: string) {
-    return this.service.byUnit(userId, unitId);
-  }
-
-  // ---- 신규: 명세서 §5 — concept 단위 ----
-
-  /** 명세서 §5 — GET /api/students/:studentId/mastery (concept 단위). */
+  // Concept-level trajectory (§5 of spec).
   @Get('trajectory')
   conceptTrajectory(@CurrentUser('id') userId: string) {
     return this.trajectory.getAllForUser(userId);
   }
 
-  /** 명세서 §5 — GET /api/students/:studentId/mastery/:conceptId/history. */
   @Get('trajectory/:conceptId/history')
   conceptHistory(
     @CurrentUser('id') userId: string,
@@ -44,13 +36,6 @@ export class MasteryController {
     return this.trajectory.getHistory(userId, conceptId, take ? parseInt(take, 10) : 30);
   }
 
-  /** 명세서 §5 — GET /api/students/:studentId/error-patterns. */
-  @Get('error-patterns')
-  errorPatterns(@CurrentUser('id') userId: string) {
-    return this.errorPattern.getActiveForUser(userId);
-  }
-
-  /** 명세서 §5 — GET /api/students/:studentId/error-patterns/active. */
   @Get('error-patterns/active')
   activeErrorPatterns(@CurrentUser('id') userId: string) {
     return this.errorPattern.getActiveForUser(userId);

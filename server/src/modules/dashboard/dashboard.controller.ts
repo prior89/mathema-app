@@ -14,4 +14,10 @@ export class DashboardController {
   summary(@CurrentUser('id') userId: string) {
     return this.service.summary(userId);
   }
+
+  /** Per-chapter progress + accuracy — top 10 chapters with recent activity. */
+  @Get('chapter-progress')
+  chapterProgress(@CurrentUser('id') userId: string) {
+    return this.service.chapterProgress(userId);
+  }
 }

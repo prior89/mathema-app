@@ -21,7 +21,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '정수 ℤ = {…, −2, −1, 0, 1, 2, …}. 부호가 같은 두 수: 절댓값 합·공통 부호. 부호가 다른 두 수: 절댓값 차·큰 쪽 부호.',
-      en: 'Integers ℤ = {…, −2, −1, 0, 1, 2, …}. Same signs ⇒ add absolute values, keep sign. Different signs ⇒ subtract, keep sign of larger |·|.',
+      en: 'Integers ℤ = {…, −2, −1, 0, 1, 2, …} extend the natural numbers by including negatives — letting us measure debts, temperatures below zero, and positions in two opposite directions. To add: same signs ⇒ add absolute values and keep that sign; different signs ⇒ subtract absolute values and take the sign of the larger one. Multiplication and division follow the rule of signs (same signs give positive, different signs give negative). Integers are the foundation for rationals, algebra, and equations to come.',
     },
     worked: {
       ko: '계산: (−7) + (+4)',
@@ -65,7 +65,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '분수 곱셈: (a/b)·(c/d) = ac / bd. 소수 곱셈: 자릿수 합만큼 소수점을 이동.',
-      en: 'Fractions: (a/b)·(c/d) = ac/bd. Decimals: count decimal places, sum them in the answer.',
+      en: 'Fractions a/b and decimals are two notations for the same numbers — every fraction is a (terminating or repeating) decimal, and vice versa. Multiplication is direct: (a/b)·(c/d) = ac/bd (no common denominator needed). For decimals, count the total decimal places of both factors — the answer has the sum. Division by a fraction equals multiplication by its reciprocal: (a/b) ÷ (c/d) = ad/bc.',
     },
     worked: {
       ko: '계산: ⅔ × ½',
@@ -108,7 +108,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '평균 = (합)/(개수). 중앙값 = 정렬 후 가운데 값. 최빈값 = 가장 자주 나타나는 값.',
-      en: 'Mean = sum/count. Median = middle value after sorting. Mode = most frequent value.',
+      en: 'Three single-number summaries describe a dataset from different angles. Mean = sum ÷ count, the balance point — pulled by every value, especially extremes. Median = middle value after sorting, the 50th percentile — robust against outliers. Mode = most frequent value, the peak of the histogram. Skewed data exposes their differences: a few extreme values shift the mean far from the median, while the mode is unaffected.',
     },
     worked: {
       ko: '데이터 {2, 3, 3, 5, 7} 의 평균·중앙값·최빈값.',
@@ -151,7 +151,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '일차방정식 ax + b = c ⇒ ax = c − b ⇒ x = (c − b)/a. 양변에 같은 연산을 하면 균형 유지.',
-      en: 'Linear equation ax + b = c ⇒ ax = c − b ⇒ x = (c − b)/a. Same operation on both sides keeps balance.',
+      en: 'A linear equation in one unknown asks: what value of x makes both sides equal? The strategy is balance — any operation done to one side, applied identically to the other, preserves equality. For ax + b = c, isolate x: subtract b, divide by a, giving x = (c − b)/a. Always verify by substituting the answer back into the original equation.',
     },
     worked: {
       ko: '풀이: 3x − 7 = 11',
@@ -195,7 +195,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '맞꼭지각은 같다. 평행선 + 횡단선 ⇒ 동위각·엇각은 같고, 동측내각은 보각(180°).',
-      en: 'Vertically opposite angles are equal. Parallel lines + transversal ⇒ corresponding & alternate angles equal; co-interior sum to 180°.',
+      en: 'When two lines cross, four angles form: opposite (vertical) pairs are equal, and any two adjacent angles sum to 180° (a linear pair). When a transversal cuts two parallel lines, eight angles result: corresponding pairs are equal, alternate-interior pairs are equal, and co-interior (same-side interior) pairs sum to 180°. These three angle relationships unlock every problem about parallel lines, polygons, and parallel-line proofs in school geometry.',
     },
     worked: {
       ko: '두 직선이 만나 만드는 각 중 하나가 65°. 나머지 세 각은?',
@@ -238,7 +238,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '삼각형 내각의 합 = 180°. 외각의 크기 = 이웃하지 않은 두 내각의 합.',
-      en: 'Triangle angle sum = 180°. Exterior angle = sum of two remote interior angles.',
+      en: 'Every triangle\'s three interior angles add to exactly 180°, no matter the shape — a fact that follows from the parallel-line theorem. The exterior angle theorem follows immediately: each exterior angle equals the sum of the two non-adjacent (remote) interior angles. Side-angle correspondence matches in order: the longest side always faces the largest angle, the shortest side the smallest. These three facts solve almost every triangle problem in school geometry.',
     },
     worked: {
       ko: '두 내각이 40°, 75° 일 때 세 번째 내각은?',
@@ -280,7 +280,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '백분율 p% = p/100. (할인된 가격) = (원가) × (1 − p/100).',
-      en: 'Percent p% = p/100. Sale price = original × (1 − p/100).',
+      en: 'A percentage p% is the fraction p/100 — a way to compare a part to a whole of 100. Discounts, taxes, profit, and loss all reduce to multiplying or dividing by (1 ± p/100). Successive percentages multiply rather than add: 25% off followed by 10% off equals (1 − 0.25)(1 − 0.10) = 32.5% off, not 35%. Ratios a : b and proportions a/b = c/d generalise the same comparison idea.',
     },
     worked: {
       ko: '₹800 상품의 25% 할인가는?',
@@ -322,7 +322,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '유리수 ℚ = { a/b | a, b ∈ ℤ, b ≠ 0 }. 두 유리수 사이엔 또 다른 유리수가 항상 있다 (조밀성).',
-      en: 'Rationals ℚ = { a/b : a, b ∈ ℤ, b ≠ 0 }. Between any two rationals lies another (density).',
+      en: 'Rationals ℚ = { a/b : a, b ∈ ℤ, b ≠ 0 } fill the gaps between integers — between any two integers sit infinitely many rationals. ℚ is dense: between any two rationals lies another rational (their mean works). ℚ is closed under +, −, ×, and ÷ (except by 0), and obeys associativity, commutativity, and distributivity. Rationals are the smallest number system where every linear equation ax + b = c (a ≠ 0) has a solution.',
     },
     worked: {
       ko: '1/3 과 1/2 사이의 유리수 1개 찾기.',
@@ -363,7 +363,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '직사각형 둘레 = 2(l + w), 넓이 = l · w. 원: 둘레 = 2πr, 넓이 = πr².',
-      en: 'Rectangle: P = 2(l + w), A = l·w. Circle: C = 2πr, A = πr².',
+      en: 'Perimeter measures the length around a 2-D shape (1-D quantity); area measures the surface enclosed (2-D quantity). For a rectangle: P = 2(l + w), A = l·w. For a circle: C = 2πr, A = πr². Two shapes can share a perimeter but have very different areas — among all shapes with a fixed perimeter, the circle encloses the maximum area.',
     },
     worked: {
       ko: '반지름 7 cm 원의 둘레와 넓이.',
@@ -405,7 +405,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '동류항은 문자와 차수가 같은 항. 계수만 더하거나 빼고 문자 부분은 보존.',
-      en: 'Like terms share variables and powers; add their coefficients, keep the variable part.',
+      en: 'An algebraic expression combines numbers, variables, and operations (e.g. 3x + 2y − 7). Terms are the pieces separated by + or −; coefficients are the numerical multipliers (3, 2); the constant is the standalone number (−7). Like terms share the same variables raised to the same powers — only these combine by adding their coefficients (3x + 5x = 8x, but 3x + 5x² cannot simplify). Evaluating substitutes specific numbers for the variables.',
     },
     worked: {
       ko: '정리: 3x + 2y − x + 5y',
@@ -447,7 +447,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'aᵐ · aⁿ = a^(m+n).  aᵐ / aⁿ = a^(m−n).  (aᵐ)ⁿ = a^(m·n).  a⁰ = 1 (a≠0).',
-      en: 'aᵐ·aⁿ = a^(m+n).  aᵐ/aⁿ = a^(m−n).  (aᵐ)ⁿ = a^(m·n).  a⁰ = 1.',
+      en: 'Exponents abbreviate repeated multiplication: aⁿ means a multiplied by itself n times. Four laws govern them: aᵐ·aⁿ = a^(m+n), aᵐ/aⁿ = a^(m−n), (aᵐ)ⁿ = a^(m·n), and (ab)ⁿ = aⁿ·bⁿ. The definition extends naturally: a⁰ = 1 (a ≠ 0) and a⁻ⁿ = 1/aⁿ. These rules let us write very large or very small numbers compactly — the basis of scientific notation.',
     },
     worked: {
       ko: '계산: 2³ · 2⁴',
@@ -489,7 +489,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '선 대칭: 한 직선으로 접으면 일치. 회전 대칭: 360°/n 만큼 돌려도 일치 (n차 회전대칭).',
-      en: 'Line symmetry: folds onto itself; rotational symmetry of order n: matches after 360°/n turn.',
+      en: 'A shape has line symmetry if folding along some line makes the two halves coincide; that line is an axis of symmetry. A shape has rotational symmetry of order n if rotating by 360°/n returns it to its original look (a square has order 4, a circle has infinite order). Many shapes have both — a regular hexagon has 6 axes of symmetry and rotational order 6. Symmetry classifies shapes and links geometry to algebra (group theory) at higher levels.',
     },
     worked: {
       ko: '정육각형의 대칭축 개수와 회전대칭 차수.',
@@ -531,7 +531,7 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '오일러 공식 (다면체): V − E + F = 2. 정육면체: V=8, E=12, F=6 ⇒ 2.',
-      en: 'Euler\'s formula for polyhedra: V − E + F = 2. Cube: V=8, E=12, F=6 ⇒ 2.',
+      en: 'Polyhedra (3-D solids with flat polygonal faces) obey Euler\'s formula: V − E + F = 2, where V counts vertices, E edges, F faces. A cube has V=8, E=12, F=6 ⇒ 2 ✓; a tetrahedron has V=4, E=6, F=4 ⇒ 2 ✓. The formula doesn\'t apply to curved solids like cylinders or spheres (those need different invariants). Nets — unfolded surfaces — let us compute surface area; cross-sections reveal interior structure.',
     },
     worked: {
       ko: '삼각뿔(정사면체)의 V, E, F 와 오일러 공식 확인.',

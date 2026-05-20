@@ -51,8 +51,8 @@ az deployment group create \
     jwtAccessSecret="$JWT_ACCESS" \
     jwtRefreshSecret="$JWT_REFRESH" \
     openaiApiKey="$OPENAI_KEY" \
-    mathpixAppId='veraedu_b19b18_d3942f' \
-    mathpixAppKey='82f12581525db1fd95ac3a9d19100914386f083372701e1b88a70fb8b98bb0d4' \
+    mathpixAppId='veraedu_b19b18_622132' \
+    mathpixAppKey='9052d4f7180dbd8bcadf6cf497a2254e3d877852df5d2cab1a371f770ec077e9' \
   --query "properties.provisioningState" -o tsv \
   || fail "Bicep deployment failed"
 

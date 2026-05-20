@@ -215,7 +215,12 @@ export class ConceptLessonsService {
   ) {
     const lesson = await this.prisma.conceptLesson.findUnique({
       where: { chapterCode },
-      include: { steps: { select: { stepIndex: true } } },
+      // Pull `kind` so we can derive how many non-RETRIEVAL steps exist —
+      // ConceptLessonScreen's concept phase only iterates those, so finishing
+      // them all is the canonical "mastery" signal. RETRIEVAL passes via
+      // checkRetrieval also feed masteredAt, but neither path is required
+      // for the other.
+      include: { steps: { select: { stepIndex: true, kind: true } } },
     });
     if (!lesson) throw new NotFoundException();
     const total = lesson.steps.length;
@@ -232,12 +237,67 @@ export class ConceptLessonsService {
     completed.add(stepIndex);
     const next = Math.min(stepIndex + 1, total);
 
+    // Mastery rule: every non-RETRIEVAL step is in the completed set.
+    // Once true, masteredAt is sticky (don't move the timestamp back).
+    const conceptStepIndexes = lesson.steps
+      .filter((s) => s.kind !== 'RETRIEVAL')
+      .map((s) => s.stepIndex);
+    const allConceptDone = conceptStepIndexes.every((i) => completed.has(i));
+    const masteredAt = progress.masteredAt ?? (allConceptDone ? new Date() : null);
+
     return this.prisma.conceptProgress.update({
       where: { id: progress.id },
       data: {
         completedSteps: Array.from(completed).sort((a, b) => a - b),
         currentStep: next,
         durationSec: { increment: durationSec },
+        masteredAt,
+      },
+    });
+  }
+
+  // ---------- FINALIZE CONCEPT PHASE ----------
+  /**
+   * Atomic "concept phase complete" — called by ConceptLessonScreen at the end
+   * of the concept walkthrough (and again on phase='done' for safety).
+   *
+   * Replaces the legacy pattern of firing N concurrent completeStep calls,
+   * which raced on the SELECT-then-UPDATE of ConceptProgress.completedSteps
+   * and could leave allConceptDone=false even when every step was tapped.
+   *
+   * Marks every non-RETRIEVAL stepIndex as completed in a single update and
+   * stamps masteredAt=now (sticky — never moves backward if already set).
+   */
+  async finalizeConceptPhase(userId: string, chapterCode: string, durationSec = 0) {
+    const lesson = await this.prisma.conceptLesson.findUnique({
+      where: { chapterCode },
+      include: { steps: { select: { stepIndex: true, kind: true } } },
+    });
+    if (!lesson) throw new NotFoundException(`ConceptLesson ${chapterCode} not found`);
+
+    const conceptIndexes = lesson.steps
+      .filter((s) => s.kind !== ConceptStepKind.RETRIEVAL)
+      .map((s) => s.stepIndex);
+
+    const progress = await this.prisma.conceptProgress.upsert({
+      where: { userId_lessonId: { userId, lessonId: lesson.id } },
+      update: {},
+      create: { userId, lessonId: lesson.id, currentStep: 1 },
+    });
+
+    const merged = Array.from(new Set([...progress.completedSteps, ...conceptIndexes]))
+      .sort((a, b) => a - b);
+
+    return this.prisma.conceptProgress.update({
+      where: { id: progress.id },
+      data: {
+        completedSteps: merged,
+        // Concept phase done → at least the last concept step is "current"; the
+        // practice phase still drives Attempt rows for the retrieval / problems.
+        currentStep: Math.max(progress.currentStep, conceptIndexes.length + 1),
+        durationSec: { increment: Math.max(0, Math.floor(durationSec)) },
+        // Sticky — preserve the earliest mastered timestamp.
+        masteredAt: progress.masteredAt ?? new Date(),
       },
     });
   }

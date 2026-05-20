@@ -91,4 +91,17 @@ export class ConceptLessonsController {
   ) {
     return this.service.checkRetrieval(userId, code, body.stepIndex, body.answer);
   }
+
+  // POST /concept-lessons/:code/finalize-concept — atomic "concept phase done"
+  // signal. ConceptLessonScreen calls this once at the end of the concept
+  // phase (and again on phase='done' for deep-link safety) so masteredAt is
+  // set reliably without racing N concurrent /step calls.
+  @Post(':code/finalize-concept')
+  finalizeConcept(
+    @CurrentUser('id') userId: string,
+    @Param('code') code: string,
+    @Body() body: { durationSec?: number } = {},
+  ) {
+    return this.service.finalizeConceptPhase(userId, code, body.durationSec ?? 0);
+  }
 }

@@ -74,9 +74,9 @@ export function SettingsScreen() {
           <Row k="Name" v={me.data?.name ?? '—'} />
           <Row k="Email" v={me.data?.email ?? '—'} />
           <Row k="Role" v={me.data?.role ?? 'STUDENT'} />
-          <Row k="Grade" v={({
-            CLASS_7: 'Grade 7', CLASS_8: 'Grade 8', CLASS_9: 'Grade 9',
-            CLASS_10: 'Grade 10', CLASS_11: 'Grade 11', CLASS_12: 'Grade 12',
+          <Row k="Class" v={({
+            CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
+            CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
           } as Record<string, string>)[me.data?.gradeLevel ?? ''] ?? me.data?.gradeLevel ?? '—'} last />
         </div>
 
@@ -86,7 +86,13 @@ export function SettingsScreen() {
         </div>
         <div className="card" style={{ padding: '4px 16px' }}>
           {items.map((it) => {
-            const active = consents.data?.find((c) => c.kind === it.kind)?.active ?? !!it.req;
+            // Required consents (DATA_PROCESSING) are non-revocable — backend rejects
+            // DELETE /privacy/consents/data_processing and routes revocation through
+            // account deletion. Render them as always-checked regardless of the
+            // /privacy/consents payload so the UI never mis-signals "you can opt out".
+            const active = it.req
+              ? true
+              : (consents.data?.find((c) => c.kind === it.kind)?.active ?? false);
             return (
               <div key={it.kind} className="consent-row">
                 <div

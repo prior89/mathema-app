@@ -40,6 +40,23 @@ export class WrongNotesController {
     return this.service.getDue(userId, limit ? +limit : undefined, lang);
   }
 
+  /** FIFO queue with a 3-day cooldown — returns 1 ready note (or null). */
+  @Get('queue/next')
+  queueNext(@CurrentUser('id') userId: string) {
+    return this.service.getQueueNext(userId);
+  }
+
+  /** Review-queue grading. Server compares the answer, records an Attempt,
+   *  and (if correct) flips the wrong note to MASTERED. */
+  @Post(':id/check')
+  checkAnswer(
+    @CurrentUser('id') userId: string,
+    @Param('id') id: string,
+    @Body() body: { answer: string; durationSec?: number },
+  ) {
+    return this.service.checkAnswer(userId, id, body);
+  }
+
   @Get()
   list(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang, @Query() query: QueryWrongNotesDto) {
     return this.service.list(userId, query, lang);

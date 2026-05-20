@@ -4,6 +4,13 @@ import { api, post, patch } from './api';
 export const updateWrongNoteStatus = (id: string, status: 'PENDING' | 'ANALYZING' | 'MASTERED') =>
   patch<{ id: string; status: string }>(`/wrong-notes/${id}/status`, { status });
 
+/** Review-queue grading. Server creates an Attempt, returns isCorrect, and
+ *  flips the wrong note to MASTERED on a correct answer. */
+export const checkReviewAnswer = (id: string, body: { answer: string; durationSec?: number }) =>
+  post<{ isCorrect: boolean; totalEligible: number; attemptId: string }>(
+    `/wrong-notes/${id}/check`, body,
+  );
+
 export type ReviewQuality = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY';
 export const reviewWrongNote = (id: string, quality: ReviewQuality) =>
   post<{
@@ -100,6 +107,10 @@ export const startRecommendedExam = () =>
 export const startTypedExam = (kind: 'mini' | 'wrong-redo' | 'real') =>
   post<ExamPackage>(`/mock-exams/types/${kind}/start`);
 
+/** Study tab — pool-first chapter test (no AI augmentation in v1). */
+export const startChapterTest = (chapterCode: string) =>
+  post<ExamPackage>(`/mock-exams/chapter/${chapterCode}/start`);
+
 // ===== Concept Lessons (사전 개념학습) =====
 export const startConceptLesson = (code: string) =>
   post<{ id: string; currentStep: number }>(`/concept-lessons/${code}/start`);
@@ -118,14 +129,3 @@ export const checkConceptRetrieval = (code: string, stepIndex: number, answer: s
     hint: { ko: string; en: string } | null;
   }>(`/concept-lessons/${code}/check`, { stepIndex, answer });
 
-export const submitExamResult = (
-  resultId: string,
-  body: {
-    answers: Array<{
-      problemId: string; answer: string; durationSec: number;
-      confidence?: number; choiceIds?: string[];
-    }>;
-  },
-) => post<{ id: string; score: number; grade: number; percentile: number; durationMin: number }>(
-  `/mock-exams/results/${resultId}/submit`, body,
-);

@@ -24,7 +24,7 @@ const STEP_TONE: Record<string, { eyebrow: string; tint: string }> = {
   WORKED_EXAMPLE: { eyebrow: 'WORKED EXAMPLE', tint: 'var(--p-accent-tint)' },
   GUIDED_PRACTICE: { eyebrow: 'GUIDED PRACTICE', tint: 'var(--p-primary-tint)' },
   RETRIEVAL: { eyebrow: 'RETRIEVAL', tint: 'var(--p-accent-tint)' },
-  MISCONCEPTION: { eyebrow: 'COMMON MISTAKE', tint: 'oklch(0.96 0.04 25)' },
+  MISCONCEPTION: { eyebrow: 'COMMON MISTAKE', tint: 'var(--p-danger-tint)' },
   REFLECT: { eyebrow: 'REFLECT', tint: 'var(--p-surface-2)' },
 };
 
@@ -78,15 +78,28 @@ export function ConceptLessonScreen() {
   const hasProblems = totalProblems > 0;
   const currentSteps = problem.data?.steps ?? [];
 
-  const completeStep = useMutation({
-    mutationFn: (stepIndex: number) => post<{ ok: boolean }>(`/concept-lessons/${code}/step`, { stepIndex }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['lesson', code] }),
+  // Single atomic call that marks every non-RETRIEVAL step done and stamps
+  // masteredAt. Replaces the previous pattern of firing N concurrent /step
+  // calls (which raced on completedSteps and could leave masteredAt unset
+  // — see P19.2). Also invalidates lessons / dashboard / chapter-progress
+  // so LearnScreen, StudyScreen (mastered filter) and HomeScreen pick up
+  // the new state immediately.
+  const finalizeConcept = useMutation({
+    mutationFn: () =>
+      post<{ masteredAt: string | null }>(`/concept-lessons/${code}/finalize-concept`, {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['lesson', code] });
+      qc.invalidateQueries({ queryKey: ['lessons'] });
+      qc.invalidateQueries({ queryKey: ['concept-lessons'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['chapter-progress'] });
+    },
   });
 
   if (lesson.isLoading) return <Shell back={() => nav('/app/learn')}><Centered msg="Loading lesson…" /></Shell>;
   if (lesson.isError || !lesson.data) return <Shell back={() => nav('/app/learn')}><Centered msg="Could not load this lesson." /></Shell>;
 
-  const subtitle = `NCERT ${lesson.data.ncertClass.replace('CLASS_', 'Grade ')} · CH ${lesson.data.chapterNumber}`;
+  const subtitle = `Class ${lesson.data.ncertClass.replace('CLASS_', '')} · Chapter ${lesson.data.chapterNumber}`;
 
   // Indicator: 1 (concept) + N problems
   const segments = 1 + Math.max(1, totalProblems);
@@ -98,9 +111,17 @@ export function ConceptLessonScreen() {
       ? `Q ${practiceProblemIdx + 1}/${totalProblems} · STEP ${practiceStepIdx} ${stepLabel[practiceStepIdx - 1] ?? ''}`
       : 'COMPLETE';
 
-  const goFromConcept = () => {
-    conceptSteps.forEach((s) => completeStep.mutate(s.stepIndex));
+  const goFromConcept = async () => {
     track('chapter.concept.complete', { chapterCode: code, steps: conceptSteps.length });
+    // Await the finalize call so the screen doesn't transition before the
+    // server has recorded mastered=true; a quick student tapping straight
+    // through the problems could otherwise leave Study locked.
+    try {
+      await finalizeConcept.mutateAsync();
+    } catch {
+      // Swallow — the user can still proceed to practice; the safety-net
+      // finalize call at phase='done' (below) will retry the mastered stamp.
+    }
     if (hasProblems) {
       setPracticeProblemIdx(0);
       setPracticeStepIdx(1);
@@ -127,9 +148,11 @@ export function ConceptLessonScreen() {
       setPracticeStepIdx(1);
       return;
     }
-    // all problems done
+    // all problems done — deep-link entry (Notes ?problemId=) skips
+    // goFromConcept, so retry the finalize here to guarantee mastered=true.
     track('chapter.practice.complete', { chapterCode: code, totalProblems });
     track('chapter.done', { chapterCode: code, hadPractice: true });
+    finalizeConcept.mutate();
     setPhase('done');
   };
 
@@ -229,9 +252,11 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
 function ConceptStepBlock({ step }: { step: ConceptStep }) {
   const tone = STEP_TONE[step.kind] ?? STEP_TONE.ABSTRACT;
   const mc = step.misconception;
-  const hasMisconception = !!(mc && (mc.wrongEn || mc.whyEn || mc.correctEn || mc.wrongKo || mc.whyKo || mc.correctKo));
+  const hasMisconception = !!(mc && (mc.wrong || mc.why || mc.correct));
   const hasWorked = !!(step.workedSteps && step.workedSteps.length > 0);
-  const reflectList = step.reflectPrompts?.promptsEn ?? step.reflectPrompts?.promptsKo ?? [];
+  // reflectPrompts is `unknown` from the API (legacy json column). The only
+  // shape we currently honour is a string array; everything else renders empty.
+  const reflectList = Array.isArray(step.reflectPrompts) ? step.reflectPrompts as string[] : [];
   const hasReflect = reflectList.length > 0;
 
   // 의미 있는 콘텐츠가 하나도 없으면 통째로 숨김 (빈 껍데기 카드 방지).
@@ -301,9 +326,9 @@ function BulletizedMathText({ text }: { text: string }) {
 
 function Misconception({ data }: { data: ConceptStep['misconception'] }) {
   if (!data) return null;
-  const wrong = data.wrongEn || data.wrongKo;
-  const why = data.whyEn || data.whyKo;
-  const correct = data.correctEn || data.correctKo;
+  const wrong = data.wrong;
+  const why = data.why;
+  const correct = data.correct;
   if (!wrong && !why && !correct) return null;
   return (
     <div className="card" style={{ marginTop: 10, padding: 14, borderColor: 'var(--p-danger)' }}>
@@ -311,7 +336,7 @@ function Misconception({ data }: { data: ConceptStep['misconception'] }) {
       {wrong && <div style={{ marginTop: 6, fontSize: 14, color: 'var(--p-ink)' }}><MathText text={wrong} /></div>}
       {why && <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-muted)' }}>Why it’s wrong: <MathText text={why} /></div>}
       {correct && (
-        <div style={{ marginTop: 8, padding: 10, background: 'oklch(0.95 0.05 155)', borderRadius: 8, fontSize: 13, color: 'var(--p-success)' }}>
+        <div style={{ marginTop: 8, padding: 10, background: 'var(--p-success-tint)', borderRadius: 8, fontSize: 13, color: 'var(--p-success)' }}>
           Correct: <MathText text={correct} />
         </div>
       )}
@@ -328,7 +353,7 @@ function WorkedExample({ steps }: { steps: NonNullable<ConceptStep['workedSteps'
             <span className="chip primary" style={{ fontSize: 10.5, padding: '2px 8px' }}>STEP {i + 1}</span>
           </div>
           <div className="math-big" style={{ fontSize: 16 }}><MathText text={s.math} /></div>
-          <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)' }}><MathText text={s.narrationEn || s.narrationKo} /></div>
+          <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)' }}><MathText text={s.narration} /></div>
         </div>
       ))}
     </div>
@@ -424,7 +449,7 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
 
         {stepIdx === 1 && problem.body && (
           <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent', marginBottom: 12 }}>
-            <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM · {problem.source.replace(/Class\s+(\d+)/g, 'Grade $1')}</div>
+            <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM · {problem.source}</div>
             <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}><MathText text={problem.body} /></div>
           </div>
         )}
@@ -500,7 +525,7 @@ function FeedbackCard({ result }: { result: StepResult }) {
       style={{
         marginTop: 12,
         padding: 14,
-        background: correct ? 'oklch(0.95 0.05 155)' : 'oklch(0.96 0.04 25)',
+        background: correct ? 'var(--p-success-tint)' : 'var(--p-danger-tint)',
         borderColor: 'transparent',
       }}
     >

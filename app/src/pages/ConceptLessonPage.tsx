@@ -432,7 +432,7 @@ function StepCard({
                 <MathText text={w.math} />
               </div>
               <div style={{ fontSize: 13, color: '#5C6B85' }}>
-                <MathText text={lang === 'ko' ? w.narrationKo : w.narrationEn} />
+                <MathText text={w.narration} />
               </div>
             </li>
           ))}

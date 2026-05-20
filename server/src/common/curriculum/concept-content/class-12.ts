@@ -21,7 +21,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '일대일(injective): f(x₁)=f(x₂) ⇒ x₁=x₂. 위로의(surjective): 치역 = 공역. 둘 다 ⇒ 역함수 존재.',
-      en: 'Injective: f(x₁)=f(x₂) ⇒ x₁=x₂. Surjective: range = codomain. Both ⇒ invertible.',
+      en: 'An inverse function f⁻¹ exists if and only if f is bijective — both injective (one-to-one: f(x₁) = f(x₂) implies x₁ = x₂) and surjective (onto: range equals codomain). The inverse swaps input and output: f(a) = b ⇔ f⁻¹(b) = a. Geometrically, f⁻¹\'s graph is the reflection of f across the line y = x — which itself is a function only when f is injective. Compositions follow the socks-and-shoes rule: (f ∘ g)⁻¹ = g⁻¹ ∘ f⁻¹.',
     },
     worked: {
       ko: 'f(x) = 3x + 1 의 역함수.',
@@ -63,7 +63,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'sin⁻¹: [−1,1] → [−π/2, π/2]. cos⁻¹: [−1,1] → [0, π]. tan⁻¹: ℝ → (−π/2, π/2).',
-      en: 'sin⁻¹: [−1,1] → [−π/2, π/2]. cos⁻¹: [−1,1] → [0, π]. tan⁻¹: ℝ → (−π/2, π/2).',
+      en: 'Inverse trigonometric functions undo sin, cos, tan, but require restricting their domains because the originals are periodic and not one-to-one. Principal ranges: sin⁻¹: [−1, 1] → [−π/2, π/2]; cos⁻¹: [−1, 1] → [0, π]; tan⁻¹: ℝ → (−π/2, π/2). Within the principal range sin⁻¹(sin x) = x, but OUTSIDE it you must convert — e.g. sin⁻¹(sin 150°) = 30°, not 150°. Three useful identities: sin⁻¹ x + cos⁻¹ x = π/2, tan⁻¹ x + cot⁻¹ x = π/2, sec⁻¹ x + cosec⁻¹ x = π/2.',
     },
     worked: {
       ko: 'sin⁻¹(½)',
@@ -105,7 +105,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '(AB)ᵢⱼ = Σₖ aᵢₖ bₖⱼ. 단위행렬 I 에 대해 AI = IA = A.',
-      en: '(AB)ᵢⱼ = Σₖ aᵢₖ bₖⱼ. Identity I gives AI = IA = A.',
+      en: 'A matrix is a rectangular array of numbers; multiplication (AB)ᵢⱼ = Σₖ aᵢₖ bₖⱼ corresponds to composition of linear transformations. Matrix multiplication is associative (AB)C = A(BC) and distributive A(B + C) = AB + AC, but NOT commutative in general — AB ≠ BA. The identity matrix I satisfies AI = IA = A; the zero matrix annihilates everything. Geometrically, multiplying a vector by a 2×2 matrix sends the unit square to a parallelogram — and the matrix records exactly where the basis vectors i, j land.',
     },
     worked: {
       ko: '[[1,2],[3,4]] · [[2,0],[1,2]]',
@@ -148,7 +148,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '|A| = ad − bc (2×2). |A·B| = |A|·|B|. |A| ≠ 0 ⇔ A 가역.',
-      en: '|A| = ad − bc for 2×2. |AB| = |A|·|B|. |A| ≠ 0 ⇔ invertible.',
+      en: 'The determinant |A| of a square matrix measures the signed area/volume scale factor of its linear transformation — a 2×2 matrix sends the unit square to a parallelogram of signed area |A| = ad − bc. Key properties: |AB| = |A|·|B| (multiplicative), |A| ≠ 0 ⇔ A is invertible, |A| = 0 ⇔ the map collapses a dimension. Determinants drive Cramer\'s rule for linear systems and the change-of-variables formula in multivariable integration. Unlike multiplication, there is NO clean relation between |A + B| and |A|, |B|.',
     },
     worked: {
       ko: '|[[2,3],[1,4]]|.',
@@ -189,7 +189,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'f 가 a 에서 연속: lim_{x→a} f(x) = f(a). 미분가능: lim_{h→0} (f(a+h)−f(a))/h 존재.',
-      en: 'Continuous at a: lim_{x→a} f(x) = f(a). Differentiable at a: that limit defining f\'(a) exists.',
+      en: 'Continuity and differentiability are two refinement levels of "well-behaved" functions. f is continuous at a if lim_{x → a} f(x) = f(a) — no holes, jumps, or asymptotes at that point. f is differentiable at a if the limit f\'(a) = lim_{h → 0} (f(a+h) − f(a))/h exists, giving a well-defined tangent slope. Differentiable ⇒ continuous, but not the reverse: f(x) = |x| is continuous everywhere yet NOT differentiable at 0 (the corner has two slopes). Standard rules — power, product, quotient, chain — handle nearly every function in school math.',
     },
     worked: {
       ko: 'f(x) = |x| 의 0 에서 미분가능성.',
@@ -232,7 +232,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'f\'(c) = 0 (임계점). f\'\'(c) > 0 ⇒ 극소, < 0 ⇒ 극대, = 0 ⇒ 추가 검사.',
-      en: 'f\'(c) = 0 (critical). f\'\'(c) > 0 ⇒ min, < 0 ⇒ max, = 0 ⇒ further test.',
+      en: 'Derivatives reveal where a function rises (f\' > 0), falls (f\' < 0), and turns. Critical points satisfy f\'(c) = 0 (or f\' is undefined) and are only CANDIDATES for local extrema — they need further classification. The second-derivative test: f\'\'(c) > 0 ⇒ local minimum (concave up), f\'\'(c) < 0 ⇒ local maximum (concave down), f\'\'(c) = 0 ⇒ inconclusive (could be inflection, e.g. x³ at 0). For absolute extrema on a closed interval, also check the endpoints. Applications: maximum profit, shortest distance, optimal dimensions, instantaneous rates in physics.',
     },
     worked: {
       ko: 'f(x) = x³ − 3x 의 극값.',
@@ -275,7 +275,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '∫ xⁿ dx = x^(n+1)/(n+1) + C (n ≠ −1). ∫ u dv = uv − ∫ v du (부분적분).',
-      en: '∫ xⁿ dx = x^(n+1)/(n+1) + C. ∫ u dv = uv − ∫ v du (integration by parts).',
+      en: 'Integration accumulates infinitesimal contributions — the inverse operation of differentiation. The Fundamental Theorem of Calculus links them: ∫ₐᵇ f\'(x) dx = f(b) − f(a). The power rule is ∫ xⁿ dx = x^(n+1)/(n+1) + C for n ≠ −1; the special case n = −1 gives ∫ dx/x = ln|x| + C. Two main techniques cover nearly every solvable integral: substitution (the chain rule run backwards) and integration by parts ∫ u dv = uv − ∫ v du (the product rule run backwards). The +C in indefinite integrals captures the family of all antiderivatives.',
     },
     worked: {
       ko: '∫ x e^x dx (부분적분).',
@@ -319,7 +319,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '면적 A = ∫ₐᵇ f(x) dx. 회전체 부피 (x축) = π ∫ₐᵇ [f(x)]² dx.',
-      en: 'Area A = ∫ₐᵇ f(x) dx. Volume of revolution (x-axis) = π ∫ₐᵇ [f(x)]² dx.',
+      en: 'Definite integrals compute geometric and physical quantities by summing infinitely thin slices. Area under y = f(x) above the x-axis on [a, b]: A = ∫ₐᵇ f(x) dx. Area between two curves: ∫ₐᵇ |f(x) − g(x)| dx. Volume of the solid generated by rotating y = f(x) around the x-axis (disk method): V = π ∫ₐᵇ [f(x)]² dx — never forget the square; each disk has radius f(x) and area πr². Arc length, work done, average value, and centre of mass all reduce to integrals of an appropriate "slice contribution".',
     },
     worked: {
       ko: 'y = x², 0 ≤ x ≤ 2 아래 면적.',
@@ -360,7 +360,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '변수분리: dy/dx = f(x)·g(y) ⇒ ∫ dy/g(y) = ∫ f(x) dx.',
-      en: 'Separable: dy/dx = f(x)·g(y) ⇒ ∫ dy/g(y) = ∫ f(x) dx.',
+      en: 'A differential equation relates a function to its derivatives — the language of every changing system (population, temperature, charge, motion, infection rate). A first-order DE involves only y\'; second-order also involves y\'\'. Separable equations dy/dx = f(x)·g(y) split as ∫ dy/g(y) = ∫ f(x) dx for direct integration. The GENERAL solution always carries a constant of integration +C; an initial condition like y(0) = 1 pins it down to a PARTICULAR solution. Newton\'s cooling, exponential growth/decay, and harmonic oscillation are the classical school examples.',
     },
     worked: {
       ko: 'dy/dx = y, y(0)=1.',
@@ -403,7 +403,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'a·b = |a||b|cos θ. a×b 의 크기 = |a||b|sin θ, 방향 = 오른손법칙.',
-      en: 'a·b = |a||b|cos θ. |a×b| = |a||b|sin θ, direction by right-hand rule.',
+      en: 'Vectors carry both magnitude and direction; two distinct products combine them in different ways. The dot product a·b = |a||b|cos θ is a SCALAR, measuring how parallel two vectors are (zero ⇔ perpendicular). The cross product a × b is a VECTOR perpendicular to both, with magnitude |a||b|sin θ (the area of the parallelogram spanned) and direction given by the right-hand rule. The dot product is commutative; the cross product is anti-commutative (a × b = −(b × a)). Vectors power physics (force, velocity, torque), computer graphics, and machine learning.',
     },
     worked: {
       ko: 'a = (1, 2, 0), b = (0, 1, 0). a·b 와 |a×b|.',
@@ -445,7 +445,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '직선 r = a + t·d. 평면 n·(r − a) = 0. 두 직선의 각: cos θ = |d₁·d₂|/(|d₁||d₂|).',
-      en: 'Line r = a + t·d. Plane n·(r − a) = 0. Angle between lines: cos θ = |d₁·d₂|/(|d₁||d₂|).',
+      en: 'Lines and planes in 3-D unify under vector language. A line through point a with direction d: r = a + t·d (parametric form). A plane through point a with normal n: n·(r − a) = 0, equivalently ax + by + cz = d, where the coefficients (a, b, c) ARE the normal and d encodes the offset from origin. The angle between two lines uses their direction vectors: cos θ = |d₁·d₂|/(|d₁||d₂|). The distance from a point P to plane ax + by + cz = d is |aPₓ + bP_y + cP_z − d|/√(a² + b² + c²).',
     },
     worked: {
       ko: 'd₁=(1,2,2), d₂=(2,2,1) 두 직선의 사잇각.',
@@ -488,7 +488,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '목적함수 max/min Z = c₁x + c₂y, 제약 부등식들. 최적해는 가능영역(다각형)의 꼭짓점에서.',
-      en: 'Maximise Z = c₁x + c₂y under inequalities. Optimum at a vertex of the feasible region.',
+      en: 'Linear programming optimises a linear objective Z = c₁x + c₂y under a system of linear inequality constraints. The constraints define a feasible region — a convex polygon in the (x, y) plane; the optimum (max or min) ALWAYS occurs at a vertex of this polygon (or along an entire edge in degenerate ties). The algorithm: locate all vertices by intersecting constraint boundaries, evaluate Z at each, pick the best. LP underlies operations research, manufacturing scheduling, transport routing, and diet-planning problems in real industry.',
     },
     worked: {
       ko: 'max Z = 4x+3y, x≤4, y≤6, x+y≤8.',
@@ -531,7 +531,7 @@ export const CLASS_12_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'P(A|B) = P(A ∩ B)/P(B). 베이즈: P(A|B) = P(B|A)P(A)/P(B).',
-      en: 'P(A|B) = P(A ∩ B)/P(B). Bayes: P(A|B) = P(B|A)P(A)/P(B).',
+      en: 'Conditional probability quantifies how one event updates the chance of another: P(A | B) = P(A ∩ B)/P(B) — the probability of A GIVEN B has occurred. Bayes\' theorem flips the direction: P(A | B) = P(B | A)·P(A)/P(B), essential when you know how often a symptom shows in patients but want how likely a patient is sick given the symptom. The most common pitfall is base-rate neglect: a 99%-accurate test for a 1%-prevalent disease yields only ~50% true-positive probability. Independent events satisfy P(A | B) = P(A) — B reveals nothing about A.',
     },
     worked: {
       ko: '주머니 — 빨강 4, 파랑 6. 빨강 뽑은 조건 하 다시 빨강일 확률 (비복원).',

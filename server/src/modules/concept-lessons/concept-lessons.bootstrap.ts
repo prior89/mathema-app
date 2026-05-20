@@ -20,25 +20,13 @@ import { pickSequence } from '../../common/learning/concept-framework';
  *   prisma generate → migrate deploy → nest start → 자동 ConceptLesson 동기화.
  */
 
-// PDF 발췌 (선택). require 로 가져와 build 단계의 path 문제 회피.
+// NCERT textbook excerpts have been removed for IP independence — concept
+// lessons now ship entirely with Mathema-authored content. The empty stubs
+// below preserve the legacy variable names but always resolve to {} so the
+// ABSTRACT step branches never render copyrighted text.
 type Excerpt = { ncertClass: string; chapterNumber: number; sourceLine: number; excerpt: string };
-const NCERT_EXCERPTS: Record<string, Excerpt> = (() => {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
-    return require('../../common/curriculum/concept-content/ncert-excerpts.json');
-  } catch {
-    return {};
-  }
-})();
-/** NCERT 힌디어 교과서 본문 발췌 (인도 PoC). 사용자가 PDF 입수 후 추출. */
-const NCERT_EXCERPTS_HI: Record<string, Excerpt> = (() => {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
-    return require('../../common/curriculum/concept-content/ncert-excerpts-hi.json');
-  } catch {
-    return {};
-  }
-})();
+const NCERT_EXCERPTS: Record<string, Excerpt> = {};
+const NCERT_EXCERPTS_HI: Record<string, Excerpt> = {};
 
 @Injectable()
 export class ConceptLessonsBootstrap implements OnModuleInit {
@@ -496,3 +484,5 @@ function stepText(
     visualData: visualData ?? undefined,
   };
 }
+
+

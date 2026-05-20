@@ -80,38 +80,11 @@ async function main() {
   // All sources use English labels (DB key) so they read naturally for English users without
   // any extra mapping in content-en.ts.
   const general: ProblemSpec[] = [
-    // Sets
-    { source: 'Class 11 · Sets · Q1', unit: '집합', difficulty: 'MIDDLE',
-      body: 'If |A|=30, |B|=20, |A∩B|=10, find |A∪B|.', answer: '40' },
-    { source: 'Class 11 · Sets · Q2', unit: '집합', difficulty: 'UPPER_MIDDLE',
-      body: 'In a class of 60 students, 38 like Math and 27 like Physics, with 18 liking both. How many like neither?', answer: '13' },
-    // Relations and Functions
-    { source: 'Class 11 · Functions · Q1', unit: '관계와 함수', difficulty: 'MIDDLE',
-      body: 'For f(x) = 2x + 1, evaluate f(3).', answer: '7' },
-    { source: 'Class 11 · Functions · Q2', unit: '관계와 함수', difficulty: 'UPPER_MIDDLE',
-      body: 'State the range of f: ℝ → ℝ, f(x) = x² + 1.', answer: '[1, ∞)' },
-    // Trigonometric Functions
-    { source: 'Class 11 · Trig · Q1', unit: '삼각함수 (일반각)', difficulty: 'UPPER_MIDDLE',
-      body: 'Evaluate sin(120°).', answer: '√3/2' },
-    { source: 'Class 11 · Trig · Q2', unit: '삼각함수 (일반각)', difficulty: 'SEMI_KILLER',
-      body: 'Solve for x in [0, 2π): 2 sin x = 1.', answer: 'π/6, 5π/6' },
-    // Complex Numbers
-    { source: 'Class 11 · Complex · Q1', unit: '복소수와 이차방정식', difficulty: 'UPPER_MIDDLE',
-      body: 'Compute (2 + 3i)(1 − i).', answer: '5 + i' },
-    // Linear Inequalities
-    { source: 'Class 11 · Inequalities · Q1', unit: '일차부등식', difficulty: 'MIDDLE',
-      body: 'Solve: −2x + 5 < 11.', answer: 'x > −3' },
-    // Permutations & Combinations
-    { source: 'Class 11 · Permutations · Q1', unit: '순열과 조합', difficulty: 'UPPER_MIDDLE',
-      body: 'How many ways can 5 books be arranged on a shelf?', answer: '120' },
-    { source: 'Class 11 · Combinations · Q1', unit: '순열과 조합', difficulty: 'UPPER_MIDDLE',
-      body: 'Evaluate ⁶C₂.', answer: '15' },
-    // Sequences and Series
-    { source: 'Class 11 · Sequences · Q1', unit: '수열과 급수', difficulty: 'UPPER_MIDDLE',
-      body: 'Sum the A.P. 3, 7, 11, … up to the 10th term.', answer: '210' },
-    // Limits and Derivatives
-    { source: 'Class 11 · Limits · Q1', unit: '극한과 미분 입문', difficulty: 'SEMI_KILLER',
-      body: 'Find d/dx of x³.', answer: '3x²' },
+    // Class 11 problems are imported via scripts/import-ncert.ts (Draft →
+    // DraftPublisher), which always emits stepIndex=1..3. We intentionally
+    // do NOT add Class 11 placeholders here: seed-steps.ts has no matching
+    // specs for them, so they would land in the DB without a stepIndex=1
+    // row, be unreachable in the UI, and inflate chapter-progress counts.
 
     // ============ Class 8 NCERT (4) — prerequisite review ============
     { source: 'Class 8 · Rational Numbers · Q1', unit: '유리수와 순환소수', sub: '순환소수와 분수', difficulty: 'MIDDLE',

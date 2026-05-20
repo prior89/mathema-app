@@ -4,7 +4,6 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { UpdateTargetDto } from './dto/update-target.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
 @UseGuards(JwtAuthGuard)
@@ -19,11 +18,6 @@ export class UsersController {
   @Patch('me')
   updateProfile(@CurrentUser('id') id: string, @Body() dto: UpdateProfileDto) {
     return this.service.updateProfile(id, dto);
-  }
-
-  @Patch('me/target')
-  updateTarget(@CurrentUser('id') id: string, @Body() dto: UpdateTargetDto) {
-    return this.service.updateTarget(id, dto);
   }
 
   @Post('me/password')

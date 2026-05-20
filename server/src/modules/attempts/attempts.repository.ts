@@ -125,6 +125,16 @@ export class AttemptsRepository {
       });
     }
 
+    // 정답이면 동일 problemId 의 미마스터 WrongNote 가 있으면 자동으로
+    // MASTERED 로 전환. SoloProblemScreen·Study·Mock 어디서 풀든 정답 하나로
+    // 큐에서 빠지도록 — 같은 문제를 두 번 마주치지 않는 사용자 약속을 지킴.
+    if (isCorrect) {
+      await this.prisma.wrongNote.updateMany({
+        where: { userId, problemId: dto.problemId, status: { not: 'MASTERED' } },
+        data: { status: 'MASTERED', masteredAt: new Date() },
+      });
+    }
+
     // 이벤트 페이로드 — mastery-trajectory.listener 가 이걸로 갱신 수행.
     //   명세서 §1-2: conceptTags / difficultyLevel 도 API 응답에 명시 노출 (Attempt 자체에는 정규화 안 됨, Problem 참조).
     const conceptIds = problem.concepts.map((c) => c.conceptId);

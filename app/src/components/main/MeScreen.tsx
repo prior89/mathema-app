@@ -7,8 +7,8 @@ import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 
 const GRADE_LABEL: Record<string, string> = {
-  CLASS_7: 'Grade 7', CLASS_8: 'Grade 8', CLASS_9: 'Grade 9',
-  CLASS_10: 'Grade 10', CLASS_11: 'Grade 11', CLASS_12: 'Grade 12',
+  CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
+  CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
 };
 
 export function MeScreen() {
@@ -95,10 +95,10 @@ export function MeScreen() {
               </div>
             </Link>
             <div className="plan-card" onClick={logout} style={{ cursor: 'pointer' }}>
-              <div className="badge" style={{ background: 'oklch(0.96 0.04 25)', color: 'oklch(0.5 0.18 25)', fontStyle: 'normal', fontSize: 18 }}>↩</div>
+              <div className="badge" style={{ background: 'var(--p-danger-tint)', color: 'var(--p-danger)', fontStyle: 'normal', fontSize: 18 }}>↩</div>
               <div className="info">
                 <div className="ttl">Log out</div>
-                <div className="sub">Sign back in with admin / admin</div>
+                <div className="sub">You'll be signed back in next time</div>
               </div>
               <Glyph.ChevronR accent="var(--p-muted)" size={16} />
             </div>

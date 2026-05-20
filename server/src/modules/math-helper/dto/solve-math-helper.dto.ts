@@ -16,4 +16,12 @@ export class SolveMathHelperDto {
   @IsString()
   @MaxLength(1000)
   studentAnswer?: string;
+
+  /** Wall-clock seconds the client thinks the user spent before submitting.
+   *  Server clamps to [5, 600] to keep DailyActivity.durationMin honest. */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(7200)
+  durationSec?: number;
 }

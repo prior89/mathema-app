@@ -12,8 +12,8 @@ const GRADE_TO_CLASS: Record<string, NcertClass> = {
 };
 
 const CLASS_LABEL: Record<NcertClass, string> = {
-  CLASS_7: 'Grade 7', CLASS_8: 'Grade 8', CLASS_9: 'Grade 9',
-  CLASS_10: 'Grade 10', CLASS_11: 'Grade 11', CLASS_12: 'Grade 12',
+  CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
+  CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
 };
 
 export function LearnScreen() {
@@ -30,7 +30,7 @@ export function LearnScreen() {
       <div style={{ flex: 1, overflow: 'auto' }}>
         <div className="app-head" style={{ paddingBottom: 0 }}>
           <div>
-            <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>NCERT</div>
+            <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>Library</div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, letterSpacing: '-0.01em' }}>Concept lessons</div>
           </div>
         </div>

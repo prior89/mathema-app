@@ -1,8 +1,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { post, tokens, get } from '../lib/api';
-import type { Me } from '../lib/queries';
+import type { Me, GradeLevel } from '../lib/queries';
 import { track } from '../lib/analytics';
+
+export type { GradeLevel };
 
 type AuthState = {
   user: Me | null;
@@ -13,7 +15,6 @@ type AuthState = {
   logout: () => void;
 };
 
-export type GradeLevel = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12';
 export type RegisterRole = 'STUDENT' | 'PARENT' | 'TEACHER';
 
 /**

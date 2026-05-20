@@ -4,7 +4,6 @@ import { Difficulty } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { MathpixService } from '../../infrastructure/mathpix/mathpix.service';
 import { AttemptsService } from '../attempts/attempts.service';
-import { ChapterTestDto, WeeklyAssessmentDto } from './dto/assessment.dto';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
 
 type DbStudentProfile = {
@@ -64,11 +63,16 @@ export class MathHelperService {
       studentProfile: profile,
     })) as SolveHelperResponse;
 
-    await this.recordWrongSolveAttempt(userId, dto, response, classLevel).catch((err) => {
-      this.logger.warn(`Could not record solved wrong answer: ${(err as Error).message}`);
+    // recordSolveAttempt creates the persistent Problem row (when math-helper
+    // returned an answer) and an Attempt; we expose its id so the UploadModal
+    // can route the user straight into SoloProblemScreen for an immediate
+    // "Practice now" path that bypasses the 3-day wrong-note cooldown.
+    const problemId = await this.recordSolveAttempt(userId, dto, response, classLevel).catch((err) => {
+      this.logger.warn(`Could not record solve attempt: ${(err as Error).message}`);
+      return null;
     });
 
-    return response;
+    return { ...response, problemId };
   }
 
   async ocrSolve(userId: string, file: Express.Multer.File, dto: Omit<SolveMathHelperDto, 'question'>) {
@@ -86,34 +90,6 @@ export class MathHelperService {
       source: ocr.source,
       result,
     };
-  }
-
-  async chapterTest(userId: string, dto: ChapterTestDto) {
-    const [profile, classLevel] = await Promise.all([
-      this.buildStudentProfile(userId),
-      dto.classLevel ? Promise.resolve(dto.classLevel) : this.defaultClassLevel(userId),
-    ]);
-
-    return this.request('POST', '/assessments/chapter-test', this.withoutUndefined({
-      classLevel: classLevel ?? 12,
-      chapterCode: dto.chapterCode,
-      chapter: dto.chapter,
-      questionCount: dto.questionCount,
-      studentProfile: profile,
-    }));
-  }
-
-  async weekly(userId: string, dto: WeeklyAssessmentDto) {
-    const [profile, classLevel] = await Promise.all([
-      this.buildStudentProfile(userId),
-      dto.classLevel ? Promise.resolve(dto.classLevel) : this.defaultClassLevel(userId),
-    ]);
-
-    return this.request('POST', '/assessments/weekly', this.withoutUndefined({
-      classLevel,
-      questionCount: dto.questionCount,
-      studentProfile: profile,
-    }));
   }
 
   private async request(method: 'GET' | 'POST', path: string, body?: unknown) {
@@ -273,23 +249,44 @@ export class MathHelperService {
     return String(value);
   }
 
-  private async recordWrongSolveAttempt(
+  /**
+   * Record every /solve as a practice Attempt so Home stats (todayMinutes,
+   * streakDays, accuracy) reflect real usage, and so AttemptsRepository's
+   * built-in WrongNote upsert files unknown problems into the user's review
+   * queue automatically when they get the answer wrong (or don't submit one).
+   *
+   * Behaviour by branch:
+   *   - studentAnswer absent       → Attempt with empty answer → isCorrect=false
+   *                                  → WrongNote auto-created (problem went into
+   *                                    review pile because the user couldn't solve it)
+   *   - studentAnswer && correct   → Attempt with isCorrect=true, no WrongNote
+   *   - studentAnswer && incorrect → Attempt with isCorrect=false → WrongNote
+   *
+   * If the solver itself failed to return an answer we have nothing to grade
+   * against, so we skip silently — math-helper already returned the user a
+   * polite fallback response.
+   */
+  private async recordSolveAttempt(
     userId: string,
     dto: SolveMathHelperDto,
     response: SolveHelperResponse,
     classLevel?: number,
-  ): Promise<void> {
-    if (!dto.studentAnswer || response.isStudentCorrect !== false || !response.answer) return;
+  ): Promise<string | null> {
+    if (!response.answer) return null;
 
     const problemId = await this.createPracticeProblem(userId, dto.question, response, classLevel);
-    if (!problemId) return;
+    if (!problemId) return null;
 
     await this.attempts.create(userId, {
       problemId,
-      answer: dto.studentAnswer,
-      durationSec: 1,
+      answer: dto.studentAnswer ?? '',
+      // durationSec is best-effort wall time from the client; fall back to a
+      // small placeholder (15s) when missing so streak-farming a photo upload
+      // doesn't credit a full minute for a single tap.
+      durationSec: Math.max(5, Math.min(600, Math.floor(dto.durationSec ?? 15))),
       context: 'PRACTICE',
     });
+    return problemId;
   }
 
   private async createPracticeProblem(

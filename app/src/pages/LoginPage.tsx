@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { post, tokens, get } from '../lib/api';
 import type { Me } from '../lib/queries';
 import { Glyph } from '../components/onboarding/Glyph';
+import { BrandLogo } from '../components/Brand';
 import '../styles/onboarding.css';
 
 const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
@@ -92,8 +93,8 @@ export default function LoginPage() {
         <div className="mathema-phone">
           <div className="screen">
             <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Glyph.Logo accent="var(--p-ink)" />
-              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>NCERT · 7–12</span>
+              <BrandLogo size="sm" />
+              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>CLASS 7–12</span>
             </div>
 
             <div className="screen-body" style={{ gap: 24, paddingTop: 32 }}>
@@ -101,7 +102,7 @@ export default function LoginPage() {
                 <span className="eyebrow">Welcome back</span>
                 <h1 className="display" style={{ marginTop: 10, fontSize: 36, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
                   <span>Sign in to</span>
-                  <img src="/matheo-logo.png" alt="Mathēma" style={{ height: 72, width: 'auto', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                  <BrandLogo size="md" />
                 </h1>
                 <p className="subtitle">Pick up where you left off — your progress and notes are saved.</p>
               </div>
@@ -180,7 +181,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
         <div className="mathema-phone">
           <div className="screen">
             <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Glyph.Logo accent="var(--p-ink)" />
+              <BrandLogo size="sm" />
               <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>{subtitle}</span>
             </div>
             <div className="screen-body" style={{ gap: 24, paddingTop: 32 }}>

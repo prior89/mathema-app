@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { post, patch, tokens, get } from '../lib/api';
 import { Glyph } from '../components/onboarding/Glyph';
+import { BrandLogo } from '../components/Brand';
 import type { Me } from '../lib/queries';
 import '../styles/onboarding.css';
 
@@ -25,6 +26,16 @@ const GRADE_MAP: Record<GradeId, string> = {
   CLASS_7: 'CLASS_7', CLASS_8: 'CLASS_8', CLASS_9: 'CLASS_9',
   CLASS_10: 'CLASS_10', CLASS_11: 'CLASS_11', CLASS_12: 'CLASS_12',
 };
+
+/** Actual NCERT chapter counts per class — used in the Ready screen's stat
+ *  trio so the headline numbers are facts the user can verify in the app. */
+const CHAPTERS_PER_CLASS: Record<GradeId, number> = {
+  CLASS_7: 13, CLASS_8: 13, CLASS_9: 12,
+  CLASS_10: 14, CLASS_11: 14, CLASS_12: 13,
+};
+function chapterCountByClass(grade: GradeId): number {
+  return CHAPTERS_PER_CLASS[grade] ?? 0;
+}
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -150,8 +161,8 @@ function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () 
   return (
     <div className="screen">
       <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Glyph.Logo accent="var(--p-ink)" />
-        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>NCERT · 7–12</span>
+        <BrandLogo size="sm" />
+        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>CLASS 7–12</span>
       </div>
       <div className="screen-body" style={{ paddingTop: 28, gap: 24 }}>
         <div className="hero-glyph">
@@ -159,7 +170,7 @@ function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () 
           <div style={{ position: 'absolute', inset: 0, padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', opacity: 0.8 }}>FIG. 01 — DEFINITE INTEGRAL</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.6 }}>NCERT XII §7.8</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.6 }}>CLASS 12 · INTEGRALS</span>
             </div>
             <div style={{ flex: 1, marginTop: -8 }}>
               <Glyph.WelcomeHero accent="#fff" />
@@ -172,7 +183,7 @@ function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () 
             Master math,<br />one <em>concept</em><br />at a time.
           </h1>
           <p className="subtitle" style={{ maxWidth: 320 }}>
-            An adaptive coach built around the NCERT curriculum — from Grade&nbsp;7 to Grade&nbsp;12.
+            An adaptive maths coach for Class&nbsp;7 to Class&nbsp;12 — every chapter, every concept.
           </p>
         </div>
       </div>
@@ -347,10 +358,13 @@ function ScreenAuth({
 function ScreenRole({
   step, onBack, onNext, role, setRole,
 }: { step: number; onBack: () => void; onNext: () => void; role: Role | ''; setRole: (r: Role) => void }) {
-  const roles: Array<{ id: Role; icon: typeof Glyph.Person; label: string; sub: string }> = [
+  // PARENT/TEACHER are visible-but-disabled until the per-role dashboards ship.
+  // We keep them rendered (vs. removed) so future Student users instantly see
+  // the product roadmap and we don't need to redesign the card stack later.
+  const roles: Array<{ id: Role; icon: typeof Glyph.Person; label: string; sub: string; comingSoon?: boolean }> = [
     { id: 'STUDENT', icon: Glyph.Person, label: 'Student', sub: 'I’m here to learn and practice math.' },
-    { id: 'PARENT', icon: Glyph.Parent, label: 'Parent', sub: 'Track my child’s progress and reports.' },
-    { id: 'TEACHER', icon: Glyph.Teacher, label: 'Teacher / Tutor', sub: 'Run a class or tutor a small group.' },
+    { id: 'PARENT', icon: Glyph.Parent, label: 'Parent', sub: 'Track my child’s progress and reports.', comingSoon: true },
+    { id: 'TEACHER', icon: Glyph.Teacher, label: 'Teacher / Tutor', sub: 'Run a class or tutor a small group.', comingSoon: true },
   ];
   return (
     <div className="screen">
@@ -366,7 +380,13 @@ function ScreenRole({
             const Icon = r.icon;
             const selected = role === r.id;
             return (
-              <div key={r.id} className={`option-card ${selected ? 'selected' : ''}`} onClick={() => setRole(r.id)}>
+              <div
+                key={r.id}
+                className={`option-card ${selected ? 'selected' : ''}`}
+                onClick={() => !r.comingSoon && setRole(r.id)}
+                style={r.comingSoon ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
+                aria-disabled={r.comingSoon || undefined}
+              >
                 <div style={{
                   width: 44, height: 44, borderRadius: 12,
                   background: selected ? 'var(--p-surface)' : 'var(--p-surface-2)',
@@ -378,9 +398,10 @@ function ScreenRole({
                   <div style={{ width: 24, height: 24 }}><Icon accent="currentColor" /></div>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 16, fontWeight: 600 }}>{r.label}</span>
                     {r.id === 'STUDENT' && <span className="chip primary" style={{ padding: '2px 8px', fontSize: 10.5 }}>Most popular</span>}
+                    {r.comingSoon && <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>Coming soon</span>}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
                 </div>
@@ -443,7 +464,7 @@ function ScreenProfile({
             <Glyph.Sparkle accent="#fff" size={14} />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>NCERT-aligned content</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>Chapter-aligned content</div>
             <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 2 }}>
               We map every chapter to your class. You can change this later.
             </div>
@@ -466,7 +487,7 @@ function ScreenGoal({
   step, onBack, onNext, goal, setGoal,
 }: { step: number; onBack: () => void; onNext: () => void; goal: GoalId | ''; setGoal: (g: GoalId) => void }) {
   const goals: Array<{ id: GoalId; title: string; sub: string }> = [
-    { id: 'BOARD', title: 'Ace my board exam', sub: 'CBSE Grade 10 or 12 board' },
+    { id: 'BOARD', title: 'Ace my board exam', sub: 'CBSE Class 10 or 12 board' },
     { id: 'JEE', title: 'Prepare for JEE / NEET', sub: 'Foundation & advanced problem sets' },
     { id: 'SCHOOL', title: 'Keep up with school', sub: 'Weekly practice and concept clarity' },
     { id: 'CATCHUP', title: 'Catch up & build foundation', sub: 'Fill gaps from earlier classes' },
@@ -495,13 +516,6 @@ function ScreenGoal({
               </div>
             );
           })}
-        </div>
-        <div className="card" style={{ background: 'var(--p-accent-tint)', borderColor: 'transparent', display: 'flex', gap: 12, alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 28, color: 'var(--p-ink)' }}>D-180</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>Board exam: 14 Feb 2027</div>
-            <div style={{ fontSize: 12, color: 'var(--p-ink-2)' }}>We’ll pace your plan to this date · Edit later</div>
-          </div>
         </div>
         <div style={{ flex: 1 }} />
       </div>
@@ -597,7 +611,7 @@ function ScreenDiagnostic({
         </div>
 
         {err && (
-          <div style={{ padding: 12, borderRadius: 10, background: 'oklch(0.96 0.04 25)', color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>
+          <div style={{ padding: 12, borderRadius: 10, background: 'var(--p-danger-tint)', color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>
         )}
 
         {!cur && !err && (
@@ -768,15 +782,22 @@ function ScreenConsents({
           <h2 className="title" style={{ marginTop: 10 }}>Your data, your call.</h2>
           <p className="subtitle">We follow India’s DPDP Act 2023. Change any of these later in Settings.</p>
         </div>
-        <div className="card" style={{ padding: 16, display: 'flex', gap: 14, alignItems: 'center' }}>
+        {/* Push reminders are gated on FCM credentials, which aren't wired yet
+            (server boot logs "FCM credentials not set — push notifications
+            disabled"). We render the row so the IA stays stable for the
+            launch build, but the toggle is non-interactive until FCM lands. */}
+        <div className="card" style={{ padding: 16, display: 'flex', gap: 14, alignItems: 'center', opacity: 0.6 }}>
           <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--p-accent-tint)', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <div style={{ width: 22, height: 22 }}><Glyph.Bell accent="currentColor" /></div>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 600 }}>Daily study reminders</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ fontSize: 14.5, fontWeight: 600 }}>Daily study reminders</div>
+              <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>Coming soon</span>
+            </div>
             <div style={{ fontSize: 12.5, color: 'var(--p-muted)', marginTop: 2 }}>Keep your streak alive — one nudge per day.</div>
           </div>
-          <div className={`toggle ${notif ? 'on' : ''}`} onClick={() => setNotif(!notif)} />
+          <div className="toggle" style={{ cursor: 'not-allowed', opacity: 0.5 }} aria-disabled />
         </div>
         <div className="card" style={{ padding: '4px 16px' }}>
           {items.map((it) => (
@@ -883,7 +904,7 @@ function ScreenReady({
             <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
             <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', opacity: 0.85 }}>LESSON 01 · NCERT XII §7.2</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', opacity: 0.85 }}>LESSON 01 · CLASS 12 INTEGRALS</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginTop: 6, fontStyle: 'italic' }}>Integration as antiderivative</div>
               </div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontStyle: 'italic', opacity: 0.95 }}>∫</div>
@@ -900,7 +921,14 @@ function ScreenReady({
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-          {[{ k: '5', v: 'Lessons /week' }, { k: '25m', v: 'Daily target' }, { k: 'D-180', v: 'To board' }].map((s) => (
+          {/* Onboarding-ready stats. Each is a verifiable fact rather than a
+              promise of pace — earlier copy said "5 lessons/week" and "25m
+              daily target" which were placeholders the app never enforced. */}
+          {[
+            { k: grade ? grade.replace('CLASS_', '') : '—', v: 'Your class' },
+            { k: grade ? String(chapterCountByClass(grade)) : '—', v: 'Chapters' },
+            { k: '∞', v: 'Practice pool' },
+          ].map((s) => (
             <div key={s.v} className="card" style={{ padding: 12, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--p-ink)', fontStyle: 'italic' }}>{s.k}</div>
               <div className="caption" style={{ fontSize: 11, marginTop: 2 }}>{s.v}</div>

@@ -4,31 +4,18 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   fetchDashboardSummary, fetchMe, fetchHeatmap, fetchToday,
-  fetchConceptLessonsForUnit,
-  type RecommendCard,
+  fetchConceptLessonsForUnit, fetchErrorDna, fetchChapterProgress,
+  type RecommendCard, type ChapterProgressRow,
 } from '../../lib/queries';
 import { track } from '../../lib/analytics';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 
-// CBSE band mapping for predicted grade — 1..9 (수능 잔존) → A1..E
-function gradeBand(n: number | null): string {
-  if (n == null) return '—';
-  if (n <= 1) return 'A1';
-  if (n <= 2) return 'A2';
-  if (n <= 3) return 'B1';
-  if (n <= 4) return 'B2';
-  if (n <= 5) return 'C1';
-  if (n <= 6) return 'C2';
-  if (n <= 7) return 'D';
-  return 'E';
-}
-
 const PLAN_BADGE: Record<string, { glyph: string; bg: string; fg: string }> = {
   concept: { glyph: '∫', bg: 'var(--p-primary-tint)', fg: 'var(--p-primary)' },
   practice: { glyph: 'f′', bg: 'var(--p-accent-tint)', fg: 'var(--p-ink)' },
-  review: { glyph: '↻', bg: 'oklch(0.96 0.04 25)', fg: 'oklch(0.5 0.18 25)' },
-  mock: { glyph: '∑', bg: 'oklch(0.95 0.05 155)', fg: 'var(--p-success)' },
+  review: { glyph: '↻', bg: 'var(--p-danger-tint)', fg: 'var(--p-danger)' },
+  mock: { glyph: '∑', bg: 'var(--p-success-tint)', fg: 'var(--p-success)' },
 };
 
 function planBadge(type: string) {
@@ -41,6 +28,8 @@ export function HomeScreen() {
   const summary = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboardSummary });
   const heatmap = useQuery({ queryKey: ['heatmap', 12], queryFn: () => fetchHeatmap(12) });
   const today = useQuery({ queryKey: ['today'], queryFn: fetchToday });
+  const errorDna = useQuery({ queryKey: ['error-dna'], queryFn: fetchErrorDna });
+  const chapterProgress = useQuery({ queryKey: ['chapter-progress'], queryFn: fetchChapterProgress });
 
   // KPI: today.card.shown 로그 (impression — acceptRate 분모).
   useEffect(() => {
@@ -76,23 +65,20 @@ export function HomeScreen() {
             && (today.data?.length ?? 0) === 0 && (
             <ColdStartHero
               name={userName.split(' ')[0]}
-              onSolve={() => nav('/app/solve')}
+              onStudy={() => nav('/app/study')}
               onLearn={() => nav('/app/learn')}
             />
           )}
 
-          {/* 4 stats */}
+          {/* 2 stats — Today + Streak. Accuracy/Predicted dropped because both
+              are misleading in the first week of usage (4 attempts ⇒ 25%
+              accuracy; no mock exam ⇒ "E" predicted). Re-introduce only when
+              they carry real signal. */}
           <div className="stat-grid" style={{ marginTop: 12 }}>
             <Stat k="Today" v={`${summary.data?.todayMinutes ?? 0}`} u="m"
                   delta={summary.data && summary.data.todayMinutes > 0 ? `↑ logged today` : 'No study yet'} />
             <Stat k="Streak" v={`${summary.data?.streakDays ?? 0}`} u="d"
                   delta={(summary.data?.streakDays ?? 0) >= 7 ? '↑ keep it up' : 'Start your streak'} />
-            <Stat k="Accuracy · 7d" v={`${summary.data?.weeklyAccuracy ?? 0}`} u="%"
-                  delta={summary.data ? `${summary.data.weeklyAccuracyDelta >= 0 ? '↑' : '↓'} ${Math.abs(summary.data.weeklyAccuracyDelta)}%` : ''}
-                  deltaDown={(summary.data?.weeklyAccuracyDelta ?? 0) < 0} />
-            <Stat k="Predicted" v={gradeBand(summary.data?.expectedGrade ?? null)} u=""
-                  delta={summary.data?.expectedGrade == null ? 'Take a mock' : `from ${gradeBand(summary.data.expectedGradeFrom)}`}
-                  deltaDown={false} />
           </div>
 
           {/* Today's plan */}
@@ -129,17 +115,70 @@ export function HomeScreen() {
                 }
               };
               return (
-                <div key={i} className="plan-card" onClick={goLesson}>
+                <div key={i} className="plan-card" onClick={goLesson} style={{ alignItems: 'flex-start' }}>
                   <div className="badge" style={{ background: b.bg, color: b.fg }}>{c.icon || b.glyph}</div>
                   <div className="info">
                     <div className="ttl">{c.title}</div>
                     <div className="sub">{c.unit} · {c.time}</div>
+                    {/* Rationale — why this card is recommended right now. */}
+                    {c.reason && (
+                      <div style={{ fontSize: 11.5, color: 'var(--p-primary)', marginTop: 4, lineHeight: 1.4 }}>
+                        {c.reason}
+                      </div>
+                    )}
                   </div>
                   <span className="chip" style={{ fontSize: 10.5 }}>{c.tag}</span>
                 </div>
               );
             })}
           </div>
+
+          {/* Where you slip — top error patterns */}
+          {errorDna.data && errorDna.data.distribution.length > 0 && (
+            <>
+              <div className="section-h">
+                <span className="label">Where you slip</span>
+                <span className="more">last 30 days</span>
+              </div>
+              <div className="card" style={{ padding: 14 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {errorDna.data.distribution.slice(0, 4).map((d) => (
+                    <ErrorBar key={d.key} name={d.name} value={d.value} color={d.color} />
+                  ))}
+                </div>
+                {errorDna.data.insight && (
+                  <div style={{ fontSize: 12, color: 'var(--p-ink-2)', marginTop: 10, lineHeight: 1.5 }}>
+                    {errorDna.data.insight}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Chapter progress — only this user's own class, and only chapters
+              they HAVEN'T finished yet. Mastered/full-progress chapters drop
+              off the home screen so the dashboard surfaces "what's left to do",
+              not a victory lap. */}
+          {(() => {
+            const myClass = me.data?.gradeLevel;
+            const active = (chapterProgress.data ?? []).filter(
+              (row) => row.ncertClass === myClass && row.progress < 1,
+            );
+            if (active.length === 0) return null;
+            return (
+              <>
+                <div className="section-h">
+                  <span className="label">Chapter progress</span>
+                  <span className="more">{active.length} in progress</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {active.slice(0, 5).map((row) => (
+                    <ChapterProgressCard key={row.chapterCode} row={row} onClick={() => nav(`/app/learn/${row.chapterCode}`)} />
+                  ))}
+                </div>
+              </>
+            );
+          })()}
 
           {/* Heatmap */}
           <div className="section-h">
@@ -194,6 +233,80 @@ function Empty({ msg }: { msg: string }) {
   );
 }
 
+/**
+ * Horizontal bar showing a single error-type's share of recent mistakes.
+ *
+ * Two-row layout (label + count above, bar below). With everything stacked,
+ * every bar's start and end pixels are identical regardless of how long the
+ * label text is — the previous side-by-side layout shifted bars right when
+ * the label exceeded its minWidth, which broke visual comparison.
+ *
+ * Colour comes from /ai-coach/error-dna so the same key keeps the same accent
+ * across screens (Notes patterns, weekly report, etc.).
+ */
+function ErrorBar({ name, value, color }: { name: string; value: number; color: string }) {
+  // Bar widths assume value is already a 0–100 percent share from /ai-coach/error-dna.
+  const widthPct = Math.max(6, Math.min(100, value));
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 12.5, marginBottom: 4 }}>
+        <span style={{ color: 'var(--p-ink)' }}>{name}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--p-muted)' }}>{value}%</span>
+      </div>
+      <div style={{ height: 8, borderRadius: 4, background: 'var(--p-surface-2)', overflow: 'hidden' }}>
+        <div style={{ width: `${widthPct}%`, height: '100%', background: color, borderRadius: 4 }} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Per-chapter card: progress bar (% problems attempted) + accuracy pill.
+ * Tapping jumps to that chapter's concept lesson so the user can review the
+ * weak parts directly.
+ */
+function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClick: () => void }) {
+  const progressPct = Math.round(row.progress * 100);
+  const accuracyPct = Math.round(row.accuracy * 100);
+  // Colour the accuracy pill by band so eyes catch the weak chapters first.
+  const accColor =
+    accuracyPct >= 80 ? 'var(--p-success)' :
+    accuracyPct >= 60 ? 'var(--p-accent)' :
+    'var(--p-danger)';
+  const accBg =
+    accuracyPct >= 80 ? 'var(--p-success-tint)' :
+    accuracyPct >= 60 ? 'var(--p-accent-tint)' :
+    'var(--p-danger-tint)';
+
+  return (
+    <div className="card" style={{ padding: 12, cursor: 'pointer' }} onClick={onClick}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+            {row.ncertClass.replace('CLASS_', 'Class ')} · CH {row.chapterNumber}
+          </div>
+          <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--p-ink)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {row.titleEn}
+          </div>
+        </div>
+        <span
+          className="status-chip"
+          style={{ background: accBg, color: accColor, flexShrink: 0 }}
+        >
+          {accuracyPct}% acc
+        </span>
+      </div>
+      <div style={{ marginTop: 8, height: 6, borderRadius: 3, background: 'var(--p-surface-2)', overflow: 'hidden' }}>
+        <div style={{ width: `${progressPct}%`, height: '100%', background: 'var(--p-primary)', borderRadius: 3 }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 10.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>
+        <span>{row.problemsAttempted} / {row.problemsTotal} problems</span>
+        <span>{progressPct}%</span>
+      </div>
+    </div>
+  );
+}
+
 function EmptyCta({ msg, cta, onClick }: { msg: string; cta: string; onClick: () => void }) {
   return (
     <div
@@ -219,8 +332,8 @@ function EmptyCta({ msg, cta, onClick }: { msg: string; cta: string; onClick: ()
  *  Two clear next-step CTAs — Solve (AI helper) and Learn (concept lessons).
  *  Drops out as soon as any study minute / streak day / today-plan item is recorded. */
 function ColdStartHero({
-  name, onSolve, onLearn,
-}: { name: string; onSolve: () => void; onLearn: () => void }) {
+  name, onStudy, onLearn,
+}: { name: string; onStudy: () => void; onLearn: () => void }) {
   return (
     <div
       style={{
@@ -244,7 +357,7 @@ function ColdStartHero({
           className="subtitle"
           style={{ fontSize: 13.5, marginTop: 8, maxWidth: 320 }}
         >
-          Solve a question your way, or open a concept lesson. Your weak spots
+          Pick a chapter to practice, or open a concept lesson. Your weak spots
           and progress fill in as you go.
         </p>
       </div>
@@ -252,10 +365,10 @@ function ColdStartHero({
         <button
           type="button"
           className="btn"
-          onClick={onSolve}
+          onClick={onStudy}
           style={{ height: 44, fontSize: 13.5 }}
         >
-          Solve a problem
+          Start practice
         </button>
         <button
           type="button"

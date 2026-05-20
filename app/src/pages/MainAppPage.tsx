@@ -1,6 +1,8 @@
-/* MainAppPage — sage-themed mobile shell (ported from prototype features-a + features-b).
- * Wraps 5 main tabs (Home / Learn / Notes / Mocks / Me) in a phone-shaped viewport.
- * Each tab is its own route under /app/*.
+/* MainAppPage — phone-frame shell for the 6-tab learning app.
+ * Tabs (Home / Mastery / Study / Notes / Test / Me) map to the PDCA loop.
+ * Each tab is its own route under /app/*. The mocks/play|result routes are
+ * retained as internal session keys — they back BOTH Study (chapter test)
+ * and Test (weekly review).
  */
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
@@ -8,8 +10,10 @@ import { HomeScreen } from '../components/main/HomeScreen';
 import { LearnScreen } from '../components/main/LearnScreen';
 import { ConceptLessonScreen } from '../components/main/ConceptLessonScreen';
 import { NotesListScreen } from '../components/main/NotesListScreen';
-import { MocksScreen } from '../components/main/MocksScreen';
-import { MathHelperScreen } from '../components/main/MathHelperScreen';
+import { StudyScreen } from '../components/main/StudyScreen';
+import { TestScreen } from '../components/main/TestScreen';
+import { ReviewQueueScreen } from '../components/main/ReviewQueueScreen';
+import { SoloProblemScreen } from '../components/main/SoloProblemScreen';
 import { MockExamPlayScreen } from '../components/main/MockExamPlayScreen';
 import { MockResultDetailScreen } from '../components/main/MockResultDetailScreen';
 import { MeScreen } from '../components/main/MeScreen';
@@ -39,12 +43,19 @@ export default function MainAppPage() {
             <Route index element={<HomeScreen />} />
             <Route path="learn" element={<LearnScreen />} />
             <Route path="learn/:code" element={<ConceptLessonScreen />} />
+            <Route path="study" element={<StudyScreen />} />
+            <Route path="test" element={<TestScreen />} />
+            <Route path="review" element={<ReviewQueueScreen />} />
             <Route path="notes" element={<NotesListScreen />} />
-            <Route path="mocks" element={<MocksScreen />} />
-            <Route path="solve" element={<MathHelperScreen />} />
-            <Route path="helper" element={<MathHelperScreen />} />
+            <Route path="practice/:problemId" element={<SoloProblemScreen />} />
+            {/* Internal session routes — shared by Study + Test. Keep mocks/* path
+                stable so existing localStorage session keys keep working. */}
             <Route path="mocks/play/:resultId" element={<MockExamPlayScreen />} />
             <Route path="mocks/result/:resultId" element={<MockResultDetailScreen />} />
+            {/* Legacy tab redirects — old Solver / Mocks tabs were absorbed. */}
+            <Route path="solve" element={<Navigate to="/app/notes" replace />} />
+            <Route path="helper" element={<Navigate to="/app/notes" replace />} />
+            <Route path="mocks" element={<Navigate to="/app/test" replace />} />
             <Route path="me" element={<MeScreen />} />
             <Route path="me/settings" element={<SettingsScreen />} />
             <Route path="report" element={<ReportScreen />} />

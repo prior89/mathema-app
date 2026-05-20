@@ -24,6 +24,4 @@ export class MasteryService {
         unitId: m.unitId,
       }));
   }
-
-  byUnit(userId: string, unitId: string) { return this.repo.findByUnit(userId, unitId); }
 }

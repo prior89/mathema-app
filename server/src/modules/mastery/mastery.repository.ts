@@ -10,11 +10,4 @@ export class MasteryRepository {
       where: { userId }, include: { unit: true },
     });
   }
-
-  findByUnit(userId: string, unitId: string) {
-    return this.prisma.masterySnapshot.findUnique({
-      where: { userId_unitId: { userId, unitId } },
-      include: { unit: true },
-    });
-  }
 }

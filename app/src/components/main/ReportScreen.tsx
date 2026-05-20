@@ -49,14 +49,11 @@ export function ReportScreen() {
         </div>
       </div>
       <div style={{ flex: 1, overflow: 'auto' }}>
-        <div className="app-head" style={{ paddingBottom: 0, paddingTop: 4 }}>
-          <div>
-            <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>Your week at a glance</div>
+        <div style={{ padding: '12px 22px 0' }}>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: 'var(--p-muted)' }}>Your week at a glance</div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.01em' }}>Hello, <em style={{ color: 'var(--p-primary)' }}>{userName}</em></div>
           </div>
-        </div>
-
-        <div style={{ padding: '12px 22px 0' }}>
           {/* 4 stats */}
           <div className="stat-grid">
             <Stat k="Study time" v={`${(cur.data?.totalHours ?? 0).toFixed(1)}`} u="h"

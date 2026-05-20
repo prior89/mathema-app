@@ -32,6 +32,13 @@ server/dist/
 server/scripts/ncert-import/pages/
 server/scripts/ncert-import/problems.json
 server/scripts/ncert-import/exercise-index.json
+# Raw NCERT textbook extracts — copyrighted, never commit.
+# If already committed, run from the repo root to scrub:
+#   git rm -r --cached scripts/ncert-pdf-extract/output server/scripts/ncert-import
+#   git commit -m "remove raw NCERT extracts (copyright)"
+scripts/ncert-pdf-extract/output/
+scripts/ncert-pdf-extract/output_test/
+scripts/ncert-pdf-extract/.cache/
 # Throwaway diagnostic / one-off scripts written into the server/ root
 # (e.g. _diag.js, _swap-env-to-prod.js, _translate-math.js)
 server/_*.js
@@ -40,3 +47,5 @@ server/.env.local-backup
 pgdata/
 __pycache__/
 *.pyc
+# Python virtualenvs (per-service isolation, never committed)
+**/.venv/

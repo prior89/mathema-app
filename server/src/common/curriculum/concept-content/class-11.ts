@@ -22,7 +22,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'A ∪ B = A 또는 B 의 원소. A ∩ B = 둘 다. Aᶜ = U 에서 A 를 뺀 것. |A∪B| = |A|+|B|−|A∩B|.',
-      en: 'A ∪ B (or), A ∩ B (and), Aᶜ (complement). |A∪B| = |A|+|B|−|A∩B|.',
+      en: 'Sets group objects without order or repetition: {1, 2, 3} = {3, 2, 1, 1}. Three operations generate all of set theory: union (A ∪ B = elements in either), intersection (A ∩ B = elements in both), complement (Aᶜ = elements of the universe NOT in A). The inclusion-exclusion principle |A ∪ B| = |A| + |B| − |A ∩ B| prevents double-counting the overlap. De Morgan\'s laws (A ∪ B)ᶜ = Aᶜ ∩ Bᶜ and (A ∩ B)ᶜ = Aᶜ ∪ Bᶜ tie complementation to the other two operations.',
     },
     worked: {
       ko: '|A|=30, |B|=20, |A∩B|=10. |A∪B|?',
@@ -63,7 +63,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'f: A → B 는 각 a ∈ A 에 단 하나의 b ∈ B 대응. 정의역(A), 공역(B), 치역(f(A) ⊆ B).',
-      en: 'f: A → B assigns each a ∈ A exactly one b ∈ B. Domain A, codomain B, range f(A) ⊆ B.',
+      en: 'A function f: A → B is a rule that assigns each element a ∈ A exactly one element b ∈ B — every input gets a single output. Set A is the domain (permitted inputs), B is the codomain (the target space), and f(A) ⊆ B is the range (outputs actually produced). Functions classify as injective (one-to-one: distinct inputs → distinct outputs), surjective (onto: every codomain element is hit), and bijective (both — the only ones with inverses). Functions are the central object of all higher mathematics: every model of how one quantity depends on another is a function.',
     },
     worked: {
       ko: 'f(x) = x² 의 ℝ → ℝ 정의에서 치역.',
@@ -106,7 +106,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '단위원 위 점 (cos θ, sin θ). 호도법: π = 180°. sin²+cos² = 1.',
-      en: 'Point (cos θ, sin θ) on the unit circle. Radians: π = 180°. sin² + cos² = 1.',
+      en: 'Trigonometric functions generalise beyond right triangles to the unit circle: for any angle θ, the terminal point on the unit circle is (cos θ, sin θ). This makes sin and cos defined for ALL real angles, not just 0° to 90°, with predictable signs in each quadrant. Radian measure (π rad = 180°) is the natural unit — it keeps calculus formulas clean, e.g. d/dx sin x = cos x. Three foundational identities power the chapter: sin²θ + cos²θ = 1, sin(A + B) = sin A cos B + cos A sin B, and cos(A + B) = cos A cos B − sin A sin B.',
     },
     worked: {
       ko: 'sin(120°) 와 cos(120°).',
@@ -150,7 +150,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'i² = −1. z = a + bi (a 실부, b 허부). |z| = √(a²+b²). 켤레 z̄ = a − bi.',
-      en: 'i² = −1. z = a + bi (real a, imaginary b). |z| = √(a²+b²). Conjugate z̄ = a − bi.',
+      en: 'Complex numbers complete the real numbers by giving every polynomial equation a solution (the Fundamental Theorem of Algebra). Define i with i² = −1; then z = a + bi has real part a and imaginary part b. Geometrically, z is the point (a, b) in the complex plane — |z| = √(a² + b²) is its distance from the origin, arg(z) is its angle from the positive real axis. The conjugate z̄ = a − bi satisfies z · z̄ = |z|². Multiplication by i rotates 90° counter-clockwise — the geometric heart of complex arithmetic, leading directly to Euler\'s formula.',
     },
     worked: {
       ko: '(2 + 3i)(1 − i).',
@@ -194,7 +194,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'ax + b ≷ c. 양변에 같은 수 더하기·빼기는 부등호 보존. 음수 곱·나눗셈은 뒤집기.',
-      en: 'ax + b ≷ c. Add/subtract preserves; multiply/divide by negative flips.',
+      en: 'A linear inequality is solved like a linear equation, with one crucial twist: multiplying or dividing BOTH sides by a NEGATIVE number flips the inequality direction. Adding or subtracting equal amounts preserves direction (the balance still tilts the same way). The solution set of ax + b ≷ c is a half-line on the number line, drawn with an open dot (strict <, >) or closed dot (≤, ≥) at the boundary. Systems of linear inequalities in two variables shade regions of the plane — the geometric foundation of linear programming and constraint optimisation.',
     },
     worked: {
       ko: '풀이: −2x < 6',
@@ -236,7 +236,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'ⁿPᵣ = n!/(n−r)! (순서 O).  ⁿCᵣ = n!/(r!(n−r)!) (순서 X).',
-      en: 'ⁿPᵣ = n!/(n−r)! (ordered). ⁿCᵣ = n!/(r!(n−r)!) (unordered).',
+      en: 'Counting problems split by whether order matters. Permutations ⁿPᵣ = n!/(n−r)! count ordered arrangements of r objects from n distinct items — "how many ways to award gold, silver, bronze to 3 of 5 runners?" Combinations ⁿCᵣ = n!/(r!(n−r)!) count unordered selections — "how many 3-member committees from 5 people?" The relation ⁿPᵣ = ⁿCᵣ · r! reflects that each unordered selection corresponds to r! ordered arrangements. Spotting the right keyword (arrange, rank, line up ⇒ P; choose, select, committee ⇒ C) is the first decision in every problem.',
     },
     worked: {
       ko: '5명 중 3명 선택 (위원회).',
@@ -278,7 +278,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '(a + b)ⁿ = Σ ⁿCᵣ aⁿ⁻ʳ bʳ. r-번째 항: Tᵣ₊₁ = ⁿCᵣ aⁿ⁻ʳ bʳ.',
-      en: '(a + b)ⁿ = Σ ⁿCᵣ aⁿ⁻ʳ bʳ. (r+1)-th term: Tᵣ₊₁ = ⁿCᵣ aⁿ⁻ʳ bʳ.',
+      en: 'The binomial theorem expands (a + b)ⁿ in one general formula: (a + b)ⁿ = Σ_{r=0}^{n} ⁿCᵣ aⁿ⁻ʳ bʳ. The (r + 1)-th term is Tᵣ₊₁ = ⁿCᵣ aⁿ⁻ʳ bʳ — a direct way to extract a single coefficient without expanding the whole expression. The coefficients ⁿCᵣ form Pascal\'s triangle: each interior entry is the sum of the two above. The most common pitfall is the freshman\'s dream (a + b)ⁿ = aⁿ + bⁿ — wrong for every n ≥ 2 because all the cross terms are missing.',
     },
     worked: {
       ko: '(x + 2)⁵ 의 x³ 항.',
@@ -320,7 +320,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '등비수열 (G.P.) aₙ = a·rⁿ⁻¹. Sₙ = a(rⁿ − 1)/(r − 1) (r ≠ 1).',
-      en: 'Geometric: aₙ = a·rⁿ⁻¹. Sₙ = a(rⁿ − 1)/(r − 1) for r ≠ 1.',
+      en: 'A sequence is an ordered list a₁, a₂, a₃, …; a series is the sum of a sequence\'s terms. Two basic families: arithmetic (AP, constant difference d, aₙ = a + (n−1)d) and geometric (GP, constant ratio r, aₙ = a·rⁿ⁻¹). The finite GP sum is Sₙ = a(rⁿ − 1)/(r − 1) for r ≠ 1; the INFINITE sum a/(1 − r) exists only when |r| < 1, otherwise the terms blow up. GPs model compound interest, radioactive decay, fractal scaling, and the famous rice-on-the-chessboard puzzle.',
     },
     worked: {
       ko: '1+2+4+8+16+32',
@@ -363,7 +363,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '기울기-절편: y = mx + c. 점-기울기: y − y₁ = m(x − x₁). 절편형: x/a + y/b = 1.',
-      en: 'Slope-intercept y = mx + c. Point-slope y − y₁ = m(x − x₁). Intercept x/a + y/b = 1.',
+      en: 'A straight line in the coordinate plane can be written in several equivalent forms — pick the one matching the given data. Slope-intercept y = mx + c uses slope m and y-intercept c. Point-slope y − y₁ = m(x − x₁) uses any point on the line plus the slope. Intercept form x/a + y/b = 1 uses the x- and y-intercepts. Two lines are parallel iff their slopes are equal; perpendicular iff their slopes multiply to −1. The distance from a point (x₀, y₀) to line ax + by + c = 0 is |ax₀ + by₀ + c|/√(a² + b²).',
     },
     worked: {
       ko: '점 (2, 3), 기울기 4 인 직선의 식.',
@@ -406,7 +406,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '원: x² + y² = r². 타원: x²/a² + y²/b² = 1. 포물선: y² = 4ax. 쌍곡선: x²/a² − y²/b² = 1.',
-      en: 'Circle x² + y² = r². Ellipse x²/a² + y²/b² = 1. Parabola y² = 4ax. Hyperbola x²/a² − y²/b² = 1.',
+      en: 'Conic sections — circle, ellipse, parabola, hyperbola — are curves obtained by slicing a double cone with a plane; the slice angle determines the shape. Each has a focus-based definition: ellipse = points whose distances to two foci sum to a constant; parabola = points equidistant from a focus and a directrix; hyperbola = points whose distance differences to two foci are constant; circle = ellipse with both foci coincident. Standard equations: x² + y² = r², x²/a² + y²/b² = 1, y² = 4ax, x²/a² − y²/b² = 1. Conics describe planetary orbits, projectile paths, and the reflective shape of satellite dishes.',
     },
     worked: {
       ko: 'x² + y² = 25 의 반지름.',
@@ -447,7 +447,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '거리 d = √[Δx² + Δy² + Δz²]. 중점도 좌표별 평균.',
-      en: 'Distance d = √[Δx² + Δy² + Δz²]. Midpoint = component-wise average.',
+      en: 'Three-dimensional coordinate geometry extends the plane by adding a third axis, giving every point three coordinates (x, y, z). The distance between (x₁, y₁, z₁) and (x₂, y₂, z₂) is d = √[(x₂−x₁)² + (y₂−y₁)² + (z₂−z₁)²] — Pythagoras applied twice. The midpoint is the component-wise average of the two endpoints. The right-hand rule (thumb x, index y, middle z, all mutually perpendicular) fixes a consistent orientation. 3-D coordinates are the foundation for vectors, multivariable calculus, and all computer graphics.',
     },
     worked: {
       ko: '(1, 2, 3), (4, 6, 3) 거리.',
@@ -489,7 +489,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'lim_{x→a} f(x) = L: x 가 a 에 다가갈 때 f(x) 가 L 에 다가감. 미분: f\'(x) = lim h→0 (f(x+h)−f(x))/h.',
-      en: 'lim_{x→a} f(x) = L. Derivative f\'(x) = lim h→0 (f(x+h)−f(x))/h.',
+      en: 'Calculus begins with the idea "value as you approach": lim_{x → a} f(x) = L means f(x) gets arbitrarily close to L as x gets arbitrarily close to a. Limits resolve indeterminate forms like 0/0 — e.g. (x² − 1)/(x − 1) is undefined at x = 1 but approaches 2. The derivative f\'(x) = lim_{h → 0} [f(x + h) − f(x)]/h measures the instantaneous rate of change — the slope of the tangent line. Three power rules cover most school problems: d/dx(xⁿ) = n·xⁿ⁻¹, d/dx(c·f) = c·f\', d/dx(f + g) = f\' + g\'.',
     },
     worked: {
       ko: 'f(x) = x² 의 도함수.',
@@ -532,7 +532,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '분산 σ² = Σ(xᵢ − x̄)²/n. 표준편차 σ = √σ².',
-      en: 'Variance σ² = Σ(xᵢ − x̄)²/n. Standard deviation σ = √σ².',
+      en: 'Two datasets can share a mean yet differ dramatically in spread — variance and standard deviation quantify that spread. Variance σ² = Σ(xᵢ − x̄)²/n is the average squared deviation from the mean; standard deviation σ = √σ² returns the units to the original scale. SD is highly sensitive to outliers because deviations are squared before averaging. For grouped data, weight each class midpoint by its frequency. Together with the mean, σ summarises a dataset in just two numbers and underlies the normal distribution and z-scores.',
     },
     worked: {
       ko: '{2, 4, 4, 6} 의 표준편차.',
@@ -575,7 +575,7 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: 'P(A ∪ B) = P(A) + P(B) − P(A ∩ B). 독립 사건: P(A ∩ B) = P(A) · P(B).',
-      en: 'P(A ∪ B) = P(A) + P(B) − P(A ∩ B). Independent: P(A ∩ B) = P(A) · P(B).',
+      en: 'Probability of compound events uses set algebra to avoid double-counting and confusion. The inclusion-exclusion rule is P(A ∪ B) = P(A) + P(B) − P(A ∩ B). Independent events satisfy P(A ∩ B) = P(A) · P(B) — one event doesn\'t affect the other\'s chance. Mutually exclusive (disjoint) events satisfy P(A ∩ B) = 0 — they can\'t both happen. Critical warning: mutually exclusive ≠ independent. Exclusive events are actually strongly DEPENDENT (one happening guarantees the other doesn\'t).',
     },
     worked: {
       ko: '52장 카드에서 빨강 또는 그림카드 확률.',

@@ -10,7 +10,6 @@ export class UsersService {
   create(data: any) { return this.repo.create(data); }
   findByEmail(email: string) { return this.repo.findByEmail(email); }
   updateProfile(id: string, dto: any) { return this.repo.update(id, dto); }
-  updateTarget(id: string, dto: any) { return this.repo.update(id, dto); }
 
   async findOne(id: string) {
     const u = await this.repo.findById(id);

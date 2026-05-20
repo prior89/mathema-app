@@ -98,6 +98,24 @@ export const fetchToday = () => get<RecommendCard[]>('/recommendations/today');
 export const fetchRecentMistakes = (limit = 3) => get<WrongNoteCard[]>('/wrong-notes/recent', { limit });
 export const fetchWrongNotes = (params?: { unitName?: string; sort?: string }) => get<WrongNoteCard[]>('/wrong-notes', params);
 export const fetchWrongNotesStats = () => get<WrongNotesStats>('/wrong-notes/stats');
+/** Per-chapter mastery row for the Home dashboard. */
+export type ChapterProgressRow = {
+  chapterCode: string;
+  titleEn: string;
+  ncertClass: string;
+  chapterNumber: number;
+  problemsTotal: number;
+  problemsAttempted: number;
+  totalAttempts: number;
+  correctAttempts: number;
+  /** 0–1 — problems attempted out of all problems mapped to this chapter. */
+  progress: number;
+  /** 0–1 — correct attempts out of all attempts on this chapter. */
+  accuracy: number;
+  lastAttemptAt: string | null;
+};
+export const fetchChapterProgress = () =>
+  get<ChapterProgressRow[]>('/dashboard/chapter-progress');
 export const fetchErrorDna = () => get<ErrorDna>('/ai-coach/error-dna');
 export const fetchPatterns = () => get<Pattern[]>('/ai-coach/patterns');
 export const fetchDiagnosis = () => get<Diagnosis>('/ai-coach/diagnosis');
@@ -331,6 +349,29 @@ export type Unit = {
 export const fetchWrongNote = (id: string) => get<WrongNoteDetail>(`/wrong-notes/${id}`);
 export const fetchDueWrongNotes = (limit?: number) =>
   get<WrongNoteCard[]>('/wrong-notes/due', limit ? { limit } : undefined);
+
+/** Review queue (FIFO + 3-day cooldown) — next single problem ready to redo.
+ *
+ * NOTE: problem.answer is intentionally not in this payload. Grading happens
+ * server-side via POST /wrong-notes/:id/check so the answer never leaks to
+ * the client (devtools), and every check creates an Attempt + (on correct)
+ * marks the wrong note MASTERED in one round trip. */
+export type ReviewQueueNext = {
+  wrongNote: {
+    wrongNoteId: string;
+    problemId: string;
+    problemBody: string;
+    source: string;
+    hint: string | null;
+    occurrences: number;
+    createdAt: string;
+  } | null;
+  totalEligible: number;
+  /** When the oldest cooldown-locked note becomes ready (null when nothing is locked). */
+  nextEligibleAt: string | null;
+};
+export const fetchReviewQueueNext = () =>
+  get<ReviewQueueNext>('/wrong-notes/queue/next');
 export const fetchProblem = (id: string) => get<Problem>(`/problems/${id}`);
 export const fetchProblemHint = (id: string) => get<Hint>(`/problems/${id}/hint`);
 export const fetchStudySession = (id: string) => get<StudySession>(`/study-sessions/${id}`);
@@ -388,14 +429,20 @@ export type ConceptStep = {
   visualType: string | null;
   visualUrl: string | null;
   visualData: any | null;   // <GraphRenderer/> JSON 파라미터 — VisualData union
-  misconception: { wrongKo: string; whyKo: string; correctKo: string; wrongEn: string; whyEn: string; correctEn: string } | null;
-  workedSteps: Array<{ math: string; narrationKo: string; narrationEn: string }> | null;
+  // Backend pre-localises misconception/workedSteps to a single language per
+  // request (CurrentLang decorator) and ships flattened payloads. The earlier
+  // multi-language shape made these three fields silently render empty.
+  misconception: { wrong: string; why: string; correct: string } | null;
+  workedSteps: Array<{ math: string; narration: string }> | null;
   retrievalCheck: {
     prompt: string;
     hint: string | null;
     choices: Array<{ choiceIndex: number; text: string }>;
   } | null;
-  reflectPrompts: { promptsKo: string[]; promptsEn: string[] } | null;
+  // reflectPrompts is the raw json column — concept-content currently emits
+  // null for every chapter; keep as `unknown` so any future shape is allowed
+  // without retro-fitting types. Consumers should guard with Array.isArray.
+  reflectPrompts: unknown;
 };
 
 export type ConceptLessonDetail = ConceptLessonSummary & {
@@ -428,16 +475,25 @@ export const fetchPracticeProblems = (chapterCode: string) =>
   get<ProblemListItem[]>(`/concept-lessons/${chapterCode}/practice-problems`);
 
 /** Student-uploaded problem OCR result solved through the math helper. */
+/** `result.problemId` is the id of the Problem row math-helper persisted while
+ *  recording the attempt — UploadProblemModal uses it to deep-link into
+ *  SoloProblemScreen for an immediate "Practice now" flow (the 3-day cooldown
+ *  applies only to the Test review queue, not direct practice). */
 export type UploadAnalysisResult = {
   extractedText: string;
   latex?: string | null;
   confidence?: number | null;
   source: 'mathpix';
-  result: import('./mathHelper').MathHelperSolveResponse;
+  result: import('./mathHelper').MathHelperSolveResponse & { problemId?: string | null };
 };
-export const uploadProblemImage = (file: File, studentAnswer?: string) => {
+export const uploadProblemImage = (
+  file: File,
+  studentAnswer?: string,
+  durationSec?: number,
+) => {
   const fd = new FormData();
   fd.append('file', file);
   if (studentAnswer?.trim()) fd.append('studentAnswer', studentAnswer.trim());
+  if (durationSec && durationSec > 0) fd.append('durationSec', String(Math.floor(durationSec)));
   return post<UploadAnalysisResult>('/math-helper/ocr-solve', fd, { isMultipart: true });
 };

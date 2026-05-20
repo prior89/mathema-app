@@ -43,6 +43,16 @@ export class MockExamsController {
     return this.service.startTyped(userId, kind, lang);
   }
 
+  /** Study tab — chapter-specific test pulled from the shared pool. */
+  @Post('chapter/:chapterCode/start')
+  startChapter(
+    @CurrentUser('id') userId: string,
+    @CurrentLang() lang: Lang,
+    @Param('chapterCode') chapterCode: string,
+  ) {
+    return this.service.startChapter(userId, chapterCode, lang);
+  }
+
   @Post('results/:id/submit')
   submit(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: SubmitExamDto) {
     return this.service.submit(userId, id, dto);

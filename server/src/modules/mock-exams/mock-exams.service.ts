@@ -246,6 +246,59 @@ export class MockExamsService {
     return this.beginSession(userId, { ...m, problems: result.problems }, lang);
   }
 
+  /**
+   * Study tab — pool-first chapter test.
+   *
+   * Strategy: pick up to 20 problems from the shared pool for the given
+   * chapter that the user has NEVER attempted. This delivers two product
+   * promises at once: (a) no user ever sees the same problem twice, and
+   * (b) AI generation cost shrinks as the pool grows (later users draw from
+   * earlier users' contributions). Schema unchanged — Attempt rows are the
+   * deduplication index. If the pool runs dry for a user we return what we
+   * have; AI augmentation lands as a follow-up (P16).
+   */
+  async startChapter(userId: string, chapterCode: string, lang: Lang = 'en') {
+    const lesson = await this.prisma.conceptLesson.findUnique({
+      where: { chapterCode },
+      select: { id: true, ncertClass: true, chapterNumber: true, titleEn: true },
+    });
+    if (!lesson) throw new NotFoundException(`Chapter not found: ${chapterCode}`);
+
+    // "Never show the same problem twice" applies only to Study/practice
+    // history. Pure mock-exam attempts (EXAM context) and diagnostic seeds
+    // stay eligible — students should be able to drill chapters even after
+    // a problem appeared in a full mock. PRACTICE covers SoloProblemScreen
+    // + math-helper-recorded attempts.
+    const attemptedRows = await this.prisma.attempt.findMany({
+      where: { userId, context: { in: [SessionContext.STUDY, SessionContext.PRACTICE] } },
+      select: { problemId: true },
+      distinct: ['problemId'],
+    });
+    const attemptedIds = attemptedRows.map((a) => a.problemId);
+
+    // Pool: problems mapped to this lesson that have at least one step + that
+    // this user has never touched. Random order via Postgres random().
+    const candidates = await this.prisma.$queryRawUnsafe<Array<{ id: string; source: string; difficulty: string }>>(
+      `SELECT p.id, p.source, p.difficulty::text AS difficulty
+       FROM "Problem" p
+       WHERE p."conceptLessonId" = $1
+         AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 1)
+         ${attemptedIds.length > 0 ? `AND p.id <> ALL($2::uuid[])` : ''}
+       ORDER BY random()
+       LIMIT 20`,
+      lesson.id,
+      ...(attemptedIds.length > 0 ? [attemptedIds] : []),
+    );
+
+    const name = `Class ${lesson.ncertClass.replace('CLASS_', '')} · ${lesson.titleEn}`;
+    return this.beginSession(userId, {
+      name,
+      type: 'MINI',
+      totalMinutes: 25,
+      problems: candidates,
+    }, lang);
+  }
+
   private async beginSession(userId: string, p: {
     name: string; type: any; totalMinutes: number;
     problems: Array<{ id: string; source: string; difficulty: string }>;
@@ -292,6 +345,16 @@ export class MockExamsService {
     problemId: string; choiceId: string;
     stepIndex: number; durationSec: number; confidence?: number;
   }, lang: Lang = 'en') {
+    // Chapter-test sessions (MockExam.type=MINI) come from the Study tab.
+    // Tag those attempts as STUDY rather than EXAM so startChapter's "never
+    // show the same problem twice" filter only excludes Study-context history
+    // — real mock-exam attempts stay eligible for chapter-test pickup.
+    const session = await this.prisma.mockExamResult.findUniqueOrThrow({
+      where: { id: resultId },
+      select: { mockExam: { select: { type: true } } },
+    });
+    const context = session.mockExam.type === 'MINI' ? SessionContext.STUDY : SessionContext.EXAM;
+
     const attempt = await this.attempts.create(userId, {
       problemId: dto.problemId,
       answer: '',
@@ -299,7 +362,7 @@ export class MockExamsService {
       confidence: dto.confidence,
       stepIndex: dto.stepIndex,
       choiceId: dto.choiceId,
-      context: SessionContext.EXAM,
+      context,
       mockExamResultId: resultId,
     });
     const choice = await this.prisma.problemChoice.findUnique({

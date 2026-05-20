@@ -21,7 +21,11 @@
   --p-accent: oklch(0.72 0.13 75);
   --p-accent-tint: oklch(0.96 0.025 75);
   --p-success: oklch(0.62 0.13 155);
+  --p-success-tint: oklch(0.95 0.05 155);
   --p-danger: oklch(0.6 0.18 25);
+  --p-danger-tint: oklch(0.96 0.04 25);
+  --p-warning: oklch(0.55 0.15 70);
+  --p-warning-tint: oklch(0.96 0.04 70);
 
   --radius-sm: 8px;
   --radius: 14px;
