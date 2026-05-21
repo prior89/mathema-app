@@ -325,10 +325,14 @@
 .mathema-app .bottom-sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--p-surface); border-radius: 24px 24px 0 0; padding: 12px 22px 18px; z-index: 11; box-shadow: 0 -8px 24px oklch(0 0 0 / 0.06); max-height: 72%; display: flex; flex-direction: column; }
 .mathema-app .bottom-sheet .grip { width: 36px; height: 4px; border-radius: 2px; background: var(--p-border-strong); margin: 0 auto 4px; }
 
-.mathema-app .notes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.mathema-app .note-card { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 130px; }
+/* Two-column notes grid -- align-items: stretch keeps L/R cards the same height
+   per row; min-width:0 on the card prevents MathText overflow from widening
+   one column. height:100% with min-height baseline gives a guaranteed identical
+   bounding box even when one card has shorter body text than its neighbour. */
+.mathema-app .notes-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+.mathema-app .note-card { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 130px; min-width: 0; height: 100%; overflow: hidden; box-sizing: border-box; }
 .mathema-app .note-card .src { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em; color: var(--p-muted); }
-.mathema-app .note-card .body { font-size: 12.5px; font-family: var(--font-mono); color: var(--p-ink); line-height: 1.4; max-height: 56px; overflow: hidden; }
+.mathema-app .note-card .body { font-size: 12.5px; font-family: var(--font-mono); color: var(--p-ink); line-height: 1.4; max-height: 56px; overflow: hidden; word-break: break-word; overflow-wrap: anywhere; }
 .mathema-app .note-card .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
 .mathema-app .status-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; font-family: var(--font-mono); letter-spacing: 0.04em; }
 .mathema-app .status-chip.pending { background: oklch(0.96 0.04 70); color: oklch(0.45 0.12 70); }

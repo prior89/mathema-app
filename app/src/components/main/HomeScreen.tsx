@@ -42,14 +42,15 @@ export function HomeScreen() {
 
   return (
     <div className="screen">
-      <div style={{ flex: 1, overflow: 'auto' }}>
-        <div className="app-head">
-          <div className="greet">
-            <div className="hello">{dateStr}</div>
-            <div className="name">Hello, <em>{userName.split(' ')[0]}</em></div>
-          </div>
+      {/* Sticky greeting — frozen so "Hello, Arjun" stays visible while the
+          user scrolls through Today's plan / heatmap below. */}
+      <div className="app-head" style={{ flexShrink: 0 }}>
+        <div className="greet">
+          <div className="hello">{dateStr}</div>
+          <div className="name">Hello, <em>{userName.split(' ')[0]}</em></div>
         </div>
-
+      </div>
+      <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
         <div style={{ padding: '0 22px' }}>
 
           {/* Cold-start hero — only when the user has zero study activity yet.

@@ -228,13 +228,15 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
 }) {
   return (
     <>
-      <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0 }}>
-        {bigIdea && (
-          <div style={{ marginBottom: 16 }}>
-            <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>BIG IDEA</span>
-            <h3 className="title" style={{ fontSize: 22, marginTop: 6, lineHeight: 1.2 }}>{bigIdea}</h3>
-          </div>
-        )}
+      {/* Sticky Big Idea — frozen at the top so the chapter's central concept
+          stays visible while the student scrolls through the step blocks. */}
+      {bigIdea && (
+        <div style={{ padding: '12px 22px 4px', flexShrink: 0 }}>
+          <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>BIG IDEA</span>
+          <h3 className="title" style={{ fontSize: 22, marginTop: 6, lineHeight: 1.2 }}>{bigIdea}</h3>
+        </div>
+      )}
+      <div style={{ flex: 1, overflow: 'auto', padding: '8px 22px', minHeight: 0 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {steps.map((s) => <ConceptStepBlock key={s.id} step={s} />)}
         </div>
@@ -437,23 +439,25 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
 
   return (
     <>
-      <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0 }}>
-        <div style={{ marginBottom: 12 }}>
-          <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>
-            QUESTION {problemIdx} OF {problemTotal} · STEP {stepIdx} OF {stepTotal} · {STEP_TYPE_LABEL[step.stepType] ?? step.stepType}
-          </span>
-          <h3 className="title" style={{ fontSize: 20, marginTop: 6, lineHeight: 1.25 }}>
-            <MathText text={step.prompt} />
-          </h3>
-        </div>
-
+      {/* Sticky context — QUESTION/STEP eyebrow + step prompt + (on step 1)
+          the PROBLEM card stay frozen at the top so the student can keep the
+          question in view while scrolling the 5 choices below. */}
+      <div style={{ padding: '12px 22px 4px', flexShrink: 0 }}>
+        <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>
+          QUESTION {problemIdx} OF {problemTotal} · STEP {stepIdx} OF {stepTotal} · {STEP_TYPE_LABEL[step.stepType] ?? step.stepType}
+        </span>
+        <h3 className="title" style={{ fontSize: 20, marginTop: 6, lineHeight: 1.25 }}>
+          <MathText text={step.prompt} />
+        </h3>
         {stepIdx === 1 && problem.body && (
-          <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent', marginBottom: 12 }}>
+          <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent', marginTop: 12 }}>
             <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM · {problem.source}</div>
             <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}><MathText text={problem.body} /></div>
           </div>
         )}
+      </div>
 
+      <div style={{ flex: 1, overflow: 'auto', padding: '8px 22px', minHeight: 0 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {choices.map((c, i) => {
             const isPicked = pickedId === c.id;

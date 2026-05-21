@@ -220,15 +220,19 @@ export function StudyPracticeScreen() {
         </button>
       </div>
 
-      {/* Scrollable middle */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Sticky problem statement — frozen so the student can still see the
+          question while picking an answer or working on the canvas below. */}
+      <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
         <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
           <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
           <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}>
             <MathText text={current.body} />
           </div>
         </div>
+      </div>
 
+      {/* Scrollable middle (canvas + choices + feedback) */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '12px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>WORKINGS</div>
           <HandwritingCanvas ref={canvasRef} height={420} extendable />
@@ -318,6 +322,7 @@ export function StudyPracticeScreen() {
           </button>
         )}
       </div>
+      <TabBar />
     </div>
   );
 }
