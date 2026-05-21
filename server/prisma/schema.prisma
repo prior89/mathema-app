@@ -287,6 +287,10 @@ model User {
   tenantId     String?
   /// Soft delete — null means active user. If set, authentication is blocked but analytics assets are preserved.
   deletedAt    DateTime?
+  /// P2-1 — set when /auth/verify-email consumes the user's token. NULL = the
+  /// user has never confirmed they own the email on file. Frontend can show a
+  /// "verify your email" banner; future policy may gate certain features.
+  emailVerifiedAt DateTime?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -313,6 +317,7 @@ model User {
   teacherOverridesApplied TeacherOverride[]     @relation("StudentTarget")
   uploadedIngestJobs      ContentIngestJob[]    @relation("UploadedIngestJobs")
   reviewedDrafts          ContentDraft[]        @relation("ReviewedDrafts")
+  authDevices             AuthDevice[]
 
   @@index([examDate])
   @@index([deletedAt])
@@ -769,6 +774,36 @@ enum SecurityEventType {
   PASSWORD_CHANGE
   BREACH_PASSWORD_BLOCKED // pwnedpasswords rejected the chosen password
   ACCOUNT_DELETED
+}
+
+/// DEV-1 -- concurrent 1-device-per-account enforcement.
+/// A row per (user, device) pair that has logged in. New device login flow:
+///   1. Compute deviceHash on client (Capacitor Device.getId() + server salt)
+///   2. POST /auth/login with X-Device-Hash header
+///   3. Backend upserts AuthDevice, revokes every OTHER device's refresh jti
+///      via Redis blacklist -> Netflix-style displacement, no confirm email
+///      gate (account sharing -> ping-pong logout -> nobody can use it)
+///
+/// Rows are deleted on User cascade, on "logout other devices" self-service,
+/// and on explicit revocation. We keep historical login record in
+/// SecurityEvent (NEW_DEVICE_LOGIN); AuthDevice only tracks currently-bound
+/// devices, not the history.
+model AuthDevice {
+  id           String   @id @default(uuid())
+  userId       String
+  /// SHA-256 of (client device fingerprint + server salt). 64 hex chars.
+  deviceHash   String
+  /// Friendly label for the Settings UI: "Pixel 7 · Chrome", "iPhone 15", etc.
+  deviceName   String?
+  /// IPv4 / IPv6 string captured on the most recent login from this device.
+  lastIp       String?
+  lastSeenAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceHash])
+  @@index([userId, lastSeenAt])
 }
 
 // ---------- CONCEPT LEARNING (concept lesson before problem solving) ----------
