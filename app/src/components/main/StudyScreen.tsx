@@ -12,10 +12,11 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { fetchConceptLessons } from '../../lib/queries';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { UploadProblemModal } from './UploadProblemModal';
 
 const CLASS_SHORT: Record<string, string> = {
   CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
@@ -26,6 +27,10 @@ export function StudyScreen() {
   const nav = useNavigate();
   const [chapter, setChapter] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
+  // AI Solver -- both Take photo and Upload buttons open the same OCR modal.
+  // The modal's pick phase handles camera vs gallery internally; surfacing
+  // two buttons here just makes the entry point legible at a glance.
+  const [solverOpen, setSolverOpen] = useState(false);
 
   // Fetch every chapter the user has access to (all classes). The mastered
   // flag in the response decides eligibility — no client-side class filter.
@@ -132,6 +137,46 @@ export function StudyScreen() {
             </div>
           )}
 
+          {/* AI Solver -- snap a problem from a textbook or photo and the
+              math-helper pipeline (Mathpix OCR -> LangGraph solver) returns a
+              step-by-step solution + lifts the problem into the user's pool. */}
+          <div className="section-h">
+            <span className="label">AI Solver</span>
+            <span className="more">Stuck? Snap it.</span>
+          </div>
+          <div className="card" style={{ padding: 14, background: 'var(--p-primary-tint)', borderColor: 'transparent' }}>
+            <div style={{ fontSize: 12.5, color: 'var(--p-ink-2)', marginBottom: 12, lineHeight: 1.5 }}>
+              Photograph any problem and we'll solve it step-by-step.
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <SolverButton
+                label="Take a photo"
+                hint="Use the camera"
+                onClick={() => setSolverOpen(true)}
+                icon={
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M3 7h3l2-3h8l2 3h3v12H3z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                }
+              />
+              <SolverButton
+                label="Upload"
+                hint="From your gallery"
+                onClick={() => setSolverOpen(true)}
+                icon={
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M12 4v12" />
+                    <path d="M7 9l5-5 5 5" />
+                    <path d="M5 20h14" />
+                  </svg>
+                }
+              />
+            </div>
+          </div>
+
+          {/* How this works moved below the AI Solver so the heading reads as
+              "you've seen the two paths -- here's the contract behind them". */}
           <div className="section-h">
             <span className="label">How this works</span>
           </div>
@@ -139,13 +184,53 @@ export function StudyScreen() {
             Every set is drawn from a shared pool of problems other students have
             solved. You'll never see the same problem twice. Get one wrong and
             it joins your <strong style={{ color: 'var(--p-ink)' }}>Notes</strong>{' '}
-            for a future weekly review.
+            for a future weekly review. For problems outside the pool, snap them
+            with the AI Solver above and we'll add them to your library.
           </div>
 
           <div style={{ height: 16 }} />
         </div>
       </div>
+      <UploadProblemModal open={solverOpen} onClose={() => setSolverOpen(false)} />
       <TabBar />
     </div>
+  );
+}
+
+function SolverButton({ label, hint, icon, onClick }: {
+  label: string; hint: string; icon: ReactNode; onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        background: 'var(--p-surface)',
+        border: '1px solid var(--p-border)',
+        borderRadius: 12,
+        padding: '14px 12px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 6,
+        cursor: 'pointer',
+        textAlign: 'left',
+        color: 'var(--p-ink)',
+        transition: 'border-color 120ms ease',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--p-primary)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--p-border)'; }}
+    >
+      <div style={{
+        width: 36, height: 36, borderRadius: 9,
+        background: 'var(--p-primary)',
+        color: 'var(--p-primary-fg, #fff)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {icon}
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4 }}>{label}</div>
+      <div style={{ fontSize: 11.5, color: 'var(--p-muted)' }}>{hint}</div>
+    </button>
   );
 }
