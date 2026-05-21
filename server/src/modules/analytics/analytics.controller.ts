@@ -1,5 +1,7 @@
-import { Body, Controller, Headers, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Headers, HttpCode, Logger, Post, UseGuards } from '@nestjs/common';
+import { ConsentKind } from '@prisma/client';
 import { AnalyticsService } from './analytics.service';
+import { PrivacyService } from '../privacy/privacy.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -12,7 +14,12 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 @UseGuards(JwtAuthGuard)
 @Controller('analytics')
 export class AnalyticsController {
-  constructor(private readonly service: AnalyticsService) {}
+  private readonly logger = new Logger(AnalyticsController.name);
+
+  constructor(
+    private readonly service: AnalyticsService,
+    private readonly privacy: PrivacyService,
+  ) {}
 
   @Post('events')
   @HttpCode(200)
@@ -21,6 +28,11 @@ export class AnalyticsController {
     @Body() body: { eventType: string; payload?: any; sessionId?: string },
     @Headers('user-agent') userAgent: string | undefined,
   ) {
+    const allowed = await this.privacy.isActive(userId, ConsentKind.ANALYTICS);
+    if (!allowed) {
+      this.logger.debug(`analytics skipped — no consent for user=${userId}`);
+      return { ok: true };
+    }
     await this.service.record({
       userId,
       eventType: body.eventType,

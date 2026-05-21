@@ -3,6 +3,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AnalyticsController } from './analytics.controller';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsInterceptor } from './analytics.interceptor';
+import { PrivacyModule } from '../privacy/privacy.module';
 
 /**
  * Analytics 모듈은 글로벌 — 모든 모듈이 AnalyticsService 주입 가능.
@@ -10,6 +11,7 @@ import { AnalyticsInterceptor } from './analytics.interceptor';
  */
 @Global()
 @Module({
+  imports: [PrivacyModule],
   controllers: [AnalyticsController],
   providers: [
     AnalyticsService,

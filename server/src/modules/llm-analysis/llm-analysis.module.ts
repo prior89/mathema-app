@@ -8,6 +8,7 @@ import { LLMAnalysisProcessor } from './llm-analysis.processor';
 import { LLMAnalysisAdminController } from './llm-analysis.controller';
 import { MasteryModule } from '../mastery/mastery.module';
 import { AiModule } from '../../infrastructure/ai/ai.module';
+import { PrivacyModule } from '../privacy/privacy.module';
 import { LLM_ANALYSIS_QUEUE } from './llm-analysis.queue';
 import { AdminGuard } from '../../common/guards/admin.guard';
 
@@ -21,6 +22,7 @@ import { AdminGuard } from '../../common/guards/admin.guard';
   imports: [
     MasteryModule,
     AiModule,
+    PrivacyModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
@@ -28,6 +30,7 @@ import { AdminGuard } from '../../common/guards/admin.guard';
           host: config.get<string>('redis.host'),
           port: config.get<number>('redis.port'),
           password: config.get<string>('redis.password') || undefined,
+          tls: config.get<boolean>('redis.tls') ? {} : undefined,
         },
       }),
       inject: [ConfigService],

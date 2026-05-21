@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { ErrorCode } from '@prisma/client';
+import { ConsentKind, ErrorCode } from '@prisma/client';
 import { LLMAnalysisQueueService } from './llm-analysis-queue.service';
+import { PrivacyService } from '../privacy/privacy.service';
 
 /**
  * attempt.completed → BullMQ 큐 enqueue (대상 제한).
@@ -27,7 +28,10 @@ import { LLMAnalysisQueueService } from './llm-analysis-queue.service';
 export class LlmAnalysisListener {
   private readonly logger = new Logger(LlmAnalysisListener.name);
 
-  constructor(private readonly queue: LLMAnalysisQueueService) {}
+  constructor(
+    private readonly queue: LLMAnalysisQueueService,
+    private readonly privacy: PrivacyService,
+  ) {}
 
   @OnEvent('attempt.completed')
   async onAttemptCompleted(payload: {
@@ -46,6 +50,12 @@ export class LlmAnalysisListener {
 
     if (!this.shouldAnalyze(payload)) {
       this.logger.debug(`LLM skip attempt=${payload.id} — analysis not warranted by gating rules`);
+      return;
+    }
+
+    const allowed = await this.privacy.isActive(payload.userId, ConsentKind.AI_TRAINING);
+    if (!allowed) {
+      this.logger.debug(`LLM skip attempt=${payload.id} — no AI_TRAINING consent`);
       return;
     }
 
