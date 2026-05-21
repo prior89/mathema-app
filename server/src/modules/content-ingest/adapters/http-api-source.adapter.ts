@@ -12,6 +12,7 @@ import { ContentSourceType, NcertClass } from '@prisma/client';
 import { createHash } from 'crypto';
 import type { SourceAdapter } from './source.adapter';
 import type { IngestContext, NormalizedProblem, SourceConfig } from '../types';
+import { assertSafeFetchUrl } from '../../../common/utils/url-safety';
 
 @Injectable()
 export class HttpApiSourceAdapter implements SourceAdapter {
@@ -37,6 +38,10 @@ export class HttpApiSourceAdapter implements SourceAdapter {
     if (config.method === 'POST' && config.bodyJson) init.body = config.bodyJson;
 
     const url = config.queryJson ? `${config.url}${config.url.includes('?') ? '&' : '?'}${this.qs(config.queryJson)}` : config.url;
+    // P0-3 SSRF guard — reject http://, private IPs (incl. cloud metadata
+    // 169.254.169.254), DNS rebind. assertSafeFetchUrl throws on any
+    // unsafe target before the network call.
+    await assertSafeFetchUrl(url);
     const res = await fetch(url, init);
     if (!res.ok) throw new Error(`Source HTTP ${res.status} ${res.statusText}`);
     const payload: unknown = await res.json();
