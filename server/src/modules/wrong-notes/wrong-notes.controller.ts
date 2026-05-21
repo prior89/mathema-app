@@ -3,6 +3,7 @@ import { WrongNotesService } from './wrong-notes.service';
 import { CreateWrongNoteDto } from './dto/create-wrong-note.dto';
 import { QueryWrongNotesDto } from './dto/query-wrong-notes.dto';
 import { ReviewWrongNoteDto } from './dto/review-wrong-note.dto';
+import { CheckWrongNoteDto } from './dto/check-wrong-note.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CurrentLang, Lang } from '../../common/i18n/current-lang.decorator';
@@ -51,7 +52,7 @@ export class WrongNotesController {
   checkAnswer(
     @CurrentUser('id') userId: string,
     @Param('id') id: string,
-    @Body() body: { answer: string; durationSec?: number },
+    @Body() body: CheckWrongNoteDto,
   ) {
     return this.service.checkAnswer(userId, id, body);
   }

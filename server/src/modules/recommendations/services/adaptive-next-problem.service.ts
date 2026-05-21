@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ErrorPatternStatus, RecommendationType } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
@@ -263,19 +263,29 @@ export class AdaptiveNextProblemService {
     return `이 개념의 masteryScore가 ${score}점 — 난이도 ${difficulty}/5 문제로 보강합니다.`;
   }
 
-  /** 추천 결과 회수 — POST /recommendations/:id/result. */
-  async recordResult(recommendationLogId: string, payload: {
+  /**
+   * 추천 결과 회수 — POST /recommendations/:id/result.
+   *
+   * Owner check: only the user the recommendation was issued for may record
+   * its result. updateMany returns count=0 on a wrong owner; we surface that
+   * as 404 (instead of 403) so existence is not leaked either.
+   */
+  async recordResult(userId: string, recommendationLogId: string, payload: {
     accepted?: boolean;
     solved?: boolean;
     result?: 'CORRECT' | 'INCORRECT' | 'SKIPPED';
   }) {
-    return this.prisma.recommendationLog.update({
-      where: { id: recommendationLogId },
+    const r = await this.prisma.recommendationLog.updateMany({
+      where: { id: recommendationLogId, userId },
       data: {
         accepted: payload.accepted ?? undefined,
         solved: payload.solved ?? undefined,
         result: (payload.result as any) ?? undefined,
       },
     });
+    if (r.count === 0) {
+      throw new NotFoundException(`RecommendationLog ${recommendationLogId} not found`);
+    }
+    return { ok: true };
   }
 }

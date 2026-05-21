@@ -12,6 +12,11 @@ import { ConceptLessonsService } from './concept-lessons.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CurrentLang, Lang } from '../../common/i18n/current-lang.decorator';
+import {
+  CompleteStepDto,
+  CheckRetrievalDto,
+  FinalizeConceptDto,
+} from './dto/concept-step.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('concept-lessons')
@@ -73,7 +78,7 @@ export class ConceptLessonsController {
   completeStep(
     @CurrentUser('id') userId: string,
     @Param('code') code: string,
-    @Body() body: { stepIndex: number; durationSec?: number },
+    @Body() body: CompleteStepDto,
   ) {
     return this.service.completeStep(
       userId,
@@ -88,7 +93,7 @@ export class ConceptLessonsController {
   check(
     @CurrentUser('id') userId: string,
     @Param('code') code: string,
-    @Body() body: { stepIndex: number; answer: string },
+    @Body() body: CheckRetrievalDto,
   ) {
     return this.service.checkRetrieval(userId, code, body.stepIndex, body.answer);
   }
@@ -101,7 +106,7 @@ export class ConceptLessonsController {
   finalizeConcept(
     @CurrentUser('id') userId: string,
     @Param('code') code: string,
-    @Body() body: { durationSec?: number } = {},
+    @Body() body: FinalizeConceptDto,
   ) {
     return this.service.finalizeConceptPhase(userId, code, body.durationSec ?? 0);
   }

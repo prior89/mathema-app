@@ -21,6 +21,20 @@ export class ActivityAttemptListener {
   async onAttemptCompleted(attempt: {
     userId: string; isCorrect: boolean; durationSec: number;
   }) {
+    try {
+      await this.doUpdate(attempt);
+    } catch (e: any) {
+      // EventEmitter2 fires listeners without awaiting, so a rejected promise
+      // here would become an unhandledRejection and silently skip the daily
+      // activity bump. Catch + log so the attempt POST still succeeds and ops
+      // can see the drift.
+      this.logger.error(`DailyActivity update failed for user=${attempt.userId}: ${e?.message ?? e}`);
+    }
+  }
+
+  private async doUpdate(attempt: {
+    userId: string; isCorrect: boolean; durationSec: number;
+  }) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const minutes = attempt.durationSec / 60;
 

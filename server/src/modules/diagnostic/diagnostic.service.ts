@@ -109,13 +109,20 @@ export class DiagnosticService {
     });
     if (!session || session.userId !== userId) throw new NotFoundException('Session not found');
 
-    await this.prisma.studySession.update({
-      where: { id: sessionId },
-      data: {
-        endedAt: new Date(),
-        correctCount: session.attempts.filter((a) => a.isCorrect).length,
-      },
-    });
+    // Idempotency: a replayed finish (network retry, tab refresh, double-tap)
+    // must not re-stamp endedAt or re-bump counters. Just recompute the
+    // summary from the same attempts and return it. The mastery-trajectory
+    // listener already ran once per Attempt at submit-time, so concept
+    // scores are stable too.
+    if (!session.endedAt) {
+      await this.prisma.studySession.update({
+        where: { id: sessionId },
+        data: {
+          endedAt: new Date(),
+          correctCount: session.attempts.filter((a) => a.isCorrect).length,
+        },
+      });
+    }
 
     // Mastery trajectories are now maintained by mastery-trajectory.listener
     // (attempt.completed → updateAfterAttempt per concept). We just read the

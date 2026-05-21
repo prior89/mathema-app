@@ -2,6 +2,7 @@ import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { DiagnosticService } from './diagnostic.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { DiagnosticAnswerDto } from './dto/diagnostic-answer.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('diagnostic')
@@ -18,9 +19,9 @@ export class DiagnosticController {
   @Post('answer')
   answer(
     @CurrentUser('id') userId: string,
-    @Body() body: { sessionId: string; problemId: string; choiceId: string; confidence?: number },
+    @Body() dto: DiagnosticAnswerDto,
   ) {
-    return this.service.submitAnswer(userId, body);
+    return this.service.submitAnswer(userId, dto);
   }
 
   /** 세션 종료 → 초기 MasteryTrajectory 작성 + 결과 반환. */

@@ -78,10 +78,10 @@ export class RecommendationsController {
    */
   @Post(':id/result')
   recordResult(
-    @CurrentUser('id') _userId: string,
+    @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Body() body: { accepted?: boolean; solved?: boolean; result?: 'CORRECT' | 'INCORRECT' | 'SKIPPED' },
   ) {
-    return this.nextProblem.recordResult(id, body);
+    return this.nextProblem.recordResult(userId, id, body);
   }
 }
