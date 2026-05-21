@@ -12,6 +12,12 @@ import { RedisService } from '../../infrastructure/redis/redis.service';
 import { MailService } from '../../infrastructure/mail/mail.service';
 import { PrivacyService } from '../privacy/privacy.service';
 import { BCRYPT_COST } from '../../common/utils/auth-constants';
+import { assertPasswordNotBreached } from '../../common/utils/password-breach';
+import {
+  assertNotLocked,
+  recordFailedLogin,
+  clearLoginFailures,
+} from '../../common/utils/login-lockout';
 
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
@@ -70,6 +76,8 @@ export class AuthService {
     const gradeLevel = isStudent ? dto.gradeLevel : undefined;
     const studyGoal = isStudent ? dto.studyGoal : undefined;
 
+    // SEC-2 breach check before bcrypt (faster reject on bad password).
+    await assertPasswordNotBreached(dto.password);
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
     const user = await this.users.create({
       email: dto.email,
@@ -100,12 +108,20 @@ export class AuthService {
     return this.issueTokens(user.id);
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, ip = '') {
+    // SEC-3 lockout: check before any DB / bcrypt work so a locked client
+    // can't be used as a CPU-burn vector.
+    await assertNotLocked(this.redis, ip, dto.email);
     const user = await this.users.findByEmail(dto.email);
-    if (!user || (user as any).deletedAt || !(await bcrypt.compare(dto.password, user.passwordHash))) {
+    const ok = user
+      && !(user as any).deletedAt
+      && await bcrypt.compare(dto.password, user.passwordHash);
+    if (!ok) {
+      await recordFailedLogin(this.redis, ip, dto.email);
       throw new UnauthorizedException('invalid credentials');
     }
-    return this.issueTokens(user.id);
+    await clearLoginFailures(this.redis, ip, dto.email);
+    return this.issueTokens(user!.id);
   }
 
   /**
@@ -253,6 +269,7 @@ export class AuthService {
     if (!rec || rec.usedAt || rec.expiresAt < new Date()) {
       throw new BadRequestException('invalid or expired token');
     }
+    await assertPasswordNotBreached(newPassword);
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST);
     await this.prisma.$transaction([
       this.prisma.user.update({ where: { id: rec.userId }, data: { passwordHash } }),

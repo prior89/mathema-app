@@ -44,6 +44,9 @@ function mockRedis(): AnyMock {
   return {
     exists: jest.fn().mockResolvedValue(false),
     set: jest.fn().mockResolvedValue(undefined),
+    get: jest.fn().mockResolvedValue(null),        // SEC-3 lockout counter read
+    incrWithTtl: jest.fn().mockResolvedValue(1),   // SEC-3 lockout counter incr
+    del: jest.fn().mockResolvedValue(undefined),   // SEC-3 lockout clear on success
   };
 }
 function mockMail(): AnyMock {
@@ -83,6 +86,13 @@ function build(over: Partial<{
 }
 
 describe('AuthService', () => {
+  // SEC-2: the breach check calls api.pwnedpasswords.com over the network.
+  // We don't want unit tests reaching the internet, so disable for all tests
+  // here. The breach check itself is exercised in password-breach.spec.ts.
+  const ORIG_PWNED = process.env.PWNED_PASSWORDS_DISABLED;
+  beforeAll(() => { process.env.PWNED_PASSWORDS_DISABLED = 'true'; });
+  afterAll(() => { process.env.PWNED_PASSWORDS_DISABLED = ORIG_PWNED; });
+
   // ─────── register ───────
   describe('register', () => {
     it('rejects duplicate email', async () => {
@@ -143,6 +153,46 @@ describe('AuthService', () => {
       users.findByEmail.mockResolvedValue({ id: 'u1', passwordHash: hash, deletedAt: new Date() });
       const { svc } = build({ users });
       await expect(svc.login({ email: 'a@b.com', password: 'pw' } as any)).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    // SEC-3 -- locked tuple rejected before bcrypt runs.
+    it('rejects when (ip, email) is already over the lockout threshold', async () => {
+      const users = mockUsers();
+      const redis = mockRedis();
+      redis.get.mockResolvedValue('5'); // counter already at threshold
+      const { svc } = build({ users, redis });
+      await expect(svc.login({ email: 'a@b.com', password: 'pw' } as any, '203.0.113.1'))
+        .rejects.toBeInstanceOf(UnauthorizedException);
+      // bcrypt compare must NOT have run -- short-circuit before DB lookup.
+      expect(users.findByEmail).not.toHaveBeenCalled();
+    });
+
+    // SEC-3 -- failure increments the (ip, email) counter.
+    it('increments the lockout counter on wrong password', async () => {
+      const hash = await bcrypt.hash('right-password', 4);
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue({ id: 'u1', passwordHash: hash, deletedAt: null });
+      const redis = mockRedis();
+      const { svc } = build({ users, redis });
+      await expect(svc.login({ email: 'a@b.com', password: 'wrong' } as any, '203.0.113.1'))
+        .rejects.toBeInstanceOf(UnauthorizedException);
+      expect(redis.incrWithTtl).toHaveBeenCalledWith(
+        expect.stringContaining('auth:fail:203.0.113.1:a@b.com'),
+        expect.any(Number),
+      );
+    });
+
+    // SEC-3 -- success clears the counter.
+    it('clears the lockout counter on successful login', async () => {
+      const hash = await bcrypt.hash('pw', 4);
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue({ id: 'u1', passwordHash: hash, deletedAt: null });
+      const jwt = mockJwt();
+      jwt.sign.mockImplementation((p) => `t-${(p as any).sub}`);
+      const redis = mockRedis();
+      const { svc } = build({ users, jwt, redis });
+      await svc.login({ email: 'a@b.com', password: 'pw' } as any, '203.0.113.1');
+      expect(redis.del).toHaveBeenCalledWith(expect.stringContaining('auth:fail:203.0.113.1:a@b.com'));
     });
 
     it('issues tokens on valid credentials', async () => {
