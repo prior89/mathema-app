@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import { getDeviceHash } from './deviceId';
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL ?? '/api/v1';
 
@@ -23,7 +24,7 @@ export const tokens = {
   },
 };
 
-api.interceptors.request.use((cfg) => {
+api.interceptors.request.use(async (cfg) => {
   const t = tokens.get();
   if (t) cfg.headers.Authorization = `Bearer ${t}`;
   // 현재 i18n 언어를 매 요청마다 자동 첨부
@@ -33,6 +34,12 @@ api.interceptors.request.use((cfg) => {
       cfg.headers['Accept-Language'] = lang;
     }
   } catch { /* ignore */ }
+  // DEV-2 X-Device-Hash: stable per-install fingerprint. Server uses this to
+  // enforce concurrent 1-account-1-device -- a new device login displaces
+  // the previous session's refresh token (Netflix-style displacement).
+  try {
+    cfg.headers['X-Device-Hash'] = await getDeviceHash();
+  } catch { /* ignore -- backend falls back to "unknown" device */ }
   return cfg;
 });
 
@@ -55,9 +62,16 @@ api.interceptors.response.use(
       original._retry = true;
       isRefreshing = true;
       try {
-        const { data } = await axios.post(`${API_BASE}/auth/refresh`, {
-          refreshToken: tokens.getRefresh(),
-        });
+        // DEV-6: include X-Device-Hash so /auth/refresh can match against the
+        // user's currently-bound AuthDevice. Without this, refresh from a
+        // displaced device would silently succeed and break the single-session
+        // invariant.
+        const deviceHash = await getDeviceHash().catch(() => '');
+        const { data } = await axios.post(
+          `${API_BASE}/auth/refresh`,
+          { refreshToken: tokens.getRefresh() },
+          { headers: deviceHash ? { 'X-Device-Hash': deviceHash } : {} },
+        );
         const access = data.data.accessToken;
         const refresh = data.data.refreshToken;
         tokens.set(access, refresh);
