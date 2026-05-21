@@ -324,6 +324,7 @@ model User {
   uploadedIngestJobs      ContentIngestJob[]    @relation("UploadedIngestJobs")
   reviewedDrafts          ContentDraft[]        @relation("ReviewedDrafts")
   authDevices             AuthDevice[]
+  subscription            Subscription?
 
   @@index([examDate])
   @@index([deletedAt])
@@ -1412,4 +1413,58 @@ model ContentDraft {
   @@index([status, createdAt])
   @@index([ingestJobId, status])
   @@index([conceptLessonId, status])
+}
+
+// ---------- BILLING (Google Play subscriptions) ----------
+
+enum SubscriptionStatus {
+  ACTIVE      /// valid + within paid period
+  GRACE       /// payment failed but Google grace period — still entitled
+  ON_HOLD     /// payment failed past grace — not entitled, can recover
+  PAUSED      /// user paused (rare)
+  CANCELED    /// canceled by user, still within expiry
+  EXPIRED     /// expired, no longer entitled
+}
+
+/// One row per user that has ever subscribed. We update in place when the
+/// status changes (RTDN notifications + verify-on-purchase). Token uniqueness
+/// is enforced by Google; we keep it unique so dupe webhooks no-op.
+model Subscription {
+  id                   String              @id @default(cuid())
+  userId               String              @unique
+  productId            String              // 'premium_monthly' | 'premium_yearly'
+  purchaseToken        String              @unique
+  orderId              String?             // Google Play orderId (refund-trace)
+  status               SubscriptionStatus
+  startTime            DateTime
+  expiryTime           DateTime
+  autoRenewing         Boolean             @default(true)
+  cancelReason         Int?                // Google docs: 0=user, 1=system, 2=replaced, 3=developer
+  isInIntroOfferPeriod Boolean             @default(false)  // 60-day Launch Promo trace
+  countryCode          String?
+  priceAmountMicros    String?             // 1_000_000 micros = 1 currency unit
+  currencyCode         String?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events               SubscriptionEvent[]
+
+  @@index([status])
+  @@index([expiryTime])
+}
+
+/// Audit log of every subscription state-change signal we receive
+/// (RTDN messages + manual admin actions + verify-on-purchase results).
+model SubscriptionEvent {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  eventType      String       // RTDN notificationType or 'verify' / 'admin.cancel' / etc.
+  payload        Json
+  receivedAt     DateTime     @default(now())
+
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, receivedAt])
+  @@index([eventType])
 }

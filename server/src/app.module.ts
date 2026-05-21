@@ -53,6 +53,7 @@ import { DiagnosticModule } from './modules/diagnostic/diagnostic.module';
 import { ContentIngestModule } from './modules/content-ingest/content-ingest.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { MathHelperModule } from './modules/math-helper/math-helper.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { MathHelperModule } from './modules/math-helper/math-helper.module';
     ContentIngestModule,
     UploadsModule,
     MathHelperModule,
+    BillingModule,
   ],
   providers: [
     // P1-3: global rate-limit. forRoot([{ ttl: 60_000, limit: 120 }]) above
