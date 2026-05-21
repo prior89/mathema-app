@@ -11,6 +11,7 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { PROBLEM_EN, STEP_PROMPT_EN, CHOICE_EN, SOURCE_EN, HINT_EN, CONCEPT_EN, FORMULA_EN } from '../../common/i18n/content-en';
 import { LlmDraftService, DraftPayload } from '../content-ingest/llm-draft.service';
+import { DeterministicCheckService } from '../../infrastructure/math/deterministic-check.service';
 
 /**
  * MockExam name → English short label.
@@ -85,6 +86,7 @@ export class MockExamsService {
     private readonly attempts: AttemptsService,
     private readonly prisma: PrismaService,
     private readonly llmDraft: LlmDraftService,
+    private readonly deterministicCheck: DeterministicCheckService,
   ) {}
 
   async trajectory(userId: string, count: number, lang: Lang = 'en') {
@@ -509,6 +511,22 @@ export class MockExamsService {
   ): Promise<{ id: string; source: string; difficulty: string }> {
     const step0 = payload.steps[0];
     const correctChoice = step0.choices.find((c) => c.isCorrect);
+
+    // QUALITY gate — deterministic-check tries to solve the LLM's problem
+    // from scratch and compares with the answer the LLM marked correct.
+    // null = the question doesn't fit any of the 9 closed-form checkers
+    // (geometry, proofs, statistics narratives, …) — let it through.
+    // isStudentCorrect === false = the LLM contradicted a reproducible
+    // solver; reject the problem so a bad answer never lands in the pool.
+    const verdict = correctChoice
+      ? this.deterministicCheck.check(payload.problemBody, correctChoice.text)
+      : null;
+    if (verdict && verdict.isStudentCorrect === false) {
+      throw new Error(
+        `Deterministic verdict mismatch (${verdict.checker}): LLM answer="${correctChoice?.text}" vs solver="${verdict.answer}"`,
+      );
+    }
+
     const problem = await this.prisma.problem.create({
       data: {
         source: attribution,

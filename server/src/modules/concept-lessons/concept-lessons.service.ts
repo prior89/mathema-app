@@ -5,6 +5,7 @@ import { Lang } from '../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN } from '../../common/i18n/content-en';
 import { UNIT_NAME_HI } from '../../common/i18n/content-hi';
 import { LlmDraftService, DraftPayload } from '../content-ingest/llm-draft.service';
+import { DeterministicCheckService } from '../../infrastructure/math/deterministic-check.service';
 
 /**
  * 수학식 답안 비교 — 학생 표기 변이를 흡수.
@@ -78,6 +79,7 @@ export class ConceptLessonsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly llmDraft: LlmDraftService,
+    private readonly deterministicCheck: DeterministicCheckService,
   ) {}
 
   // ---------- LIST ----------
@@ -601,6 +603,21 @@ export class ConceptLessonsService {
   ) {
     const answerStep = payload.steps.find((s) => s.stepType === 'ANSWER') ?? payload.steps[payload.steps.length - 1];
     const correctChoice = answerStep?.choices.find((c) => c.isCorrect);
+
+    // QUALITY gate — same deterministic verification mock-exams.persist
+    // applies to single-step LLM problems. Multi-step adds a wrinkle: only
+    // the ANSWER step's correctChoice is the "final" answer; CONCEPT /
+    // PROCESS choices are reasoning markers that the closed-form solvers
+    // can't validate. We check ANSWER only.
+    const verdict = correctChoice
+      ? this.deterministicCheck.check(payload.problemBody, correctChoice.text)
+      : null;
+    if (verdict && verdict.isStudentCorrect === false) {
+      throw new Error(
+        `Deterministic verdict mismatch (${verdict.checker}): LLM ANSWER="${correctChoice?.text}" vs solver="${verdict.answer}"`,
+      );
+    }
+
     const problem = await this.prisma.problem.create({
       data: {
         source: attribution,
