@@ -58,7 +58,10 @@ jobs:
           MATHEO_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           MATHEO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           MATHEO_KEY_ALIAS: matheo
-        run: ./gradlew bundleRelease --no-daemon
+        run: |
+          # gradlew loses its +x bit when committed from Windows; restore it.
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
