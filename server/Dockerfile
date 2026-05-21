@@ -7,7 +7,7 @@
 # =============================================================
 
 # ----- stage 1: install deps (cached) -----
-FROM node:20-alpine AS deps
+FROM node:26-alpine AS deps
 WORKDIR /repo
 COPY package.json package-lock.json ./
 # Root postinstall is `node scripts/sync-env.cjs` — a dev-only helper that
@@ -18,7 +18,7 @@ COPY server/package.json ./server/
 RUN npm ci --workspace=mathema-backend --include-workspace-root=false --include=dev
 
 # ----- stage 2: build (TypeScript + Prisma client) -----
-FROM node:20-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /repo
 # npm workspaces hoist everything into /repo/node_modules; there is no
 # server/node_modules at the deps stage (server resolves up the tree).
@@ -32,7 +32,7 @@ WORKDIR /repo
 RUN npm prune --omit=dev --workspace=mathema-backend --include-workspace-root=false
 
 # ----- stage 3: runtime -----
-FROM node:20-alpine
+FROM node:26-alpine
 LABEL org.opencontainers.image.title="mathema-backend" \
       org.opencontainers.image.source="https://github.com/prior89/mathema-app"
 
