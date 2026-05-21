@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 _Nothing yet._
 
+## [0.1.0-rc2] — 2026-05-22
+
+> CI/repo housekeeping release. No application code change vs rc1 — supersedes rc1 because rc1's AAB build failed on `cap sync android` (Capacitor CLI 8.x requires Node 22+; the workflow was pinned to Node 20).
+
+### Fixed
+- `android-release.yml`: bump runner to Node 22 so Capacitor CLI can run `cap sync android`.
+
+### Changed
+- Dependabot config simplified: root-only npm scope, weekly Monday cadence, semver-major bumps ignored, grouped into `prod` / `dev` / `@types/*`. First-day backlog of 30+ PRs (mostly major jumps + npm-workspaces lock-sync failures) closed in a single sweep — see explanatory comment on closed PRs.
+
 ## [0.1.0-rc1] — 2026-05-22
 
 > India-first NCERT math tutor proof-of-concept. NestJS server plus React/Vite/Capacitor Android client, deployed end-to-end on Azure Central India (Container Apps, Postgres Flexible Server, Key Vault, Static Web Apps) with a Python math-helper sidecar wrapping OpenAI and Mathpix. This release candidate covers the full student loop — Study, Test, Review, Solo, AI Solver, wrong-note queue, and pool-first problem generation — over a real backend with Postgres + Redis + BullMQ, plus a hardened auth stack (bcrypt-12, breached-password rejection, IP/email lockout, TOTP MFA backend, one-device-per-account, SecurityEvent audit log) and DPDP-leaning privacy gates. Pre-beta: Play Store assets are queued, Play Billing is not yet wired, and the Android AAB has gone green on the signed release workflow.
@@ -91,5 +101,6 @@ _Nothing yet._
 - D-day exam countdown card removed from Home.
 - Admin/admin login prefill removed from production builds.
 
-[Unreleased]: https://github.com/prior89/mathema-app/compare/v0.1.0-rc1...HEAD
+[Unreleased]: https://github.com/prior89/mathema-app/compare/v0.1.0-rc2...HEAD
+[0.1.0-rc2]: https://github.com/prior89/mathema-app/releases/tag/v0.1.0-rc2
 [0.1.0-rc1]: https://github.com/prior89/mathema-app/releases/tag/v0.1.0-rc1
