@@ -65,10 +65,19 @@ export class PrivacyService {
     }
     const current = await this.currentRow(userId, kind);
     if (!current || current.revokedAt !== null) return null;  // 이미 비활성 — no-op
-    return this.prisma.consent.update({
+    const updated = await this.prisma.consent.update({
       where: { id: current.id },
       data: { revokedAt: new Date() },
     });
+    // Cascade: revoking MARKETING also opts out every device token for this user.
+    // Idempotent — updateMany on an already-false set is a no-op.
+    if (kind === ConsentKind.MARKETING) {
+      await this.prisma.deviceToken.updateMany({
+        where: { userId },
+        data: { marketingEnabled: false },
+      });
+    }
+    return updated;
   }
 
   /** 사용자의 현재 모든 kind 상태 (UI 표시용). */

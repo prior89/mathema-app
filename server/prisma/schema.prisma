@@ -674,6 +674,11 @@ model DeviceToken {
   lastSentAt DateTime?
   /// Set when the token has been invalidated (e.g., FCM NotRegistered response)
   disabledAt DateTime?
+  /// Whether this device has opted into marketing pushes.
+  /// Default false — only flipped true via PATCH /devices/:token/marketing when MARKETING consent is active.
+  /// Learning-reminder pushes (streak / SM-2-due) ignore this flag — they are essential service notifications.
+  /// Auto-reset to false when PrivacyService.revoke(MARKETING) runs.
+  marketingEnabled Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
