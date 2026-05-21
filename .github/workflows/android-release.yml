@@ -22,7 +22,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # Capacitor CLI 8.x requires Node >=22. Other workflows still
+          # run Node 20 because the server is happy there; only this
+          # workflow exercises `cap sync`.
+          node-version: '22'
           cache: 'npm'
 
       - uses: actions/setup-java@v4
