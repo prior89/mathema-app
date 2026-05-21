@@ -320,7 +320,7 @@ export class MockExamsService {
     // average LLM cost per chapter trends down with each session.
     const shortfall = TARGET - candidates.length;
     if (shortfall > 0) {
-      const generated = await this.generateSingleStepProblems(lesson, shortfall);
+      const generated = await this.generateSingleStepProblems(lesson, shortfall, userId);
       candidates.push(...generated);
     }
 
@@ -393,8 +393,8 @@ export class MockExamsService {
 
     let chosenId: string | null = pooled[0]?.id ?? null;
     if (!chosenId) {
-      // Pool dry — generate one fresh single-step problem.
-      const generated = await this.generateSingleStepProblems(lesson, 1);
+      // Pool dry — generate one fresh single-step problem for this user.
+      const generated = await this.generateSingleStepProblems(lesson, 1, userId);
       chosenId = generated[0]?.id ?? null;
     }
     if (!chosenId) return null;
@@ -423,6 +423,7 @@ export class MockExamsService {
       subUnitId: string | null;
     },
     count: number,
+    userId?: string,
   ): Promise<Array<{ id: string; source: string; difficulty: string }>> {
     // Problem.unitId is non-null in the schema, so a chapter whose
     // ConceptLesson lost its unit mapping (legacy seed glitch) can't host
@@ -469,7 +470,7 @@ export class MockExamsService {
                 chapterTitleHint: lesson.titleEn,
                 text,
               },
-              { mode: 'single-step' },
+              { mode: 'single-step', userId },
             )
             .catch((err) => {
               this.logger.warn(`Single-step LLM gen failed: ${(err as Error).message}`);

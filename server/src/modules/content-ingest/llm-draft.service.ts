@@ -8,9 +8,10 @@
  *     (a reviewer can re-run it).
  *   - Token and cost tracking → ContentDraft.aiTokensIn/Out/CostUsd.
  */
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AiService } from '../../infrastructure/ai/ai.service';
+import { RedisService } from '../../infrastructure/redis/redis.service';
 import type { NormalizedProblem } from './types';
 
 export const DRAFT_PROMPT_VERSION = 'v1.2026-05-13';
@@ -136,10 +137,13 @@ Rules:
 @Injectable()
 export class LlmDraftService {
   private readonly logger = new Logger(LlmDraftService.name);
+  /** Daily per-user cap on LLM problem generations (Mastery + Study combined). */
+  private static readonly DAILY_CAP = 100;
 
   constructor(
     private readonly ai: AiService,
     private readonly config: ConfigService,
+    private readonly redis: RedisService,
   ) {}
 
   async generate(
@@ -151,9 +155,31 @@ export class LlmDraftService {
       qIndex?: number;
       text: string;
     },
-    opts: { mode?: DraftMode } = {},
+    opts: { mode?: DraftMode; userId?: string | null } = {},
   ): Promise<DraftResult> {
     const mode: DraftMode = opts.mode ?? 'multi-step';
+
+    // Per-user daily quota — guards against a single account hot-looping
+    // LLM cost into the floor. userId === null/undefined bypasses the
+    // check (admin scripts like prewarm-mastery, content-ingest admin
+    // imports). On a real student session the caller passes the JWT user
+    // id and over-cap requests get a 429.
+    if (opts.userId) {
+      const today = new Date().toISOString().slice(0, 10);
+      const key = `llm:gen:daily:${opts.userId}:${today}`;
+      const after = await this.redis.incrWithTtl(key, 24 * 3600);
+      if (after > LlmDraftService.DAILY_CAP) {
+        this.logger.warn(`LLM quota exceeded user=${opts.userId} count=${after}`);
+        throw new HttpException(
+          {
+            message: `Daily AI generation quota reached (${LlmDraftService.DAILY_CAP}/day). The pool refreshes at 00:00 UTC.`,
+            quota: LlmDraftService.DAILY_CAP,
+            used: after,
+          },
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+    }
     const ctxLine = [
       input.ncertClass ? `Class: ${input.ncertClass}` : null,
       input.chapterNumber ? `Chapter: ${input.chapterNumber}` : null,

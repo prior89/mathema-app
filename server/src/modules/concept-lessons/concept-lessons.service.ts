@@ -412,7 +412,7 @@ export class ConceptLessonsService {
    */
   private static readonly MASTERY_TARGET = 20;
 
-  async practiceProblems(chapterCode: string, _lang: Lang = 'en') {
+  async practiceProblems(chapterCode: string, _lang: Lang = 'en', userId?: string) {
     const lesson = await this.prisma.conceptLesson.findUnique({
       where: { chapterCode },
       select: {
@@ -451,7 +451,7 @@ export class ConceptLessonsService {
 
     // Top-up via LLM multi-step generation (see BULK-LLM chunked policy).
     const shortfall = target - pool.length;
-    const generated = await this.generateMultiStepProblems(lesson, shortfall);
+    const generated = await this.generateMultiStepProblems(lesson, shortfall, userId);
     return [...pool, ...generated];
   }
 
@@ -530,6 +530,7 @@ export class ConceptLessonsService {
       subUnitId: string | null;
     },
     count: number,
+    userId?: string,
   ) {
     if (!lesson.unitId) {
       this.logger.warn(`Skipping Mastery LLM top-up: chapter ${lesson.id} has no unitId`);
@@ -569,7 +570,7 @@ export class ConceptLessonsService {
               chapterTitleHint: lesson.titleEn,
               text,
             },
-            { mode: 'multi-step' },
+            { mode: 'multi-step', userId },
           ).catch((err) => {
             this.logger.warn(`Mastery LLM gen failed: ${(err as Error).message}`);
             return null;

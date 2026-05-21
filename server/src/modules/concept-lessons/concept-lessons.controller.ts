@@ -45,10 +45,11 @@ export class ConceptLessonsController {
   /** GET /concept-lessons/:code/practice-problems — lesson 에 매핑된 3-step 객관식 문제 목록 */
   @Get(':code/practice-problems')
   practiceProblems(
+    @CurrentUser('id') userId: string,
     @CurrentLang() lang: Lang,
     @Param('code') code: string,
   ) {
-    return this.service.practiceProblems(code, lang);
+    return this.service.practiceProblems(code, lang, userId);
   }
 
   /** GET /concept-lessons/:code — lesson 상세 (모든 step 포함) */
