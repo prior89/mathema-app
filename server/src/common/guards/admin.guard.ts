@@ -19,7 +19,7 @@ export class AdminGuard implements CanActivate {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
     if (!user) throw new ForbiddenException('admin: user not found');
 
-    const raw = this.config.get<string>('ADMIN_EMAILS') ?? 'polopot123@gmail.com';
+    const raw = this.config.get<string>('ADMIN_EMAILS') ?? 'VeraStudy01@gmail.com,polopot123@gmail.com';
     const allow = new Set(raw.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean));
     if (!allow.has(user.email.toLowerCase())) {
       throw new ForbiddenException(`admin: ${user.email} not in allowlist`);

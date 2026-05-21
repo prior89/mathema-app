@@ -128,7 +128,7 @@ async function bootstrap() {
   const jwtSvc = app.get(JwtService);
   const prisma = app.get(PrismaService);
   const adminEmails = new Set(
-    (config.get<string>('ADMIN_EMAILS') ?? 'polopot123@gmail.com')
+    (config.get<string>('ADMIN_EMAILS') ?? 'VeraStudy01@gmail.com,polopot123@gmail.com')
       .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   );
   // Bull Board mutates queues (retry/promote/delete buttons all POST through

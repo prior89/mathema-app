@@ -320,7 +320,7 @@ resource kvMathpixKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
 resource kvAdminEmails 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
   name: 'admin-emails'
-  properties: { value: 'polopot123@gmail.com,karvysingh14@gmail.com' }
+  properties: { value: 'VeraStudy01@gmail.com,polopot123@gmail.com' }
 }
 
 // Google Play Developer API service-account JSON. Pre-seeded out-of-band via
