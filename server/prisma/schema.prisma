@@ -737,6 +737,40 @@ model AdminAccessLog {
   @@index([path, createdAt])
 }
 
+/// Per-user security audit trail — every login outcome, password reset, device
+/// switch, breach-block. Separate from AdminAccessLog because the user-facing
+/// "where is my account logged in?" UX needs fast per-user lookups, and
+/// AdminAccessLog is admin-only.
+///
+/// Survives account deletion (audit retention) via onDelete: NoAction on the
+/// userId FK — the row keeps the original userId as a dangling pointer so a
+/// deleted account's history is still queryable for dispute / abuse review.
+model SecurityEvent {
+  id        String            @id @default(uuid())
+  userId    String? // nullable — failed logins with unknown email have no user FK
+  eventType SecurityEventType
+  ip        String?
+  userAgent String?           @db.Text
+  metadata  Json? // { email?, deviceHash?, reason?, ... } — event-specific
+  createdAt DateTime          @default(now())
+
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+}
+
+enum SecurityEventType {
+  LOGIN_SUCCESS
+  LOGIN_FAIL
+  LOGIN_LOCKED // 5-fail lockout triggered
+  NEW_DEVICE_LOGIN // session displaced an earlier device
+  DEVICE_REVOKE_OTHERS // user-initiated "log out other devices"
+  PASSWORD_RESET_REQUEST
+  PASSWORD_RESET_SUCCESS
+  PASSWORD_CHANGE
+  BREACH_PASSWORD_BLOCKED // pwnedpasswords rejected the chosen password
+  ACCOUNT_DELETED
+}
+
 // ---------- CONCEPT LEARNING (concept lesson before problem solving) ----------
 //
 // A pre-learning module that operationalizes 6 cognitive-psychology principles as stages:
