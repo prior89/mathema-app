@@ -12,7 +12,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import { fetchConceptLessons } from '../../lib/queries';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
@@ -27,10 +27,20 @@ export function StudyScreen() {
   const nav = useNavigate();
   const [chapter, setChapter] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
-  // AI Solver -- both Take photo and Upload buttons open the same OCR modal.
-  // The modal's pick phase handles camera vs gallery internally; surfacing
-  // two buttons here just makes the entry point legible at a glance.
-  const [solverOpen, setSolverOpen] = useState(false);
+  // AI Solver -- each button owns its own native <input type="file"> so the
+  // taps go DIRECTLY to the camera or to the gallery (no intermediate modal
+  // picker). The modal opens only AFTER a file is chosen, with that file
+  // already loaded via the initialFile prop.
+  const [solverFile, setSolverFile] = useState<File | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  const onFileChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) setSolverFile(f);
+    // Reset so picking the same file twice still fires onChange.
+    e.target.value = '';
+  };
 
   // Fetch every chapter the user has access to (all classes). The mastered
   // flag in the response decides eligibility — no client-side class filter.
@@ -151,8 +161,8 @@ export function StudyScreen() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <SolverButton
                 label="Take a photo"
-                hint="Use the camera"
-                onClick={() => setSolverOpen(true)}
+                hint="Open the camera"
+                onClick={() => cameraInputRef.current?.click()}
                 icon={
                   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <path d="M3 7h3l2-3h8l2 3h3v12H3z" />
@@ -162,8 +172,8 @@ export function StudyScreen() {
               />
               <SolverButton
                 label="Upload"
-                hint="From your gallery"
-                onClick={() => setSolverOpen(true)}
+                hint="Pick a file"
+                onClick={() => galleryInputRef.current?.click()}
                 icon={
                   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <path d="M12 4v12" />
@@ -173,6 +183,27 @@ export function StudyScreen() {
                 }
               />
             </div>
+            {/* Hidden native inputs -- each button triggers its specific
+                intent. `capture="environment"` makes Android/iOS open the
+                rear camera instead of the gallery picker; omitting it on
+                the second input gives the gallery (with PDFs too). */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={onFileChosen}
+              style={{ display: 'none' }}
+              aria-hidden
+            />
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={onFileChosen}
+              style={{ display: 'none' }}
+              aria-hidden
+            />
           </div>
 
           {/* How this works moved below the AI Solver so the heading reads as
@@ -181,9 +212,7 @@ export function StudyScreen() {
             <span className="label">How this works</span>
           </div>
           <div className="card" style={{ padding: 14, fontSize: 13, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
-            Every set is drawn from a shared pool of problems other students have
-            solved. You'll never see the same problem twice. Get one wrong and
-            it joins your <strong style={{ color: 'var(--p-ink)' }}>Notes</strong>{' '}
+            Get one wrong and it joins your <strong style={{ color: 'var(--p-ink)' }}>Notes</strong>{' '}
             for a future weekly review. For problems outside the pool, snap them
             with the AI Solver above and we'll add them to your library.
           </div>
@@ -191,7 +220,11 @@ export function StudyScreen() {
           <div style={{ height: 16 }} />
         </div>
       </div>
-      <UploadProblemModal open={solverOpen} onClose={() => setSolverOpen(false)} />
+      <UploadProblemModal
+        open={!!solverFile}
+        onClose={() => setSolverFile(null)}
+        initialFile={solverFile}
+      />
       <TabBar />
     </div>
   );

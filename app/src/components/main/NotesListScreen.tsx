@@ -36,71 +36,74 @@ export function NotesListScreen() {
 
   return (
     <div className="screen" style={{ position: 'relative' }}>
-      <div style={{ flex: 1, overflow: 'auto' }}>
-        <div className="app-head" style={{ paddingBottom: 0 }}>
-          <div>
-            <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>Library</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, marginTop: 2, letterSpacing: '-0.01em' }}>Wrong notes</div>
-          </div>
+      {/* Sticky top -- header + 4 stats + pattern banner + filter chips all
+          stay frozen above the scroll. The grid below is the only thing that
+          scrolls, so the user can swap filters without re-finding the stats. */}
+      <div className="app-head" style={{ paddingBottom: 0, flexShrink: 0 }}>
+        <div>
+          <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>Library</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, marginTop: 2, letterSpacing: '-0.01em' }}>Wrong notes</div>
+        </div>
+      </div>
+      <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
+        {/* 4 stats compact */}
+        <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+          <StatMini k="TOTAL" v={stats.data?.total ?? 0} />
+          <StatMini k="ANALYZED" v={stats.data?.analyzed ?? 0} />
+          <StatMini k="MASTERED" v={stats.data?.mastered ?? 0} />
+          <StatMini k="REDO %" v={Math.round(stats.data?.retryAccuracy ?? 0)} />
         </div>
 
-        <div style={{ padding: '12px 22px 0' }}>
-          {/* 4 stats compact */}
-          <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-            <StatMini k="TOTAL" v={stats.data?.total ?? 0} />
-            <StatMini k="ANALYZED" v={stats.data?.analyzed ?? 0} />
-            <StatMini k="MASTERED" v={stats.data?.mastered ?? 0} />
-            <StatMini k="REDO %" v={Math.round(stats.data?.retryAccuracy ?? 0)} />
-          </div>
-
-          {/* AI pattern banner */}
-          {patterns.data && patterns.data.length > 0 && (
-            <div className="card" style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent', padding: 12, display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, marginTop: 8 }}>
-              <div style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--p-primary)', color: 'var(--p-primary-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Glyph.Sparkle accent="#fff" size={14} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--p-ink)' }}>Pattern detected · {patterns.data[0].title}</div>
-                <div style={{ fontSize: 11.5, color: 'var(--p-ink-2)' }}>{patterns.data[0].desc}</div>
-              </div>
-              <Glyph.ChevronR accent="var(--p-primary)" size={16} />
+        {/* AI pattern banner */}
+        {patterns.data && patterns.data.length > 0 && (
+          <div className="card" style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent', padding: 12, display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, marginTop: 8 }}>
+            <div style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--p-primary)', color: 'var(--p-primary-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Glyph.Sparkle accent="#fff" size={14} />
             </div>
-          )}
-
-          {/* Status filter — defaults to "In progress" so the user reaches
-              what still needs work without scrolling past every MASTERED card. */}
-          <div className="filter-row" style={{ marginTop: 10, marginBottom: 4 }}>
-            {FILTERS.map((f) => (
-              <span
-                key={f.id}
-                className={`filter-chip ${filter === f.id ? 'active' : ''}`}
-                style={{ flex: '0 0 calc((100% - 12px) / 3)', textAlign: 'center' }}
-                onClick={() => setFilter(f.id)}
-              >
-                {f.label}
-              </span>
-            ))}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--p-ink)' }}>Pattern detected · {patterns.data[0].title}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--p-ink-2)' }}>{patterns.data[0].desc}</div>
+            </div>
+            <Glyph.ChevronR accent="var(--p-primary)" size={16} />
           </div>
+        )}
 
-          {/* Notes grid */}
-          {notes.isLoading && <Empty msg="Loading wrong notes…" />}
-          {notes.data && notes.data.length === 0 && <Empty msg="No wrong notes yet — practice problems to start building." />}
-          {notes.data && notes.data.length > 0 && visibleNotes.length === 0 && (
-            <Empty msg={
-              filter === 'mastered'
-                ? 'No mastered notes yet — solve a wrong-note review to graduate one.'
-                : filter === 'active'
-                  ? 'All caught up — every wrong note is mastered. Practice more chapters to grow the queue.'
-                  : 'No wrong notes match this filter.'
-            } />
-          )}
-          <div className="notes-grid">
-            {visibleNotes.map((n) => (
-              <div
-                key={n.id}
-                className="note-card"
-                onClick={() => nav(`/app/practice/${n.problemId}`)}
-              >
+        {/* Status filter — defaults to "In progress" so the user reaches
+            what still needs work without scrolling past every MASTERED card. */}
+        <div className="filter-row" style={{ marginTop: 10, marginBottom: 4 }}>
+          {FILTERS.map((f) => (
+            <span
+              key={f.id}
+              className={`filter-chip ${filter === f.id ? 'active' : ''}`}
+              style={{ flex: '0 0 calc((100% - 12px) / 3)', textAlign: 'center' }}
+              onClick={() => setFilter(f.id)}
+            >
+              {f.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Scrollable grid only */}
+      <div style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '8px 22px' }}>
+        {notes.isLoading && <Empty msg="Loading wrong notes…" />}
+        {notes.data && notes.data.length === 0 && <Empty msg="No wrong notes yet — practice problems to start building." />}
+        {notes.data && notes.data.length > 0 && visibleNotes.length === 0 && (
+          <Empty msg={
+            filter === 'mastered'
+              ? 'No mastered notes yet — solve a wrong-note review to graduate one.'
+              : filter === 'active'
+                ? 'All caught up — every wrong note is mastered. Practice more chapters to grow the queue.'
+                : 'No wrong notes match this filter.'
+          } />
+        )}
+        <div className="notes-grid">
+          {visibleNotes.map((n) => (
+            <div
+              key={n.id}
+              className="note-card"
+              onClick={() => nav(`/app/practice/${n.problemId}`)}
+            >
                 {/* Attribution (e.g. "NCERT Class 11 Mathematics, Ch.8 Ex.8.2
                     Q.11 (derived for matheo, Reprint 2024-25)") lives on
                     Problem.source for licence-safety reasons but isn't
@@ -132,9 +135,8 @@ export function NotesListScreen() {
                 </div>
               </div>
             ))}
-          </div>
-          <div style={{ height: 90 }} />
         </div>
+        <div style={{ height: 90 }} />
       </div>
 
       <div className="fab" onClick={() => setUploadOpen(true)} aria-label="Upload a problem">

@@ -11,11 +11,18 @@ import { uploadProblemImage, UploadAnalysisResult } from '../../lib/queries';
 import MathText from '../MathText';
 import { Glyph } from '../onboarding/Glyph';
 
-type Props = { open: boolean; onClose: () => void };
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  /** If provided, the modal opens with this file already chosen (skips the
+   *  "pick" picker UI). Used by the Study tab's Take-a-photo / Upload
+   *  buttons which own their own native <input type="file"> triggers. */
+  initialFile?: File | null;
+};
 
 type Phase = 'pick' | 'analyzing' | 'result' | 'error';
 
-export function UploadProblemModal({ open, onClose }: Props) {
+export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   const nav = useNavigate();
   const [phase, setPhase] = useState<Phase>('pick');
   const [file, setFile] = useState<File | null>(null);
@@ -41,6 +48,14 @@ export function UploadProblemModal({ open, onClose }: Props) {
       }
     } else {
       startedAtRef.current = Date.now();
+      // If the caller pre-loaded a file (Study tab buttons that own their own
+      // file input), surface it immediately as if the user had picked here.
+      if (initialFile) {
+        setFile(initialFile);
+        if (initialFile.type.startsWith('image/')) {
+          setPreviewUrl(URL.createObjectURL(initialFile));
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
