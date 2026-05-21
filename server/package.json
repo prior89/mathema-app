@@ -36,7 +36,7 @@
     "@langchain/core": "^1.1.46",
     "@langchain/openai": "^1.4.5",
     "@nestjs/bullmq": "^11.0.4",
-    "@nestjs/common": "^10.3.0",
+    "@nestjs/common": "^11.1.23",
     "@nestjs/config": "^3.2.0",
     "@nestjs/core": "^10.3.0",
     "@nestjs/event-emitter": "^2.0.4",
