@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { SecurityEventService } from './security-event.service';
 import { AuthDeviceService } from './auth-device.service';
+import { MfaService } from './mfa.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
 import { UsersModule } from '../users/users.module';
@@ -32,7 +33,7 @@ import { PrivacyModule } from '../privacy/privacy.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, SecurityEventService, AuthDeviceService, JwtStrategy, RefreshStrategy],
-  exports: [AuthService, SecurityEventService, AuthDeviceService],
+  providers: [AuthService, SecurityEventService, AuthDeviceService, MfaService, JwtStrategy, RefreshStrategy],
+  exports: [AuthService, SecurityEventService, AuthDeviceService, MfaService],
 })
 export class AuthModule {}

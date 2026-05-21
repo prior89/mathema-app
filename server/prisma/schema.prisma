@@ -291,6 +291,12 @@ model User {
   /// user has never confirmed they own the email on file. Frontend can show a
   /// "verify your email" banner; future policy may gate certain features.
   emailVerifiedAt DateTime?
+  /// MFA-1 — base32 TOTP secret. NULL = MFA never enrolled. Encrypted at rest
+  /// is a v1.1 follow-up; for now the column is plain text + relies on DB-
+  /// level access control. Setting this does NOT enable the challenge until
+  /// totpEnabledAt is also stamped (the /auth/mfa/verify step).
+  totpSecret      String?
+  totpEnabledAt   DateTime?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 

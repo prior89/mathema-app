@@ -12,6 +12,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuthDeviceService } from './auth-device.service';
 import { SecurityEventService } from './security-event.service';
+import { MfaService } from './mfa.service';
 
 @UseGuards(ThrottlerGuard)
 @Controller('auth')
@@ -20,6 +21,7 @@ export class AuthController {
     private readonly service: AuthService,
     private readonly devices: AuthDeviceService,
     private readonly events: SecurityEventService,
+    private readonly mfa: MfaService,
   ) {}
 
   // 가입: 분당 5회/IP — 신규 botspam 방지.
@@ -155,5 +157,34 @@ export class AuthController {
       metadata: { revokedCount: others.length },
     });
     return { ok: true, revoked: others.length };
+  }
+
+  // ---------- MFA-1 -- TOTP enrolment endpoints (v1.0 backend only) ----------
+
+  /** Stage 1 of enrolment: return otpauth URL + base64 QR PNG. */
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ auth: { ttl: 60_000, limit: 5 } })
+  @Post('mfa/setup')
+  mfaSetup(@CurrentUser('id') userId: string) {
+    return this.mfa.startSetup(userId);
+  }
+
+  /** Stage 2: confirm with the first OTP from the authenticator app. */
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ auth: { ttl: 60_000, limit: 10 } })
+  @Post('mfa/verify')
+  mfaVerify(@CurrentUser('id') userId: string, @Body('token') token: string) {
+    return this.mfa.confirmSetup(userId, token);
+  }
+
+  /** Disable -- requires both current password and a valid OTP. */
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ auth: { ttl: 60_000, limit: 5 } })
+  @Post('mfa/disable')
+  mfaDisable(
+    @CurrentUser('id') userId: string,
+    @Body() body: { password: string; token: string },
+  ) {
+    return this.mfa.disable(userId, body.password, body.token);
   }
 }
