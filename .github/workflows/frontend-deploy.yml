@@ -47,7 +47,7 @@ jobs:
       # the stored GH secret can't drift from the actual SWA (rotation,
       # recreate, wrong copy, etc.).
       - name: Login to Azure (OIDC)
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id:       ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
