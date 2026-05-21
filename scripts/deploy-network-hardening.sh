@@ -62,4 +62,45 @@ echo ">>> template=$TEMPLATE"
 echo ">>> parameters file=$PARAMS_FILE + 6 inline values"
 echo
 
+# Allow the deploy to fail without aborting the script — we still need the
+# post-deploy hook to re-pin PG/KV public access. ARM partial rollback has
+# bitten us twice: a Bicep redeploy that fails mid-way leaves PG and KV
+# with publicNetworkAccess=Disabled + KV networkAcls.defaultAction=Deny,
+# even though the template specifies the opposite. Until we ship VNet +
+# private endpoints (#27), the safe state is public + Allow + KV bypass.
+set +e
 az deployment group "$AZ_SUBCMD" "${ARGS[@]}"
+AZ_EXIT=$?
+set -e
+
+# Only the create path mutates state; whatif is pure dry-run.
+if [ "$AZ_SUBCMD" = "create" ]; then
+  echo
+  echo ">>> post-deploy: pinning PG + KV to known-safe public state"
+
+  PG_NAME=$(az postgres flexible-server list -g "$RG" --query "[0].name" -o tsv 2>/dev/null || echo "")
+  KV_NAME=$(az keyvault list -g "$RG" --query "[0].name" -o tsv 2>/dev/null || echo "")
+
+  if [ -n "$PG_NAME" ]; then
+    echo "    PG $PG_NAME → public-access Enabled"
+    az postgres flexible-server update -g "$RG" -n "$PG_NAME" --public-access Enabled --output none || true
+  else
+    echo "    (PG not found — skipping)"
+  fi
+
+  if [ -n "$KV_NAME" ]; then
+    echo "    KV $KV_NAME → publicNetworkAccess Enabled + default-action Allow"
+    az keyvault update --name "$KV_NAME" --public-network-access Enabled --output none || true
+    az keyvault update --name "$KV_NAME" --default-action Allow            --output none || true
+  else
+    echo "    (KV not found — skipping)"
+  fi
+
+  echo ">>> post-deploy hook done."
+fi
+
+if [ $AZ_EXIT -ne 0 ]; then
+  echo
+  echo "::error::az deployment group $AZ_SUBCMD exited $AZ_EXIT (state pinned to safe values above; investigate before redeploy)" >&2
+  exit $AZ_EXIT
+fi
