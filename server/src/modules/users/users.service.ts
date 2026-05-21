@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from './users.repository';
 import { daysUntil } from '../../common/utils/date.util';
+import { BCRYPT_COST } from '../../common/utils/auth-constants';
 
 @Injectable()
 export class UsersService {
@@ -23,7 +24,7 @@ export class UsersService {
     if (!u) throw new NotFoundException('User not found');
     const ok = await bcrypt.compare(current, u.passwordHash);
     if (!ok) throw new NotFoundException('current password mismatch');
-    const passwordHash = await bcrypt.hash(next, 10);
+    const passwordHash = await bcrypt.hash(next, BCRYPT_COST);
     await this.repo.update(id, { passwordHash });
     return { ok: true };
   }

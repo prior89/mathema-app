@@ -11,6 +11,7 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { RedisService } from '../../infrastructure/redis/redis.service';
 import { MailService } from '../../infrastructure/mail/mail.service';
 import { PrivacyService } from '../privacy/privacy.service';
+import { BCRYPT_COST } from '../../common/utils/auth-constants';
 
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
@@ -69,7 +70,7 @@ export class AuthService {
     const gradeLevel = isStudent ? dto.gradeLevel : undefined;
     const studyGoal = isStudent ? dto.studyGoal : undefined;
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
     const user = await this.users.create({
       email: dto.email,
       passwordHash,
@@ -127,7 +128,7 @@ export class AuthService {
     if (!user) {
       user = await this.users.create({
         email,
-        passwordHash: await bcrypt.hash('admin1234', 10),
+        passwordHash: await bcrypt.hash('admin1234', BCRYPT_COST),
         name: 'Aarav Sharma',
         examDate: new Date('2027-02-14'),
         targetGrade: 1,
@@ -216,7 +217,7 @@ export class AuthService {
       // here used to give every Google sign-up the wrong-class curriculum.
       user = await this.users.create({
         email,
-        passwordHash: await bcrypt.hash(`google:${payload.sub}:${Date.now()}`, 10),
+        passwordHash: await bcrypt.hash(`google:${payload.sub}:${Date.now()}`, BCRYPT_COST),
         name,
         examDate: placeholderExam,
         targetGrade: 1,
@@ -252,7 +253,7 @@ export class AuthService {
     if (!rec || rec.usedAt || rec.expiresAt < new Date()) {
       throw new BadRequestException('invalid or expired token');
     }
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST);
     await this.prisma.$transaction([
       this.prisma.user.update({ where: { id: rec.userId }, data: { passwordHash } }),
       (this.prisma as any).passwordResetToken.update({
