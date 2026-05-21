@@ -28,7 +28,10 @@ export class AuthController {
   // 로그인: 분당 5회/IP — credential stuffing 차단.
   @Throttle({ auth: { ttl: 60_000, limit: 5 } })
   @Public() @Post('login')
-  login(@Body() dto: LoginDto) { return this.service.login(dto); }
+  login(@Body() dto: LoginDto, @Req() req: any) {
+    const ip = (req?.ip ?? req?.headers?.['x-forwarded-for'] ?? '') as string;
+    return this.service.login(dto, ip);
+  }
 
   /** PoC dev login — admin/admin (or any creds). 자동 admin 시드 + DPDP 동의 + 토큰 발급. non-production only. */
   @Throttle({ auth: { ttl: 60_000, limit: 30 } })
