@@ -21,10 +21,15 @@ TEMPLATE="infra/bicep/main.bicep"
 PARAMS_FILE="infra/bicep/main.parameters.json"
 NAME="privlock-$(date +%Y%m%d-%H%M)"
 
-if [ "$MODE" != "whatif" ] && [ "$MODE" != "create" ]; then
-  echo "Usage: bash $0 [whatif|create]" >&2
-  exit 1
-fi
+# Normalise the shorthand `whatif` to the az subcommand `what-if`.
+case "$MODE" in
+  whatif|what-if) AZ_SUBCMD="what-if" ;;
+  create)         AZ_SUBCMD="create" ;;
+  *)
+    echo "Usage: bash $0 [whatif|create]" >&2
+    exit 1
+    ;;
+esac
 
 # Sanity check the four expected env vars are non-empty.
 for v in DB_PW JWT_A JWT_R OAI; do
@@ -52,9 +57,9 @@ if [ "$MODE" = "create" ]; then
   ARGS+=(--name "$NAME")
 fi
 
-echo ">>> az deployment group $MODE (rg=$RG, name=$NAME)"
+echo ">>> az deployment group $AZ_SUBCMD (rg=$RG, name=$NAME)"
 echo ">>> template=$TEMPLATE"
 echo ">>> parameters file=$PARAMS_FILE + 6 inline values"
 echo
 
-az deployment group "$MODE" "${ARGS[@]}"
+az deployment group "$AZ_SUBCMD" "${ARGS[@]}"
