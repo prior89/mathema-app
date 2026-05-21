@@ -10,6 +10,7 @@ import { ContentSourceType } from '@prisma/client';
 import { createHash } from 'crypto';
 import type { SourceAdapter } from './source.adapter';
 import type { IngestContext, NormalizedProblem, SourceConfig } from '../types';
+import { assertSafeIngestPath } from '../../../common/utils/path-safety';
 
 @Injectable()
 export class JsonBulkSourceAdapter implements SourceAdapter {
@@ -18,14 +19,18 @@ export class JsonBulkSourceAdapter implements SourceAdapter {
 
   async computeDigest(config: SourceConfig): Promise<string> {
     if (config.type !== 'JSON_BULK') throw new Error('JsonBulkSourceAdapter requires JSON_BULK config');
-    const buf = await fs.readFile(config.filePath);
+    // P1-4 path guard -- only files inside NCERT_INGEST_DIR are readable;
+    // prevents arbitrary admin-driven file disclosure (e.g. .env, keystore).
+    const safe = await assertSafeIngestPath(config.filePath);
+    const buf = await fs.readFile(safe);
     return createHash('sha256').update(buf).digest('hex');
   }
 
   async ingest(_jobId: string, config: SourceConfig, ctx: IngestContext): Promise<NormalizedProblem[]> {
     if (config.type !== 'JSON_BULK') throw new Error('JsonBulkSourceAdapter requires JSON_BULK config');
     await ctx.updateStatus('EXTRACTING');
-    const raw = await fs.readFile(config.filePath, 'utf8');
+    const safe = await assertSafeIngestPath(config.filePath);
+    const raw = await fs.readFile(safe, 'utf8');
     const parsed = JSON.parse(raw) as
       | NormalizedProblem[]
       | { items?: NormalizedProblem[]; problems?: NormalizedProblem[] };
