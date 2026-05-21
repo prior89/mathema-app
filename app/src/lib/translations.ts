@@ -463,6 +463,12 @@ const ko = {
   'study.concept.banner.desc':
     'NCERT 7–12 교육과정 79개 챕터 · 챕터당 10–25분 · 인지심리 6원칙으로 설계 (CPA · Cognitive Load · Worked Example · Retrieval · Variation · Misconception).',
   'study.gate.toConcept': '먼저 개념 학습: {title}',
+
+  // ===== Quota / Paywall (Phase 5 — AI Solver daily limit) =====
+  'quota.solver.remaining': '오늘 {used}/{limit}회 사용',
+  'quota.solver.exhausted': '한도 도달({used}/{limit}) — Premium 시작',
+  'paywall.quotaBanner.title': 'Free 한도에 도달했어요',
+  'paywall.quotaBanner.desc': 'Free 플랜은 하루 {limit}회 AI Solver 사용 — Premium은 무제한',
 };
 
 const en: typeof ko = {
@@ -922,6 +928,12 @@ const en: typeof ko = {
   'study.concept.banner.desc':
     'NCERT 7–12 syllabus · 79 chapters · 10–25 min each · grounded in six learning-science principles (CPA · Cognitive Load · Worked Example · Retrieval · Variation · Misconception).',
   'study.gate.toConcept': 'Concept first: {title}',
+
+  // Quota / Paywall (Phase 5 — AI Solver daily limit)
+  'quota.solver.remaining': '{used}/{limit} today',
+  'quota.solver.exhausted': 'Daily limit reached ({used}/{limit}) — Start Premium',
+  'paywall.quotaBanner.title': 'You\'ve reached the Free limit',
+  'paywall.quotaBanner.desc': 'Free plan: {limit} AI Solver calls per day — Premium is unlimited.',
 };
 
 // ----- HINDI (हिन्दी) -----

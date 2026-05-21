@@ -7,6 +7,7 @@ import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { UploadProblemModal } from './UploadProblemModal';
+import { QuotaMeter } from '../QuotaMeter';
 
 type StatusFilter = 'active' | 'mastered' | 'all';
 
@@ -139,6 +140,23 @@ export function NotesListScreen() {
         <div style={{ height: 90 }} />
       </div>
 
+      {/* Quota meter floats above the FAB so the user sees their remaining
+          AI Solver calls before tapping the "+" to upload a problem. */}
+      <div
+        style={{
+          position: 'absolute',
+          right: 22,
+          bottom: 86,
+          padding: '4px 10px',
+          background: 'var(--p-surface)',
+          border: '1px solid var(--p-border)',
+          borderRadius: 999,
+          boxShadow: '0 2px 8px rgba(31,26,20,0.06)',
+          zIndex: 5,
+        }}
+      >
+        <QuotaMeter />
+      </div>
       <div className="fab" onClick={() => setUploadOpen(true)} aria-label="Upload a problem">
         <svg viewBox="0 0 24 24" width="24" height="24">
           <path d="M 12 5 V 19 M 5 12 H 19" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />

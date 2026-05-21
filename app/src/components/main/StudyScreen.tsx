@@ -17,6 +17,7 @@ import { fetchConceptLessons } from '../../lib/queries';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import { UploadProblemModal } from './UploadProblemModal';
+import { QuotaMeter } from '../QuotaMeter';
 
 const CLASS_SHORT: Record<string, string> = {
   CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
@@ -152,7 +153,10 @@ export function StudyScreen() {
               step-by-step solution + lifts the problem into the user's pool. */}
           <div className="section-h">
             <span className="label">AI Solver</span>
-            <span className="more">Stuck? Snap it.</span>
+            {/* QuotaMeter renders nothing for premium / loading — it slots
+                here precisely so the free-tier user sees their remaining
+                calls before tapping a Solver button (Phase 5 quota UX). */}
+            <QuotaMeter style={{ marginLeft: 'auto' }} />
           </div>
           <div className="card" style={{ padding: 14, background: 'var(--p-primary-tint)', borderColor: 'transparent' }}>
             <div style={{ fontSize: 12.5, color: 'var(--p-ink-2)', marginBottom: 12, lineHeight: 1.5 }}>

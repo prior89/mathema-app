@@ -50,6 +50,32 @@ api.interceptors.response.use(
   (r) => r,
   async (err: AxiosError) => {
     const original = err.config as AxiosRequestConfig & { _retry?: boolean };
+
+    // Phase 5: AI Solver server-side quota.
+    // Backend throws 403 { error: 'QuotaExceeded', ... } from /math-helper/solve
+    // and /math-helper/ocr-solve when the daily Free counter is exhausted.
+    // Redirect the user straight to the paywall so we never let them stare at a
+    // raw "Forbidden" toast. We narrow on body.error === 'QuotaExceeded' so
+    // OTHER 403s (auth role mismatch, deleted account, etc.) still surface
+    // normally to the caller.
+    if (err.response?.status === 403) {
+      const data: any = err.response.data;
+      const code = data?.error?.code ?? data?.error;
+      if (code === 'QuotaExceeded') {
+        // Avoid bouncing the user mid-paywall if a stray request 403s there.
+        try {
+          if (!window.location.pathname.startsWith('/app/paywall')) {
+            window.location.assign('/app/paywall?reason=quota');
+          }
+        } catch {
+          /* SSR / non-browser — ignore */
+        }
+        // Fall through so the caller still sees the rejection (the modal will
+        // unmount on navigation, but in-flight code may want the error).
+        return Promise.reject(err);
+      }
+    }
+
     if (err.response?.status === 401 && !original?._retry && tokens.getRefresh()) {
       if (isRefreshing) {
         return new Promise((resolve) => {

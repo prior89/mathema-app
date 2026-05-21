@@ -104,6 +104,16 @@ export interface BillingServerStatus {
     autoRenewing: boolean;
     isInIntroOfferPeriod: boolean;
   } | null;
+  // Phase 5 server-side quota: limit === null => unlimited (premium tier).
+  // Backend reports the AI Solver daily counter so the client can render a
+  // pre-emptive meter next to the Solver button (avoids surprising 403s).
+  quota?: {
+    solver: {
+      used: number;
+      limit: number | null;
+      resetAt: string;
+    };
+  };
 }
 
 export async function getServerStatus(): Promise<BillingServerStatus> {

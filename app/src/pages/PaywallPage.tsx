@@ -11,6 +11,7 @@
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   fetchProducts,
   buy,
@@ -19,10 +20,19 @@ import {
   isBillingAvailable,
   initBilling,
 } from '../lib/billing';
+import { useT } from '../lib/i18n';
 
 export default function PaywallPage() {
   const qc = useQueryClient();
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
+  const [searchParams] = useSearchParams();
+  // `?reason=quota` is set by the api.ts 403/QuotaExceeded interceptor.
+  // It only changes the headline banner — the rest of the page (products,
+  // restore link, premium gate) stays identical. We deliberately read the
+  // status quota object so we can show the actual numeric limit instead of
+  // hardcoding "8" — keeps the UI honest if backend defaults change.
+  const reason = searchParams.get('reason');
 
   // Attach listeners on mount so the first purchaseUpdate after buy() lands.
   useEffect(() => {
@@ -43,6 +53,8 @@ export default function PaywallPage() {
     // came back from Play after a successful purchase.
     refetchOnWindowFocus: true,
   });
+
+  const quotaLimit = status.data?.quota?.solver?.limit ?? 8;
 
   if (!isBillingAvailable()) {
     return (
@@ -124,6 +136,25 @@ export default function PaywallPage() {
 
   return (
     <div style={{ maxWidth: 420, margin: '0 auto', padding: 24 }}>
+      {reason === 'quota' && (
+        <div
+          style={{
+            background: 'var(--p-danger-tint, #FEF2F2)',
+            border: '1px solid var(--p-danger, #DC2626)',
+            color: 'var(--p-danger, #B91C1C)',
+            borderRadius: 12,
+            padding: '12px 14px',
+            marginBottom: 16,
+          }}
+        >
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
+            {t('paywall.quotaBanner.title')}
+          </div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+            {t('paywall.quotaBanner.desc', { limit: quotaLimit })}
+          </div>
+        </div>
+      )}
       <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Matheo Premium</h1>
       <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 20 }}>
         Unlimited problems · AI explanations · Mistake analysis · Weekly reports
