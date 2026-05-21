@@ -99,6 +99,27 @@
     "transform": {
       "^.+.(t|j)s$": "ts-jest"
     },
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "__bench__"
+    ],
+    "collectCoverageFrom": [
+      "**/*.ts",
+      "!**/*.spec.ts",
+      "!**/*.module.ts",
+      "!**/main.ts",
+      "!**/dto/*.ts",
+      "!**/entities/*.ts",
+      "!common/i18n/content-*.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 18,
+        "branches": 12,
+        "functions": 10,
+        "lines": 19
+      }
+    }
   }
 }
