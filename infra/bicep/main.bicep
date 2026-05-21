@@ -96,6 +96,10 @@ param mathpixAppId string = ''
 @secure()
 param mathpixAppKey string = ''
 
+@description('Google Play Developer API service-account JSON (entire file content). Used by BillingService to verify purchaseTokens. Leave empty on redeploy if already seeded out-of-band — the secret will not be overwritten.')
+@secure()
+param playServiceAccountJson string = ''
+
 @description('Bootstrap mode for math-helper Container App — true on first deploy (placeholder image), false after the real Python image is pushed to ACR.')
 param mathHelperBootstrap bool = true
 
@@ -319,6 +323,23 @@ resource kvAdminEmails 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   properties: { value: 'polopot123@gmail.com,karvysingh14@gmail.com' }
 }
 
+// Google Play Developer API service-account JSON. Pre-seeded out-of-band via
+// `az keyvault secret set --vault-name <kv> --name play-service-account-json
+// --file matheo-play-billing-verify-<id>.json`. We declare the resource as
+// a stub so Bicep tracks it for backend secretRef wiring — the actual value
+// stays under operator control (don't blow it away on redeploy).
+// The `existing` modifier on the parent keyVault would be cleaner but the
+// rest of the template treats `keyVault` as a fresh resource, so we keep
+// this consistent: the secret is overwritten with a placeholder if redeployed
+// without the JSON, hence the `playServiceAccountJson` parameter (default
+// empty string — empty means "leave whatever's there", but Bicep can't
+// truly skip; see backend env block for the safe wiring).
+resource kvPlayServiceAccount 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(playServiceAccountJson)) {
+  parent: keyVault
+  name: 'play-service-account-json'
+  properties: { value: playServiceAccountJson }
+}
+
 // ---------- Container Apps Environment ----------
 
 resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
@@ -370,6 +391,8 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
         { name: 'mathpix-app-id',       keyVaultUrl: kvMathpixId.properties.secretUri,     identity: 'system' }
         { name: 'mathpix-app-key',      keyVaultUrl: kvMathpixKey.properties.secretUri,    identity: 'system' }
         { name: 'admin-emails',         keyVaultUrl: kvAdminEmails.properties.secretUri,   identity: 'system' }
+        // Play Developer API service-account JSON (seeded out-of-band)
+        { name: 'play-service-account-json', keyVaultUrl: '${keyVault.properties.vaultUri}secrets/play-service-account-json', identity: 'system' }
       ]
     }
     template: {
@@ -400,6 +423,11 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AI_EMBEDDING_MODEL',    value: 'text-embedding-3-large' }
             { name: 'AI_EMBEDDING_API_KEY',  secretRef: 'openai-api-key' }
             { name: 'ADMIN_EMAILS',        secretRef: 'admin-emails' }
+            // Google Play Developer API service-account credentials (full JSON
+            // body in the secret). BillingService parses it at boot.
+            { name: 'PLAY_SERVICE_ACCOUNT_JSON', secretRef: 'play-service-account-json' }
+            // Android package name BillingService passes to purchases.subscriptionsv2.get.
+            { name: 'PLAY_PACKAGE_NAME',   value: 'ai.matheo.app' }
             { name: 'STORAGE_DRIVER',      value: 'local' }
             { name: 'LLM_DRAFT_CONCURRENCY', value: '5' }
             // SPA origins for the backend's CORS allowlist. Both point at the

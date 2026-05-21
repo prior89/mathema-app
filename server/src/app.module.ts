@@ -14,6 +14,7 @@ import aiApiConfig from './config/ai-api.config';
 import storageConfig from './config/storage.config';
 import mathHelperConfig from './config/math-helper.config';
 import mathpixConfig from './config/mathpix.config';
+import playBillingConfig from './config/play-billing.config';
 
 // infrastructure (전역)
 import { PrismaModule } from './infrastructure/prisma/prisma.module';
@@ -59,7 +60,7 @@ import { BillingModule } from './modules/billing/billing.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, dbConfig, redisConfig, jwtConfig, aiApiConfig, storageConfig, mathHelperConfig, mathpixConfig],
+      load: [appConfig, dbConfig, redisConfig, jwtConfig, aiApiConfig, storageConfig, mathHelperConfig, mathpixConfig, playBillingConfig],
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
