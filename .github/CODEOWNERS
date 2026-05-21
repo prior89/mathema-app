@@ -1,0 +1,17 @@
+# CODEOWNERS for Matheo
+#
+# Lines later in the file take precedence over earlier ones.
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner
+*                                     @prior89
+
+# Karvy partner directories (0-line modification policy for prior89)
+/services/math-helper/                @Karvy-Singh
+/services/data/                       @Karvy-Singh
+/scripts/ncert-pdf-extract/           @Karvy-Singh
+
+# Infra / CI sensitive
+/infra/                               @prior89
+/.github/workflows/                   @prior89
+/server/prisma/migrations/            @prior89

@@ -1,0 +1,34 @@
+# Normalize line endings across Windows / macOS / Linux contributors.
+# Git will store text files with LF in the repo and check them out using the
+# platform default; the explicit eol overrides below pin per-file-type
+# endings where the runtime cares.
+
+* text=auto eol=lf
+
+# Shell scripts are executed on Linux containers (Azure, Docker) — must be LF.
+*.sh        text eol=lf
+
+# Windows batch files must be CRLF or cmd.exe refuses to parse them.
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Common binary assets — never normalize, never diff as text.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+*.pdf       binary
+
+# Android release signing artefacts and store bundles.
+*.jks       binary
+*.keystore  binary
+*.aab       binary
+*.apk       binary
+
+# Fonts.
+*.ttf       binary
+*.otf       binary
+*.woff      binary
+*.woff2     binary

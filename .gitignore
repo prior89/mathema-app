@@ -10,6 +10,10 @@ node_modules/
 .env.local
 **/.env
 **/.env.local
+# Android signing (keystore + passwords — never commit)
+.keystore.env
+*.jks
+*.keystore
 # OS / Editor
 .DS_Store
 .vscode/
@@ -49,11 +53,4 @@ __pycache__/
 *.pyc
 # Python virtualenvs (per-service isolation, never committed)
 **/.venv/
-
-# Android release signing — keep keystores + passphrases out of git.
-# Loss of these means we cannot ship app updates under the same upload key.
-# Back them up to a password manager / KeyVault.
-*.jks
-*.keystore
-.keystore.env
 
