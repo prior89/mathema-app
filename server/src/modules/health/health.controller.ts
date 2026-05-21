@@ -1,4 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { RedisService } from '../../infrastructure/redis/redis.service';
@@ -27,13 +28,17 @@ export class HealthController {
   }
 
   @Public() @Get('ready')
-  async ready() {
+  async ready(@Res({ passthrough: true }) res: Response) {
     const checks: Record<string, 'ok' | string> = {};
     try { await this.prisma.$queryRaw`SELECT 1`; checks.db = 'ok'; }
     catch (e) { checks.db = (e as Error).message; }
     try { await this.redis.get('health:ping'); checks.redis = 'ok'; }
     catch (e) { checks.redis = (e as Error).message; }
     const ready = checks.db === 'ok' && checks.redis === 'ok';
+    // ACA readiness probe relies on the HTTP status code, not the body --
+    // returning 200 while degraded would keep routing traffic to a backend
+    // that can't talk to its DB. Set 503 so probes drain the bad replica.
+    if (!ready) res.status(HttpStatus.SERVICE_UNAVAILABLE);
     return { status: ready ? 'ready' : 'degraded', checks, time: new Date().toISOString() };
   }
 }

@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 // config
 import appConfig from './config/configuration';
@@ -97,6 +98,16 @@ import { MathHelperModule } from './modules/math-helper/math-helper.module';
     ContentIngestModule,
     UploadsModule,
     MathHelperModule,
+  ],
+  providers: [
+    // P1-3: global rate-limit. forRoot([{ ttl: 60_000, limit: 120 }]) above
+    // only registers the module; without APP_GUARD only controllers with an
+    // explicit @UseGuards(ThrottlerGuard) get throttled. AuthController
+    // already has it, but the rest of the API (attempts, mock-exams, etc.)
+    // was wide open. With APP_GUARD every endpoint inherits the global
+    // budget; per-route @Throttle() decorators still override per-endpoint
+    // (e.g. /auth/login at 5/min via a stricter named throttler).
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule {}
