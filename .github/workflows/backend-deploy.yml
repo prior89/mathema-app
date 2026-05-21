@@ -76,10 +76,42 @@ jobs:
       # the whole job.
       - name: Smoke test
         run: |
-          BACKEND_URL=$(az containerapp show \
-            --name ${{ env.CONTAINER_APP }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
+          set -uo pipefail
+
+          # Resolve FQDN with retries + fallback. The `az containerapp update`
+          # above can return before ingress metadata is fully propagated, so
+          # the first show call sometimes returns an empty string. Also try
+          # latestRevisionFqdn as a fallback in case the ingress.fqdn path
+          # is stale for the new revision.
+          BACKEND_URL=""
+          for i in $(seq 1 6); do
+            BACKEND_URL=$(az containerapp show \
+              --name ${{ env.CONTAINER_APP }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --query "properties.configuration.ingress.fqdn" -o tsv 2>/dev/null || true)
+            if [ -z "$BACKEND_URL" ]; then
+              BACKEND_URL=$(az containerapp show \
+                --name ${{ env.CONTAINER_APP }} \
+                --resource-group ${{ env.RESOURCE_GROUP }} \
+                --query "properties.latestRevisionFqdn" -o tsv 2>/dev/null || true)
+            fi
+            if [ -n "$BACKEND_URL" ]; then
+              echo "Resolved FQDN on attempt $i: $BACKEND_URL"
+              break
+            fi
+            echo "FQDN fetch attempt $i empty, retrying in 5s..."
+            sleep 5
+          done
+
+          if [ -z "$BACKEND_URL" ]; then
+            echo "::error::Could not resolve Container App FQDN — dumping containerapp show for diagnosis"
+            az containerapp show \
+              --name ${{ env.CONTAINER_APP }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --query "properties.configuration.ingress" -o json || true
+            exit 1
+          fi
+
           echo "Backend URL: https://$BACKEND_URL"
           ok=0
           for i in $(seq 1 12); do
