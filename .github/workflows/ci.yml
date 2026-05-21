@@ -40,7 +40,7 @@ jobs:
 
       - name: Typecheck (server only -- frontend in separate job)
         working-directory: server
-        run: npm run build -- --noEmit
+        run: npm run typecheck
 
       - name: Jest with coverage
         working-directory: server
