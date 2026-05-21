@@ -1,4 +1,4 @@
-# Mathēma — Azure 배포 가이드
+# Matheo — Azure 배포 가이드
 
 > 인도 PoC 권장: **Central India** 리전. $10k 크레딧으로 약 100개월 운영 가능 (월 ~$96 추산).
 

@@ -1,18 +1,25 @@
-# matheo
+# Matheo
 
-AI-powered NCERT math learning app for Indian Class 7-12 students (CBSE / JEE prep).
+AI-powered NCERT math learning app — India-first, expanding to KR / ID / VN / AE.
+Class 7-12 (NCF-SE 2023). CBSE / JEE / NEET prep.
 Monorepo:
 
-- **`server/`** — NestJS + Prisma + PostgreSQL backend (REST `/api/v1/*`)
-- **`app/`** — React + Vite + Capacitor mobile-first frontend (sage UI, 5 tabs)
+- **`server/`** — NestJS + Prisma + PostgreSQL + Redis + BullMQ backend (REST `/api/v1/*`)
+- **`app/`** — React + Vite + Capacitor (Android `ai.matheo.app`) — student / parent / teacher / admin UI
+- **`services/math-helper/`** — Python LangGraph microservice (NCERT problem solver, OpenAI + Mathpix) — partner-maintained ([Karvy-Singh](https://github.com/Karvy-Singh))
 
-> **Status: pre-beta PoC.** The 5 tabs of the student flow are wired end-to-end
-> against a real backend, and the admin content-ingestion pipeline (PDF / HTTP
-> API → LLM draft → review → publish) is functional. Production hosting is
-> not yet set up — see [Production deployment](#production-deployment-tbd).
-> All 6 NCERT Math PDFs (Class 7–12, NCF-SE 2023 syllabus) have been extracted
-> into **2,169 NormalizedProblem entries** and are ready for bulk import via
-> `npm run import:ncert` — see [NCERT content ingestion](#ncert-content-ingestion-pipeline) below.
+> **Status: v0.1.0 release candidate — Internal Testing track upload in progress.**
+>
+> - 🟢 Backend live on Azure Central India (Container Apps + Postgres Flexible + Redis + Key Vault).
+> - 🟢 Frontend live on Azure Static Web Apps (`https://black-wave-093b02b00.7.azurestaticapps.net`).
+> - 🟢 Math-helper sidecar live (internal ingress, called from server).
+> - 🟢 Signed Android AAB ready (Capacitor 8 + Play Billing 7.1.1 native plugin).
+> - 🟢 Google Play Billing: Subscription Prisma model + Play Developer API v3 server verify + RTDN webhook + Free 8/day quota gate + paywall UI. All wired; **Play Console product creation + Internal Testing track release are the operator's last steps.**
+> - 🟡 Pricing: Free (8/day) + Premium monthly + Premium yearly (5 countries: KR / IN / ID / VN / AE) — 60-day Launch Promo via Play introductory price.
+> - 🟡 Family plan: deferred to v1.
+> - 🟡 Network hardening (VNet + private endpoints for PG/KV): deferred to a follow-up sprint — currently `publicNetworkAccess: Enabled` with KV `defaultAction: Allow` since ACA shared-pool egress isn't on Microsoft's trusted-services list.
+>
+> 2,169 NormalizedProblem entries (NCERT Math, 6 PDFs Class 7-12, NCF-SE 2023) ingested and live in production Postgres. Bulk import CLI in `server/scripts/import-ncert.ts` — see [NCERT content ingestion](#ncert-content-ingestion-pipeline) below.
 
 ---
 
@@ -37,7 +44,8 @@ npm run dev
 ```
 
 Open <http://localhost:5173>. The demo auto-login (`VITE_ENABLE_DEMO_AUTO_LOGIN=true`)
-signs in with the seeded `polopot123@gmail.com` account.
+signs in with the seeded `polopot123@gmail.com` account (still the seed user; the
+production admin allowlist is `VeraStudy01@gmail.com,polopot123@gmail.com`).
 
 ---
 
@@ -335,14 +343,43 @@ npm run cap:open       # opens Android Studio
 
 ---
 
-## Production deployment (TBD)
+## Production deployment — Azure Central India
 
-Recommended target topology:
-- frontend → **Vercel** (static + SPA)
-- backend → **Render** or **Fly.io** (NestJS container — Dockerfile already in `server/`)
-- Postgres → **Neon** (managed)
-- Redis → **Upstash**
-- Secrets via hosting platform env (never commit `.env`)
+Live topology (RG `mathema-prod-cin`):
+
+| Layer | Resource | Notes |
+|---|---|---|
+| Frontend | Static Web App `mathema-swa` | `https://black-wave-093b02b00.7.azurestaticapps.net` |
+| Backend | Container App `mathema-backend` | NestJS, system-assigned MI pulls from ACR |
+| Math-helper | Container App `mathema-math-helper` | Python LangGraph, internal ingress |
+| DB | Postgres Flexible Server `mathema-pg-*` | B1ms, 32GB, `publicNetworkAccess: Enabled` (see Status note) |
+| Cache | Azure Cache for Redis Basic C0 | `rediss://` (BullMQ + idempotency + quota counters) |
+| Secrets | Key Vault `mathema-kv-7ehvzq` | All env vars (DB URL / JWT / OpenAI / Mathpix / Play SA JSON / admin emails) injected via `secretRef` |
+| Registry | ACR `mathemaacr*` | `adminUserEnabled: false`, MI-based AcrPull |
+| Observability | Log Analytics + Application Insights | Sentry on frontend |
+
+### Deploy
+
+1. Push to `main` — workflows auto-trigger by path:
+   - `server/**` → `backend-deploy.yml` (Docker build → ACR push → Container App update → smoke test)
+   - `app/**` → `frontend-deploy.yml` (Vite build → SWA deploy)
+   - `services/math-helper/**` → `math-helper-deploy.yml`
+   - tag `v*` or workflow_dispatch → `android-release.yml` (signed AAB artifact, 30-day retention)
+
+2. Infra changes — `bash scripts/deploy-network-hardening.sh create` (post-deploy hook keeps PG/KV publicNetworkAccess Enabled until VNet + private endpoint sprint lands).
+
+### Operator runbook
+- Backend down: `az containerapp revision restart` + check `az containerapp logs show`.
+- KV / PG silently disabled by ARM partial rollback: deploy script's post-deploy hook auto-re-enables, but manual recovery is `az postgres flexible-server update --public-access Enabled` + `az keyvault update --default-action Allow`.
+- AAB rebuild: `gh workflow run android-release.yml --ref main`; artifact `matheo-aab` in the run's Artifacts.
+
+### What's NOT deployed yet (operator-driven last mile)
+- Play Console product creation (`premium_monthly` / `premium_yearly` + 5-country pricing + 60-day intro offer with `launch-promo-60d` tag).
+- Internal Testing track release of the current AAB.
+- GCP Pub/Sub topic + Play Console RTDN linkage (server `/billing/rtdn` endpoint is ready; operator fills `RTDN_AUDIENCE` + `RTDN_SERVICE_ACCOUNT_EMAIL` env vars once Pub/Sub is provisioned).
+- FCM credentials (`google-services.json` + ACA env). Push notifications inactive until then.
+- Designer assets: app icon adaptive + splash (current launcher is from the 512px brand icon), feature graphic 1024×500, 2-8 phone screenshots.
+- VNet integration + private endpoints (PG / KV / AOAI) — task #27.
 
 ---
 
