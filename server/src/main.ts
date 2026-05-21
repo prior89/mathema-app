@@ -28,6 +28,7 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { PrismaService } from './infrastructure/prisma/prisma.service';
 
 // Sentry 초기화 — DSN 미설정이면 SDK 가 no-op 모드로 동작 (안전).
 if (process.env.SENTRY_DSN) {
@@ -118,6 +119,37 @@ async function bootstrap() {
     res.set('Content-Type', promClient.register.contentType);
     res.end(await promClient.register.metrics());
   });
+
+  // MON-3 -- Bull Board admin UI under /api/v1/admin/queues. Bull Board ships
+  // an express router; we cannot put it behind Nest's JwtAuthGuard +
+  // AdminGuard via a controller, so wire equivalent middleware here.
+  const { BullBoardModule, BULL_BOARD_BASE_PATH } = await import('./modules/admin/bull-board.module');
+  const { JwtService } = await import('@nestjs/jwt');
+  const jwtSvc = app.get(JwtService);
+  const prisma = app.get(PrismaService);
+  const adminEmails = new Set(
+    (config.get<string>('ADMIN_EMAILS') ?? 'polopot123@gmail.com')
+      .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+  );
+  server.use(BULL_BOARD_BASE_PATH, async (req: any, res: any, next: any) => {
+    try {
+      const auth = req.headers?.authorization ?? '';
+      const token = auth.startsWith('Bearer ') ? auth.slice('Bearer '.length) : '';
+      if (!token) return res.status(401).json({ error: { message: 'admin: missing bearer token' } });
+      const payload = await jwtSvc.verifyAsync(token, {
+        secret: config.get<string>('jwt.accessSecret'),
+      });
+      const user = await prisma.user.findUnique({
+        where: { id: payload.sub }, select: { email: true },
+      });
+      if (!user || !adminEmails.has(user.email.toLowerCase())) {
+        return res.status(403).json({ error: { message: 'admin: not in allowlist' } });
+      }
+      next();
+    } catch (e: any) {
+      res.status(401).json({ error: { message: `admin: ${e?.message ?? 'auth failed'}` } });
+    }
+  }, BullBoardModule.serverAdapter.getRouter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

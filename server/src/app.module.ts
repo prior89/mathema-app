@@ -42,6 +42,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthModule } from './modules/health/health.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { BullBoardModule } from './modules/admin/bull-board.module';
 import { PushModule } from './modules/push/push.module';
 import { PrivacyModule } from './modules/privacy/privacy.module';
 import { LlmAnalysisModule } from './modules/llm-analysis/llm-analysis.module';
@@ -92,6 +93,7 @@ import { MathHelperModule } from './modules/math-helper/math-helper.module';
     PushModule,
     PrivacyModule,
     LlmAnalysisModule,
+    BullBoardModule,
     FeedbackModule,
     StudentsModule,
     DiagnosticModule,
