@@ -141,7 +141,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' = {
   location: location
   sku: { name: 'Basic' }
   properties: {
-    adminUserEnabled: true   // PoC 편의 — production 에서는 managed identity 권장
+    adminUserEnabled: false   // AcrPull role on Container App managed identities handles auth; admin user is not needed.
   }
 }
 
@@ -161,7 +161,7 @@ resource pgServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-preview'
     storage: { storageSizeGB: 32 }
     backup: { backupRetentionDays: 7, geoRedundantBackup: 'Disabled' }
     highAvailability: { mode: 'Disabled' }
-    network: { publicNetworkAccess: 'Enabled' }
+    network: { publicNetworkAccess: 'Disabled' }
   }
 }
 
@@ -202,7 +202,12 @@ resource aoai 'Microsoft.CognitiveServices/accounts@2024-10-01' = if (provisionA
   sku: { name: 'S0' }
   properties: {
     customSubDomainName: aoaiName
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: 'Disabled'
+    networkAcls: {
+      defaultAction: 'Deny'
+      virtualNetworkRules: []
+      ipRules: []
+    }
   }
 }
 
@@ -226,7 +231,13 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableRbacAuthorization: true
     enableSoftDelete: true
     softDeleteRetentionInDays: 7
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: 'Disabled'
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Deny'
+      ipRules: []
+      virtualNetworkRules: []
+    }
   }
 }
 
@@ -292,6 +303,16 @@ resource kvMathpixKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   properties: { value: mathpixAppKey }
 }
 
+// Admin email allowlist — comma-separated. Default seeded here; rotate via
+// `az keyvault secret set --vault-name <kv> --name admin-emails --value ...`
+// in the Azure portal/CLI without redeploying the template. Container App
+// reads the latest revision on next restart.
+resource kvAdminEmails 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
+  parent: keyVault
+  name: 'admin-emails'
+  properties: { value: 'polopot123@gmail.com,karvysingh14@gmail.com' }
+}
+
 // ---------- Container Apps Environment ----------
 
 resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
@@ -331,12 +352,10 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
       registries: [
         {
           server: acr.properties.loginServer
-          username: acr.name
-          passwordSecretRef: 'acr-password'
+          identity: 'system'
         }
       ]
       secrets: [
-        { name: 'acr-password',         value: acr.listCredentials().passwords[0].value }
         { name: 'database-url',         keyVaultUrl: kvDbUrl.properties.secretUri,         identity: 'system' }
         { name: 'redis-url',            keyVaultUrl: kvRedisUrl.properties.secretUri,      identity: 'system' }
         { name: 'jwt-access-secret',    keyVaultUrl: kvJwtAccess.properties.secretUri,     identity: 'system' }
@@ -344,6 +363,7 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
         { name: 'openai-api-key',       keyVaultUrl: kvOpenai.properties.secretUri,        identity: 'system' }
         { name: 'mathpix-app-id',       keyVaultUrl: kvMathpixId.properties.secretUri,     identity: 'system' }
         { name: 'mathpix-app-key',      keyVaultUrl: kvMathpixKey.properties.secretUri,    identity: 'system' }
+        { name: 'admin-emails',         keyVaultUrl: kvAdminEmails.properties.secretUri,   identity: 'system' }
       ]
     }
     template: {
@@ -373,7 +393,7 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AI_EMBEDDING_PROVIDER', value: 'openai' }
             { name: 'AI_EMBEDDING_MODEL',    value: 'text-embedding-3-large' }
             { name: 'AI_EMBEDDING_API_KEY',  secretRef: 'openai-api-key' }
-            { name: 'ADMIN_EMAILS',        value: 'polopot123@gmail.com,karvysingh14@gmail.com' }
+            { name: 'ADMIN_EMAILS',        secretRef: 'admin-emails' }
             { name: 'STORAGE_DRIVER',      value: 'local' }
             { name: 'LLM_DRAFT_CONCURRENCY', value: '5' }
             // SPA origins for the backend's CORS allowlist. Both point at the
@@ -434,6 +454,17 @@ resource kvSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' 
   }
 }
 
+// ACR pull permission — managed identity replaces admin user for image pulls.
+resource acrPullRoleBackend 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: acr
+  name: guid(acr.id, backendApp.id, 'acr-pull')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull
+    principalId: backendApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // ---------- Math-helper Container App (Python FastAPI · internal) ----------
 //
 // Karvy 의 LangGraph 서비스. /math-helper/solve, /assessments/* 호출 시
@@ -458,12 +489,10 @@ resource mathHelperApp 'Microsoft.App/containerApps@2024-03-01' = {
       registries: [
         {
           server: acr.properties.loginServer
-          username: acr.name
-          passwordSecretRef: 'acr-password'
+          identity: 'system'
         }
       ]
       secrets: [
-        { name: 'acr-password',  value: acr.listCredentials().passwords[0].value }
         { name: 'openai-api-key', keyVaultUrl: kvOpenai.properties.secretUri, identity: 'system' }
       ]
     }
@@ -515,6 +544,17 @@ resource kvSecretsUserRoleForMathHelper 'Microsoft.Authorization/roleAssignments
   name: guid(keyVault.id, mathHelperApp.id, 'kv-secrets-user')
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+    principalId: mathHelperApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// math-helper managed identity — AcrPull (no admin user on ACR).
+resource acrPullRoleMathHelper 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: acr
+  name: guid(acr.id, mathHelperApp.id, 'acr-pull')
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull
     principalId: mathHelperApp.identity.principalId
     principalType: 'ServicePrincipal'
   }
