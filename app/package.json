@@ -24,7 +24,7 @@
     "@sentry/react": "^10.52.0",
     "@tanstack/react-query": "^5.28.0",
     "axios": "^1.6.7",
-    "katex": "^0.16.10",
+    "katex": "^0.16.47",
     "lucide-react": "^0.383.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
