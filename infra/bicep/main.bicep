@@ -428,6 +428,17 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'PLAY_SERVICE_ACCOUNT_JSON', secretRef: 'play-service-account-json' }
             // Android package name BillingService passes to purchases.subscriptionsv2.get.
             { name: 'PLAY_PACKAGE_NAME',   value: 'ai.matheo.app' }
+            // Play RTDN (Real-Time Developer Notifications) — Pub/Sub push auth.
+            // Both values are left EMPTY at first deploy; the RTDN endpoint
+            // refuses every request until the operator fills them in (after
+            // creating the Pub/Sub topic + push subscription + dedicated
+            // service account, then re-deploying with these values set, or
+            // editing the Container App env directly). RTDN_AUDIENCE should
+            // be the public RTDN URL (the value Pub/Sub uses as the OIDC
+            // `aud` claim), and RTDN_SERVICE_ACCOUNT_EMAIL is the SA Pub/Sub
+            // signs with — RtdnService pins the OIDC `email` claim to it.
+            { name: 'RTDN_AUDIENCE',               value: '' }
+            { name: 'RTDN_SERVICE_ACCOUNT_EMAIL',  value: '' }
             { name: 'STORAGE_DRIVER',      value: 'local' }
             { name: 'LLM_DRAFT_CONCURRENCY', value: '5' }
             // SPA origins for the backend's CORS allowlist. Both point at the
