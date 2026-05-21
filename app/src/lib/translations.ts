@@ -7,7 +7,7 @@
 
 const ko = {
   // ===== App brand =====
-  'app.brand': 'matheo',
+  'app.brand': 'Matheo',
   'app.tagline': '· NCERT 수학',
 
   // ===== Common =====
@@ -467,7 +467,7 @@ const ko = {
 
 const en: typeof ko = {
   // Brand
-  'app.brand': 'matheo',
+  'app.brand': 'Matheo',
   'app.tagline': '· NCERT Maths',
 
   // Common
@@ -529,7 +529,7 @@ const en: typeof ko = {
   'auth.gradeLevel.placeholder': 'Select grade',
   // ── Sage onboarding (3 steps: role → profile → consent) ──
   'reg.step1.eyebrow': 'Step 01 · You',
-  'reg.step1.title': 'Who\'s using matheo?',
+  'reg.step1.title': 'Who\'s using Matheo?',
   'reg.step1.sub': 'We tailor the home screen and reports to your role.',
   'reg.role.student': 'Student',
   'reg.role.student.sub': 'I\'m here to learn and practice math.',
@@ -929,7 +929,7 @@ const en: typeof ko = {
 // missing keys fall through to EN via i18n.tsx t().
 const hi: Partial<typeof ko> = {
   // Brand
-  'app.brand': 'matheo',
+  'app.brand': 'Matheo',
   'app.tagline': '· NCERT गणित',
 
   // Common
@@ -991,7 +991,7 @@ const hi: Partial<typeof ko> = {
   'auth.gradeLevel.placeholder': 'श्रेणी चुनें',
   // ── Sage onboarding (3 steps: role → profile → consent) ──
   'reg.step1.eyebrow': 'चरण 01 · आप',
-  'reg.step1.title': 'matheo का उपयोग कौन कर रहा है?',
+  'reg.step1.title': 'Matheo का उपयोग कौन कर रहा है?',
   'reg.step1.sub': 'हम आपकी भूमिका के अनुसार होम स्क्रीन और रिपोर्ट तैयार करते हैं।',
   'reg.role.student': 'विद्यार्थी',
   'reg.role.student.sub': 'मैं गणित सीखने और अभ्यास करने यहाँ हूँ।',

@@ -26,7 +26,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { SecurityEventService } from './security-event.service';
 
-const TOTP_ISSUER = 'matheo';
+const TOTP_ISSUER = 'Matheo';
 
 // Standard authenticator-app friendly TOTP options: 30-second steps + 1-step
 // drift window (+/-30s = 90s effective). Re-applied per verify call because

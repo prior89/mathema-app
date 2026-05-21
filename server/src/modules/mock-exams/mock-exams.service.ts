@@ -437,7 +437,7 @@ export class MockExamsService {
     }
     const unitId = lesson.unitId;
     const classLabel = lesson.ncertClass.replace('CLASS_', 'Class ');
-    const attribution = `AI generated for matheo · ${classLabel} Chapter ${lesson.chapterNumber} (${lesson.titleEn}) — derived from NCERT syllabus`;
+    const attribution = `AI generated for Matheo · ${classLabel} Chapter ${lesson.chapterNumber} (${lesson.titleEn}) — derived from NCERT syllabus`;
     const chapterRef = `${classLabel} · Chapter ${lesson.chapterNumber} · ${lesson.titleEn}`;
     // Per-variant prompt nudges the LLM to vary the problems even when
     // called in parallel. The seed integer + difficulty hint avoids

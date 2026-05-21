@@ -31,14 +31,14 @@ describe('attribution.helper', () => {
     it('produces canonical attribution for old textbook', () => {
       const s = buildNcertAttribution('AUTO · CLASS_10 · Ch1 · Ex1.1 · Q4');
       expect(s).toBe(
-        'NCERT Class 10 Mathematics, Ch.1 Ex.1.1 Q.4 (derived for matheo, Reprint 2024-25)',
+        'NCERT Class 10 Mathematics, Ch.1 Ex.1.1 Q.4 (derived for Matheo, Reprint 2024-25)',
       );
     });
 
     it('formats Figure it Out exercise id without Ex prefix duplication', () => {
       const s = buildNcertAttribution('AUTO · CLASS_7 · Ch1 · ExFIO-2 · Q1');
       expect(s).toBe(
-        'NCERT Class 7 Mathematics, Ch.1 FIO-2 Q.1 (derived for matheo, Reprint 2024-25)',
+        'NCERT Class 7 Mathematics, Ch.1 FIO-2 Q.1 (derived for Matheo, Reprint 2024-25)',
       );
     });
 
@@ -53,14 +53,14 @@ describe('attribution.helper', () => {
     it('accepts a full NCERT attribution', () => {
       expect(
         isAcceptableAttribution(
-          'NCERT Class 10 Mathematics, Ch.1 Ex.1.1 Q.4 (derived for matheo, Reprint 2024-25)',
+          'NCERT Class 10 Mathematics, Ch.1 Ex.1.1 Q.4 (derived for Matheo, Reprint 2024-25)',
         ),
       ).toBe(true);
     });
 
     it('accepts EBS-derived attribution', () => {
       expect(
-        isAcceptableAttribution('EBS 수능특강 2024 problem 12 (derived for matheo)'),
+        isAcceptableAttribution('EBS 수능특강 2024 problem 12 (derived for Matheo)'),
       ).toBe(true);
     });
 
@@ -81,7 +81,7 @@ describe('attribution.helper', () => {
 
     it('rejects when textbook brand missing', () => {
       expect(
-        isAcceptableAttribution('Some Mathematics problem (derived for matheo)'),
+        isAcceptableAttribution('Some Mathematics problem (derived for Matheo)'),
       ).toBe(false);
     });
   });

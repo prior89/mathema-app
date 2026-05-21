@@ -540,7 +540,7 @@ export class ConceptLessonsService {
     }
     const unitId = lesson.unitId;
     const classLabel = lesson.ncertClass.replace('CLASS_', 'Class ');
-    const attribution = `AI generated for matheo · ${classLabel} Chapter ${lesson.chapterNumber} (${lesson.titleEn}) — derived from NCERT syllabus`;
+    const attribution = `AI generated for Matheo · ${classLabel} Chapter ${lesson.chapterNumber} (${lesson.titleEn}) — derived from NCERT syllabus`;
     const chapterRef = `${classLabel} · Chapter ${lesson.chapterNumber} · ${lesson.titleEn}`;
     // Per-variant difficulty quota + random seed beat the LLM's habit of
     // collapsing same-prompt parallel calls onto the same canonical

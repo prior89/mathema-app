@@ -191,7 +191,7 @@ export function SettingsScreen() {
 
         {/* About */}
         <div style={{ marginTop: 24, padding: 12, textAlign: 'center', fontSize: 11, color: 'var(--p-muted)' }}>
-          matheo PoC · Policy v2026.05.01
+          Matheo · Policy v2026.05.01
         </div>
       </div>
       <TabBar />

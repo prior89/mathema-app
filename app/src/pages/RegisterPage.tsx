@@ -1,5 +1,5 @@
 /**
- * RegisterPage — matheo 폰-프레임 3단계 회원가입.
+ * RegisterPage — Matheo 폰-프레임 3단계 회원가입.
  *
  *   명세서 §1 — 역할별 분기 (STUDENT / PARENT / TEACHER).
  *

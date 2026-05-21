@@ -1,4 +1,4 @@
-/* matheo glyphs — ported from prototype `App onboarding/glyphs.jsx` */
+/* Matheo glyphs — ported from prototype `App onboarding/glyphs.jsx` */
 import { CSSProperties } from 'react';
 
 type AccentProps = { accent?: string };
@@ -104,7 +104,7 @@ export const Glyph = {
           <circle cx="14" cy="14" r="12" fill="none" stroke={accent} strokeWidth="2" />
           <text x="14" y="20" textAnchor="middle" fontFamily="Lora, serif" fontSize="16" fontStyle="italic" fill={accent}>m</text>
         </svg>
-        <span style={{ fontFamily: 'Lora, serif', fontSize: 18, fontStyle: 'italic', color: accent, letterSpacing: '-0.01em' }}>matheo</span>
+        <span style={{ fontFamily: 'Lora, serif', fontSize: 18, fontStyle: 'italic', color: accent, letterSpacing: '-0.01em' }}>Matheo</span>
       </div>
     );
   },

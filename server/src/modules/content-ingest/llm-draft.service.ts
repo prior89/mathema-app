@@ -62,7 +62,7 @@ export type DraftResult = {
  */
 export type DraftMode = 'multi-step' | 'single-step';
 
-const SYSTEM_PROMPT_MULTI_STEP = `You are an expert math educator transforming NCERT (Indian Class 7-12) and similar problems into a strict 3-step multiple-choice format for the matheo learning app.
+const SYSTEM_PROMPT_MULTI_STEP = `You are an expert math educator transforming NCERT (Indian Class 7-12) and similar problems into a strict 3-step multiple-choice format for the Matheo learning app.
 
 You MUST return a single JSON object with this exact schema (no markdown, no commentary):
 
@@ -99,7 +99,7 @@ Rules:
 - All strings in English (the app's primary content language is English for Indian users).
 - Output JSON ONLY. No leading/trailing prose.`;
 
-const SYSTEM_PROMPT_SINGLE_STEP = `You are an expert math educator generating a single-step multiple-choice question for matheo (Indian NCERT Class 7-12 students).
+const SYSTEM_PROMPT_SINGLE_STEP = `You are an expert math educator generating a single-step multiple-choice question for Matheo (Indian NCERT Class 7-12 students).
 
 Return a single JSON object with this exact schema (no markdown, no commentary):
 
