@@ -158,20 +158,12 @@ export function SoloProblemScreen() {
         </div>
       )}
 
-      {/* Problem has no practice steps — show body only as a read-only review. */}
+      {/* Problem has no practice steps — show body + reveal-answer affordance.
+          (AI-Solver-uploaded problems land here without 3-step MC because the
+          OCR pipeline captures body + answer only; the multi-step generator
+          runs in a separate phase.) */}
       {problem.data && steps.length === 0 && (
-        <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0 }}>
-          <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
-            <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
-            <div className="math-big" style={{ fontSize: 16, marginTop: 8, whiteSpace: 'pre-wrap' }}>
-              <MathText text={problem.data.body} />
-            </div>
-          </div>
-          <p style={{ marginTop: 14, fontSize: 13, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
-            This problem doesn't have step-by-step practice yet. Review the body
-            above, work it out on paper, and check the answer in your notes.
-          </p>
-        </div>
+        <NoStepsReview problemBody={problem.data.body} answer={(problem.data as any).answer} />
       )}
 
       {/* 3-step MC walk-through */}
@@ -275,6 +267,51 @@ export function SoloProblemScreen() {
         )}
       </div>
       <TabBar />
+    </div>
+  );
+}
+
+function NoStepsReview({ problemBody, answer }: { problemBody: string; answer?: string | null }) {
+  const [revealed, setRevealed] = useState(false);
+  const hasAnswer = !!(answer && answer.trim().length > 0);
+
+  return (
+    <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
+        <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
+        <div className="math-big" style={{ fontSize: 16, marginTop: 8, whiteSpace: 'pre-wrap' }}>
+          <MathText text={problemBody} />
+        </div>
+      </div>
+
+      <div className="card" style={{ padding: 14, fontSize: 13, color: 'var(--p-ink-2)', lineHeight: 1.55 }}>
+        This problem came in through the <strong style={{ color: 'var(--p-ink)' }}>AI Solver</strong> so
+        it doesn't have a 3-step walkthrough yet. Work it on paper using the
+        problem above, then peek at the answer to self-grade.
+      </div>
+
+      {hasAnswer && (
+        revealed ? (
+          <div className="card" style={{
+            padding: '14px 16px',
+            background: 'var(--p-primary-tint)',
+            borderColor: 'var(--p-primary)',
+          }}>
+            <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>ANSWER</div>
+            <div style={{ marginTop: 6, fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
+              <MathText text={answer!} />
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="btn outline"
+            onClick={() => setRevealed(true)}
+          >
+            Reveal answer
+          </button>
+        )
+      )}
     </div>
   );
 }

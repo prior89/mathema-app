@@ -145,11 +145,9 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--p-muted)', textTransform: 'uppercase', marginBottom: 4 }}>
-              Wrong notes
-            </div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.01em' }}>
-              Upload a problem
+            <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>AI Solver</span>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, letterSpacing: '-0.01em', marginTop: 4 }}>
+              Solve a problem
             </div>
           </div>
           <button
@@ -355,67 +353,75 @@ function ResultPhase({
 }) {
   const solve = result.result;
   const checked = solve.isStudentCorrect !== undefined && solve.isStudentCorrect !== null;
+  const conceptText = [solve.detected.chapter, solve.detected.topic].filter(Boolean).join(' · ');
   return (
     <div>
-      <Section label="Problem">
-        <MathText text={result.extractedText} />
-      </Section>
-
-      <Section label="Concept">
-        <MathText text={[solve.detected.chapter, solve.detected.topic].filter(Boolean).join(' · ') || '—'} />
-      </Section>
-
-      <Section label="Solution steps">
-        <MathText text={solve.explanation || '—'} />
-      </Section>
-
-      <div style={{
-        background: 'var(--p-primary-tint)', border: '1px solid var(--p-primary)',
-        borderRadius: 10, padding: '10px 14px', marginTop: 12,
-      }}>
-        <div style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--p-primary)', textTransform: 'uppercase' }}>
-          Answer
+      {/* PROBLEM card -- matches the Mastery / Study problem card style */}
+      <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
+        <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
+        <div className="math-big" style={{ fontSize: 15, marginTop: 6, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+          <MathText text={result.extractedText} />
         </div>
-        <div style={{ marginTop: 4, fontSize: 15 }}>
+      </div>
+
+      {/* Concept chip */}
+      {conceptText && (
+        <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+          <span className="eyebrow" style={{ fontSize: 10 }}>CONCEPT</span>
+          <span className="chip" style={{ fontSize: 11.5 }}>
+            <MathText text={conceptText} />
+          </span>
+        </div>
+      )}
+
+      {/* Solution steps -- de-emphasised body card so the answer below pops */}
+      {solve.explanation && (
+        <div className="card" style={{ padding: 14, marginTop: 12, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
+          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>SOLUTION STEPS</div>
+          <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap' }}>
+            <MathText text={solve.explanation} />
+          </div>
+        </div>
+      )}
+
+      {/* Answer card -- primary accent so it reads as the headline result */}
+      <div className="card" style={{
+        marginTop: 12, padding: '14px 16px',
+        background: 'var(--p-primary-tint)', borderColor: 'var(--p-primary)',
+      }}>
+        <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>ANSWER</div>
+        <div style={{ marginTop: 6, fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
           <MathText text={solve.answer || '—'} />
         </div>
       </div>
 
       {checked && (
-        <div style={{
-          marginTop: 12, padding: 10,
+        <div className="card" style={{
+          marginTop: 12, padding: 12,
           background: solve.isStudentCorrect ? 'var(--p-success-tint)' : 'var(--p-warning-tint)',
-          border: '1px solid var(--p-border)', borderRadius: 8, fontSize: 12.5,
+          borderColor: 'transparent', fontSize: 13, fontWeight: 600,
+          color: solve.isStudentCorrect ? 'var(--p-success)' : 'var(--p-warning)',
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
-          <Glyph.Check accent={solve.isStudentCorrect ? 'var(--p-success)' : 'var(--p-warning)'} size={14} />
-          <span>{solve.isStudentCorrect ? 'Your answer looks correct.' : 'Your answer looks wrong, so it was added to wrong notes for review.'}</span>
+          <Glyph.Check accent="currentColor" size={14} />
+          <span>{solve.isStudentCorrect ? 'Your answer looks correct.' : 'Your answer looks wrong — filed to your Notes for review.'}</span>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 16, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-        <button
-          onClick={onRetry}
-          style={{
-            background: 'transparent', border: '1px solid var(--p-border)', color: 'var(--p-ink-2)',
-            padding: '9px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 13,
-          }}
-        >Try another</button>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'transparent', border: '1px solid var(--p-border)', color: 'var(--p-ink-2)',
-            padding: '9px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 13,
-          }}
-        >Done</button>
-        {onPracticeNow && (
-          <button
-            onClick={onPracticeNow}
-            style={{
-              background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
-              padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-            }}
-          >Practice now →</button>
+      <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+        <button className="btn outline" onClick={onRetry} style={{ flex: 1 }}>
+          Try another
+        </button>
+        {onPracticeNow ? (
+          <button className="btn" onClick={onPracticeNow} style={{ flex: 1 }}>
+            Save to Notes
+            <Glyph.ChevronR />
+          </button>
+        ) : (
+          <button className="btn" onClick={onClose} style={{ flex: 1 }}>
+            Done
+            <Glyph.ChevronR />
+          </button>
         )}
       </div>
     </div>
