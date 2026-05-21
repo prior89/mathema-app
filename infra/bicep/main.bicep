@@ -488,16 +488,16 @@ resource kvSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' 
   }
 }
 
-// ACR pull permission — managed identity replaces admin user for image pulls.
-resource acrPullRoleBackend 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: acr
-  name: guid(acr.id, backendApp.id, 'acr-pull')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull
-    principalId: backendApp.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// NOTE: acrPullRoleBackend resource removed — already granted out-of-band via
+// `az role assignment create --assignee <backend-MI> --role AcrPull --scope <ACR>`
+// after our first Bicep deploy partially failed and the deterministic GUID
+// here started colliding (ARM's RoleAssignmentExists quirk on redeploy of
+// the same role+principal+scope tuple). Bicep can't easily re-declare an
+// existing role assignment idempotently — see Microsoft Q&A "RoleAssignmentExists"
+// thread. The runtime permission is intact (verified via `az role assignment
+// list --assignee <backend-MI> --scope <acr>`); we just don't re-create it
+// in Bicep. If you ever do a *fresh* RG deploy, restore this resource OR
+// run the manual `az role assignment create` again after the deploy.
 
 // ---------- Math-helper Container App (Python FastAPI · internal) ----------
 //
@@ -583,16 +583,9 @@ resource kvSecretsUserRoleForMathHelper 'Microsoft.Authorization/roleAssignments
   }
 }
 
-// math-helper managed identity — AcrPull (no admin user on ACR).
-resource acrPullRoleMathHelper 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: acr
-  name: guid(acr.id, mathHelperApp.id, 'acr-pull')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull
-    principalId: mathHelperApp.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// NOTE: acrPullRoleMathHelper resource removed for the same reason as
+// acrPullRoleBackend above. Permission was granted out-of-band and the
+// Bicep re-declaration was triggering RoleAssignmentExists conflicts.
 
 // ---------- Static Web App (frontend Vite SPA) ----------
 
