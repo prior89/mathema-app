@@ -4,6 +4,7 @@ import { Difficulty } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { MathpixService } from '../../infrastructure/mathpix/mathpix.service';
 import { AttemptsService } from '../attempts/attempts.service';
+import { LlmDraftService } from '../content-ingest/llm-draft.service';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
 
 type DbStudentProfile = {
@@ -44,6 +45,7 @@ export class MathHelperService {
     private readonly prisma: PrismaService,
     private readonly attempts: AttemptsService,
     private readonly mathpix: MathpixService,
+    private readonly llmDraft: LlmDraftService,
   ) {}
 
   async health() {
@@ -356,6 +358,66 @@ export class MathHelperService {
       select: { id: true },
     });
 
+    // Fire and forget — generate a single-step 5-choice MC variant so the
+    // student can later "Practice this problem" in Study-style (handwriting
+    // pad + 5 choices + grading). Failure here is non-fatal; the problem is
+    // still saved with body + answer + explanation, and the Notes screen
+    // renders that via NoStepsReview.
+    this.generateMcChoicesForUploadedProblem(problem.id, question, userId).catch((e) => {
+      this.logger.warn(`MC generation failed for problem ${problem.id}: ${(e as Error).message}`);
+    });
+
     return problem.id;
+  }
+
+  /**
+   * Post-OCR 5-choice MC generation. Runs LlmDraftService in single-step mode
+   * with the math-helper's verified answer pinned to the correct choice, then
+   * persists ProblemStep + ProblemChoice rows so the existing 5-choice
+   * Study/Mastery practice flow renders this problem with no extra branching.
+   *
+   * Idempotent: skips if the problem already has steps (e.g. retry on the
+   * same upload). Daily-quota guarded by LlmDraftService (cap 100/user/day).
+   */
+  private async generateMcChoicesForUploadedProblem(
+    problemId: string,
+    question: string,
+    userId: string,
+  ): Promise<void> {
+    const existingSteps = await this.prisma.problemStep.count({ where: { problemId } });
+    if (existingSteps > 0) return;
+    const fresh = await this.prisma.problem.findUnique({
+      where: { id: problemId },
+      select: { answer: true },
+    });
+    if (!fresh?.answer) return;
+
+    const draft = await this.llmDraft.generate(
+      { text: question },
+      { mode: 'single-step', userId },
+    );
+    const payload = draft.payload;
+    const step = payload.steps[0];
+    if (!step || step.choices.length !== 5) return;
+
+    // Replace whichever choice the LLM marked correct with math-helper's
+    // verified answer string -- single source of truth for grading.
+    const sanitisedChoices = step.choices.map((c, idx) => ({
+      choiceIndex: idx + 1,
+      text: c.isCorrect ? fresh.answer! : c.text,
+      isCorrect: c.isCorrect,
+      distractorType: c.isCorrect ? null : (c.distractorType ?? null),
+      rationale: c.rationale ?? null,
+    }));
+
+    await this.prisma.problemStep.create({
+      data: {
+        problemId,
+        stepIndex: 1,
+        stepType: 'ANSWER',
+        prompt: step.prompt,
+        choices: { create: sanitisedChoices },
+      },
+    });
   }
 }

@@ -55,11 +55,19 @@ export class ProblemsService {
         } : null,
       };
     });
+    // AI Solver pipeline stores its step-by-step walkthrough in
+    // expectedSolutionSteps.explanation (JSON column). Surface it so the
+    // Notes/review screen can show the full solution alongside the answer.
+    let explanation: string | null = null;
+    const ess = p.expectedSolutionSteps as any;
+    if (ess && typeof ess === 'object' && typeof ess.explanation === 'string') {
+      explanation = ess.explanation;
+    }
     return {
       id: p.id, source: sourceDisp,
       unit: p.unit?.name ?? null, subUnit: p.subUnit?.name ?? null,
       difficulty: p.difficulty,
-      body, concept, formula, answer, steps,
+      body, concept, formula, answer, explanation, steps,
     };
   }
 

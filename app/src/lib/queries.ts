@@ -388,6 +388,10 @@ export type ProblemSolution = {
   unit: string | null; subUnit: string | null;
   difficulty: string;
   body: string; concept: string | null; formula: string | null; answer: string;
+  /** AI-Solver-uploaded problems carry a free-form step-by-step explanation
+   *  here (from Problem.expectedSolutionSteps.explanation). NULL for legacy
+   *  NCERT-seeded problems that already have 3-step MC walkthroughs. */
+  explanation?: string | null;
   steps: Array<{
     stepIndex: number;
     stepType: 'CONCEPT' | 'PROCESS' | 'ANSWER';

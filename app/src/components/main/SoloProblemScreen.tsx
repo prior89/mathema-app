@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchProblem } from '../../lib/queries';
+import { fetchProblem, fetchProblemSolution } from '../../lib/queries';
 import { masterWrongNoteByProblem } from '../../lib/mutations';
 import { post } from '../../lib/api';
 import { Glyph } from '../onboarding/Glyph';
@@ -158,12 +158,11 @@ export function SoloProblemScreen() {
         </div>
       )}
 
-      {/* Problem has no practice steps — show body + reveal-answer affordance.
-          (AI-Solver-uploaded problems land here without 3-step MC because the
-          OCR pipeline captures body + answer only; the multi-step generator
-          runs in a separate phase.) */}
+      {/* Problem has no practice steps — show body + AI-Solver solution
+          (full step-by-step explanation + answer) via /problems/:id/solution.
+          This is the Notes / review path for AI-Solver-uploaded problems. */}
       {problem.data && steps.length === 0 && (
-        <NoStepsReview problemBody={problem.data.body} answer={(problem.data as any).answer} />
+        <NoStepsReview problemId={problem.data.id} problemBody={problem.data.body} />
       )}
 
       {/* 3-step MC walk-through */}
@@ -271,12 +270,22 @@ export function SoloProblemScreen() {
   );
 }
 
-function NoStepsReview({ problemBody, answer }: { problemBody: string; answer?: string | null }) {
-  const [revealed, setRevealed] = useState(false);
-  const hasAnswer = !!(answer && answer.trim().length > 0);
+function NoStepsReview({ problemId, problemBody }: { problemId: string; problemBody: string }) {
+  // Pull the solution endpoint which exposes both `answer` and `explanation`
+  // (the latter populated by the AI Solver pipeline via expectedSolutionSteps).
+  // This screen is the Notes / review surface for AI-Solver-uploaded problems,
+  // so we always want the full walkthrough -- not a "work on paper" copy.
+  const solution = useQuery({
+    queryKey: ['problem-solution', problemId],
+    queryFn: () => fetchProblemSolution(problemId),
+  });
+  const answer = solution.data?.answer ?? null;
+  const explanation = solution.data?.explanation ?? null;
+  const concept = solution.data?.concept ?? null;
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* PROBLEM card */}
       <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
         <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
         <div className="math-big" style={{ fontSize: 16, marginTop: 8, whiteSpace: 'pre-wrap' }}>
@@ -284,33 +293,47 @@ function NoStepsReview({ problemBody, answer }: { problemBody: string; answer?: 
         </div>
       </div>
 
-      <div className="card" style={{ padding: 14, fontSize: 13, color: 'var(--p-ink-2)', lineHeight: 1.55 }}>
-        This problem came in through the <strong style={{ color: 'var(--p-ink)' }}>AI Solver</strong> so
-        it doesn't have a 3-step walkthrough yet. Work it on paper using the
-        problem above, then peek at the answer to self-grade.
-      </div>
+      {/* Concept chip */}
+      {concept && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+          <span className="eyebrow" style={{ fontSize: 10 }}>CONCEPT</span>
+          <span className="chip" style={{ fontSize: 11.5 }}>
+            <MathText text={concept} />
+          </span>
+        </div>
+      )}
 
-      {hasAnswer && (
-        revealed ? (
-          <div className="card" style={{
-            padding: '14px 16px',
-            background: 'var(--p-primary-tint)',
-            borderColor: 'var(--p-primary)',
-          }}>
-            <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>ANSWER</div>
-            <div style={{ marginTop: 6, fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
-              <MathText text={answer!} />
-            </div>
+      {/* Solution steps -- the AI-Solver explanation, rendered as the
+          headline of this review screen. */}
+      {solution.isLoading ? (
+        <div className="card" style={{ padding: 14, textAlign: 'center', color: 'var(--p-muted)', fontSize: 13 }}>
+          Loading solution…
+        </div>
+      ) : explanation ? (
+        <div className="card" style={{ padding: 14, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
+          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>SOLUTION STEPS</div>
+          <div style={{ fontSize: 14, lineHeight: 1.65, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap' }}>
+            <MathText text={explanation} />
           </div>
-        ) : (
-          <button
-            type="button"
-            className="btn outline"
-            onClick={() => setRevealed(true)}
-          >
-            Reveal answer
-          </button>
-        )
+        </div>
+      ) : (
+        <div className="card" style={{ padding: 14, fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.55 }}>
+          No saved step-by-step solution for this problem yet.
+        </div>
+      )}
+
+      {/* Answer card -- primary tint to read as the headline result */}
+      {answer && (
+        <div className="card" style={{
+          padding: '14px 16px',
+          background: 'var(--p-primary-tint)',
+          borderColor: 'var(--p-primary)',
+        }}>
+          <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>ANSWER</div>
+          <div style={{ marginTop: 6, fontSize: 20, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
+            <MathText text={answer} />
+          </div>
+        </div>
       )}
     </div>
   );
