@@ -22,6 +22,7 @@ import { AiModule } from './infrastructure/ai/ai.module';
 import { StorageModule } from './infrastructure/storage/storage.module';
 import { MailModule } from './infrastructure/mail/mail.module';
 import { MathModule } from './infrastructure/math/math.module';
+import { BullSharedModule } from './infrastructure/bull/bull-shared.module';
 
 // 도메인 모듈 — UI 화면별 1:1
 import { AuthModule } from './modules/auth/auth.module';
@@ -66,6 +67,7 @@ import { MathHelperModule } from './modules/math-helper/math-helper.module';
     // infra
     PrismaModule,
     RedisModule,
+    BullSharedModule,
     AiModule,
     StorageModule,
     MailModule,

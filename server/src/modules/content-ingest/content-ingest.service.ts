@@ -2,16 +2,16 @@
  *
  * Flow:
  *   1) createJob(): create ContentIngestJob (status=QUEUED) and persist sourceConfig
- *   2) runJob() (BG): adapter.ingest() → NormalizedProblem[] → generate an LLM draft for each → save ContentDraft
+ *   2) BullMQ worker (ContentIngestProcessor) → runJob(): adapter.ingest() →
+ *      NormalizedProblem[] → generate an LLM draft for each → save ContentDraft
  *   3) Mark job.status READY (or FAILED)
- *
- * We use setImmediate for async processing while we're in PoC. Production should run on a BullMQ queue (Redis).
  */
 import { Injectable, Logger, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { SourceRegistry } from './source-registry.service';
 import { LlmDraftService, DRAFT_PROMPT_VERSION } from './llm-draft.service';
 import { DraftPublisher } from './draft-publisher.service';
+import { ContentIngestQueueService } from './content-ingest-queue.service';
 import type { ContentIngestStatus, ContentDraftStatus, ContentSourceType, NcertClass, Prisma } from '@prisma/client';
 import type { IngestContext, JobMetrics, NormalizedProblem, SourceConfig } from './types';
 
@@ -24,6 +24,7 @@ export class ContentIngestService {
     private readonly registry: SourceRegistry,
     private readonly llmDraft: LlmDraftService,
     private readonly publisher: DraftPublisher,
+    private readonly queueService: ContentIngestQueueService,
   ) {}
 
   // ---------- Job lifecycle ----------
@@ -45,12 +46,15 @@ export class ContentIngestService {
       },
       select: { id: true },
     });
-    setImmediate(() => this.runJob(j.id).catch((e) => this.logger.error(`Job ${j.id} crashed: ${e}`, e instanceof Error ? e.stack : undefined)));
+    await this.queueService.enqueue(j.id).catch((e) => this.logger.error(`enqueue failed for job ${j.id}: ${e instanceof Error ? e.message : e}`));
     return j;
   }
 
-  /** Background processing — adapter ingest → LLM draft generation → save ContentDraft. */
-  private async runJob(jobId: string): Promise<void> {
+  /**
+   * Background processing — adapter ingest → LLM draft generation → save ContentDraft.
+   * Public so the BullMQ worker (ContentIngestProcessor) can invoke it.
+   */
+  async runJob(jobId: string): Promise<void> {
     const job = await this.prisma.contentIngestJob.findUnique({ where: { id: jobId } });
     if (!job) return;
 
