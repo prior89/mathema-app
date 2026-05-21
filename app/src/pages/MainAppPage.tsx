@@ -4,7 +4,7 @@
  * retained as internal session keys for Study's chapter test only — the Test
  * tab routes to /app/review (ReviewQueueScreen), not /app/mocks/*.
  */
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomeScreen } from '../components/main/HomeScreen';
 import { LearnScreen } from '../components/main/LearnScreen';
@@ -24,6 +24,9 @@ import { AdminIngestScreen } from '../components/admin/AdminIngestScreen';
 import { AdminDraftListScreen } from '../components/admin/AdminDraftListScreen';
 import { AdminDraftEditorScreen } from '../components/admin/AdminDraftEditorScreen';
 import '../styles/onboarding.css';
+
+// Paywall is code-split — only loads when the user navigates to /app/paywall.
+const PaywallPage = lazy(() => import('./PaywallPage'));
 
 export default function MainAppPage() {
   // 인도 PoC 앱 surface — 한국어 잔존 차단. 사용자가 명시적으로 KO 토글 안 했다면 EN 강제.
@@ -63,6 +66,17 @@ export default function MainAppPage() {
             <Route path="mocks" element={<Navigate to="/app/test" replace />} />
             <Route path="me" element={<MeScreen />} />
             <Route path="me/settings" element={<SettingsScreen />} />
+            {/* Play Billing paywall — Android only at runtime; web build shows
+                an "Android only" notice. Lazy + Suspense so the billing bundle
+                doesn't ship with the main shell. */}
+            <Route
+              path="paywall"
+              element={
+                <Suspense fallback={<div style={{ padding: 32 }}>Loading...</div>}>
+                  <PaywallPage />
+                </Suspense>
+              }
+            />
             <Route path="report" element={<ReportScreen />} />
             <Route path="admin/ingest" element={<AdminIngestScreen />} />
             <Route path="admin/drafts" element={<AdminDraftListScreen />} />
