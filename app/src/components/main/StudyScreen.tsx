@@ -212,9 +212,13 @@ export function StudyScreen() {
             <span className="label">How this works</span>
           </div>
           <div className="card" style={{ padding: 14, fontSize: 13, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
-            Get one wrong and it joins your <strong style={{ color: 'var(--p-ink)' }}>Notes</strong>{' '}
-            for a future weekly review. For problems outside the pool, snap them
-            with the AI Solver above and we'll add them to your library.
+            <strong style={{ color: 'var(--p-ink)' }}>Start practice</strong> unlocks a chapter
+            only after you complete its{' '}
+            <strong style={{ color: 'var(--p-ink)' }}>Mastery</strong> lesson — that's how the
+            chapter shows up in the dropdown above. Get one wrong and it joins
+            your <strong style={{ color: 'var(--p-ink)' }}>Notes</strong> for a future weekly
+            review. For problems outside the pool, snap them with the AI Solver
+            above and we'll add them to your library.
           </div>
 
           <div style={{ height: 16 }} />
