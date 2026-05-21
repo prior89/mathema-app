@@ -131,6 +131,32 @@ async function bootstrap() {
     (config.get<string>('ADMIN_EMAILS') ?? 'polopot123@gmail.com')
       .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   );
+  // Bull Board mutates queues (retry/promote/delete buttons all POST through
+  // the same router). The global Nest ThrottlerGuard does not cover this
+  // express-mounted middleware, so add a small in-memory token-bucket here:
+  // 10 requests / minute / admin-IP. Tight enough that an accidental
+  // double-click loop or a script holding an admin token cannot stampede the
+  // queue API. In-memory is fine — Bull Board is operator-only, single-replica
+  // throttling is sufficient.
+  const BULL_BOARD_RATE_LIMIT = 10;
+  const BULL_BOARD_WINDOW_MS = 60_000;
+  const bullBoardBuckets = new Map<string, { count: number; resetAt: number }>();
+  server.use(BULL_BOARD_BASE_PATH, (req: any, res: any, next: any) => {
+    const ip = (req.ip ?? req.headers?.['x-forwarded-for'] ?? req.socket?.remoteAddress ?? 'unknown') as string;
+    const now = Date.now();
+    const bucket = bullBoardBuckets.get(ip);
+    if (!bucket || bucket.resetAt < now) {
+      bullBoardBuckets.set(ip, { count: 1, resetAt: now + BULL_BOARD_WINDOW_MS });
+      return next();
+    }
+    if (bucket.count >= BULL_BOARD_RATE_LIMIT) {
+      const retryAfterSec = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
+      res.setHeader('Retry-After', retryAfterSec.toString());
+      return res.status(429).json({ error: { message: 'admin: rate limit exceeded' } });
+    }
+    bucket.count += 1;
+    next();
+  });
   server.use(BULL_BOARD_BASE_PATH, async (req: any, res: any, next: any) => {
     try {
       const auth = req.headers?.authorization ?? '';

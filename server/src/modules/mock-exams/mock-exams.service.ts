@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Difficulty } from '@prisma/client';
+import { Difficulty, DistractorType, MockExamType } from '@prisma/client';
 import { MockExamsRepository } from './mock-exams.repository';
 import { GradingService } from './services/grading.service';
 import { AiRecommendExamService } from './services/ai-recommend-exam.service';
@@ -230,14 +230,14 @@ export class MockExamsService {
     const { problems } = await this.aiRec.compose(userId);
     return this.beginSession(
       userId,
-      { name: 'AI-tailored Mock', type: 'RECOMMENDED' as any, totalMinutes: 50, problems },
+      { name: 'AI-tailored Mock', type: MockExamType.RECOMMENDED, totalMinutes: 50, problems },
       lang,
     );
   }
 
   async startTyped(userId: string, kind: 'mini' | 'wrong-redo' | 'real', lang: Lang = 'en') {
     const result = await this.aiRec.composeTyped(userId, kind);
-    const fb = (result as any).fallbackReason as string | undefined;
+    const fb = (result as { fallbackReason?: string }).fallbackReason;
     const meta: Record<string, { name: string; type: any; totalMinutes: number }> = {
       mini:        { name: 'Unit Mini Test',                  type: 'MINI',       totalMinutes: 15 },
       'wrong-redo':{ name: 'Wrong-Redo Exam',                 type: 'WRONG_REDO', totalMinutes: 30 },
@@ -295,7 +295,13 @@ export class MockExamsService {
       select: { problemId: true },
       distinct: ['problemId'],
     });
-    const attemptedIds = attemptedRows.map((a) => a.problemId);
+    // Bound the SQL `IN (...)` clause for the $queryRawUnsafe call below.
+    // A user with 5k+ Study attempts would otherwise inflate the parameter
+    // array (DoS surface; Postgres parser slows past a few thousand). Cap at
+    // 500 most-recent — older attempts are unlikely to be drawn again from a
+    // random LIMIT 20 pool, so the de-dup quality cost is negligible.
+    const ATTEMPTED_CAP = 500;
+    const attemptedIds = attemptedRows.map((a) => a.problemId).slice(0, ATTEMPTED_CAP);
 
     // Pool: SINGLE-STEP problems only — the Study tab is single-question
     // practice (5-choice MC + handwriting pad). Multi-step (3-step MC)
@@ -377,7 +383,9 @@ export class MockExamsService {
       select: { problemId: true },
       distinct: ['problemId'],
     });
-    const attemptedIds = attemptedRows.map((a) => a.problemId);
+    // Same DoS bound as startChapter — cap the `IN (...)` parameter array.
+    const ATTEMPTED_CAP = 500;
+    const attemptedIds = attemptedRows.map((a) => a.problemId).slice(0, ATTEMPTED_CAP);
 
     // Pool — single-step, mapped to this chapter, never tried by this user.
     const pooled = await this.prisma.$queryRawUnsafe<Array<{ id: string; source: string; difficulty: string }>>(
@@ -550,7 +558,7 @@ export class MockExamsService {
                 choiceIndex: ci + 1,
                 text: c.text,
                 isCorrect: c.isCorrect,
-                ...(c.distractorType ? { distractorType: c.distractorType as any } : {}),
+                ...(c.distractorType ? { distractorType: c.distractorType as DistractorType } : {}),
                 ...(c.rationale ? { rationale: c.rationale } : {}),
               })),
             },

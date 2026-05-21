@@ -20,6 +20,13 @@ const PKG_PUSH = '@capacitor/push-notifications';
 const dynImport = (name: string): Promise<any> =>
   import(/* @vite-ignore */ name).catch(() => null);
 
+// Push listener registration is idempotent — calling initCapacitorBridge()
+// twice (StrictMode dev double-mount, HMR reload, manual re-init) used to
+// stack duplicate 'registration' / 'registrationError' handlers, sending the
+// same FCM token to /push/register N times. Guard at module scope so the
+// listeners attach exactly once per page lifetime.
+let pushListenersAttached = false;
+
 export async function initCapacitorBridge() {
   const core: any = await dynImport(PKG_CORE);
   const Capacitor = core?.Capacitor;
@@ -69,21 +76,24 @@ export async function initCapacitorBridge() {
       }
       if (granted) {
         await PN.register();
-        PN.addListener('registration', async (token: { value: string }) => {
-          try {
-            await post('/push/register', {
-              token: token.value,
-              platform: 'android',
-              appVersion: '0.1.0',
-            });
-          } catch { /* network/backend down */ }
-        });
-        PN.addListener('registrationError', (err: any) => {
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console
-            console.warn('FCM registration error', err);
-          }
-        });
+        if (!pushListenersAttached) {
+          PN.addListener('registration', async (token: { value: string }) => {
+            try {
+              await post('/push/register', {
+                token: token.value,
+                platform: 'android',
+                appVersion: '0.1.0',
+              });
+            } catch { /* network/backend down */ }
+          });
+          PN.addListener('registrationError', (err: any) => {
+            if (import.meta.env.DEV) {
+              // eslint-disable-next-line no-console
+              console.warn('FCM registration error', err);
+            }
+          });
+          pushListenersAttached = true;
+        }
       }
     } catch { /* plugin not installed */ }
   }
