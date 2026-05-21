@@ -7,7 +7,11 @@ android {
         applicationId "ai.matheo.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        // versionCode: CI passes ANDROID_VERSION_CODE (= GITHUB_RUN_NUMBER) so
+        // every signed AAB has a unique, monotonically-increasing code. Local
+        // builds fall back to 1. Play Console refuses duplicate codes — this
+        // is the cheapest way to stay safe without bumping the file every push.
+        versionCode (System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger()
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
