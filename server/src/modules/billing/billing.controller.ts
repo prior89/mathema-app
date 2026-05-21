@@ -9,12 +9,15 @@ import { VerifyPurchaseDto } from './dto/verify-purchase.dto';
 export class BillingController {
   constructor(private readonly billing: BillingService) {}
 
-  /** Current entitlement + minimal subscription summary for UI gating. */
+  /** Current entitlement + minimal subscription summary for UI gating.
+   * Also includes the daily AI Solver quota snapshot so the client can
+   * render `5/8 used today` style indicators without a second round-trip. */
   @Get('status')
   async status(@CurrentUser('id') userId: string) {
-    const [premium, sub] = await Promise.all([
+    const [premium, sub, solverQuota] = await Promise.all([
       this.billing.isPremium(userId),
       this.billing.getSubscription(userId),
+      this.billing.getSolverQuota(userId),
     ]);
     return {
       premium,
@@ -27,6 +30,7 @@ export class BillingController {
             isInIntroOfferPeriod: sub.isInIntroOfferPeriod,
           }
         : null,
+      quota: { solver: solverQuota },
     };
   }
 

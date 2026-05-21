@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Get, Post, UploadedFile, UseGuar
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { FreeTierSolverQuotaGuard } from '../billing/free-tier-solver-quota.guard';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
 import { MathHelperService } from './math-helper.service';
 
@@ -12,6 +13,7 @@ export class MathHelperController {
 
   // CI smoke test target — proxies through to the math-helper container's
   // /health so deploy scripts can verify the revision is up.
+  // Note: GET /health is intentionally NOT under FreeTierSolverQuotaGuard.
   @Get('health')
   health() {
     return this.service.health();
@@ -20,12 +22,16 @@ export class MathHelperController {
   // Text-only solve. Kept for verify-math-helper.sh and as a fallback path
   // for clients that already have the question text; production UI uses
   // /math-helper/ocr-solve which calls this internally after OCR.
+  // JwtAuthGuard MUST run before FreeTierSolverQuotaGuard so req.user is
+  // populated when the quota guard reads it.
   @Post('solve')
+  @UseGuards(JwtAuthGuard, FreeTierSolverQuotaGuard)
   solve(@CurrentUser('id') userId: string, @Body() dto: SolveMathHelperDto) {
     return this.service.solve(userId, dto);
   }
 
   @Post('ocr-solve')
+  @UseGuards(JwtAuthGuard, FreeTierSolverQuotaGuard)
   @UseInterceptors(FileInterceptor('file', {
     limits: { fileSize: 12 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {

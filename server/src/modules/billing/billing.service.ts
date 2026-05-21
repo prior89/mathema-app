@@ -1,7 +1,9 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { SubscriptionStatus } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { FREE_TIER_SOLVER_LIMIT } from './free-tier-solver-quota.guard';
 import { PlayApiClient } from './play-api-client.service';
+import { QuotaService } from './quota.service';
 
 /**
  * Google Play Billing — Phase 2.
@@ -17,6 +19,7 @@ export class BillingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly playApi: PlayApiClient,
+    private readonly quota: QuotaService,
   ) {}
 
   /** Returns true iff the user is currently entitled.
@@ -45,6 +48,22 @@ export class BillingService {
   /** Returns the full subscription row (or null) for the user. Used by /billing/status. */
   async getSubscription(userId: string) {
     return this.prisma.subscription.findUnique({ where: { userId } });
+  }
+
+  /** Daily AI Solver quota snapshot for /billing/status. Premium users get
+   * `limit: null` (unlimited) but we still surface `used` for informational
+   * UI; for free users `limit` is the FREE_TIER_SOLVER_LIMIT constant
+   * (single source of truth lives in the guard module). */
+  async getSolverQuota(
+    userId: string,
+  ): Promise<{ used: number; limit: number | null; resetAt: string }> {
+    const premium = await this.isPremium(userId);
+    const used = await this.quota.getSolverUsed(userId);
+    return {
+      used,
+      limit: premium ? null : FREE_TIER_SOLVER_LIMIT,
+      resetAt: this.quota.resetAt().toISOString(),
+    };
   }
 
   /** Verifies a purchaseToken via Google Play Developer API v3 (subscriptionsv2)
