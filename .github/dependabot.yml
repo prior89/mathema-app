@@ -1,65 +1,82 @@
 version: 2
+
+# Dependabot config — Matheo monorepo.
+#
+# Lessons from the first run (30+ PRs in a single day, ~7 lock-sync fails):
+# - npm workspaces share package-lock.json at root, so per-workspace
+#   dependabot directories cause `npm ci` lock-sync errors. Use root only.
+# - Daily cadence + no grouping = unmanageable PR noise on first sync.
+# - Semver-major bumps need manual coordination (Prisma 7, NestJS 11,
+#   React 19, react-router 7, etc.) — ignore them here and handle by hand.
+
 updates:
-  # npm — repo root (monorepo workspaces manifest)
+  # npm — root scope updates root + both workspaces in a single coherent
+  # PR set that keeps package-lock.json in sync.
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 8
     labels:
       - "dependencies"
       - "npm"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    reviewers:
+      - "prior89"
+    groups:
+      prod:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+          - "minor"
+      dev:
+        dependency-type: "development"
+        update-types:
+          - "patch"
+          - "minor"
+      types:
+        patterns:
+          - "@types/*"
+    ignore:
+      # All semver-major upgrades are deferred — track them in dedicated
+      # PRs with migration notes (Prisma 5→7, NestJS 10→11, React 18→19,
+      # react-router 6→7, Express 4→5, etc.).
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
 
-  # npm — app workspace (React / Vite / Capacitor client)
-  - package-ecosystem: "npm"
-    directory: "/app"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "npm"
-      - "app"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"
-
-  # npm — server workspace (NestJS API)
-  - package-ecosystem: "npm"
-    directory: "/server"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "npm"
-      - "server"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"
-
-  # GitHub Actions workflows
+  # GitHub Actions — patch + minor, grouped.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
     labels:
       - "dependencies"
       - "github-actions"
     commit-message:
       prefix: "chore(ci)"
       include: "scope"
+    groups:
+      actions:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
 
-  # Docker — server image
+  # Server Dockerfile base image — minor + patch only.
   - package-ecosystem: "docker"
     directory: "/server"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 5
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 2
     labels:
       - "dependencies"
       - "docker"
@@ -67,14 +84,18 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
 
-  # Docker — math-helper image (partner-maintained directory; updates are
-  # base-image only and should be reviewed with @Karvy-Singh before merging)
+  # Math-helper Dockerfile (partner-maintained directory; Karvy reviews).
   - package-ecosystem: "docker"
     directory: "/services/math-helper"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 5
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 2
     labels:
       - "dependencies"
       - "docker"
@@ -84,3 +105,7 @@ updates:
       include: "scope"
     reviewers:
       - "Karvy-Singh"
+    ignore:
+      - dependency-name: "python"
+        update-types:
+          - "version-update:semver-major"
