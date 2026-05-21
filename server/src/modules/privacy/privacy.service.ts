@@ -10,7 +10,7 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
  * - DATA_PROCESSING 은 필수 — 가입 시 자동 부여, 철회 시 계정 비활성으로 안내.
  */
 
-export const CURRENT_POLICY_VERSION = '2026-05-13';
+export const CURRENT_POLICY_VERSION = '2026-05-21';
 
 export interface ConsentStatus {
   kind: ConsentKind;
