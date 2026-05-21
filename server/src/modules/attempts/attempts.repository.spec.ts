@@ -64,7 +64,7 @@ describe('AttemptsRepository.create', () => {
   it('marks attempt correct when the chosen ProblemChoice.isCorrect is true', async () => {
     const prisma = mockPrisma();
     prisma.problemChoice.findUnique = jest.fn().mockResolvedValue({
-      id: 'ch-1', text: '42', isCorrect: true, distractorType: null, stepId: 's-1',
+      id: 'ch-1', text: '42', isCorrect: true, distractorType: null, stepId: 's-1', step: { problemId: 'p1' },
     });
     const { repo } = build({ prisma });
     const r = await repo.create('u1', { problemId: 'p1', choiceId: 'ch-1' });
@@ -75,7 +75,7 @@ describe('AttemptsRepository.create', () => {
   it('marks attempt wrong + upserts WrongNote when choice is incorrect (first try)', async () => {
     const prisma = mockPrisma();
     prisma.problemChoice.findUnique = jest.fn().mockResolvedValue({
-      id: 'ch-2', text: '0', isCorrect: false, distractorType: 'CALC_ERROR', stepId: 's-1',
+      id: 'ch-2', text: '0', isCorrect: false, distractorType: 'CALC_ERROR', stepId: 's-1', step: { problemId: 'p1' },
     });
     const grading = mockGrading();
     grading.analyze.mockReturnValue({ errorCodes: ['CALC'], legacyErrorType: 'CALCULATION_MISTAKE' });
@@ -94,6 +94,20 @@ describe('AttemptsRepository.create', () => {
     const { repo } = build({ prisma });
     await expect(repo.create('u1', { problemId: 'p1', choiceId: 'ch-bad' }))
       .rejects.toThrow(/Invalid choiceId/);
+  });
+
+  // P0-1 regression guard: cross-problem choiceId attack.
+  it('throws when choiceId belongs to a step of a different problem', async () => {
+    const prisma = mockPrisma();
+    prisma.problemChoice.findUnique = jest.fn().mockResolvedValue({
+      id: 'ch-evil', text: '42', isCorrect: true, distractorType: null, stepId: 's-other',
+      step: { problemId: 'p-OTHER' },
+    });
+    const { repo } = build({ prisma });
+    await expect(repo.create('u1', { problemId: 'p1', choiceId: 'ch-evil' }))
+      .rejects.toThrow(/does not belong to problemId p1/);
+    // Critical: no Attempt row should have been created when the guard rejects.
+    expect(prisma.attempt.create).not.toHaveBeenCalled();
   });
 
   // ─── text answer normalization ───
@@ -125,7 +139,7 @@ describe('AttemptsRepository.create', () => {
   it('does NOT graduate WrongNote on a correct multi-step attempt (stepIndex provided)', async () => {
     const prisma = mockPrisma();
     prisma.problemChoice.findUnique = jest.fn().mockResolvedValue({
-      id: 'ch-1', text: '42', isCorrect: true, distractorType: null, stepId: 's-1',
+      id: 'ch-1', text: '42', isCorrect: true, distractorType: null, stepId: 's-1', step: { problemId: 'p1' },
     });
     const { repo } = build({ prisma });
     await repo.create('u1', { problemId: 'p1', choiceId: 'ch-1', stepIndex: 1 });
@@ -136,7 +150,7 @@ describe('AttemptsRepository.create', () => {
   it('skips WrongNote upsert on a wrong retry (same session+problem+stepIndex)', async () => {
     const prisma = mockPrisma();
     prisma.problemChoice.findUnique = jest.fn().mockResolvedValue({
-      id: 'ch-x', text: '0', isCorrect: false, distractorType: null, stepId: 's-1',
+      id: 'ch-x', text: '0', isCorrect: false, distractorType: null, stepId: 's-1', step: { problemId: 'p1' },
     });
     prisma.attempt.count = jest.fn().mockResolvedValue(1); // previous attempt exists
     const { repo } = build({ prisma });
@@ -151,7 +165,7 @@ describe('AttemptsRepository.create', () => {
   it('includes conceptTags + difficultyLevel in the returned payload', async () => {
     const prisma = mockPrisma({ problem: { difficultyLevel: 'SEMI_KILLER' } });
     prisma.problemChoice.findUnique = jest.fn().mockResolvedValue({
-      id: 'ch-1', text: '42', isCorrect: true, distractorType: null, stepId: 's-1',
+      id: 'ch-1', text: '42', isCorrect: true, distractorType: null, stepId: 's-1', step: { problemId: 'p1' },
     });
     const { repo } = build({ prisma });
     const r = await repo.create('u1', { problemId: 'p1', choiceId: 'ch-1' });

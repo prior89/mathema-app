@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { GradingService } from './grading.service';
 
@@ -40,11 +40,23 @@ export class AttemptsRepository {
     let distractorType: string | null = null;
 
     if (dto.choiceId) {
+      // P0-1 fix: choiceId must belong to a step of dto.problemId. Without
+      // this check the client could submit the correct choice from a
+      // different problem and score this problem correct — corrupting
+      // Attempt, WrongNote, Mastery, and Recommendation downstream.
       const choice = await this.prisma.problemChoice.findUnique({
         where: { id: dto.choiceId },
-        select: { id: true, text: true, isCorrect: true, distractorType: true, stepId: true },
+        select: {
+          id: true, text: true, isCorrect: true, distractorType: true, stepId: true,
+          step: { select: { problemId: true } },
+        },
       });
-      if (!choice) throw new Error(`Invalid choiceId: ${dto.choiceId}`);
+      if (!choice) throw new BadRequestException(`Invalid choiceId: ${dto.choiceId}`);
+      if (choice.step.problemId !== dto.problemId) {
+        throw new BadRequestException(
+          `choiceId does not belong to problemId ${dto.problemId}`,
+        );
+      }
       isCorrect = choice.isCorrect;
       answerText = choice.text;
       distractorType = choice.distractorType ?? null;
