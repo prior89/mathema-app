@@ -24,3 +24,55 @@ export async function backendReachable(page: Page): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Register a throwaway user via the real /auth/register endpoint, then drop the
+ * resulting access + refresh tokens into localStorage so the next page.goto
+ * lands authenticated. No dev-login required -- works on any backend.
+ *
+ * Returns the credentials so the spec can hit further endpoints directly, and
+ * a teardown() callback that hard-deletes the account at end of test.
+ */
+export async function registerThrowawayUser(page: Page) {
+  const stamp = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  const email = `e2e-${stamp}@example.com`;
+  const password = 'Test1234!Throwaway' + stamp;
+  const name = 'E2E User';
+
+  const res = await page.request.post('http://localhost:4000/api/v1/auth/register', {
+    data: {
+      email, password, name, role: 'STUDENT',
+      gradeLevel: 'CLASS_11',
+      examDate: '2027-02-14',
+      targetGrade: 3,
+      consentAnalytics: false, consentMarketing: false, consentAiTraining: false,
+    },
+  });
+  if (!res.ok()) {
+    throw new Error(`register failed (${res.status()}): ${await res.text()}`);
+  }
+  const body = await res.json();
+  const accessToken = body?.data?.accessToken;
+  const refreshToken = body?.data?.refreshToken;
+  if (!accessToken || !refreshToken) {
+    throw new Error('register response missing tokens');
+  }
+
+  // Seed tokens into the app's localStorage BEFORE navigation so the first
+  // page.goto sees the user as authenticated.
+  await page.goto('/login'); // any same-origin page is fine; this loads localStorage
+  await page.evaluate(([a, r]) => {
+    localStorage.setItem('mathema.access', a);
+    localStorage.setItem('mathema.refresh', r);
+  }, [accessToken, refreshToken]);
+
+  const teardown = async () => {
+    try {
+      await page.request.delete('http://localhost:4000/api/v1/users/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch { /* best-effort cleanup */ }
+  };
+
+  return { email, password, accessToken, refreshToken, teardown };
+}

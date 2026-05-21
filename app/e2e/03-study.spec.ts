@@ -20,6 +20,11 @@ test.describe('study tab', () => {
     } catch {
       test.skip(true, 'Backend not reachable at :4000');
     }
+    // Study practice requires Mastery completion, which a register-only
+    // throwaway user can't reach -- only the admin dev-login user (seeded
+    // with progress) can. Probe dev-login availability; skip if disabled.
+    const probe = await request.post('http://localhost:4000/api/v1/auth/dev-login', { data: {} });
+    test.skip(probe.status() === 401, 'Dev-login disabled -- Study practice spec needs admin seed');
     await loginAsAdmin(page);
   });
 
