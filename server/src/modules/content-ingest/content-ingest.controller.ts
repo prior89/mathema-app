@@ -7,6 +7,7 @@ import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { AdminAuditInterceptor } from '../admin/admin-audit.interceptor';
 import { ContentIngestService } from './content-ingest.service';
 import type { ContentDraftStatus, ContentIngestStatus, NcertClass } from '@prisma/client';
 import type { Request } from 'express';
@@ -16,6 +17,7 @@ const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'content-ingest');
 type AuthedRequest = Request & { user?: { id: string } };
 
 @UseGuards(JwtAuthGuard, AdminGuard)
+@UseInterceptors(AdminAuditInterceptor)
 @Controller('admin/ingest')
 export class ContentIngestController {
   constructor(private readonly svc: ContentIngestService) {}

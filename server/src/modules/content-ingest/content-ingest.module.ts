@@ -9,6 +9,7 @@ import { PdfSourceAdapter } from './adapters/pdf-source.adapter';
 import { HttpApiSourceAdapter } from './adapters/http-api-source.adapter';
 import { JsonBulkSourceAdapter } from './adapters/json-bulk-source.adapter';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { AdminAuditInterceptor } from '../admin/admin-audit.interceptor';
 
 @Module({
   imports: [AiModule],
@@ -22,6 +23,11 @@ import { AdminGuard } from '../../common/guards/admin.guard';
     HttpApiSourceAdapter,
     JsonBulkSourceAdapter,
     AdminGuard,
+    // P1-6: provide AdminAuditInterceptor locally so the controller can
+    // @UseInterceptors it. AdminModule provides the same class for its own
+    // controller; having two independent provider instances is fine -- the
+    // interceptor is stateless and only writes to AdminAccessLog.
+    AdminAuditInterceptor,
   ],
   exports: [LlmDraftService],
 })
