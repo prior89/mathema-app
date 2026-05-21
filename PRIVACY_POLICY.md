@@ -30,9 +30,9 @@ If you do not agree, do not use the Service.
 For purposes of the DPDP Act, the **Data Fiduciary** is the legal entity
 listed on the Play Store listing of this app. Contact:
 
-> **prior89 (matheo)**
-> Email: `privacy@mathema.app` (replace with the real address before
-> publishing; this Markdown file is the canonical source for the live URL).
+> **Matheo by VeraStudy**
+> Seoul, South Korea
+> Email: `VeraStudy01@gmail.com`
 
 If you have a complaint about our handling of your information that we have
 not resolved, you may contact the **Data Protection Board of India**
@@ -183,7 +183,7 @@ Under DPDP §11–§14 and GDPR Art. 15–22 you may:
    → Consents**.
 4. **Delete your account and all associated data** from **Settings →
    Privacy → Delete account**.
-5. **Lodge a grievance** with our Grievance Officer (`privacy@mathema.app`)
+5. **Lodge a grievance** with our Grievance Officer (`VeraStudy01@gmail.com`)
    within 7 working days of an incident.
 6. **Nominate** another person to exercise your rights in case of death or
    incapacity (DPDP §13). Contact us by email.
@@ -211,7 +211,7 @@ curriculum (NCERT Class 7-12), so a substantial fraction of users are
   information from a minor than from an adult.
 
 If you become aware that a child has registered without parental supervision,
-contact `privacy@mathema.app` and we will remove the account.
+contact `VeraStudy01@gmail.com` and we will remove the account.
 
 ---
 
@@ -256,7 +256,7 @@ constitutes acceptance.
 
 ## 12. Contact
 
-- **Grievance Officer**: `privacy@mathema.app`
+- **Grievance Officer**: `VeraStudy01@gmail.com`
 - **Data Fiduciary**: see Section 1.
 - **Response time commitment**: 7 working days for grievances, 30 days for
   rights requests.

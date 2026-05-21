@@ -17,7 +17,7 @@ verbatim. Hindi locale (`hi-IN`) is intentionally omitted in v1.0; see
 | Additional supported language | English (India) — `en-IN` |
 | Category | Education |
 | Tags (≤ 5) | NCERT, CBSE, Class 7-12, Math practice, JEE foundation |
-| Contact email | `support@mathema.app` |
+| Contact email | `VeraStudy01@gmail.com` |
 | Website | `https://black-wave-093b02b00.7.azurestaticapps.net` *(replace once a custom domain is live)* |
 | Privacy Policy URL | `https://black-wave-093b02b00.7.azurestaticapps.net/legal/privacy-policy.md` |
 | Terms of Service URL | `https://black-wave-093b02b00.7.azurestaticapps.net/legal/terms-of-service.md` |
@@ -190,7 +190,7 @@ section:
 
 ```
 sign-in: required
-email: reviewer@mathema.app
+email: VeraStudy01@gmail.com
 password: <generate a 24-char passphrase, rotate monthly>
 notes: This account starts at the onboarding flow. Pick any NCERT class to
        reach the main app. The diagnostic at step 06 can be skipped via

@@ -54,7 +54,7 @@ purpose other than the above.
 
 ### Web — without opening the app
 
-Email `privacy@mathema.app` from the email address associated with your
+Email `VeraStudy01@gmail.com` from the email address associated with your
 matheo account, with subject:
 
 ```
@@ -90,6 +90,6 @@ aligned).
 
 ## Contact
 
-- **Grievance Officer**: `privacy@mathema.app`
-- **General support**: `support@mathema.app`
+- **Grievance Officer**: `VeraStudy01@gmail.com`
+- **General support**: `VeraStudy01@gmail.com`
 - **Response window**: 48 hours acknowledgement, 30 days completion.

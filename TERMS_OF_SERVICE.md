@@ -72,7 +72,7 @@ When using the Service you agree **not** to:
   rate limits that we publish.
 - Probe, test, or exploit security weaknesses without our written
   permission. Responsible security research is welcome; contact
-  `security@mathema.app`.
+  `VeraStudy01@gmail.com`.
 - Use the Service to cheat on a real-world exam or assignment in violation
   of your school's policies.
 
@@ -117,7 +117,7 @@ redistribute raw NCERT textbook extracts; references are paraphrased or
 reformatted into our own problem set.
 
 If you believe any content in the Service infringes a copyright you hold,
-contact `copyright@mathema.app` with details and we will respond within
+contact `VeraStudy01@gmail.com` with details and we will respond within
 14 days.
 
 ### 6.3 Your content
@@ -213,14 +213,14 @@ data fiduciary's registered office have exclusive jurisdiction over any
 dispute, except where local consumer-protection law gives you the right to
 sue in your own jurisdiction.
 
-Before filing a claim, please contact us at `support@mathema.app` and we
+Before filing a claim, please contact us at `VeraStudy01@gmail.com` and we
 will attempt to resolve the issue informally within 14 days.
 
 ---
 
 ## 14. Contact
 
-- **General support**: `support@mathema.app`
-- **Privacy**: `privacy@mathema.app`
-- **Copyright / DMCA-style notices**: `copyright@mathema.app`
-- **Security disclosures**: `security@mathema.app`
+- **General support**: `VeraStudy01@gmail.com`
+- **Privacy**: `VeraStudy01@gmail.com`
+- **Copyright / DMCA-style notices**: `VeraStudy01@gmail.com`
+- **Security disclosures**: `VeraStudy01@gmail.com`
