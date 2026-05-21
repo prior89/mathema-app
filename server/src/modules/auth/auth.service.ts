@@ -18,6 +18,8 @@ import {
   recordFailedLogin,
   clearLoginFailures,
 } from '../../common/utils/login-lockout';
+import { SecurityEventService } from './security-event.service';
+import { AuthDeviceService } from './auth-device.service';
 
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
@@ -37,12 +39,14 @@ export class AuthService {
     private readonly redis: RedisService,
     private readonly mail: MailService,
     private readonly privacy: PrivacyService,
+    private readonly events: SecurityEventService,
+    private readonly devices: AuthDeviceService,
   ) {
     const cid = this.config.get<string>('GOOGLE_CLIENT_ID');
     if (cid && cid !== 'api입력칸') this.googleClient = new OAuth2Client(cid);
   }
 
-  async register(dto: RegisterDto, ctx: { ip?: string; ua?: string } = {}) {
+  async register(dto: RegisterDto, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
     const exists = await this.users.findByEmail(dto.email);
     if (exists) throw new UnauthorizedException('email already used');
 
@@ -105,10 +109,21 @@ export class AuthService {
     this.issueVerificationToken(user.id, user.email).catch((e) =>
       this.logger.error(`verification token issue failed: ${e?.message}`),
     );
-    return this.issueTokens(user.id);
+    // DEV-3: bind the registering device immediately so the user is
+    // single-session from the very first token issuance.
+    await this.bindAndDisplace({
+      userId: user.id,
+      deviceHash: ctx.deviceHash,
+      ip: ctx.ip, ua: ctx.ua,
+    });
+    return this.issueTokens(user.id, ctx.deviceHash);
   }
 
-  async login(dto: LoginDto, ip = '') {
+  async login(
+    dto: LoginDto,
+    ctx: { ip?: string; ua?: string; deviceHash?: string } = {},
+  ) {
+    const ip = ctx.ip ?? '';
     // SEC-3 lockout: check before any DB / bcrypt work so a locked client
     // can't be used as a CPU-burn vector.
     await assertNotLocked(this.redis, ip, dto.email);
@@ -118,10 +133,23 @@ export class AuthService {
       && await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) {
       await recordFailedLogin(this.redis, ip, dto.email);
+      this.events.record('LOGIN_FAIL' as any, {
+        userId: user?.id ?? null,
+        ip, userAgent: ctx.ua, metadata: { email: dto.email },
+      });
       throw new UnauthorizedException('invalid credentials');
     }
     await clearLoginFailures(this.redis, ip, dto.email);
-    return this.issueTokens(user!.id);
+    // DEV-3/5: bind this device, displace every other.
+    await this.bindAndDisplace({
+      userId: user!.id,
+      deviceHash: ctx.deviceHash,
+      ip, ua: ctx.ua,
+    });
+    this.events.record('LOGIN_SUCCESS' as any, {
+      userId: user!.id, ip, userAgent: ctx.ua,
+    });
+    return this.issueTokens(user!.id, ctx.deviceHash);
   }
 
   /**
@@ -133,7 +161,7 @@ export class AuthService {
    * the endpoint. Now requires BOTH NODE_ENV === 'development' AND an explicit
    * ENABLE_DEV_LOGIN=true env flag — staging must opt in deliberately.
    */
-  async devLogin(ctx: { ip?: string; ua?: string } = {}) {
+  async devLogin(ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
     const isDev = process.env.NODE_ENV === 'development';
     const optIn = process.env.ENABLE_DEV_LOGIN === 'true';
     if (!isDev || !optIn) {
@@ -159,10 +187,13 @@ export class AuthService {
     if (!hasDP) {
       await this.privacy.grant(user.id, 'DATA_PROCESSING' as any, { ip: ctx.ip, ua: ctx.ua });
     }
-    return this.issueTokens(user.id);
+    await this.bindAndDisplace({
+      userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
+    });
+    return this.issueTokens(user.id, ctx.deviceHash);
   }
 
-  async refresh(token: string) {
+  async refresh(token: string, requestDeviceHash?: string) {
     let payload: any;
     try {
       payload = await this.jwt.verifyAsync(token, {
@@ -178,11 +209,32 @@ export class AuthService {
     if (await this.redis.exists(`${REFRESH_REVOKE_NAMESPACE}${payload.jti}`)) {
       throw new UnauthorizedException('refresh token revoked');
     }
+    // DEV-6 device-displacement check. The token carries dh=<deviceHash>
+    // claim from when it was minted; the client also sends X-Device-Hash on
+    // every request. If a different device tries to use this token (token
+    // theft, paste, browser copy) the two will not match -> refuse. If the
+    // token is from a device that's since been displaced (another login on
+    // a different device deleted this AuthDevice row) isBound returns false.
+    if (payload.dh) {
+      if (requestDeviceHash && requestDeviceHash !== payload.dh) {
+        throw new UnauthorizedException({
+          message: 'Refresh token belongs to a different device.',
+          code: 'device_mismatch',
+        });
+      }
+      const bound = await this.devices.isBound(payload.sub, payload.dh);
+      if (!bound) {
+        throw new UnauthorizedException({
+          message: 'This session was logged out by a newer device login.',
+          code: 'device_displaced',
+        });
+      }
+    }
     // Rotation: 사용한 refresh 는 즉시 blacklist (TTL은 원본 만료까지).
     const now = Math.floor(Date.now() / 1000);
     const remainSec = Math.max(60, (payload.exp ?? now) - now);
     await this.redis.set(`${REFRESH_REVOKE_NAMESPACE}${payload.jti}`, '1', remainSec);
-    return this.issueTokens(payload.sub);
+    return this.issueTokens(payload.sub, payload.dh);
   }
 
   async logout(token: string) {
@@ -203,7 +255,7 @@ export class AuthService {
   /**
    * Google ID Token 검증 후 user find-or-create.
    */
-  async signInWithGoogle(idToken: string) {
+  async signInWithGoogle(idToken: string, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
     if (!this.googleClient) {
       throw new UnauthorizedException('Google sign-in not configured (GOOGLE_CLIENT_ID missing)');
     }
@@ -240,7 +292,10 @@ export class AuthService {
         country: 'IN' as any,
       });
     }
-    return this.issueTokens(user.id);
+    await this.bindAndDisplace({
+      userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
+    });
+    return this.issueTokens(user.id, ctx.deviceHash);
   }
 
   // ---------- 비밀번호 재설정 ----------
@@ -278,6 +333,7 @@ export class AuthService {
         data: { usedAt: new Date() },
       }),
     ]);
+    this.events.record('PASSWORD_RESET_SUCCESS' as any, { userId: rec.userId });
     return { ok: true };
   }
 
@@ -306,33 +362,85 @@ export class AuthService {
     if (!rec || rec.usedAt || rec.expiresAt < new Date()) {
       throw new BadRequestException('invalid or expired token');
     }
-    await (this.prisma as any).emailVerificationToken.update({
-      where: { id: rec.id },
-      data: { usedAt: new Date() },
-    });
-    // emailVerified 컬럼은 추후 추가 가능. 지금은 토큰만 소비 + 로그.
+    // P2-1 -- mark the user as verified in the same transaction as token
+    // consumption so partial failure can't leave them claimed-but-not-stamped.
+    await this.prisma.$transaction([
+      (this.prisma as any).emailVerificationToken.update({
+        where: { id: rec.id },
+        data: { usedAt: new Date() },
+      }),
+      this.prisma.user.update({
+        where: { id: rec.userId },
+        data: { emailVerifiedAt: new Date() },
+      }),
+    ]);
     this.logger.log(`Email verified: ${rec.email}`);
     return { ok: true, email: rec.email };
   }
 
   // ---------- 토큰 발급 ----------
 
-  private issueTokens(userId: string) {
+  private issueTokens(userId: string, deviceHash?: string) {
     const jti = randomUUID();
+    // DEV-6: include the deviceHash claim so /auth/refresh + JWT guards can
+    // bind the token to the device that minted it. Tokens forwarded to a
+    // different device (cookie steal, paste) cannot be refreshed there.
     const accessToken = this.jwt.sign(
-      { sub: userId },
+      { sub: userId, ...(deviceHash ? { dh: deviceHash } : {}) },
       {
         secret: this.config.get<string>('jwt.accessSecret'),
         expiresIn: this.config.get<string>('jwt.accessTtl'),
       },
     );
     const refreshToken = this.jwt.sign(
-      { sub: userId, type: 'refresh', jti },
+      { sub: userId, type: 'refresh', jti, ...(deviceHash ? { dh: deviceHash } : {}) },
       {
         secret: this.config.get<string>('jwt.refreshSecret'),
         expiresIn: this.config.get<string>('jwt.refreshTtl'),
       },
     );
     return { accessToken, refreshToken };
+  }
+
+  /**
+   * DEV-3/5 -- bind the (user, device) pair and displace every other device.
+   * The deletion of other AuthDevice rows is what actually displaces those
+   * sessions: when the displaced client's refresh comes in, isBound() will
+   * return false and we 401 it (see refresh()). Returns { isNewDevice } so
+   * the caller can decide whether to log NEW_DEVICE_LOGIN.
+   */
+  private async bindAndDisplace(args: {
+    userId: string;
+    deviceHash?: string;
+    deviceName?: string | null;
+    ip?: string | null;
+    ua?: string | null;
+  }): Promise<{ isNewDevice: boolean; displaced: number }> {
+    if (!args.deviceHash) return { isNewDevice: false, displaced: 0 };
+    const { isNewDevice } = await this.devices.upsertOnLogin({
+      userId: args.userId,
+      deviceHash: args.deviceHash,
+      deviceName: args.deviceName ?? args.ua ?? null,
+      ip: args.ip ?? null,
+    });
+    const others = await this.devices.revokeOtherDevices(args.userId, args.deviceHash);
+    if (isNewDevice && others.length > 0) {
+      this.events.record('NEW_DEVICE_LOGIN' as any, {
+        userId: args.userId,
+        ip: args.ip,
+        userAgent: args.ua,
+        metadata: { displacedCount: others.length },
+      });
+      // DEV-4 -- best-effort anti-theft alert. Fire and forget so a stuck
+      // mail provider does not slow down login.
+      this.prisma.user.findUnique({
+        where: { id: args.userId }, select: { email: true },
+      }).then((u) => {
+        if (u?.email) {
+          this.mail.sendNewDeviceLoginAlert(u.email, { ip: args.ip, ua: args.ua }).catch(() => {});
+        }
+      }).catch(() => {});
+    }
+    return { isNewDevice, displaced: others.length };
   }
 }

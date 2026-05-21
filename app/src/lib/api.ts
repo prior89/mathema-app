@@ -79,8 +79,16 @@ api.interceptors.response.use(
         pending = [];
         original.headers!.Authorization = `Bearer ${access}`;
         return api(original);
-      } catch (e) {
+      } catch (e: any) {
         tokens.clear();
+        // DEV-7 -- distinguish "logged out by another device" from generic
+        // session expiry so the LoginPage can show the right banner instead
+        // of a confusing "your session expired" message.
+        const code = e?.response?.data?.error?.code
+          ?? e?.response?.data?.code; // some responses are not wrapped
+        if (code === 'device_displaced' || code === 'device_mismatch') {
+          try { sessionStorage.setItem('matheo.loginNotice', code); } catch {}
+        }
         window.location.href = '/login';
         return Promise.reject(e);
       } finally {

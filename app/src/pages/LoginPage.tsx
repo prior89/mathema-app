@@ -22,6 +22,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState(import.meta.env.DEV ? 'admin' : '');
   const [password, setPassword] = useState(import.meta.env.DEV ? 'admin' : '');
   const [err, setErr] = useState<string | null>(null);
+  // DEV-7 -- displaced-session notice: when api.ts redirects from /auth/refresh
+  // with code=device_displaced it sets sessionStorage.matheo.loginNotice; show
+  // it here as an explanation, then clear so refreshes don't re-show it.
+  const [notice, setNotice] = useState<string | null>(() => {
+    try {
+      const v = sessionStorage.getItem('matheo.loginNotice');
+      sessionStorage.removeItem('matheo.loginNotice');
+      if (v === 'device_displaced')
+        return 'You were signed out because your account logged in on a new device.';
+      if (v === 'device_mismatch')
+        return 'Your session token did not match this device. Please sign in again.';
+      return null;
+    } catch { return null; }
+  });
   const [busy, setBusy] = useState(false);
   const gsiRef = useRef<HTMLDivElement | null>(null);
 
@@ -106,6 +120,20 @@ export default function LoginPage() {
                 </h1>
                 <p className="subtitle">Pick up where you left off — your progress and notes are saved.</p>
               </div>
+
+              {notice && (
+                <div
+                  role="status"
+                  style={{
+                    padding: '10px 12px', borderRadius: 8, fontSize: 13,
+                    background: 'var(--p-surface-2)', border: '1px solid var(--p-border)',
+                    color: 'var(--p-ink)',
+                  }}
+                  onClick={() => setNotice(null)}
+                >
+                  {notice}
+                </div>
+              )}
 
               <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="field">

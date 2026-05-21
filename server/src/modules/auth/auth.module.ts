@@ -5,6 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { SecurityEventService } from './security-event.service';
+import { AuthDeviceService } from './auth-device.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
 import { UsersModule } from '../users/users.module';
@@ -30,7 +32,7 @@ import { PrivacyModule } from '../privacy/privacy.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RefreshStrategy],
-  exports: [AuthService],
+  providers: [AuthService, SecurityEventService, AuthDeviceService, JwtStrategy, RefreshStrategy],
+  exports: [AuthService, SecurityEventService, AuthDeviceService],
 })
 export class AuthModule {}

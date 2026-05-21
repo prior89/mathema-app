@@ -29,4 +29,17 @@ export class MailService {
     this.logger.warn(`[MAIL stub] verify-email → ${to}`);
     this.logger.warn(`           link: ${link}`);
   }
+
+  /**
+   * DEV-4 -- informational, non-blocking notice that a new device just logged
+   * into the account. Anti-theft signal: if it wasn't the user, they can
+   * change their password from the reset link.
+   */
+  async sendNewDeviceLoginAlert(to: string, opts: { ip?: string | null; ua?: string | null; at?: Date }): Promise<void> {
+    const when = (opts.at ?? new Date()).toISOString();
+    const resetLink = `${this.appUrl()}/forgot-password`;
+    this.logger.warn(`[MAIL stub] new-device-login → ${to}`);
+    this.logger.warn(`           at: ${when}  ip: ${opts.ip ?? 'unknown'}  ua: ${opts.ua ?? 'unknown'}`);
+    this.logger.warn(`           reset-if-not-you: ${resetLink}`);
+  }
 }

@@ -63,9 +63,22 @@ function mockPrivacy(): AnyMock {
   };
 }
 
+function mockSecurityEvents(): AnyMock {
+  return { record: jest.fn() };
+}
+function mockDevices(): AnyMock {
+  return {
+    upsertOnLogin: jest.fn().mockResolvedValue({ isNewDevice: true, device: { id: 'd1' } }),
+    revokeOtherDevices: jest.fn().mockResolvedValue([]),
+    listForUser: jest.fn().mockResolvedValue([]),
+    isBound: jest.fn().mockResolvedValue(true),
+  };
+}
+
 function build(over: Partial<{
   users: AnyMock; jwt: AnyMock; config: AnyMock; prisma: any;
   redis: AnyMock; mail: AnyMock; privacy: AnyMock;
+  events: AnyMock; devices: AnyMock;
 }> = {}) {
   const users   = over.users   ?? mockUsers();
   const jwt     = over.jwt     ?? mockJwt();
@@ -80,9 +93,15 @@ function build(over: Partial<{
   const redis   = over.redis   ?? mockRedis();
   const mail    = over.mail    ?? mockMail();
   const privacy = over.privacy ?? mockPrivacy();
+  const events  = over.events  ?? mockSecurityEvents();
+  const devices = over.devices ?? mockDevices();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const svc = new AuthService(users as any, jwt as any, config as any, prisma, redis as any, mail as any, privacy as any);
-  return { svc, users, jwt, config, prisma, redis, mail, privacy };
+  const svc = new AuthService(
+    users as any, jwt as any, config as any, prisma,
+    redis as any, mail as any, privacy as any,
+    events as any, devices as any,
+  );
+  return { svc, users, jwt, config, prisma, redis, mail, privacy, events, devices };
 }
 
 describe('AuthService', () => {
@@ -161,7 +180,7 @@ describe('AuthService', () => {
       const redis = mockRedis();
       redis.get.mockResolvedValue('5'); // counter already at threshold
       const { svc } = build({ users, redis });
-      await expect(svc.login({ email: 'a@b.com', password: 'pw' } as any, '203.0.113.1'))
+      await expect(svc.login({ email: 'a@b.com', password: 'pw' } as any, { ip: '203.0.113.1' }))
         .rejects.toBeInstanceOf(UnauthorizedException);
       // bcrypt compare must NOT have run -- short-circuit before DB lookup.
       expect(users.findByEmail).not.toHaveBeenCalled();
@@ -174,7 +193,7 @@ describe('AuthService', () => {
       users.findByEmail.mockResolvedValue({ id: 'u1', passwordHash: hash, deletedAt: null });
       const redis = mockRedis();
       const { svc } = build({ users, redis });
-      await expect(svc.login({ email: 'a@b.com', password: 'wrong' } as any, '203.0.113.1'))
+      await expect(svc.login({ email: 'a@b.com', password: 'wrong' } as any, { ip: '203.0.113.1' }))
         .rejects.toBeInstanceOf(UnauthorizedException);
       expect(redis.incrWithTtl).toHaveBeenCalledWith(
         expect.stringContaining('auth:fail:203.0.113.1:a@b.com'),
@@ -191,7 +210,7 @@ describe('AuthService', () => {
       jwt.sign.mockImplementation((p) => `t-${(p as any).sub}`);
       const redis = mockRedis();
       const { svc } = build({ users, jwt, redis });
-      await svc.login({ email: 'a@b.com', password: 'pw' } as any, '203.0.113.1');
+      await svc.login({ email: 'a@b.com', password: 'pw' } as any, { ip: '203.0.113.1' });
       expect(redis.del).toHaveBeenCalledWith(expect.stringContaining('auth:fail:203.0.113.1:a@b.com'));
     });
 
