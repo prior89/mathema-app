@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { SimilarProblemService } from '../recommendations/services/similar-problem.service';
+import { CreateAttemptDto } from './dto/create-attempt.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('attempts')
@@ -15,8 +16,8 @@ export class AttemptsController {
   ) {}
 
   @Post()
-  create(@CurrentUser('id') userId: string, @Body() body: any) {
-    return this.service.create(userId, body);
+  create(@CurrentUser('id') userId: string, @Body() dto: CreateAttemptDto) {
+    return this.service.create(userId, dto);
   }
 
   /** 명세서 §5 — GET /api/attempts/:attemptId. 본인 것만 반환. */
