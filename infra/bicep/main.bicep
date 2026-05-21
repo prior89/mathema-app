@@ -161,7 +161,10 @@ resource pgServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-preview'
     storage: { storageSizeGB: 32 }
     backup: { backupRetentionDays: 7, geoRedundantBackup: 'Disabled' }
     highAvailability: { mode: 'Disabled' }
-    network: { publicNetworkAccess: 'Disabled' }
+    // publicNetworkAccess: 'Disabled' would block Container Apps' shared-pool
+    // outbound (no VNet integration, no private endpoint). Revert until we
+    // add a real private network. See infra/README.md hardening notes.
+    network: { publicNetworkAccess: 'Enabled' }
   }
 }
 
@@ -170,7 +173,7 @@ resource pgFirewallAllowAzure 'Microsoft.DBforPostgreSQL/flexibleServers/firewal
   name: 'AllowAzureServices'
   properties: {
     startIpAddress: '0.0.0.0'
-    endIpAddress: '0.0.0.0'   // (special: Azure 내부 from any region)
+    endIpAddress: '0.0.0.0'   // (special: Azure-services-only — required while publicAccess is Enabled)
   }
 }
 
@@ -231,10 +234,13 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableRbacAuthorization: true
     enableSoftDelete: true
     softDeleteRetentionInDays: 7
-    publicNetworkAccess: 'Disabled'
+    // 'Disabled' + bypass:AzureServices does NOT include Container Apps'
+    // shared-pool outbound (Microsoft trusted-services list is narrower).
+    // Revert until we add VNet integration + a KV private endpoint.
+    publicNetworkAccess: 'Enabled'
     networkAcls: {
       bypass: 'AzureServices'
-      defaultAction: 'Deny'
+      defaultAction: 'Allow'
       ipRules: []
       virtualNetworkRules: []
     }
