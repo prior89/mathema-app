@@ -632,7 +632,7 @@ export class ConceptLessonsService {
     });
 
     const CHUNK = 5;
-    const results: Array<{ id: string; source: string; unitId: string | null; subUnitId: string | null; difficulty: Difficulty; difficultyLevel: number | null; body: string }> = [];
+    const results: Array<{ id: string; source: string; unitId: string; subUnitId: string | null; difficulty: Difficulty; difficultyLevel: number; body: string }> = [];
     for (let i = 0; i < variants.length; i += CHUNK) {
       const slice = variants.slice(i, i + CHUNK);
       const drafts = await Promise.all(

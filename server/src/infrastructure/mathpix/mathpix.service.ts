@@ -5,7 +5,7 @@ export type MathpixOcrResult = {
   text: string;
   latex?: string | null;
   confidence?: number | null;
-  source: 'mathpix';
+  source: 'mathpix' | 'gemini';
 };
 
 @Injectable()
