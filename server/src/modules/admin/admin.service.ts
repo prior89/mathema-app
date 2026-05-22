@@ -1,7 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN } from '../../common/i18n/content-en';
+import type { ConceptLessonsService } from '../concept-lessons/concept-lessons.service';
+
+interface PrewarmResult {
+  chapterCode: string;
+  before: number;
+  generated: number;
+  after: number;
+  error?: string;
+}
 
 const localizeUnit = (name: string | undefined | null, lang: Lang) =>
   lang !== 'ko' ? (name && UNIT_NAME_EN[name]) || name || '—' : name || '—';
@@ -12,6 +21,7 @@ const localizeUnit = (name: string | undefined | null, lang: Lang) =>
  */
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
   constructor(private readonly prisma: PrismaService) {}
 
   // ===== 시스템 전체 개요 =====
@@ -371,5 +381,88 @@ export class AdminService {
     return Array.from(map.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([date, set]) => ({ date, dau: set.size }));
+  }
+
+  // ===== Prewarm Mastery — HTTP wrapper around scripts/prewarm-mastery.ts =====
+
+  /** Counts multi-step problems (steps 1, 2, AND 3) for a chapter — same
+   *  definition the script uses. */
+  private async countMultiStep(chapterCode: string): Promise<number> {
+    const rows = await this.prisma.$queryRaw<Array<{ n: bigint }>>`
+      SELECT COUNT(*)::bigint AS n
+      FROM "Problem" p
+      JOIN "ConceptLesson" cl ON cl.id = p."conceptLessonId"
+      WHERE cl."chapterCode" = ${chapterCode}
+        AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 1)
+        AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 2)
+        AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 3);
+    `;
+    return Number(rows[0]?.n ?? 0);
+  }
+
+  /** Every chapter whose multi-step pool is currently < target. */
+  private async findUnderstocked(target: number): Promise<string[]> {
+    const rows = await this.prisma.$queryRaw<Array<{ chapterCode: string; multi: bigint }>>`
+      SELECT cl."chapterCode" AS "chapterCode",
+             (SELECT COUNT(*)
+              FROM "Problem" p
+              WHERE p."conceptLessonId" = cl.id
+                AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 1)
+                AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 2)
+                AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 3)
+             )::bigint AS multi
+      FROM "ConceptLesson" cl
+      WHERE cl."unitId" IS NOT NULL
+      ORDER BY cl."chapterCode";
+    `;
+    return rows.filter((r) => Number(r.multi) < target).map((r) => r.chapterCode);
+  }
+
+  /** HTTP-callable equivalent of scripts/prewarm-mastery.ts. Blocks until done.
+   *  Each chapter takes ~30-60s × (target - existing)/5 — a full sweep can
+   *  run for minutes. Caller (AdminController) holds the HTTP connection open. */
+  async prewarmMastery(opts: {
+    chapterCodes?: string[];
+    target: number;
+    lessons: ConceptLessonsService;
+  }): Promise<{ target: number; processed: number; totalGenerated: number; results: PrewarmResult[] }> {
+    const { target, lessons } = opts;
+    const chapters = opts.chapterCodes?.length
+      ? opts.chapterCodes
+      : await this.findUnderstocked(target);
+
+    if (chapters.length === 0) {
+      return { target, processed: 0, totalGenerated: 0, results: [] };
+    }
+
+    this.logger.log(`prewarm-mastery queue: ${chapters.length} chapter(s), target=${target}`);
+
+    const results: PrewarmResult[] = [];
+    let totalGenerated = 0;
+    for (const code of chapters) {
+      const t0 = Date.now();
+      const before = await this.countMultiStep(code);
+      const need = Math.max(0, target - before);
+      if (need === 0) {
+        results.push({ chapterCode: code, before, generated: 0, after: before });
+        continue;
+      }
+      try {
+        await lessons.prewarmChapter(code, need);
+        const after = await this.countMultiStep(code);
+        const generated = after - before;
+        totalGenerated += generated;
+        results.push({ chapterCode: code, before, generated, after });
+        this.logger.log(
+          `prewarm [${code}] before=${before} generated=${generated} after=${after} took=${((Date.now() - t0) / 1000).toFixed(1)}s`,
+        );
+      } catch (e) {
+        const error = (e as Error).message;
+        this.logger.error(`prewarm [${code}] FAILED: ${error}`);
+        results.push({ chapterCode: code, before, generated: 0, after: before, error });
+      }
+    }
+
+    return { target, processed: results.length, totalGenerated, results };
   }
 }

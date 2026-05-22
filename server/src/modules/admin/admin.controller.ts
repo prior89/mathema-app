@@ -1,15 +1,19 @@
-import { Controller, Get, Param, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { AdminAuditInterceptor } from './admin-audit.interceptor';
 import { CurrentLang, Lang } from '../../common/i18n/current-lang.decorator';
+import { ConceptLessonsService } from '../concept-lessons/concept-lessons.service';
 
 @UseGuards(JwtAuthGuard, AdminGuard)
 @UseInterceptors(AdminAuditInterceptor)
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly service: AdminService) {}
+  constructor(
+    private readonly service: AdminService,
+    private readonly lessons: ConceptLessonsService,
+  ) {}
 
   @Get('overview')        overview() { return this.service.overview(); }
   @Get('users')           users(@Query('limit') limit = 100) { return this.service.listUsers(+limit); }
@@ -46,5 +50,32 @@ export class AdminController {
     @Query('path') path?: string,
   ) {
     return this.service.auditLogs({ limit: limit ? +limit : 200, email, path });
+  }
+
+  /**
+   * Top up every Mastery chapter that has fewer than 20 multi-step problems
+   * via LLM generation — mirrors the scripts/prewarm-mastery.ts one-shot
+   * admin tool but callable over HTTP so we don't need shell access to a
+   * Container App instance to fill new chapters.
+   *
+   * Body (all optional):
+   *   { chapterCodes?: string[], target?: number }
+   *     - chapterCodes: specific chapters to top up; default = all under-stocked
+   *     - target: chapter problem floor; default 20
+   *
+   * Returns: { chapterCode, before, generated, after }[]
+   *
+   * NB: each chapter takes ~30-60s × (target - existing)/5. With ~80 chapters
+   * a full sweep can run for minutes — the call blocks the HTTP connection
+   * until done. For larger jobs prefer the CLI script or split into batches.
+   */
+  @Post('prewarm-mastery')
+  async prewarmMastery(@Body() body: { chapterCodes?: string[]; target?: number }) {
+    const target = body?.target ?? 20;
+    return this.service.prewarmMastery({
+      chapterCodes: body?.chapterCodes,
+      target,
+      lessons: this.lessons,
+    });
   }
 }
