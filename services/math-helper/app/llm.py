@@ -22,7 +22,7 @@ _logger = logging.getLogger(__name__)
 # if Flash falters on a class of problems we can't fix with prompting.
 _gemini_flash = (
     ChatGoogleGenerativeAI(
-        model="gemini-3.5-flash",
+        model="gemini-1.5-flash",
         temperature=0,
         max_output_tokens=2000,
     )
