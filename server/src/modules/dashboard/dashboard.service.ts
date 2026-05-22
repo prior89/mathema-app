@@ -145,8 +145,17 @@ export class DashboardService {
     );
 
     return rows.map((r) => {
-      const problemsTotal = Number(r.problems_total);
-      const problemsAttempted = Number(r.problems_attempted);
+      // Cap to the Mastery 20-problem invariant: the Home card now mirrors
+      // what the student actually sees in Mastery (which always exposes
+      // exactly MASTERY_TARGET problems, regardless of how many sit in the
+      // underlying pool). Without the cap a chapter with 54 reachable
+      // problems would show "1 / 54" on Home while Mastery shows 1/20 —
+      // confusing, and not how progress is judged.
+      const MASTERY_CAP = 20;
+      const rawTotal = Number(r.problems_total);
+      const rawAttempted = Number(r.problems_attempted);
+      const problemsTotal = Math.min(rawTotal, MASTERY_CAP);
+      const problemsAttempted = Math.min(rawAttempted, problemsTotal);
       const totalAttempts = Number(r.total_attempts);
       const correctAttempts = Number(r.correct_attempts);
       return {

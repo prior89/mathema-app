@@ -448,7 +448,7 @@ export class ConceptLessonsService {
     const target = ConceptLessonsService.MASTERY_TARGET;
 
     if (pool.length >= target) {
-      return this.pickBalanced(pool, target);
+      return this.pickRandom(pool, target);
     }
 
     // Top-up via LLM multi-step generation (see BULK-LLM chunked policy).
@@ -458,44 +458,24 @@ export class ConceptLessonsService {
   }
 
   /**
-   * Pick `target` problems from `pool` with even difficulty spread.
-   * Difficulty buckets: MIDDLE / UPPER_MIDDLE / SEMI_KILLER / KILLER.
-   * Each bucket aims for target / 4 problems; if a bucket is under-stocked,
-   * the surplus is drawn from neighbouring buckets in difficulty order.
-   * The leftover problems stay in the database — they remain pool members
-   * for the next user, the Study tab can never see them (multi-step), and
-   * the next practiceProblems call will re-pick freshly.
+   * Pick `target` problems uniformly at random from `pool`.
+   * Fisher-Yates partial shuffle — O(target) swaps.
+   *
+   * Difficulty-balanced selection was dropped 2026-05-22 in favour of a
+   * single-rule "20 random per chapter" so the Home Chapter Progress card
+   * and Mastery practiceProblems agree on the same denominator.
    */
-  private pickBalanced(
+  private pickRandom(
     pool: Array<{ id: string; source: string; unitId: string | null; subUnitId: string | null; difficulty: Difficulty; difficultyLevel: number | null; body: string }>,
     target: number,
   ) {
-    const buckets = new Map<Difficulty, typeof pool>();
-    for (const p of pool) {
-      const arr = buckets.get(p.difficulty) ?? [];
-      arr.push(p);
-      buckets.set(p.difficulty, arr);
+    const arr = pool.slice();
+    const n = Math.min(target, arr.length);
+    for (let i = 0; i < n; i++) {
+      const j = i + Math.floor(Math.random() * (arr.length - i));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    const order: Difficulty[] = [Difficulty.MIDDLE, Difficulty.UPPER_MIDDLE, Difficulty.SEMI_KILLER, Difficulty.KILLER];
-    const quota = Math.floor(target / order.length);
-
-    const picked: typeof pool = [];
-    // First pass — quota per bucket.
-    for (const d of order) {
-      const arr = buckets.get(d) ?? [];
-      picked.push(...arr.slice(0, quota));
-    }
-    // Second pass — fill the remainder from whatever buckets still have stock.
-    const remaining = target - picked.length;
-    if (remaining > 0) {
-      const leftovers: typeof pool = [];
-      for (const d of order) {
-        const arr = buckets.get(d) ?? [];
-        leftovers.push(...arr.slice(quota));
-      }
-      picked.push(...leftovers.slice(0, remaining));
-    }
-    return picked;
+    return arr.slice(0, n);
   }
 
   /**

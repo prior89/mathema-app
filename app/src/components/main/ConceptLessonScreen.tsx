@@ -99,17 +99,17 @@ export function ConceptLessonScreen() {
   if (lesson.isLoading) return <Shell back={() => nav('/app/learn')}><Centered msg="Loading lesson…" /></Shell>;
   if (lesson.isError || !lesson.data) return <Shell back={() => nav('/app/learn')}><Centered msg="Could not load this lesson." /></Shell>;
 
-  const subtitle = `Class ${lesson.data.ncertClass.replace('CLASS_', '')} · Chapter ${lesson.data.chapterNumber}`;
-
   // Indicator: 1 (concept) + N problems
   const segments = 1 + Math.max(1, totalProblems);
   const activeSeg = phase === 'concept' ? 0 : phase === 'practice' ? 1 + practiceProblemIdx : segments - 1;
   const stepLabel = ['CONCEPT', 'PROCESS', 'ANSWER'];
-  const pillLabel = phase === 'concept'
-    ? `CONCEPT · ${conceptSteps.length} steps`
-    : phase === 'practice'
-      ? `Q ${practiceProblemIdx + 1}/${totalProblems} · STEP ${practiceStepIdx} ${stepLabel[practiceStepIdx - 1] ?? ''}`
-      : 'COMPLETE';
+  // Header pill is suppressed during concept phase (the chapter title alone is
+  // enough); only practice phase keeps Q/STEP progress, done phase shows COMPLETE.
+  const pillLabel = phase === 'practice'
+    ? `Q ${practiceProblemIdx + 1}/${totalProblems} · STEP ${practiceStepIdx} ${stepLabel[practiceStepIdx - 1] ?? ''}`
+    : phase === 'done'
+      ? 'COMPLETE'
+      : undefined;
 
   const goFromConcept = async () => {
     track('chapter.concept.complete', { chapterCode: code, steps: conceptSteps.length });
@@ -157,7 +157,7 @@ export function ConceptLessonScreen() {
   };
 
   return (
-    <Shell back={() => nav('/app/learn')} title={lesson.data.title} subtitle={subtitle} pill={pillLabel}>
+    <Shell back={() => nav('/app/learn')} title={lesson.data.title} pill={pillLabel}>
       <SegmentIndicator total={segments} active={activeSeg} />
       {phase === 'concept' && (
         <ConceptPhase
@@ -189,8 +189,8 @@ export function ConceptLessonScreen() {
   );
 }
 
-function Shell({ children, back, title, subtitle, pill }: {
-  children: React.ReactNode; back: () => void; title?: string; subtitle?: string; pill?: string;
+function Shell({ children, back, title, pill }: {
+  children: React.ReactNode; back: () => void; title?: string; pill?: string;
 }) {
   return (
     <div className="screen">
@@ -200,8 +200,7 @@ function Shell({ children, back, title, subtitle, pill }: {
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
-            {subtitle && <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{subtitle}</div>}
-            {title && <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>}
+            {title && <div style={{ fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>}
           </div>
         </div>
         {pill && <span className="step-pill" style={{ whiteSpace: 'nowrap' }}>{pill}</span>}
