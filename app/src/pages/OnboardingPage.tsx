@@ -738,7 +738,6 @@ function ScreenResults({
                   : <>Practice your first chapter — your AI coach will surface weak topics from real attempts.</>}
               </div>
               <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                <span className="chip" style={{ fontSize: 11 }}>~25 min / day</span>
                 {focusConcept && <span className="chip" style={{ fontSize: 11 }}>{focusConcept.conceptCode}</span>}
                 <span className="chip" style={{ fontSize: 11 }}>Adaptive</span>
               </div>
