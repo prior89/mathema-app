@@ -227,13 +227,13 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
           <h3 className="title" style={{ fontSize: 22, marginTop: 6, lineHeight: 1.2 }}>{bigIdea}</h3>
         </div>
       )}
-      <div style={{ flex: 1, overflow: 'auto', padding: '8px 22px', minHeight: 0 }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '8px 22px 16px', minHeight: 0 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {steps.map((s) => <ConceptStepBlock key={s.id} step={s} />)}
         </div>
-      </div>
-      <div className="screen-foot" style={{ paddingTop: 6 }}>
-        <button className="btn" onClick={onContinue}>
+        {/* CTA lives inside the scroll area — the student swipes down to it
+            rather than meeting a sticky footer. */}
+        <button className="btn" onClick={onContinue} style={{ marginTop: 20 }}>
           {ctaLabel}
           <Glyph.ChevronR />
         </button>
@@ -449,7 +449,7 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
         )}
       </div>
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '8px 22px', minHeight: 0 }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '8px 22px 16px', minHeight: 0 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {choices.map((c, i) => {
             const isPicked = pickedId === c.id;
@@ -472,27 +472,29 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
         </div>
 
         {result && <FeedbackCard result={result} />}
-      </div>
-      <div className="screen-foot" style={{ paddingTop: 6 }}>
-        {!result ? (
-          <button className="btn" disabled={!pickedId || submit.isPending} onClick={() => submit.mutate()}>
-            {submit.isPending ? 'Checking…' : 'Check answer'}
-            <Glyph.ChevronR />
-          </button>
-        ) : result.isCorrect ? (
-          <button className="btn" onClick={onNext}>
-            {stepIdx < stepTotal
-              ? `Continue to STEP ${stepIdx + 1}`
-              : problemIdx < problemTotal
-                ? `Next question (${problemIdx + 1}/${problemTotal})`
-                : 'Finish chapter'}
-            <Glyph.ChevronR />
-          </button>
-        ) : (
-          <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
-            Try again
-          </button>
-        )}
+
+        {/* Action button lives inside the scroll area — no sticky footer. */}
+        <div style={{ marginTop: 16 }}>
+          {!result ? (
+            <button className="btn" disabled={!pickedId || submit.isPending} onClick={() => submit.mutate()}>
+              {submit.isPending ? 'Checking…' : 'Check answer'}
+              <Glyph.ChevronR />
+            </button>
+          ) : result.isCorrect ? (
+            <button className="btn" onClick={onNext}>
+              {stepIdx < stepTotal
+                ? `Continue to STEP ${stepIdx + 1}`
+                : problemIdx < problemTotal
+                  ? `Next question (${problemIdx + 1}/${problemTotal})`
+                  : 'Finish chapter'}
+              <Glyph.ChevronR />
+            </button>
+          ) : (
+            <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
+              Try again
+            </button>
+          )}
+        </div>
       </div>
     </>
   );
@@ -549,10 +551,10 @@ function FeedbackCard({ result }: { result: StepResult }) {
 function DonePhase({ chapterTitle, onBack }: { chapterTitle: string; onBack: () => void }) {
   return (
     <>
-      <div style={{ flex: 1, overflow: 'auto', padding: '24px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', gap: 16 }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '24px 22px 16px', minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 16 }}>
         <div style={{
           width: 72, height: 72, borderRadius: 24, background: 'var(--p-primary-tint)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 32,
         }}>
           <Glyph.Check accent="var(--p-primary)" size={36} />
         </div>
@@ -563,9 +565,7 @@ function DonePhase({ chapterTitle, onBack }: { chapterTitle: string; onBack: () 
             Your attempts are saved. Your AI coach will use this data to surface weak patterns and target the next chapter.
           </p>
         </div>
-      </div>
-      <div className="screen-foot" style={{ paddingTop: 6 }}>
-        <button className="btn" onClick={onBack}>
+        <button className="btn" onClick={onBack} style={{ marginTop: 16, maxWidth: 280 }}>
           Back to chapters
           <Glyph.ChevronR />
         </button>
