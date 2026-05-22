@@ -20,7 +20,7 @@ _logger = logging.getLogger(__name__)
 # Accuracy on AIME / NCERT word problems sits around 80-85%, lower than
 # Pro's ~95% but high enough for the v1 launch — promote back to Pro only
 # if Flash falters on a class of problems we can't fix with prompting.
-# Primary: gpt-4o. Gemini 1.5 Flash kept falting on multi-step Korean
+# Primary: gpt-4o. Gemini 3.5 Flash kept falting on multi-step Korean
 # sequence/series problems even with the token cap lifted — falling back
 # to OpenAI's frontier mini-flagship gives ~90%+ accuracy on the same
 # class. Pricing $2.50/$10 per 1M is roughly 30x Flash, justified while
@@ -31,12 +31,14 @@ _openai_primary = ChatOpenAI(
     max_tokens=8192,
 )
 
-# Cross-cloud fallback — Gemini 1.5 Flash. Same multimodal model used for
+# Cross-cloud fallback — Gemini 3.5 Flash. Same multimodal model used for
 # OCR in mathpix.service.ts, so a single key keeps both paths alive when
 # OpenAI is rate-limited or auth-failing.
+# Was gemini-1.5-flash until 2026-05-22 — Google deprecated that id and returns
+# 404 NOT_FOUND on v1beta. 3.5-flash is the current stable multimodal tier.
 _gemini_flash = (
     ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-3.5-flash",
         temperature=0,
         max_output_tokens=8192,
     )
@@ -48,7 +50,7 @@ _gemini_flash = (
 async def structured(prompt: str, schema: type[BaseModel]):
     """Schema-constrained LLM call with cross-cloud failure fallback.
 
-    Order: gpt-4o → Gemini 1.5 Flash (if configured) → re-raise.
+    Order: gpt-4o → Gemini 3.5 Flash (if configured) → re-raise.
     `with_structured_output(schema)` honoured by both sides so callers
     don't care which provider answered.
     """
@@ -58,7 +60,7 @@ async def structured(prompt: str, schema: type[BaseModel]):
         if _gemini_flash is None:
             raise
         _logger.warning(
-            "gpt-4o structured() failed (%s) — falling back to Gemini 1.5 Flash",
+            "gpt-4o structured() failed (%s) — falling back to Gemini 3.5 Flash",
             type(e).__name__,
         )
         return await _gemini_flash.with_structured_output(schema).ainvoke(prompt)
