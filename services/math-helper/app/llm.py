@@ -20,47 +20,49 @@ _logger = logging.getLogger(__name__)
 # Accuracy on AIME / NCERT word problems sits around 80-85%, lower than
 # Pro's ~95% but high enough for the v1 launch — promote back to Pro only
 # if Flash falters on a class of problems we can't fix with prompting.
+# Primary: gpt-4o. Gemini 1.5 Flash kept falting on multi-step Korean
+# sequence/series problems even with the token cap lifted — falling back
+# to OpenAI's frontier mini-flagship gives ~90%+ accuracy on the same
+# class. Pricing $2.50/$10 per 1M is roughly 30x Flash, justified while
+# we're tuning the Solver for launch correctness over per-call cost.
+_openai_primary = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0,
+    max_tokens=8192,
+)
+
+# Cross-cloud fallback — Gemini 1.5 Flash. Same multimodal model used for
+# OCR in mathpix.service.ts, so a single key keeps both paths alive when
+# OpenAI is rate-limited or auth-failing.
 _gemini_flash = (
     ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
         temperature=0,
-        # 8192 is Gemini 1.5 Flash's hard ceiling — generous headroom so
-        # multi-step solutions (e.g. sum-with-absolute-values where the
-        # model has to derive a_n, find the sign-flip point, and split
-        # the sum) aren't truncated mid-derivation. Cost upside if some
-        # responses are short — Gemini bills actual tokens, not the cap.
         max_output_tokens=8192,
     )
     if ChatGoogleGenerativeAI is not None and os.environ.get("GEMINI_API_KEY")
     else None
 )
 
-# Cross-cloud fallback. Used only when Gemini is auth-fail / 429 / timeout
-# / schema-decode-fail, so a Google-side outage doesn't take Solver down.
-_openai = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0,
-    max_tokens=8192,
-)
-
 
 async def structured(prompt: str, schema: type[BaseModel]):
-    """Schema-constrained LLM call with single-cloud-failure fallback.
+    """Schema-constrained LLM call with cross-cloud failure fallback.
 
-    Order: Gemini 2.5 Flash (if configured) → OpenAI gpt-4o-mini → re-raise.
-    Same `with_structured_output(schema)` contract on both providers so
-    callers don't care which side answered.
+    Order: gpt-4o → Gemini 1.5 Flash (if configured) → re-raise.
+    `with_structured_output(schema)` honoured by both sides so callers
+    don't care which provider answered.
     """
-    if _gemini_flash is not None:
-        try:
-            return await _gemini_flash.with_structured_output(schema).ainvoke(prompt)
-        except Exception as e:
-            _logger.warning(
-                "Gemini 2.5 Flash structured() failed (%s) — falling back to gpt-4o-mini",
-                type(e).__name__,
-            )
-    return await _openai.with_structured_output(schema).ainvoke(prompt)
+    try:
+        return await _openai_primary.with_structured_output(schema).ainvoke(prompt)
+    except Exception as e:
+        if _gemini_flash is None:
+            raise
+        _logger.warning(
+            "gpt-4o structured() failed (%s) — falling back to Gemini 1.5 Flash",
+            type(e).__name__,
+        )
+        return await _gemini_flash.with_structured_output(schema).ainvoke(prompt)
 
 
 # Direct-invoke alias for legacy callers (graph.py imports `llm`).
-llm = _gemini_flash if _gemini_flash is not None else _openai
+llm = _openai_primary
