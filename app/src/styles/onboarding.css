@@ -274,7 +274,10 @@
 .mathema-app .math-big { font-family: var(--font-mono); font-size: 22px; color: var(--p-ink); letter-spacing: -0.01em; }
 
 /* ===== Main app ===== */
-.mathema-app .tabbar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: var(--p-surface); border-top: 1px solid var(--p-border); padding: 10px 4px 14px; }
+/* TabBar pinned to the bottom of .screen — flex-shrink:0 stops it from being
+   squeezed when scroll content overflows; sticky+z-index keeps it visually
+   anchored above any descendant scroll layer. */
+.mathema-app .tabbar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: var(--p-surface); border-top: 1px solid var(--p-border); padding: 10px 4px 14px; flex-shrink: 0; position: sticky; bottom: 0; z-index: 10; }
 .mathema-app .tabbar .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; color: var(--p-muted); font-size: 11.5px; font-weight: 500; cursor: pointer; }
 .mathema-app .tabbar .tab .icon { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
 .mathema-app .tabbar .tab.active { color: var(--p-primary); }
