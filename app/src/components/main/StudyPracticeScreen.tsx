@@ -138,19 +138,35 @@ export function StudyPracticeScreen() {
     return (
       <div className="screen">
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 14, padding: 22, textAlign: 'center' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-primary)' }}>✓</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 24 }}>
-            {correctCount + wrongCount === 0 ? 'No problems solved yet.' : 'Practice done.'}
-          </div>
-          {correctCount + wrongCount > 0 && (
-            <div style={{ fontSize: 14, color: 'var(--p-ink-2)', lineHeight: 1.6 }}>
-              <strong>{correctCount}</strong> right · <strong>{wrongCount}</strong> filed to Notes.
-            </div>
+          {/* Two completion shapes:
+              • truly done — student practised and stopped → success tick + summary.
+              • dry pool — backend returned null for the very first /next call
+                because the chapter has no single-step problems yet → friendly
+                "coming soon" message, not the misleading "no problems solved yet". */}
+          {correctCount + wrongCount === 0 ? (
+            <>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-muted)' }}>📒</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, lineHeight: 1.25 }}>
+                This chapter doesn't have practice problems yet.
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--p-ink-2)', maxWidth: 320, lineHeight: 1.55 }}>
+                We're curating problems for it by hand to keep quality up.
+                Try a different chapter, or check back soon.
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-primary)' }}>✓</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 24 }}>Practice done.</div>
+              <div style={{ fontSize: 14, color: 'var(--p-ink-2)', lineHeight: 1.6 }}>
+                <strong>{correctCount}</strong> right · <strong>{wrongCount}</strong> filed to Notes.
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--p-muted)', maxWidth: 320, lineHeight: 1.55 }}>
+                Wrong answers are now in your wrong-note book. Re-open them from Notes
+                whenever you want — a single perfect retry graduates them.
+              </div>
+            </>
           )}
-          <div style={{ fontSize: 12, color: 'var(--p-muted)', maxWidth: 320, lineHeight: 1.55 }}>
-            Wrong answers are now in your wrong-note book. Re-open them from Notes
-            whenever you want — a single perfect retry graduates them.
-          </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
             <button className="btn outline" onClick={() => nav('/app/study')}>Back to Study</button>
             {wrongCount > 0 && (

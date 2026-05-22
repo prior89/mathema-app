@@ -322,12 +322,13 @@ export class MockExamsService {
       ...(attemptedIds.length > 0 ? [attemptedIds] : []),
     );
 
-    // Top-up with LLM-generated single-step problems when the pool is short.
-    // Newly generated problems persist as Problem rows (conceptLessonId set),
-    // so future users for the same chapter draw from the enriched pool —
-    // average LLM cost per chapter trends down with each session.
+    // 2026-05-22 user decision: do NOT silently top-up with LLM-generated
+    // problems when the pool is short. Surface the gap so we can curate
+    // problems by hand (NCERT exercises, exemplar problems, etc.). The
+    // `LLM_POOL_TOPUP` env var is the kill-switch — set to "on" to re-enable
+    // generation for a specific deploy if needed.
     const shortfall = TARGET - candidates.length;
-    if (shortfall > 0) {
+    if (shortfall > 0 && process.env.LLM_POOL_TOPUP === 'on') {
       const generated = await this.generateSingleStepProblems(lesson, shortfall, userId);
       candidates.push(...generated);
     }
@@ -402,8 +403,10 @@ export class MockExamsService {
     );
 
     let chosenId: string | null = pooled[0]?.id ?? null;
-    if (!chosenId) {
-      // Pool dry — generate one fresh single-step problem for this user.
+    if (!chosenId && process.env.LLM_POOL_TOPUP === 'on') {
+      // Pool dry — opt-in LLM top-up. Off by default (2026-05-22 user
+      // decision: chapters with empty single-step pools should signal that
+      // the pool needs hand-curation, not silently fall back to AI gen).
       const generated = await this.generateSingleStepProblems(lesson, 1, userId);
       chosenId = generated[0]?.id ?? null;
     }

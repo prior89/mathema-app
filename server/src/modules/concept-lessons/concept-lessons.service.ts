@@ -489,7 +489,11 @@ export class ConceptLessonsService {
     });
 
     let working = pool;
-    if (working.length < target) {
+    // 2026-05-22 user decision: when a chapter's multi-step pool is short of
+    // 20, do NOT auto-generate the gap with LLM. Surface the shortfall so
+    // problems can be curated by hand (NCERT exercises / exemplar / etc.).
+    // `LLM_POOL_TOPUP=on` re-enables the auto top-up for one-off use.
+    if (working.length < target && process.env.LLM_POOL_TOPUP === 'on') {
       const shortfall = target - working.length;
       const generated = await this.generateMultiStepProblems(lesson, shortfall, userId);
       working = [...working, ...generated];
