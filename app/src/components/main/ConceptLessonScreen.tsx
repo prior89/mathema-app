@@ -428,27 +428,25 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
 
   return (
     <>
-      {/* Sticky context — QUESTION/STEP eyebrow + step prompt + (on step 1)
-          the PROBLEM card stay frozen at the top so the student can keep the
-          question in view while scrolling the 5 choices below. */}
-      <div style={{ padding: '12px 22px 4px', flexShrink: 0 }}>
-        <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>
-          QUESTION {problemIdx} OF {problemTotal} · STEP {stepIdx} OF {stepTotal} · {STEP_TYPE_LABEL[step.stepType] ?? step.stepType}
-        </span>
-        <h3 className="title" style={{ fontSize: 20, marginTop: 6, lineHeight: 1.25 }}>
-          <MathText text={step.prompt} />
-        </h3>
-        {stepIdx === 1 && problem.body && (
-          // Attribution (Problem.source) intentionally not rendered — same
-          // licence-safety / visual-clutter call already made on Notes cards.
-          <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent', marginTop: 12 }}>
-            <div className="math-big" style={{ fontSize: 16, whiteSpace: 'pre-wrap' }}><MathText text={problem.body} /></div>
-          </div>
-        )}
-      </div>
+      <div style={{ flex: 1, overflow: 'auto', padding: '12px 22px 16px', minHeight: 0 }}>
+        {/* Question header, prompt, and PROBLEM card now scroll with the rest
+            of the practice screen — no longer sticky-pinned at the top. */}
+        <div style={{ paddingBottom: 4 }}>
+          <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>
+            QUESTION {problemIdx} OF {problemTotal} · STEP {stepIdx} OF {stepTotal} · {STEP_TYPE_LABEL[step.stepType] ?? step.stepType}
+          </span>
+          <h3 className="title" style={{ fontSize: 20, marginTop: 6, lineHeight: 1.25 }}>
+            <MathText text={step.prompt} />
+          </h3>
+          {stepIdx === 1 && problem.body && (
+            // Attribution (Problem.source) intentionally not rendered.
+            <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent', marginTop: 12 }}>
+              <div className="math-big" style={{ fontSize: 16, whiteSpace: 'pre-wrap' }}><MathText text={problem.body} /></div>
+            </div>
+          )}
+        </div>
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '8px 22px 16px', minHeight: 0 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
           {choices.map((c, i) => {
             const isPicked = pickedId === c.id;
             // 정답일 때만 내가 고른 보기를 초록으로. 오답일 때는 정답 보기 노출 X.
