@@ -235,7 +235,7 @@ export function StudyPracticeScreen() {
       <div style={{ flex: 1, overflow: 'auto', padding: '12px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>WORKINGS</div>
-          <HandwritingCanvas ref={canvasRef} height={420} extendable />
+          <HandwritingCanvas ref={canvasRef} height={300} extendable />
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
             <button
               type="button"
