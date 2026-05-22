@@ -1,7 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { SubscriptionStatus } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { FREE_TIER_SOLVER_LIMIT } from './free-tier-solver-quota.guard';
+import { FREE_TIER_SOLVER_LIMIT } from './billing.constants';
 import { PlayApiClient } from './play-api-client.service';
 import { QuotaService } from './quota.service';
 

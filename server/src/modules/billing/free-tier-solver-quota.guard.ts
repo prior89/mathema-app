@@ -6,11 +6,13 @@ import {
 } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { QuotaService } from './quota.service';
+import { FREE_TIER_SOLVER_LIMIT } from './billing.constants';
 
-/** Free-tier daily AI Solver call cap. Premium users bypass. Source of
- * truth for the limit number — keep this value in sync with the pricing
- * memory (`project_matheo_pricing_india`). */
-export const FREE_TIER_SOLVER_LIMIT = 8;
+// FREE_TIER_SOLVER_LIMIT is re-exported here for legacy consumers
+// (analytics, billing.controller, …) that imported it from this path
+// before billing.constants.ts existed. Single source of truth lives in
+// billing.constants — see the doc comment there for the cycle history.
+export { FREE_TIER_SOLVER_LIMIT };
 
 @Injectable()
 export class FreeTierSolverQuotaGuard implements CanActivate {
