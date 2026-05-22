@@ -67,8 +67,9 @@ describe('ConceptLessonsService.practiceProblems', () => {
     await expect(svc.practiceProblems('NONEXISTENT', 'en', 'u1')).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('returns exactly 20 problems with even difficulty spread when pool > 20', async () => {
-    // 30-problem pool — 10 MIDDLE, 8 UPPER_MIDDLE, 7 SEMI_KILLER, 5 KILLER.
+  it('returns exactly 20 random problems when pool > 20 without invoking LLM', async () => {
+    // 30-problem pool — selection is now uniform random (no bucket quota),
+    // so we only assert size + that every chosen problem came from the pool.
     const pool = [
       ...Array.from({ length: 10 }, (_, i) => makeProblem(`m${i}`, Difficulty.MIDDLE)),
       ...Array.from({ length: 8 }, (_, i) => makeProblem(`um${i}`, Difficulty.UPPER_MIDDLE)),
@@ -86,15 +87,12 @@ describe('ConceptLessonsService.practiceProblems', () => {
     const out = await svc.practiceProblems('CH-1', 'en', 'u1');
     expect(out).toHaveLength(20);
     expect(llm.generate).not.toHaveBeenCalled();
-    // First-pass quota = 5 per bucket; every bucket should appear at least floor(20/4)=5 times.
-    const counts = out.reduce<Record<string, number>>((m, p) => {
-      m[p.difficulty] = (m[p.difficulty] ?? 0) + 1;
-      return m;
-    }, {});
-    expect(counts[Difficulty.MIDDLE]).toBeGreaterThanOrEqual(5);
-    expect(counts[Difficulty.UPPER_MIDDLE]).toBeGreaterThanOrEqual(5);
-    expect(counts[Difficulty.SEMI_KILLER]).toBeGreaterThanOrEqual(5);
-    expect(counts[Difficulty.KILLER]).toBeGreaterThanOrEqual(5);
+    // Every returned problem must be a member of the input pool (no duplicates
+    // either — set size === array length).
+    const ids = out.map((p) => p.id);
+    expect(new Set(ids).size).toBe(20);
+    const poolIds = new Set(pool.map((p) => p.id));
+    for (const id of ids) expect(poolIds.has(id)).toBe(true);
   });
 });
 
