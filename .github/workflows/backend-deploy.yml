@@ -62,16 +62,26 @@ jobs:
       - name: Install containerapp extension
         run: az extension add --name containerapp --upgrade -y
 
-      # Sync Mathpix OCR credentials (and other rotatable secrets) into the
-      # Container App's secret store.
+      # Sync Mathpix OCR credentials end-to-end.
       #
-      # We remove the existing entries first because the Bicep template wires
-      # them as KV references (keyVaultUrl + identity), and a plain
-      # `--secrets NAME=VALUE` on a KV-referenced slot can leave the live
-      # secret stuck on the old reference (observed 2026-05-22: backend kept
-      # returning Mathpix 401 even after a successful secret-set step).
-      # `secret remove` first drops the KV link cleanly, then `secret set`
-      # writes the new plaintext value.
+      # Step 1 — Key Vault is the source of truth. Bicep wires the Container
+      # App's mathpix-app-* secrets as KV references, so even after we
+      # `containerapp secret set` to plaintext, the next image rollout can
+      # snap the spec back to the KV reference. If KV holds an empty string
+      # (the Bicep param default when the .bicepparam doesn't supply one),
+      # the live backend resolves Mathpix creds to "" → 401. Update KV first
+      # so subsequent spec syncs read the right value.
+      #
+      # Step 2 — drop and re-set the Container App secret as plaintext as a
+      # safety net for the current revision (KV reference may be stale until
+      # the next deploy).
+      - name: Update Mathpix secrets in Key Vault (source of truth)
+        run: |
+          az keyvault secret set --vault-name mathema-kv-7ehvzq \
+            --name mathpix-app-id --value "${{ secrets.MATHPIX_APP_ID }}" --output none
+          az keyvault secret set --vault-name mathema-kv-7ehvzq \
+            --name mathpix-app-key --value "${{ secrets.MATHPIX_APP_KEY }}" --output none
+
       - name: Sync rotatable secrets to backend Container App
         run: |
           az containerapp secret remove \
