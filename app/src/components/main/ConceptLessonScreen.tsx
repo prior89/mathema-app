@@ -219,20 +219,18 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
 }) {
   return (
     <>
-      {/* Sticky Big Idea — frozen at the top so the chapter's central concept
-          stays visible while the student scrolls through the step blocks. */}
-      {bigIdea && (
-        <div style={{ padding: '12px 22px 4px', flexShrink: 0 }}>
-          <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>BIG IDEA</span>
-          <h3 className="title" style={{ fontSize: 22, marginTop: 6, lineHeight: 1.2 }}>{bigIdea}</h3>
-        </div>
-      )}
-      <div style={{ flex: 1, overflow: 'auto', padding: '8px 22px 16px', minHeight: 0 }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '12px 22px 16px', minHeight: 0 }}>
+        {/* Big Idea now scrolls along with the rest of the lesson — no
+            longer sticky-pinned at the top. */}
+        {bigIdea && (
+          <div style={{ paddingBottom: 12 }}>
+            <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>BIG IDEA</span>
+            <h3 className="title" style={{ fontSize: 22, marginTop: 6, lineHeight: 1.2 }}>{bigIdea}</h3>
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {steps.map((s) => <ConceptStepBlock key={s.id} step={s} />)}
         </div>
-        {/* CTA lives inside the scroll area — the student swipes down to it
-            rather than meeting a sticky footer. */}
         <button className="btn" onClick={onContinue} style={{ marginTop: 20 }}>
           {ctaLabel}
           <Glyph.ChevronR />
