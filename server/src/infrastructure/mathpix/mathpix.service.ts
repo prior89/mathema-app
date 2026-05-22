@@ -31,23 +31,68 @@ export class MathpixService {
   }
 
   private async extractImage(file: Express.Multer.File): Promise<MathpixOcrResult> {
-    const src = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-    const json = await this.mathpixFetch('https://api.mathpix.com/v3/text', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        src,
-        formats: ['text', 'latex_styled'],
-        data_options: { include_asciimath: true, include_latex: true },
-      }),
-    });
-    const text = String(json.text ?? json.latex_styled ?? '').trim();
-    if (!text) throw new BadRequestException('Math OCR could not read this image clearly.');
+    // 2026-05-22 user decision: drop Mathpix entirely, route OCR through
+    // Gemini 3.5 Flash multimodal. Single-vendor stack with the solver +
+    // verifier (also Flash) means one billing surface, one key to rotate,
+    // and Vertex AI Mumbai migration in one shot when DPDP enforcement
+    // arrives. Pricing of Flash vision is ~$0.0005 per image vs Mathpix's
+    // $0.002, accuracy is comparable on printed + handwritten math per
+    // independent 2025-2026 benchmarks.
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new ServiceUnavailableException('Gemini OCR is not configured (GEMINI_API_KEY missing).');
+
+    const imageBase64 = file.buffer.toString('base64');
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs());
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              {
+                text:
+                  'Extract every piece of mathematical content from this image as clean ' +
+                  "LaTeX (or plain text where math notation isn't appropriate). " +
+                  'Preserve line breaks. Return ONLY the extracted content — no preamble, ' +
+                  'no commentary, no code fences.',
+              },
+              { inline_data: { mime_type: file.mimetype, data: imageBase64 } },
+            ],
+          }],
+          generationConfig: { temperature: 0, maxOutputTokens: 2000 },
+        }),
+      });
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new GatewayTimeoutException(
+          `Math OCR timed out after ${Math.round(this.timeoutMs() / 1000)}s. Try a smaller or clearer image.`,
+        );
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new ServiceUnavailableException(`Gemini OCR failed (${res.status}): ${errText.slice(0, 300)}`);
+    }
+
+    const json: any = await res.json();
+    const text: string = String(json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '').trim();
+    if (!text) throw new BadRequestException('Could not read this image clearly. Try a sharper photo.');
+
     return {
       text,
-      latex: json.latex_styled ?? null,
-      confidence: typeof json.confidence === 'number' ? json.confidence : null,
-      source: 'mathpix',
+      latex: text,
+      confidence: null,
+      source: 'gemini',
     };
   }
 
