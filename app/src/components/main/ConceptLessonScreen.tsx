@@ -225,7 +225,9 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
         {bigIdea && (
           <div style={{ paddingBottom: 12 }}>
             <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>BIG IDEA</span>
-            <h3 className="title" style={{ fontSize: 22, marginTop: 6, lineHeight: 1.2 }}>{bigIdea}</h3>
+            {/* Strip trailing period — Big Idea reads as a headline, not a
+                sentence. LLM-generated bigIdea strings often end in `.` */}
+            <h3 className="title" style={{ fontSize: 22, marginTop: 6, lineHeight: 1.2 }}>{bigIdea.replace(/\.$/, '')}</h3>
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
