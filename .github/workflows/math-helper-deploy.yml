@@ -58,12 +58,24 @@ jobs:
       - name: Install containerapp extension
         run: az extension add --name containerapp --upgrade -y
 
+      # Sync the Gemini API key as a Container App secret so the LangGraph
+      # fallback chain (llm.py) can read GEMINI_API_KEY from env. Stored on
+      # the Container App rather than in the image so rotation is one CLI
+      # call. Idempotent — overwrites the existing secret if any.
+      - name: Sync Gemini secret to Container App
+        run: |
+          az containerapp secret set \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --secrets gemini-api-key=${{ secrets.GEMINI_API_KEY }}
+
       - name: Container App revision update
         run: |
           az containerapp update \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
+            --set-env-vars GEMINI_API_KEY=secretref:gemini-api-key
 
       # math-helper has internal ingress (external: false), so GitHub
       # runners can't curl it directly. We verify health by polling
