@@ -4,7 +4,11 @@ import { Lang } from '../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN } from '../../common/i18n/content-en';
 import type { ConceptLessonsService } from '../concept-lessons/concept-lessons.service';
 
-interface PrewarmResult {
+// Exported so AdminController can name this type for its `prewarmMastery`
+// return — without `export` TS4053 fired at build time because the controller
+// method's inferred return type references a file-local interface that the
+// emitted .d.ts cannot reach.
+export interface PrewarmResult {
   chapterCode: string;
   before: number;
   generated: number;
