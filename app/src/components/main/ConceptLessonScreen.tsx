@@ -105,21 +105,19 @@ export function ConceptLessonScreen() {
 
   const goFromConcept = async () => {
     track('chapter.concept.complete', { chapterCode: code, steps: conceptSteps.length });
-    // Await the finalize call so the screen doesn't transition before the
-    // server has recorded mastered=true; a quick student tapping straight
-    // through the problems could otherwise leave Study locked.
-    try {
-      await finalizeConcept.mutateAsync();
-    } catch {
-      // Swallow — the user can still proceed to practice; the safety-net
-      // finalize call at phase='done' (below) will retry the mastered stamp.
-    }
+    // Finalize (= masteredAt stamp = unlocks Study tab) is intentionally NOT
+    // called here anymore. Concept walkthrough alone is not enough — the user
+    // must finish all 20 practice problems first. The stamp lives only on
+    // goAfterStep's last-problem branch (or, for chapters with zero practice
+    // problems, the else branch below).
     if (hasProblems) {
       setPracticeProblemIdx(0);
       setPracticeStepIdx(1);
       setPhase('practice');
     } else {
+      // Chapter has no practice problems at all — nothing to gate on, stamp.
       track('chapter.done', { chapterCode: code, hadPractice: false });
+      finalizeConcept.mutate();
       setPhase('done');
     }
   };
