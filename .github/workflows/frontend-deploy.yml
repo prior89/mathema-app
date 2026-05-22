@@ -1,13 +1,12 @@
 name: Frontend — build & deploy to Azure Static Web Apps
 
-# Build the Vite SPA, deploy to SWA. Triggered on main pushes to app/ or this file.
+# Build the Vite SPA, deploy to SWA.
+#
+# Gating: manual-trigger-only to mirror backend-deploy.yml. Push to main runs
+# ci.yml only; to ship a frontend, run:
+#   gh workflow run frontend-deploy.yml --ref main
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'app/**'
-      - '.github/workflows/frontend-deploy.yml'
   workflow_dispatch:
 
 env:
