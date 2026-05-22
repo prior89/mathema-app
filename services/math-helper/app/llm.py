@@ -24,7 +24,12 @@ _gemini_flash = (
     ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
         temperature=0,
-        max_output_tokens=2000,
+        # 8192 is Gemini 1.5 Flash's hard ceiling — generous headroom so
+        # multi-step solutions (e.g. sum-with-absolute-values where the
+        # model has to derive a_n, find the sign-flip point, and split
+        # the sum) aren't truncated mid-derivation. Cost upside if some
+        # responses are short — Gemini bills actual tokens, not the cap.
+        max_output_tokens=8192,
     )
     if ChatGoogleGenerativeAI is not None and os.environ.get("GEMINI_API_KEY")
     else None
@@ -35,7 +40,7 @@ _gemini_flash = (
 _openai = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0,
-    max_tokens=1500,
+    max_tokens=8192,
 )
 
 
