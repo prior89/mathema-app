@@ -15,6 +15,15 @@ COPY package.json package-lock.json ./
 # which is exactly the case in CI. Copy it so npm can run the hook.
 COPY scripts/sync-env.cjs ./scripts/sync-env.cjs
 COPY server/package.json ./server/
+# server/package.json now declares "postinstall": "prisma generate" so the
+# local-dev npm install regenerates the client whenever a teammate pulls a
+# schema change. That hook fires inside `npm ci` too, so the schema must
+# already be on disk at this stage even though the build stage will run
+# prisma generate again — without it `npm ci` exits 1 with "schema.prisma:
+# file not found". Schema changes invalidate this layer's cache, but that's
+# acceptable: schema edits should rebuild deps anyway since they typically
+# come with prisma-version or @prisma/client version bumps.
+COPY server/prisma ./server/prisma
 RUN npm ci --workspace=mathema-backend --include-workspace-root=false --include=dev
 
 # ----- stage 2: build (TypeScript + Prisma client) -----
