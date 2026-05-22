@@ -34,6 +34,11 @@ export class AdminController {
   @Get('content/coverage') contentCoverage(@CurrentLang() lang: Lang) {
     return this.service.contentCoverage(lang);
   }
+  /** Per-chapter Mastery (multi-step) + Study (single-step) pool counts
+   *  with gap-vs-20 figures. Use this to decide which chapters need
+   *  hand-curation now that LLM auto-topup is off (2026-05-22). */
+  @Get('content/pool-gaps')
+  poolGaps() { return this.service.poolGaps(); }
   @Get('insights/distractors') distractors(@CurrentLang() lang: Lang, @Query('days') days = 30) {
     return this.service.distractorInsights(+days, lang);
   }

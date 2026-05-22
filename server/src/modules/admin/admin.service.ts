@@ -422,6 +422,55 @@ export class AdminService {
     return rows.filter((r) => Number(r.multi) < target).map((r) => r.chapterCode);
   }
 
+  /** Pool-gap audit — per chapter, how many multi-step (Mastery) and
+   *  single-step (Study) problems exist vs. the 20 target. Use this to
+   *  decide which chapters to hand-curate now that LLM auto-topup is off. */
+  async poolGaps() {
+    const rows = await this.prisma.$queryRawUnsafe<Array<{
+      chapter_code: string;
+      title_en: string;
+      ncert_class: string;
+      chapter_number: number;
+      multi_step: bigint;
+      single_step: bigint;
+      mastery_frozen: boolean;
+    }>>(`
+      SELECT
+        cl."chapterCode"   AS chapter_code,
+        cl."titleEn"       AS title_en,
+        cl."ncertClass"    AS ncert_class,
+        cl."chapterNumber" AS chapter_number,
+        (SELECT COUNT(*) FROM "Problem" p
+          WHERE p."conceptLessonId" = cl.id
+            AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 1)
+            AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 2)
+            AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 3)
+        ) AS multi_step,
+        (SELECT COUNT(*) FROM "Problem" p
+          WHERE p."conceptLessonId" = cl.id
+            AND EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" = 1)
+            AND NOT EXISTS (SELECT 1 FROM "ProblemStep" s WHERE s."problemId" = p.id AND s."stepIndex" >= 2)
+        ) AS single_step,
+        (array_length(cl."masterySetProblemIds", 1) IS NOT NULL
+          AND array_length(cl."masterySetProblemIds", 1) = 20) AS mastery_frozen
+      FROM "ConceptLesson" cl
+      ORDER BY cl."ncertClass", cl."chapterNumber";
+    `);
+    const TARGET = 20;
+    return rows.map((r) => ({
+      chapterCode: r.chapter_code,
+      title: r.title_en,
+      ncertClass: r.ncert_class,
+      chapterNumber: r.chapter_number,
+      multiStepCount: Number(r.multi_step),
+      singleStepCount: Number(r.single_step),
+      multiStepGap: Math.max(0, TARGET - Number(r.multi_step)),
+      singleStepGap: Math.max(0, TARGET - Number(r.single_step)),
+      masteryFrozen: r.mastery_frozen,
+      needsCuration: Number(r.multi_step) < TARGET || Number(r.single_step) < TARGET,
+    }));
+  }
+
   /** HTTP-callable equivalent of scripts/prewarm-mastery.ts. Blocks until done.
    *  Each chapter takes ~30-60s × (target - existing)/5 — a full sweep can
    *  run for minutes. Caller (AdminController) holds the HTTP connection open. */
