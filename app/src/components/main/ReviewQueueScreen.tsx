@@ -204,8 +204,8 @@ function ActiveProblem({
       {/* Scrollable middle — problem body + canvas + feedback */}
       <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
-          <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM · {note.source}</div>
-          <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}>
+          {/* Attribution (note.source) intentionally not rendered. */}
+          <div className="math-big" style={{ fontSize: 16, whiteSpace: 'pre-wrap' }}>
             <MathText text={note.problemBody} />
           </div>
           {note.occurrences > 1 && (

@@ -232,8 +232,8 @@ export function MockExamPlayScreen() {
         ) : (
           <>
             <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
-              <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{cur.source}</div>
-              <div className="math-big" style={{ fontSize: 16, marginTop: 8, whiteSpace: 'pre-wrap' }}>
+              {/* Attribution (cur.source) intentionally not rendered. */}
+              <div className="math-big" style={{ fontSize: 16, whiteSpace: 'pre-wrap' }}>
                 <MathText text={cur.body} />
               </div>
             </div>

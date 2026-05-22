@@ -119,9 +119,7 @@ export function MockResultDetailScreen() {
                 <div key={p.problemId} className="card" style={{ padding: 14, borderColor: p.allCorrect ? 'var(--p-success)' : 'var(--p-danger)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18 }}>{i + 1}.</span>
-                    <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--p-muted)' }}>
-                      {p.source}
-                    </span>
+                    {/* Attribution (p.source) intentionally not rendered. */}
                     <span className="chip" style={{ marginLeft: 'auto', fontSize: 10.5, background: p.allCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)', color: p.allCorrect ? 'var(--p-success)' : 'var(--p-danger)' }}>
                       {p.allCorrect ? '✓ ALL' : '✗ MISSED'}
                     </span>

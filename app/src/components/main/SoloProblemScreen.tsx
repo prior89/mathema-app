@@ -130,10 +130,8 @@ export function SoloProblemScreen() {
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-              {problem.data?.source ?? 'PROBLEM'}
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>Practice this problem</div>
+            {/* Attribution (problem.source) intentionally not rendered. */}
+            <div style={{ fontSize: 14, fontWeight: 600 }}>Practice this problem</div>
           </div>
         </div>
         {steps.length > 0 && !done && (

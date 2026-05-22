@@ -102,14 +102,6 @@ export function ConceptLessonScreen() {
   // Indicator: 1 (concept) + N problems
   const segments = 1 + Math.max(1, totalProblems);
   const activeSeg = phase === 'concept' ? 0 : phase === 'practice' ? 1 + practiceProblemIdx : segments - 1;
-  const stepLabel = ['CONCEPT', 'PROCESS', 'ANSWER'];
-  // Header pill is suppressed during concept phase (the chapter title alone is
-  // enough); only practice phase keeps Q/STEP progress, done phase shows COMPLETE.
-  const pillLabel = phase === 'practice'
-    ? `Q ${practiceProblemIdx + 1}/${totalProblems} · STEP ${practiceStepIdx} ${stepLabel[practiceStepIdx - 1] ?? ''}`
-    : phase === 'done'
-      ? 'COMPLETE'
-      : undefined;
 
   const goFromConcept = async () => {
     track('chapter.concept.complete', { chapterCode: code, steps: conceptSteps.length });
@@ -157,7 +149,7 @@ export function ConceptLessonScreen() {
   };
 
   return (
-    <Shell back={() => nav('/app/learn')} title={lesson.data.title} pill={pillLabel}>
+    <Shell back={() => nav('/app/learn')} title={lesson.data.title}>
       <SegmentIndicator total={segments} active={activeSeg} />
       {phase === 'concept' && (
         <ConceptPhase
@@ -449,9 +441,10 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
           <MathText text={step.prompt} />
         </h3>
         {stepIdx === 1 && problem.body && (
+          // Attribution (Problem.source) intentionally not rendered — same
+          // licence-safety / visual-clutter call already made on Notes cards.
           <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent', marginTop: 12 }}>
-            <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM · {problem.source}</div>
-            <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}><MathText text={problem.body} /></div>
+            <div className="math-big" style={{ fontSize: 16, whiteSpace: 'pre-wrap' }}><MathText text={problem.body} /></div>
           </div>
         )}
       </div>
