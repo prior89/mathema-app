@@ -63,12 +63,22 @@ jobs:
         run: az extension add --name containerapp --upgrade -y
 
       # Sync Mathpix OCR credentials (and other rotatable secrets) into the
-      # Container App's secret store. Overwrites whatever was there from the
-      # initial Bicep deploy (which Bicep'd them as empty strings when the
-      # parameters weren't supplied at deploy time — left the backend
-      # throwing "Mathpix is not configured" until 2026-05-22).
+      # Container App's secret store.
+      #
+      # We remove the existing entries first because the Bicep template wires
+      # them as KV references (keyVaultUrl + identity), and a plain
+      # `--secrets NAME=VALUE` on a KV-referenced slot can leave the live
+      # secret stuck on the old reference (observed 2026-05-22: backend kept
+      # returning Mathpix 401 even after a successful secret-set step).
+      # `secret remove` first drops the KV link cleanly, then `secret set`
+      # writes the new plaintext value.
       - name: Sync rotatable secrets to backend Container App
         run: |
+          az containerapp secret remove \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --secret-names mathpix-app-id mathpix-app-key || true
+
           az containerapp secret set \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
