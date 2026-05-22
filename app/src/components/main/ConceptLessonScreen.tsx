@@ -410,6 +410,7 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
       }
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['heatmap'] });
+      qc.invalidateQueries({ queryKey: ['chapter-progress'] });
     },
     onError: () => setResult({ isCorrect: false, selectedChoice: null, correctChoice: null }),
   });
