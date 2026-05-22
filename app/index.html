@@ -39,7 +39,10 @@
         --sage-font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
         --sage-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
       }
-      html, body { margin: 0; padding: 0; }
+      /* Paint the brand sage tint behind the React root so the user never
+         sees a flash of white between document load and React mount. */
+      html, body { margin: 0; padding: 0; background: oklch(0.95 0.022 175); }
+      #root { min-height: 100vh; background: oklch(0.95 0.022 175); }
       /* Onboarding scope — 회원가입/로그인 페이지에서만 sage 토큰 사용. */
       .sage-scope {
         background: var(--sage-bg);

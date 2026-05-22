@@ -55,7 +55,9 @@ export function LoadingSplash() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--p-bg, #f5f7f3)',
+        // Brand sage tint instead of near-white — splash should read as the
+        // app's signature colour, not a blank page.
+        background: 'var(--p-primary-tint, oklch(0.95 0.022 175))',
       }}
     >
       <div style={{ animation: 'mathema-fade 1.4s ease-in-out infinite' }}>
