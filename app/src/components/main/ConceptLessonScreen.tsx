@@ -438,7 +438,11 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
           <h3 className="title" style={{ fontSize: 20, marginTop: 6, lineHeight: 1.25 }}>
             <MathText text={step.prompt} />
           </h3>
-          {stepIdx === 1 && problem.body && (
+          {problem.body && (
+            // PROBLEM body stays visible across all three steps (CONCEPT /
+            // PROCESS / ANSWER) — the question text is what the student is
+            // solving, so it has to be in view when the prompt changes from
+            // "which formula?" → "what's the next step?" → "what's the answer?".
             // Attribution (Problem.source) intentionally not rendered.
             <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent', marginTop: 12 }}>
               <div className="math-big" style={{ fontSize: 16, whiteSpace: 'pre-wrap' }}><MathText text={problem.body} /></div>
