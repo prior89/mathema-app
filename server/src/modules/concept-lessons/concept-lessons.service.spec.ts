@@ -19,6 +19,7 @@ function mockPrisma(over: any = {}) {
     conceptLesson: {
       findUnique: jest.fn().mockResolvedValue(null),
       findMany: jest.fn().mockResolvedValue([]),
+      update: jest.fn().mockResolvedValue(undefined),
       ...over.conceptLesson,
     },
     problem: {
@@ -67,19 +68,26 @@ describe('ConceptLessonsService.practiceProblems', () => {
     await expect(svc.practiceProblems('NONEXISTENT', 'en', 'u1')).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('returns exactly 20 random problems when pool > 20 without invoking LLM', async () => {
-    // 30-problem pool — selection is now uniform random (no bucket quota),
-    // so we only assert size + that every chosen problem came from the pool.
+  it('curates a diverse 20 from the pool and freezes them on the lesson', async () => {
+    // 30-problem pool — bucket-balanced selection (5 per difficulty) so the
+    // resulting frozen set covers a fair span of difficulty for cohort analysis.
     const pool = [
       ...Array.from({ length: 10 }, (_, i) => makeProblem(`m${i}`, Difficulty.MIDDLE)),
       ...Array.from({ length: 8 }, (_, i) => makeProblem(`um${i}`, Difficulty.UPPER_MIDDLE)),
       ...Array.from({ length: 7 }, (_, i) => makeProblem(`sk${i}`, Difficulty.SEMI_KILLER)),
       ...Array.from({ length: 5 }, (_, i) => makeProblem(`k${i}`, Difficulty.KILLER)),
     ];
+    const updateSpy = jest.fn().mockResolvedValue(undefined);
     const prisma = mockPrisma({
-      conceptLesson: { findUnique: jest.fn().mockResolvedValue({
-        id: 'L1', ncertClass: 'CLASS_7', chapterNumber: 1, titleEn: 'X', unitId: 'u1', subUnitId: 's1',
-      }) },
+      conceptLesson: {
+        // First call: no frozen set yet (masterySetProblemIds: []).
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'L1', ncertClass: 'CLASS_7', chapterNumber: 1, titleEn: 'X',
+          unitId: 'u1', subUnitId: 's1',
+          masterySetProblemIds: [], masterySetCuratedAt: null,
+        }),
+        update: updateSpy,
+      },
       problem: { findMany: jest.fn().mockResolvedValue(pool) },
     });
     const llm = mockLlm();
@@ -87,12 +95,45 @@ describe('ConceptLessonsService.practiceProblems', () => {
     const out = await svc.practiceProblems('CH-1', 'en', 'u1');
     expect(out).toHaveLength(20);
     expect(llm.generate).not.toHaveBeenCalled();
-    // Every returned problem must be a member of the input pool (no duplicates
-    // either — set size === array length).
+    // No duplicates and every chosen problem is in the pool.
     const ids = out.map((p) => p.id);
     expect(new Set(ids).size).toBe(20);
     const poolIds = new Set(pool.map((p) => p.id));
     for (const id of ids) expect(poolIds.has(id)).toBe(true);
+    // The chosen 20 must have been frozen onto the lesson row so every
+    // subsequent user sees the same set.
+    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'L1' },
+      data: expect.objectContaining({
+        masterySetProblemIds: expect.arrayContaining(ids),
+      }),
+    }));
+  });
+
+  it('returns the frozen canonical set when one already exists (no re-curation, no pool query)', async () => {
+    const frozenIds = Array.from({ length: 20 }, (_, i) => `frozen-${i}`);
+    const problemsBackToTheLesson = frozenIds.map((id) => makeProblem(id, Difficulty.MIDDLE));
+    const updateSpy = jest.fn().mockResolvedValue(undefined);
+    const problemFindMany = jest.fn().mockResolvedValue(problemsBackToTheLesson);
+    const prisma = mockPrisma({
+      conceptLesson: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'L1', ncertClass: 'CLASS_7', chapterNumber: 1, titleEn: 'X',
+          unitId: 'u1', subUnitId: 's1',
+          masterySetProblemIds: frozenIds,
+          masterySetCuratedAt: new Date('2026-05-22T00:00:00Z'),
+        }),
+        update: updateSpy,
+      },
+      problem: { findMany: problemFindMany },
+    });
+    const llm = mockLlm();
+    const { svc } = build({ prisma, llm });
+    const out = await svc.practiceProblems('CH-1', 'en', 'u1');
+    expect(out).toHaveLength(20);
+    expect(out.map((p) => p.id)).toEqual(frozenIds); // order preserved
+    expect(llm.generate).not.toHaveBeenCalled();
+    expect(updateSpy).not.toHaveBeenCalled(); // no re-freeze
   });
 });
 

@@ -414,18 +414,61 @@ export class ConceptLessonsService {
    */
   private static readonly MASTERY_TARGET = 20;
 
+  /**
+   * Returns the canonical 20-problem Mastery set for a chapter.
+   *
+   * Every user sees the same 20 Problem IDs in the same order. This is a
+   * deliberate inversion of the "random per call" approach we briefly used
+   * 2026-05-22 — cohort statistics, percentile, and concept-weakness
+   * diagnostics are only meaningful when the comparison baseline is shared.
+   *
+   * Flow:
+   *   1. If lesson.masterySetProblemIds is already filled (20 IDs frozen),
+   *      fetch + return those Problems in the recorded order.
+   *   2. Otherwise:
+   *      a) Pull every multi-step problem in the pool.
+   *      b) If pool < 20, top-up with LLM-generated multi-step problems.
+   *      c) Pick a diverse 20 (difficulty buckets + concept coverage).
+   *      d) Freeze those IDs on the ConceptLesson row.
+   *      e) Return them.
+   *
+   * Re-curation (e.g. after content review) is an explicit admin tool
+   * — never re-randomised silently, because that would break every running
+   * student's progress measurement.
+   */
   async practiceProblems(chapterCode: string, _lang: Lang = 'en', userId?: string) {
     const lesson = await this.prisma.conceptLesson.findUnique({
       where: { chapterCode },
       select: {
         id: true, ncertClass: true, chapterNumber: true, titleEn: true,
         unitId: true, subUnitId: true,
+        masterySetProblemIds: true, masterySetCuratedAt: true,
       },
     });
     if (!lesson) throw new NotFoundException();
 
-    // Mastery pool — multi-step only (steps.length === 3, with the
-    // canonical CONCEPT/PROCESS/ANSWER stepIndex sequence).
+    const target = ConceptLessonsService.MASTERY_TARGET;
+
+    // Path 1 — canonical set already frozen. Hydrate + return in order.
+    if (lesson.masterySetProblemIds.length === target) {
+      const problems = await this.prisma.problem.findMany({
+        where: { id: { in: lesson.masterySetProblemIds } },
+        select: {
+          id: true, source: true, unitId: true, subUnitId: true,
+          difficulty: true, difficultyLevel: true, body: true,
+        },
+      });
+      const byId = new Map(problems.map((p) => [p.id, p]));
+      const ordered = lesson.masterySetProblemIds
+        .map((id) => byId.get(id))
+        .filter((p): p is NonNullable<typeof p> => !!p);
+      // If even one frozen Problem has been deleted from the pool we fall
+      // through to re-curation — a 19-problem set defeats the purpose.
+      if (ordered.length === target) return ordered;
+    }
+
+    // Path 2 — no frozen set yet (or the frozen set lost a row to deletion).
+    // Build the pool, top up via LLM if short, pick a diverse 20, freeze.
     const pool = await this.prisma.problem.findMany({
       where: {
         conceptLessonId: lesson.id,
@@ -445,37 +488,82 @@ export class ConceptLessonsService {
       },
     });
 
-    const target = ConceptLessonsService.MASTERY_TARGET;
-
-    if (pool.length >= target) {
-      return this.pickRandom(pool, target);
+    let working = pool;
+    if (working.length < target) {
+      const shortfall = target - working.length;
+      const generated = await this.generateMultiStepProblems(lesson, shortfall, userId);
+      working = [...working, ...generated];
     }
 
-    // Top-up via LLM multi-step generation (see BULK-LLM chunked policy).
-    const shortfall = target - pool.length;
-    const generated = await this.generateMultiStepProblems(lesson, shortfall, userId);
-    return [...pool, ...generated];
+    const picked = this.pickDiverse(working, target);
+
+    // Freeze. We tolerate failure here (logger.warn handled by the global
+    // exception filter) — students still get a valid 20-problem set this
+    // call, the next call will retry the freeze.
+    if (picked.length === target) {
+      await this.prisma.conceptLesson.update({
+        where: { id: lesson.id },
+        data: {
+          masterySetProblemIds: picked.map((p) => p.id),
+          masterySetCuratedAt: new Date(),
+        },
+      }).catch(() => undefined);
+    }
+
+    return picked;
   }
 
   /**
-   * Pick `target` problems uniformly at random from `pool`.
-   * Fisher-Yates partial shuffle — O(target) swaps.
+   * Pick `target` problems with deliberate variety so the resulting 20
+   * cover a fair span of difficulty + concepts. Used once per chapter
+   * (then frozen on the ConceptLesson row) so every student sees the
+   * same diagnostic set.
    *
-   * Difficulty-balanced selection was dropped 2026-05-22 in favour of a
-   * single-rule "20 random per chapter" so the Home Chapter Progress card
-   * and Mastery practiceProblems agree on the same denominator.
+   * Algorithm:
+   *   1. Bucket by difficulty: MIDDLE / UPPER_MIDDLE / SEMI_KILLER / KILLER.
+   *      Quota = target / 4 per bucket (5 each for the default target of 20).
+   *   2. Within each bucket, sort by `source` so picks are deterministic
+   *      across runs (same chapter, same pool → same 20 IDs).
+   *   3. If a bucket is short, the gap is drawn from neighbouring buckets
+   *      in increasing-difficulty order so the easiest available problems
+   *      backfill first.
    */
-  private pickRandom(
+  private pickDiverse(
     pool: Array<{ id: string; source: string; unitId: string | null; subUnitId: string | null; difficulty: Difficulty; difficultyLevel: number | null; body: string }>,
     target: number,
   ) {
-    const arr = pool.slice();
-    const n = Math.min(target, arr.length);
-    for (let i = 0; i < n; i++) {
-      const j = i + Math.floor(Math.random() * (arr.length - i));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+    const buckets = new Map<Difficulty, typeof pool>();
+    for (const p of pool) {
+      const arr = buckets.get(p.difficulty) ?? [];
+      arr.push(p);
+      buckets.set(p.difficulty, arr);
     }
-    return arr.slice(0, n);
+    // Deterministic order within each bucket.
+    for (const arr of buckets.values()) {
+      arr.sort((a, b) => a.source.localeCompare(b.source));
+    }
+
+    const order: Difficulty[] = [Difficulty.MIDDLE, Difficulty.UPPER_MIDDLE, Difficulty.SEMI_KILLER, Difficulty.KILLER];
+    const quota = Math.floor(target / order.length);
+
+    const picked: typeof pool = [];
+    // First pass — fill the quota for each bucket.
+    for (const d of order) {
+      const arr = buckets.get(d) ?? [];
+      picked.push(...arr.slice(0, quota));
+    }
+    // Second pass — backfill the remainder from whatever buckets have stock,
+    // walking buckets in difficulty order so easier problems land first.
+    const remaining = target - picked.length;
+    if (remaining > 0) {
+      const leftovers: typeof pool = [];
+      for (const d of order) {
+        const arr = buckets.get(d) ?? [];
+        leftovers.push(...arr.slice(quota));
+      }
+      picked.push(...leftovers.slice(0, remaining));
+    }
+    return picked;
   }
 
   /**

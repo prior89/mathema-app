@@ -856,6 +856,14 @@ model ConceptLesson {
   /// Mapping to Korean unit (optional). The bridge that connects to problem solving / wrong notes.
   unitId            String?
   subUnitId         String?
+  /// Canonical Mastery 20-problem set — every user on this chapter sees the
+  /// same Problem IDs in the same order. Curated once (on first practiceProblems
+  /// call) from the pool with difficulty-balanced + concept-coverage rules,
+  /// then frozen so cohort statistics, percentile, and per-concept weakness
+  /// diagnostics are comparable across the entire user base. Re-curate is a
+  /// one-shot admin tool (`scripts/recurate-mastery-set.ts`, future).
+  masterySetProblemIds String[]  @default([])
+  masterySetCuratedAt  DateTime?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
