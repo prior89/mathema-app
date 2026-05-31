@@ -19,6 +19,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, RegisterRole } from '../context/AuthContext';
 import type { GradeLevel, NcertClass } from '../lib/queries';
 import { useT } from '../lib/i18n';
+import { isLikelyEmail } from '../lib/email';
 import { Glyph } from '../components/onboarding/Glyph';
 import { BrandLogo } from '../components/Brand';
 import '../styles/onboarding.css';
@@ -72,7 +73,7 @@ export default function RegisterPage() {
   const [busy, setBusy] = useState(false);
 
   // 단계별 next 조건
-  const canStep1Next = !!email && password.length >= 8 && !!name && !!role;
+  const canStep1Next = isLikelyEmail(email) && password.length >= 8 && !!name.trim() && !!role;
   const canStep2Next = (
     role === 'STUDENT' ? (!!ncertClass && !!examDate && !!targetGrade)
     : role === 'PARENT' ? !!childEmail

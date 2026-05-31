@@ -144,7 +144,7 @@ describe('AuthService', () => {
         email: 'a@b.com', password: 'pw12345678', name: 'A', role: 'STUDENT',
         examDate: '2027-02-14', targetGrade: 2,
       } as any);
-      expect(users.create).toHaveBeenCalledWith(expect.objectContaining({ email: 'a@b.com', name: 'A' }));
+      expect(users.create).toHaveBeenCalledWith(expect.objectContaining({ email: 'a@b.com', name: 'A', gradeLevel: null }));
       expect(result).toEqual({ accessToken: 'token-u-new', refreshToken: 'token-u-new' });
     });
   });

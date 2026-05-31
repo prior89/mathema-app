@@ -3,9 +3,11 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { post } from '../lib/api';
 import { useT } from '../lib/i18n';
 import { AuthShell } from './LoginPage';
+import { useAuth } from '../context/AuthContext';
 
 export default function VerifyEmailPage() {
   const { t } = useT();
+  const { refreshUser } = useAuth();
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const [status, setStatus] = useState<'verifying' | 'success' | 'failed'>('verifying');
@@ -13,8 +15,14 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     if (!token) { setStatus('failed'); return; }
     post('/auth/verify-email', { token })
-      .then(() => setStatus('success'))
+      .then(async () => {
+        await refreshUser();
+        setStatus('success');
+      })
       .catch(() => setStatus('failed'));
+  // refreshUser is intentionally omitted: AuthContext recreates it on each
+  // render, while verification should run exactly once per token.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const tone = status === 'success' ? '#5A8A45' : status === 'failed' ? '#C25E2E' : '#5C6B85';

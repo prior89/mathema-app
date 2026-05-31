@@ -32,6 +32,12 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
     // Unauth → /login (preserve target so we return here after sign-in).
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
+  // Password sign-ups must prove they own the email before any learning or
+  // billing surface is reachable. /users/me stays available server-side so
+  // this guard can render the verification screen instead of logging out.
+  if (!user.emailVerifiedAt && !location.pathname.startsWith('/verify-required')) {
+    return <Navigate to="/verify-required" replace />;
+  }
   // Google sign-up creates users without a class. Force them through the
   // NCERT picker (CLASS_7..CLASS_12) before /app/* is reachable — UNLESS
   // the user has already finished onboarding locally (PATCH may have just

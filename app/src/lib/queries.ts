@@ -99,6 +99,7 @@ export type StudyGoal = 'BOARD' | 'JEE' | 'SCHOOL' | 'CATCHUP';
 export type CountryCode = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'GLOBAL';
 export type Me = {
   id: string; name: string; email: string;
+  emailVerifiedAt?: string | null;
   examDate: string; targetGrade: number; dDay: number;
   gradeLevel?: GradeLevel | null;
   studyGoal?: StudyGoal | null;

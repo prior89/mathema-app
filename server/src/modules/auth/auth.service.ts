@@ -47,7 +47,9 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
-    const exists = await this.users.findByEmail(dto.email);
+    const email = dto.email.trim().toLowerCase();
+    const childEmail = dto.childEmail?.trim().toLowerCase();
+    const exists = await this.users.findByEmail(email);
     if (exists) throw new UnauthorizedException('email already used');
 
     const role = dto.role ?? 'STUDENT';
@@ -55,10 +57,10 @@ export class AuthService {
     // ── PARENT: 자녀(STUDENT) 이메일 매칭 ────────────────────────
     let childOfUserId: string | null = null;
     if (role === 'PARENT') {
-      if (!dto.childEmail) {
+      if (!childEmail) {
         throw new BadRequestException('childEmail required for PARENT role');
       }
-      const child = await this.users.findByEmail(dto.childEmail);
+      const child = await this.users.findByEmail(childEmail);
       if (!child) {
         throw new BadRequestException('child account not found — student must register first');
       }
@@ -84,7 +86,7 @@ export class AuthService {
     await assertPasswordNotBreached(dto.password);
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
     const user = await this.users.create({
-      email: dto.email,
+      email,
       passwordHash,
       name: dto.name,
       role,
@@ -94,7 +96,10 @@ export class AuthService {
       // omitted value still lands on India behaviour — KR sign-ups must
       // explicitly send country: 'KR' for curriculum branching to fire.
       country: (dto.country ?? 'IN') as any,
-      ...(gradeLevel ? { gradeLevel } : {}),
+      // Onboarding may create the account before the class picker runs.
+      // Write an explicit null instead of letting Prisma's legacy CLASS_12
+      // default leak into diagnostics and ProtectedRoute decisions.
+      ...(isStudent ? { gradeLevel: gradeLevel ?? null } : {}),
       ...(studyGoal ? { studyGoal } : {}),
       ...(childOfUserId ? { childOfUserId } : {}),
       ...(tenantId ? { tenantId } : {}),
@@ -128,22 +133,23 @@ export class AuthService {
     ctx: { ip?: string; ua?: string; deviceHash?: string } = {},
   ) {
     const ip = ctx.ip ?? '';
+    const email = dto.email.trim().toLowerCase();
     // SEC-3 lockout: check before any DB / bcrypt work so a locked client
     // can't be used as a CPU-burn vector.
-    await assertNotLocked(this.redis, ip, dto.email);
-    const user = await this.users.findByEmail(dto.email);
+    await assertNotLocked(this.redis, ip, email);
+    const user = await this.users.findByEmail(email);
     const ok = user
       && !(user as any).deletedAt
       && await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) {
-      await recordFailedLogin(this.redis, ip, dto.email);
+      await recordFailedLogin(this.redis, ip, email);
       this.events.record('LOGIN_FAIL' as any, {
         userId: user?.id ?? null,
-        ip, userAgent: ctx.ua, metadata: { email: dto.email },
+        ip, userAgent: ctx.ua, metadata: { email },
       });
       throw new UnauthorizedException('invalid credentials');
     }
-    await clearLoginFailures(this.redis, ip, dto.email);
+    await clearLoginFailures(this.redis, ip, email);
     // DEV-3/5: bind this device, displace every other.
     await this.bindAndDisplace({
       userId: user!.id,
@@ -191,10 +197,11 @@ export class AuthService {
     if (!hasDP) {
       await this.privacy.grant(user.id, 'DATA_PROCESSING' as any, { ip: ctx.ip, ua: ctx.ua });
     }
+    const verifiedUser = user!;
     await this.bindAndDisplace({
-      userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
+      userId: verifiedUser.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
     });
-    return this.issueTokens(user.id, ctx.deviceHash);
+    return this.issueTokens(verifiedUser.id, ctx.deviceHash);
   }
 
   async refresh(token: string, requestDeviceHash?: string) {
@@ -294,12 +301,19 @@ export class AuthService {
         examDate: placeholderExam,
         targetGrade: 1,
         country: 'IN' as any,
+        emailVerifiedAt: new Date(),
       });
+    } else if (!(user as any).emailVerifiedAt) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date() },
+      }) as any;
     }
+    const verifiedUser = user!;
     await this.bindAndDisplace({
-      userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
+      userId: verifiedUser.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
     });
-    return this.issueTokens(user.id, ctx.deviceHash);
+    return this.issueTokens(verifiedUser.id, ctx.deviceHash);
   }
 
   // ---------- 비밀번호 재설정 ----------
@@ -309,7 +323,7 @@ export class AuthService {
    * 가입 여부 정보 누출(enumeration) 차단.
    */
   async forgotPassword(email: string, requestIp?: string) {
-    const user = await this.users.findByEmail(email);
+    const user = await this.users.findByEmail(email.trim().toLowerCase());
     if (user && !(user as any).deletedAt) {
       const raw = randomBytes(32).toString('hex');
       const tokenHash = createHash('sha256').update(raw).digest('hex');

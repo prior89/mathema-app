@@ -11,6 +11,7 @@ import { BrandLogo } from '../components/Brand';
 import type { Me } from '../lib/queries';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../lib/i18n';
+import { isLikelyEmail } from '../lib/email';
 import '../styles/onboarding.css';
 
 const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
@@ -66,6 +67,7 @@ type DiagnosticMastery = { conceptId: string; conceptName: string; conceptCode: 
 type DiagnosticResult = { sessionId: string; attempted: number; correct: number; masteries: DiagnosticMastery[] };
 
 function Flow({ onFinish }: { onFinish: () => void }) {
+  const { refreshUser } = useAuth();
   const [step, setStep] = useState<StepKey>('welcome');
   const [role, setRole] = useState<Role | ''>('STUDENT');
   // Default placeholder name — India onboarding gets 'Aarav'. KR users
@@ -89,6 +91,16 @@ function Flow({ onFinish }: { onFinish: () => void }) {
   const go = (key: StepKey) => setStep(key);
   const next = () => go(STEP_FLOW[Math.min(STEP_FLOW.length - 1, idx + 1)]);
   const back = () => go(STEP_FLOW[Math.max(0, idx - 1)]);
+  const syncProfileThenDiagnostic = async () => {
+    if (!grade || !goal) throw new Error('missing onboarding profile');
+    await patch<Me>('/users/me', {
+      name,
+      gradeLevel: GRADE_MAP[grade],
+      studyGoal: goal,
+    });
+    await refreshUser().catch(() => {});
+    next();
+  };
 
   switch (step) {
     case 'welcome':
@@ -110,7 +122,7 @@ function Flow({ onFinish }: { onFinish: () => void }) {
     case 'profile':
       return <ScreenProfile step={stepIndex} onBack={back} onNext={next} name={name} setName={setName} grade={grade} setGrade={setGrade} country={country} />;
     case 'goal':
-      return <ScreenGoal step={stepIndex} onBack={back} onNext={next} goal={goal} setGoal={setGoal} />;
+      return <ScreenGoal step={stepIndex} onBack={back} onNext={syncProfileThenDiagnostic} goal={goal} setGoal={setGoal} />;
     case 'diagnostic':
       return <ScreenDiagnostic step={stepIndex} onBack={back} onNext={next} onComplete={setDiagnosticResult} />;
     case 'results':
@@ -359,7 +371,7 @@ function ScreenAuth({
     }
 
     // Production / 일반: 진짜 가입.
-    if (!email.includes('@')) { setErr(t('onboarding.auth.invalidEmail')); return; }
+    if (!isLikelyEmail(email)) { setErr(t('onboarding.auth.invalidEmail')); return; }
     if (password.length < 8)  { setErr(t('onboarding.auth.shortPw')); return; }
 
     setBusy(true);
@@ -381,7 +393,7 @@ function ScreenAuth({
       // Best-effort: if /users/me fails (rare — same token just succeeded),
       // we proceed anyway; ScreenReady will retry.
       await refreshUser().catch(() => {});
-      onNext();
+      window.location.assign('/verify-required');
     } catch (e: any) {
       // Map backend error codes → Korean-friendly messages. User-report
       // 2026-05-27: PASSWORD_BREACHED came through as the raw English string
@@ -707,14 +719,32 @@ function ScreenProfile({
 // ─────────── 05 Goal (localStorage only) ───────────
 function ScreenGoal({
   step, onBack, onNext, goal, setGoal,
-}: { step: number; onBack: () => void; onNext: () => void; goal: GoalId | ''; setGoal: (g: GoalId) => void }) {
+}: { step: number; onBack: () => void; onNext: () => void | Promise<void>; goal: GoalId | ''; setGoal: (g: GoalId) => void }) {
   const { t } = useT();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const goals: Array<{ id: GoalId; title: string; sub: string }> = [
     { id: 'BOARD', title: t('onboarding.goal.board.title'), sub: t('onboarding.goal.board.sub') },
     { id: 'JEE', title: t('onboarding.goal.jee.title'), sub: t('onboarding.goal.jee.sub') },
     { id: 'SCHOOL', title: t('onboarding.goal.school.title'), sub: t('onboarding.goal.school.sub') },
     { id: 'CATCHUP', title: t('onboarding.goal.catchup.title'), sub: t('onboarding.goal.catchup.sub') },
   ];
+  const continueToDiagnostic = async () => {
+    if (!goal || busy) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      await onNext();
+    } catch (e: any) {
+      const rawMsg = e?.response?.data?.error?.message;
+      const isKR = (() => { try { return localStorage.getItem('mathema.lang') === 'ko'; } catch { return false; } })();
+      setErr(rawMsg ?? (isKR
+        ? '학년 정보를 저장하지 못했어요. 다시 시도해 주세요.'
+        : 'Could not save your class. Please try again.'));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className="screen">
       <TopScaffold step={step} onBack={onBack} />
@@ -740,11 +770,27 @@ function ScreenGoal({
             );
           })}
         </div>
+        {err && (
+          <div
+            role="alert"
+            style={{
+              background: 'var(--p-danger-tint)',
+              color: 'var(--p-danger)',
+              border: '1px solid var(--p-danger)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              fontSize: 14,
+              lineHeight: 1.45,
+            }}
+          >
+            {err}
+          </div>
+        )}
         <div style={{ flex: 1 }} />
       </div>
       <div className="screen-foot">
-        <button className="btn" onClick={onNext} disabled={!goal} style={{ opacity: goal ? 1 : 0.45 }}>
-          {t('onboarding.goal.continue')}
+        <button className="btn" onClick={continueToDiagnostic} disabled={!goal || busy} style={{ opacity: goal && !busy ? 1 : 0.45 }}>
+          {busy ? t('onboarding.diag.saving') : t('onboarding.goal.continue')}
           <Glyph.ChevronR />
         </button>
       </div>

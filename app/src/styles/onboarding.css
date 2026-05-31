@@ -224,6 +224,7 @@
 .mathema-app .hero-glyph {
   width: 100%; aspect-ratio: 1.1 / 1; border-radius: 28px;
   background: var(--p-primary); position: relative; overflow: hidden; color: var(--p-primary-fg);
+  flex-shrink: 0;
 }
 .mathema-app .hero-glyph .grid-bg {
   position: absolute; inset: 0;
