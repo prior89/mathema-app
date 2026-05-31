@@ -5,9 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   fetchDashboardSummary, fetchMe, fetchToday,
   fetchConceptLessonsForUnit, fetchErrorDna, fetchChapterProgress,
+  fetchKoreanConceptLessons,
   type RecommendCard, type ChapterProgressRow,
+  type KoreanGrade, type KoreanConceptLessonSummary, type KoreanSubject,
 } from '../../lib/queries';
 import { track } from '../../lib/analytics';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 
@@ -22,13 +25,54 @@ function planBadge(type: string) {
   return PLAN_BADGE[type] ?? PLAN_BADGE.concept;
 }
 
+// User's NCERT-style gradeLevel → closest Korean grade. Matches the same
+// mapping LearnScreen uses so chip defaults stay aligned across surfaces.
+const NCERT_TO_KR_GRADE: Record<string, KoreanGrade> = {
+  CLASS_7: 'MIDDLE_1', CLASS_8: 'MIDDLE_2', CLASS_9: 'MIDDLE_3',
+  CLASS_10: 'HIGH_1', CLASS_11: 'HIGH_2', CLASS_12: 'HIGH_3',
+};
+const KOREAN_GRADE_LABEL: Record<KoreanGrade, string> = {
+  MIDDLE_1: '중1', MIDDLE_2: '중2', MIDDLE_3: '중3',
+  HIGH_1: '고1', HIGH_2: '고2', HIGH_3: '고3',
+};
+const KOREAN_SUBJECT_LABEL: Record<KoreanSubject, string> = {
+  MIDDLE_MATH_1: '수학 1',
+  MIDDLE_MATH_2: '수학 2',
+  MIDDLE_MATH_3: '수학 3',
+  HIGH_COMMON_1: '공통수학1',
+  HIGH_COMMON_2: '공통수학2',
+  HIGH_ALGEBRA: '대수',
+  HIGH_CALCULUS_1: '미적분Ⅰ',
+  HIGH_CALCULUS_2: '미적분Ⅱ',
+  HIGH_STATISTICS: '확률과 통계',
+  HIGH_GEOMETRY: '기하',
+};
+
 export function HomeScreen() {
   const nav = useNavigate();
+  const { t, lang } = useT();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const summary = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboardSummary });
   const today = useQuery({ queryKey: ['today'], queryFn: fetchToday });
   const errorDna = useQuery({ queryKey: ['error-dna'], queryFn: fetchErrorDna });
-  const chapterProgress = useQuery({ queryKey: ['chapter-progress'], queryFn: fetchChapterProgress });
+  const isKR = me.data?.country === 'KR';
+  // chapter-progress endpoint is country-aware on the backend (I4a 2026-05-24):
+  // NCERT users get ConceptLesson aggregation, KR users get KoreanConceptLesson
+  // aggregation, both packed into the same ChapterProgressRow shape. Frontend
+  // calls it for all logged-in users.
+  const chapterProgress = useQuery({
+    queryKey: ['chapter-progress'],
+    queryFn: fetchChapterProgress,
+    enabled: !!me.data,
+  });
+  // Korean chapters for KR users: pick grade from NCERT mapping (Korean users
+  // currently still go through India onboarding so gradeLevel is a CLASS_N).
+  const krGrade = NCERT_TO_KR_GRADE[me.data?.gradeLevel ?? 'CLASS_11'] ?? 'HIGH_2';
+  const koLessons = useQuery({
+    queryKey: ['home-ko-lessons', krGrade],
+    queryFn: () => fetchKoreanConceptLessons({ koreanGrade: krGrade }),
+    enabled: !!me.data && isKR,
+  });
 
   // KPI: today.card.shown 로그 (impression — acceptRate 분모).
   useEffect(() => {
@@ -37,8 +81,17 @@ export function HomeScreen() {
     track('today.cards.shown', { count: cards.length, tags: cards.map((c) => c.tag) });
   }, [today.data]);
 
+  // 2026-05-29: adaptive entry moved off Home onto Study tab (문제풀이
+  // 연습시작) per user feedback that the card overlapped with Study's
+  // chapter picker. Backend endpoint stays, SoloProblemScreen sequence
+  // (Sprint 3 A12) still consumes sessionStorage 'adaptive:queue'.
+
   const userName = me.data?.name ?? 'Aarav';
-  const dateStr = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+  // Locale follows user lang (set by I18nCountrySync from User.country).
+  // 'ko' → 'ko-KR' shows "5월 24일 일요일", everything else → 'en-IN' keeps
+  // the India PoC default "Sunday, 24 May".
+  const dateLocale = lang === 'ko' ? 'ko-KR' : 'en-IN';
+  const dateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'short' });
 
   return (
     <div className="screen">
@@ -47,7 +100,7 @@ export function HomeScreen() {
       <div className="app-head" style={{ flexShrink: 0 }}>
         <div className="greet">
           <div className="hello">{dateStr}</div>
-          <div className="name">Hello, <em>{userName.split(' ')[0]}</em></div>
+          <div className="name">{t('home.greet', { name: userName.split(' ')[0] })}</div>
         </div>
       </div>
       <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
@@ -77,15 +130,15 @@ export function HomeScreen() {
 
           {/* Today's plan */}
           <div className="section-h">
-            <span className="label">Today’s plan</span>
-            <span className="more">{today.data?.length ?? 0} items</span>
+            <span className="label">{t('home.today.section')}</span>
+            <span className="more">{t('home.today.itemsCount', { n: today.data?.length ?? 0 })}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {today.isLoading && <Empty msg="Loading…" />}
+            {today.isLoading && <Empty msg={t('home.today.loading')} />}
             {today.data && today.data.length === 0 && (
               <EmptyCta
-                msg="No tasks yet. Try a concept lesson to start."
-                cta="Browse concept lessons"
+                msg={t('home.today.emptyMsg')}
+                cta={t('home.today.emptyCta')}
                 onClick={() => nav('/app/learn')}
               />
             )}
@@ -131,8 +184,8 @@ export function HomeScreen() {
           {errorDna.data && errorDna.data.distribution.length > 0 && (
             <>
               <div className="section-h">
-                <span className="label">Where you slip</span>
-                <span className="more">last 30 days</span>
+                <span className="label">{t('home.errorDna.section')}</span>
+                <span className="more">{t('home.errorDna.recent30')}</span>
               </div>
               <div className="card" style={{ padding: 14 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -149,42 +202,65 @@ export function HomeScreen() {
             </>
           )}
 
-          {/* Chapter progress — every in-progress chapter the user has
-              touched, regardless of NCERT class. The previous filter pinned
-              the dashboard to the user's onboarded class, so a Class 11
-              student who reviewed a Class 8 chapter never saw it surfaced
-              here even though Mastery + Study both treat any mastered
-              chapter as fair game. 100%-done chapters still drop off so
-              the card stays "what's left to do" rather than a victory lap. */}
+          {/* Chapter progress — same card for both NCERT and KR (backend
+              I4a packs Korean shapes into the same ChapterProgressRow).
+              2026-05-28: per user request, mastered (100%) chapters STAY
+              visible here. Click still routes to ConceptLessonScreen so
+              the learner can re-attempt; the ✓ badge from L5 carries the
+              "mastered" signal in the card. The section label now splits
+              "진행 중 N개 · 마스터 M개" so 100% chapters no longer get
+              mis-labeled "진행 중". */}
           {(() => {
-            const active = (chapterProgress.data ?? []).filter(
-              (row) => row.progress < 1,
-            );
-            if (active.length === 0) return null;
+            const all = (chapterProgress.data ?? []);
+            const inProgress = all.filter((row) => row.progress < 1);
+            const mastered = all.filter((row) => row.progress >= 1);
+            const active = all;
+            // Section header always present once user data loaded. Empty
+            // state vs card-list both render under the same "Chapter progress"
+            // label so KR cold-start users (no attempts yet) get the EmptyCta
+            // → /app/learn nudge, identical to what NCERT cold-start saw via
+            // ColdStartHero. Eliminates the KR-only "browse 8 chapters" block.
+            if (!me.data) return null;
             return (
               <>
                 <div className="section-h">
-                  <span className="label">Chapter progress</span>
-                  <span className="more">{active.length} in progress</span>
+                  <span className="label">{t('home.chapterProgress.section')}</span>
+                  {active.length > 0 && (
+                    <span className="more">
+                      {inProgress.length > 0 && mastered.length > 0
+                        ? `진행 중 ${inProgress.length} · 마스터 ${mastered.length}`
+                        : inProgress.length > 0
+                          ? t('home.chapterProgress.inProgress', { n: inProgress.length })
+                          : `마스터 ${mastered.length}`}
+                    </span>
+                  )}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {active.slice(0, 5).map((row) => (
-                    <ChapterProgressCard
-                      key={row.chapterCode}
-                      row={row}
-                      onClick={() => {
-                        // Deep-link into the next unattempted problem when the
-                        // backend knows which one it is — otherwise fall back
-                        // to the chapter root so ConceptLessonScreen can decide
-                        // (typically lands on the concept phase).
-                        const url = row.nextProblemId
-                          ? `/app/learn/${row.chapterCode}?problemId=${row.nextProblemId}`
-                          : `/app/learn/${row.chapterCode}`;
-                        nav(url);
-                      }}
-                    />
-                  ))}
-                </div>
+                {active.length === 0 ? (
+                  <EmptyCta
+                    msg={t('home.chapterProgress.empty.msg')}
+                    cta={t('home.chapterProgress.empty.cta')}
+                    onClick={() => nav('/app/learn')}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {active.slice(0, 5).map((row) => (
+                      <ChapterProgressCard
+                        key={row.chapterCode}
+                        row={row}
+                        onClick={() => {
+                          // Deep-link into the next unattempted problem when the
+                          // backend knows which one it is — otherwise fall back
+                          // to the chapter root so ConceptLessonScreen can decide
+                          // (typically lands on the concept phase).
+                          const url = row.nextProblemId
+                            ? `/app/learn/${row.chapterCode}?problemId=${row.nextProblemId}`
+                            : `/app/learn/${row.chapterCode}`;
+                          nav(url);
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </>
             );
           })()}
@@ -272,7 +348,13 @@ function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClic
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
-            {row.ncertClass.replace('CLASS_', 'Class ')} · CH {row.chapterNumber}
+            {/* KR rows pack a KoreanGrade enum ("MIDDLE_1" / "HIGH_2_ALG") into
+                ncertClass — un-localized and confusing in the UI. User decision
+                2026-05-27: just drop the grade label on KR cards and keep
+                only "CH N". NCERT (IN) still renders the localized class. */}
+            {row.chapterCode.startsWith('K-')
+              ? `CH ${row.chapterNumber}`
+              : `${row.ncertClass.replace('CLASS_', 'Class ')} · CH ${row.chapterNumber}`}
           </div>
           <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--p-ink)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {row.titleEn}
@@ -291,6 +373,39 @@ function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClic
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 10.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>
         <span>{row.problemsAttempted} / {row.problemsTotal} problems</span>
         <span>{progressPct}%</span>
+      </div>
+    </div>
+  );
+}
+
+/** Korean chapter card — lightweight Home variant of the Mastery / Learn
+ *  chapter card. No progress bar (KR side has no per-chapter attempt
+ *  aggregation yet — wire up when the Korean mastery rollup lands).
+ *  Click → KoreanConceptLessonScreen via ConceptLessonScreen K- routing. */
+function KoreanChapterCard({ lesson, onClick }: { lesson: KoreanConceptLessonSummary; onClick: () => void }) {
+  return (
+    <div className="card" style={{ padding: 12, cursor: 'pointer' }} onClick={onClick}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div
+          className="badge"
+          style={{
+            background: 'var(--p-primary-tint)', color: 'var(--p-primary)',
+            width: 32, height: 32, borderRadius: 8,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 700, flexShrink: 0,
+          }}
+        >
+          {lesson.chapterNumber}
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+            {KOREAN_SUBJECT_LABEL[lesson.koreanSubject]}
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {lesson.titleKo}
+          </div>
+        </div>
+        <Glyph.ChevronR accent="var(--p-muted)" size={16} />
       </div>
     </div>
   );
@@ -321,8 +436,16 @@ function EmptyCta({ msg, cta, onClick }: { msg: string; cta: string; onClick: ()
  *  Two clear next-step CTAs — Solve (AI helper) and Learn (concept lessons).
  *  Drops out as soon as any study minute / streak day / today-plan item is recorded. */
 function ColdStartHero({
-  name, onStudy, onLearn,
+  name,
 }: { name: string; onStudy: () => void; onLearn: () => void }) {
+  // User decision 2026-05-27: CTA buttons removed. The "연습 시작" → /app/study
+  // was a NCERT-era artifact that dead-ends on cold start (Study tab needs
+  // mastered chapters to populate, which a cold-start user has zero of), and
+  // the duplicate "개념 학습" → /app/learn just races with the tab bar's own
+  // Learn entry point. The hero now functions as a pure welcome banner — the
+  // tab bar handles navigation. `onStudy`/`onLearn` props kept in the
+  // signature so HomeScreen's call site doesn't churn.
+  const { t } = useT();
   return (
     <div
       style={{
@@ -331,43 +454,21 @@ function ColdStartHero({
         padding: '20px 18px',
         background: 'linear-gradient(135deg, var(--p-primary-tint), var(--p-accent-tint))',
         border: '1px solid var(--p-border)',
-        display: 'flex', flexDirection: 'column', gap: 14,
       }}
     >
-      <div>
-        <div className="eyebrow">Welcome</div>
-        <div
-          className="display"
-          style={{ marginTop: 6, fontSize: 22, lineHeight: 1.15 }}
-        >
-          Let's get you started, <em>{name}</em>.
-        </div>
-        <p
-          className="subtitle"
-          style={{ fontSize: 13.5, marginTop: 8, maxWidth: 320 }}
-        >
-          Pick a chapter to practice, or open a concept lesson. Your weak spots
-          and progress fill in as you go.
-        </p>
+      <div className="eyebrow">{t('home.coldStart.eyebrow')}</div>
+      <div
+        className="display"
+        style={{ marginTop: 6, fontSize: 22, lineHeight: 1.15 }}
+      >
+        {t('home.coldStart.title', { name })}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-        <button
-          type="button"
-          className="btn"
-          onClick={onStudy}
-          style={{ height: 44, fontSize: 13.5 }}
-        >
-          Start practice
-        </button>
-        <button
-          type="button"
-          className="btn outline"
-          onClick={onLearn}
-          style={{ height: 44, fontSize: 13.5 }}
-        >
-          Concept lessons
-        </button>
-      </div>
+      <p
+        className="subtitle"
+        style={{ fontSize: 13.5, marginTop: 8, maxWidth: 320 }}
+      >
+        {t('home.coldStart.desc')}
+      </p>
     </div>
   );
 }

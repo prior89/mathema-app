@@ -73,6 +73,13 @@ export class SimilarProblemService {
         id: { notIn: Array.from(excludeIds) },
         difficultyLevel: { gte: Math.max(1, targetDiff - 2), lte: Math.min(5, targetDiff + 2) },
         concepts: { some: { conceptId: { in: conceptIds } } },
+        // Sprint 4: active-pool filter — same gate as Adaptive (Sprint 2 A7) +
+        // chapter-mismatch guard so mis-tagged rows can't seed look-alikes.
+        conceptMismatch: { not: true },
+        OR: [
+          { qualityStatus: null },
+          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+        ],
       },
       include: {
         concepts: { select: { conceptId: true, weight: true } },

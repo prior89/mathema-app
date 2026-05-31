@@ -1,7 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { GradeLevel, ProblemStep } from '@prisma/client';
+import { GradeLevel, KoreanGrade, ProblemStep } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AttemptsService } from '../attempts/attempts.service';
+
+// India NCERT GradeLevel → closest Korean grade. Same mapping used by
+// frontend HomeScreen / LearnScreen / OnboardingPage so KR students
+// onboarded through the India class picker land on a sensible Korean
+// grade (e.g. CLASS_11 → HIGH_2 = 고2).
+const NCERT_TO_KR_GRADE: Record<string, KoreanGrade> = {
+  CLASS_7: 'MIDDLE_1', CLASS_8: 'MIDDLE_2', CLASS_9: 'MIDDLE_3',
+  CLASS_10: 'HIGH_1', CLASS_11: 'HIGH_2', CLASS_12: 'HIGH_3',
+};
 
 /**
  * 4문항 진단 — 온보딩 06번 화면.
@@ -24,12 +33,17 @@ export class DiagnosticService {
   async start(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { gradeLevel: true },
+      select: { gradeLevel: true, country: true },
     });
     if (!user) throw new NotFoundException('user not found');
 
-    // 사용자 grade 에 매핑된 ConceptLesson 들 → 매핑된 Problem 들 풀에서 4개 추출 (서로 다른 concept 우선).
-    const problems = await this.selectFour(user.gradeLevel ?? 'CLASS_11');
+    // Country-aware diagnostic pool selection.
+    //   - country='KR'  → 한국 커리큘럼 (KoreanConceptLesson 매핑 problem)
+    //   - 그 외 / null  → NCERT (legacy selectFour, ConceptLesson 매핑 problem)
+    // 응답 형태는 두 경우 모두 동일 — 프론트 ScreenDiagnostic이 한 줄도 안 바뀜.
+    const problems = user.country === 'KR'
+      ? await this.selectFourKorean(user.gradeLevel ?? 'CLASS_11')
+      : await this.selectFour(user.gradeLevel ?? 'CLASS_11');
     if (problems.length === 0) {
       throw new BadRequestException('No diagnostic problems available for your grade yet. Please contact support.');
     }
@@ -173,6 +187,12 @@ export class DiagnosticService {
       where: {
         conceptLessonId: { in: lessonIds.length ? lessonIds : ['__none__'] },
         steps: { some: { stepIndex: 1 } },
+        // Sprint 4: diagnostic must not surface EXCLUDED or chapter-mismatched.
+        conceptMismatch: { not: true },
+        OR: [
+          { qualityStatus: null },
+          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+        ],
       },
       orderBy: { source: 'asc' },
       select: {
@@ -189,7 +209,14 @@ export class DiagnosticService {
     const fallback: Sel[] = pool.length
       ? pool
       : ((await this.prisma.problem.findMany({
-          where: { conceptLessonId: { not: null }, steps: { some: { stepIndex: 1 } } },
+          where: {
+            conceptLessonId: { not: null },
+            steps: { some: { stepIndex: 1 } },
+            OR: [
+              { qualityStatus: null },
+              { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+            ],
+          },
           orderBy: { source: 'asc' },
           select: {
             id: true, body: true, difficulty: true, unitId: true, conceptLessonId: true,
@@ -209,6 +236,82 @@ export class DiagnosticService {
       if (!p.conceptLessonId || seen.has(p.conceptLessonId)) continue;
       picks.push(p);
       seen.add(p.conceptLessonId);
+    }
+    for (const p of fallback) {
+      if (picks.length === 4) break;
+      if (!picks.find((x) => x.id === p.id)) picks.push(p);
+    }
+    return picks;
+  }
+
+  /**
+   * KR 진단 풀 — country='KR' 사용자 전용. selectFour(NCERT)와 응답 shape 동일
+   * (id/body/difficulty/unitId/conceptLessonId/steps). 다른 점:
+   *   - NCERT ConceptLesson 대신 KoreanConceptLesson 매핑 problem만 추출
+   *   - 학년 매핑은 NCERT_TO_KR_GRADE (CLASS_N → MIDDLE_x/HIGH_x)
+   *   - 매핑된 학년 풀 부족 시 KR 전체 풀에서 fallback
+   *   - conceptLessonId 필드는 항상 null (KR쪽은 koreanConceptLessonId지만
+   *     응답 shape 호환을 위해 null로 채움 — frontend는 conceptLessonId 사용 안 함)
+   * 현재 시드 상태: 2 챕터만 (INTEGERS, EXP-LOG). 학년 매핑에 따라 0개일 수
+   * 있고 그땐 start()가 BadRequestException 그대로. 프론트는 동일 에러 핸들링.
+   */
+  private async selectFourKorean(grade: GradeLevel) {
+    type Sel = {
+      id: string; body: string; difficulty: string;
+      unitId: string; conceptLessonId: string | null;
+      steps: Array<ProblemStep & { choices: Array<{ id: string; choiceIndex: number; text: string }> }>;
+    };
+    const krGrade = NCERT_TO_KR_GRADE[grade] ?? 'HIGH_2';
+
+    // 1차: krGrade 매핑된 KoreanConceptLesson 의 매핑 problem
+    const lessons = await this.prisma.koreanConceptLesson.findMany({
+      where: { koreanGrade: krGrade },
+      select: { id: true },
+    });
+    const lessonIds = lessons.map((l) => l.id);
+
+    const pool: Sel[] = await this.prisma.problem.findMany({
+      where: {
+        koreanConceptLessonId: { in: lessonIds.length ? lessonIds : ['__none__'] },
+        steps: { some: { stepIndex: 1 } },
+      },
+      orderBy: { source: 'asc' },
+      select: {
+        id: true, body: true, difficulty: true, unitId: true, conceptLessonId: true,
+        koreanConceptLessonId: true,
+        steps: {
+          where: { stepIndex: 1 },
+          take: 1,
+          include: { choices: { orderBy: { choiceIndex: 'asc' }, select: { id: true, choiceIndex: true, text: true } } },
+        },
+      },
+    }) as any;
+
+    // fallback: 학년 풀이 0개면 KR 전체 풀 (다른 학년이라도 진단 가능하게)
+    const fallback: Sel[] = pool.length
+      ? pool
+      : ((await this.prisma.problem.findMany({
+          where: { koreanConceptLessonId: { not: null }, steps: { some: { stepIndex: 1 } } },
+          orderBy: { source: 'asc' },
+          select: {
+            id: true, body: true, difficulty: true, unitId: true, conceptLessonId: true,
+            koreanConceptLessonId: true,
+            steps: {
+              where: { stepIndex: 1 },
+              take: 1,
+              include: { choices: { orderBy: { choiceIndex: 'asc' }, select: { id: true, choiceIndex: true, text: true } } },
+            },
+          },
+        })) as any);
+
+    // 서로 다른 koreanConceptLesson 우선, 부족하면 중복 허용. NCERT 측과 동일.
+    const seen = new Set<string>();
+    const picks: Sel[] = [];
+    for (const p of fallback as Array<Sel & { koreanConceptLessonId: string | null }>) {
+      if (picks.length === 4) break;
+      if (!p.koreanConceptLessonId || seen.has(p.koreanConceptLessonId)) continue;
+      picks.push(p);
+      seen.add(p.koreanConceptLessonId);
     }
     for (const p of fallback) {
       if (picks.length === 4) break;

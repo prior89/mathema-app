@@ -1,8 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { StepType } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN } from '../../common/i18n/content-en';
 import type { ConceptLessonsService } from '../concept-lessons/concept-lessons.service';
+import type { CreateKoreanStudyProblemDto } from './dto/create-korean-study-problem.dto';
 
 // Exported so AdminController can name this type for its `prewarmMastery`
 // return — without `export` TS4053 fired at build time because the controller
@@ -517,5 +519,405 @@ export class AdminService {
     }
 
     return { target, processed: results.length, totalGenerated, results };
+  }
+
+  /** Author one KR Study (single-step) problem. Validates exactly 1 correct,
+   *  inserts Problem + ANSWER step + 5 choices. Returns created problem id.
+   *  Used by AdminKoreanStudyEditorScreen.
+   */
+  async createKoreanStudyProblem(dto: CreateKoreanStudyProblemDto) {
+    const lesson = await this.prisma.koreanConceptLesson.findUnique({
+      where: { chapterCode: dto.chapterCode }, select: { id: true },
+    });
+    if (!lesson) throw new NotFoundException(`KoreanConceptLesson ${dto.chapterCode} not found`);
+
+    // Exactly 1 correct + 4 wrong validation.
+    const correctCount = dto.options.filter((o) => o.isCorrect).length;
+    if (correctCount !== 1) {
+      throw new BadRequestException(`Exactly 1 option must be isCorrect=true (got ${correctCount})`);
+    }
+    // Wrong options must carry errorCode + rationale (qualitative validation —
+    // matches the seed file convention so analytics keeps a consistent shape).
+    for (const o of dto.options) {
+      if (!o.isCorrect && (!o.errorCode || !o.rationale)) {
+        throw new BadRequestException('Wrong options require both errorCode and rationale');
+      }
+    }
+
+    // Problem.unitId is NOT NULL on the legacy NCERT side — Korean rows reuse
+    // a fallback unit since the Korean curriculum is wired through
+    // koreanConceptLessonId. The first unit by order is fine; mirrors the
+    // pattern in scripts/seed-korean-study-problems.ts.
+    const fallbackUnit = await this.prisma.unit.findFirst({
+      orderBy: { order: 'asc' }, select: { id: true },
+    });
+    if (!fallbackUnit) throw new NotFoundException('No Unit row found to use as Problem.unitId fallback');
+
+    const answerText = dto.options.find((o) => o.isCorrect)?.text ?? '';
+    const problem = await this.prisma.problem.create({
+      data: {
+        source: 'Matheo KR (2022 개정) · Study · admin-authored',
+        unitId: fallbackUnit.id,
+        koreanConceptLessonId: lesson.id,
+        difficulty: dto.difficulty,
+        difficultyLevel: dto.difficultyLevel,
+        body: dto.stem,
+        concept: dto.concept,
+        answer: answerText,
+        requiredSkills: dto.requiredSkills ?? [],
+        expectedSolutionSteps: { explanation: dto.solution } as any,
+        steps: {
+          create: [{
+            stepIndex: 1,
+            stepType: StepType.ANSWER,
+            prompt: dto.stem,
+            choices: {
+              create: dto.options.map((o, i) => ({
+                choiceIndex: i + 1,
+                text: o.text,
+                isCorrect: o.isCorrect,
+                distractorErrorCode: o.errorCode ?? null,
+                rationale: o.rationale ?? null,
+              })),
+            },
+          }],
+        },
+      },
+      select: { id: true },
+    });
+    return { id: problem.id, chapterCode: dto.chapterCode };
+  }
+
+  /** Chapter picker source for the admin form. Returns lessons (all KR
+   *  chapters) annotated with current study-pool size (single-step problem
+   *  count) so the admin can see "이미 N개 있음" before adding more. */
+  async koreanChaptersWithStudyCounts() {
+    const lessons = await this.prisma.koreanConceptLesson.findMany({
+      orderBy: [{ koreanGrade: 'asc' }, { koreanSubject: 'asc' }, { chapterNumber: 'asc' }],
+      select: {
+        id: true, chapterCode: true, titleKo: true,
+        koreanGrade: true, koreanSubject: true, chapterNumber: true,
+      },
+    });
+    // Single-step (Study) count per lesson — 1-step ANSWER-only problems.
+    const counts = await this.prisma.problem.groupBy({
+      by: ['koreanConceptLessonId'],
+      where: {
+        koreanConceptLessonId: { in: lessons.map((l) => l.id) },
+        steps: { every: { stepType: 'ANSWER' } },
+      },
+      _count: { _all: true },
+    });
+    const studyCount = new Map(counts.map((c) => [c.koreanConceptLessonId, c._count._all]));
+    return lessons.map((l) => ({
+      ...l,
+      studyProblemCount: studyCount.get(l.id) ?? 0,
+    }));
+  }
+
+  /**
+   * Sprint 5 #76 E: inspect a chapter's frozen 20-set + the candidate pool.
+   *
+   * Returns the current canonical_20 (in order) with per-row quality flags
+   * and the broader pool of mastery-eligible problems (3-step + same lesson)
+   * that aren't already in the set — admin picks one as `newProblemId` for
+   * a swap. Country-aware: chapterCode starting with 'K-' → KR, else NCERT.
+   */
+  async masterySetInventory(chapterCode: string) {
+    const isKR = chapterCode.startsWith('K-');
+    const lesson = isKR
+      ? await this.prisma.koreanConceptLesson.findUnique({
+          where: { chapterCode },
+          select: { id: true, masterySetProblemIds: true, titleKo: true },
+        })
+      : await this.prisma.conceptLesson.findUnique({
+          where: { chapterCode },
+          select: { id: true, masterySetProblemIds: true, titleEn: true },
+        });
+    if (!lesson) throw new NotFoundException(`Lesson ${chapterCode} not found`);
+    const lessonFkKey = isKR ? 'koreanConceptLessonId' : 'conceptLessonId';
+
+    // Current frozen set — preserve admin-set order.
+    const currentRows = await this.prisma.problem.findMany({
+      where: { id: { in: lesson.masterySetProblemIds } },
+      select: {
+        id: true, source: true, body: true, difficulty: true, difficultyLevel: true,
+        qualityStatus: true, qualityCriticalFlags: true, conceptMismatch: true,
+        _count: { select: { steps: true } },
+      },
+    });
+    const rowsById = new Map(currentRows.map((p) => [p.id, p]));
+    const current = lesson.masterySetProblemIds.map((id, idx) => {
+      const p = rowsById.get(id);
+      return {
+        index: idx,
+        problemId: id,
+        present: !!p,
+        source: p?.source ?? null,
+        body: p?.body.slice(0, 120) ?? null,
+        difficulty: p?.difficulty ?? null,
+        difficultyLevel: p?.difficultyLevel ?? null,
+        stepCount: p?._count.steps ?? 0,
+        qualityStatus: p?.qualityStatus ?? null,
+        flags: p?.qualityCriticalFlags ?? [],
+        conceptMismatch: p?.conceptMismatch ?? false,
+        // Suggested-for-replacement if any active-pool guard would reject it.
+        needsSwap:
+          !p ||
+          p._count.steps !== 3 ||
+          p.qualityStatus === 'EXCLUDED' ||
+          p.conceptMismatch,
+      };
+    });
+
+    // Candidate pool — same lesson, 3-step Mastery format, quality OK,
+    // not already in the canonical set.
+    const candidates = await this.prisma.problem.findMany({
+      where: {
+        [lessonFkKey]: lesson.id,
+        id: { notIn: lesson.masterySetProblemIds },
+        AND: [
+          { steps: { some: { stepIndex: 1 } } },
+          { steps: { some: { stepIndex: 2 } } },
+          { steps: { some: { stepIndex: 3 } } },
+        ],
+        conceptMismatch: { not: true },
+        OR: [
+          { qualityStatus: null },
+          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+        ],
+      },
+      orderBy: [{ difficultyLevel: 'asc' }, { source: 'asc' }],
+      take: 50,
+      select: {
+        id: true, source: true, body: true, difficulty: true, difficultyLevel: true,
+        qualityStatus: true,
+      },
+    });
+
+    return {
+      chapterCode,
+      curriculum: isKR ? 'KR' : 'IN',
+      lessonId: lesson.id,
+      title: isKR ? (lesson as any).titleKo : (lesson as any).titleEn,
+      canonicalCount: lesson.masterySetProblemIds.length,
+      needsSwapCount: current.filter((r) => r.needsSwap).length,
+      current,
+      candidates: candidates.map((p) => ({
+        problemId: p.id,
+        source: p.source,
+        body: p.body.slice(0, 120),
+        difficulty: p.difficulty,
+        difficultyLevel: p.difficultyLevel,
+        qualityStatus: p.qualityStatus,
+      })),
+      candidatePoolSize: candidates.length,
+    };
+  }
+
+  /**
+   * Sprint 5 #76 E: swap one entry in masterySetProblemIds. Index preserved.
+   *
+   * Validates:
+   *   - old in current set
+   *   - new in same lesson, 3-step, quality OK, conceptMismatch=false
+   *   - new not already in current set
+   *
+   * Returns the updated array + a structured audit log (also stamped via
+   * AdminAuditInterceptor on the request side).
+   */
+  async swapMasterySetProblem(
+    chapterCode: string,
+    dto: { oldProblemId: string; newProblemId: string; reason: string },
+  ) {
+    if (dto.oldProblemId === dto.newProblemId) {
+      throw new BadRequestException('oldProblemId == newProblemId');
+    }
+    const isKR = chapterCode.startsWith('K-');
+    const lesson = isKR
+      ? await this.prisma.koreanConceptLesson.findUnique({
+          where: { chapterCode },
+          select: { id: true, masterySetProblemIds: true },
+        })
+      : await this.prisma.conceptLesson.findUnique({
+          where: { chapterCode },
+          select: { id: true, masterySetProblemIds: true },
+        });
+    if (!lesson) throw new NotFoundException(`Lesson ${chapterCode} not found`);
+    const lessonFkKey = isKR ? 'koreanConceptLessonId' : 'conceptLessonId';
+
+    const idx = lesson.masterySetProblemIds.indexOf(dto.oldProblemId);
+    if (idx < 0) {
+      throw new BadRequestException(
+        `oldProblemId ${dto.oldProblemId} not in ${chapterCode} canonical set`,
+      );
+    }
+    if (lesson.masterySetProblemIds.includes(dto.newProblemId)) {
+      throw new BadRequestException(
+        `newProblemId ${dto.newProblemId} already in canonical set`,
+      );
+    }
+
+    const newProb = await this.prisma.problem.findUnique({
+      where: { id: dto.newProblemId },
+      select: {
+        id: true,
+        conceptLessonId: true,
+        koreanConceptLessonId: true,
+        qualityStatus: true,
+        conceptMismatch: true,
+        _count: { select: { steps: true } },
+      },
+    });
+    if (!newProb) throw new NotFoundException(`newProblemId ${dto.newProblemId} not found`);
+
+    const newLessonFk = (newProb as any)[lessonFkKey] as string | null;
+    if (newLessonFk !== lesson.id) {
+      throw new BadRequestException(
+        `newProblemId belongs to a different lesson (${lessonFkKey}=${newLessonFk})`,
+      );
+    }
+    if (newProb._count.steps !== 3) {
+      throw new BadRequestException(
+        `newProblemId has ${newProb._count.steps} steps; Mastery requires 3`,
+      );
+    }
+    if (newProb.conceptMismatch) {
+      throw new BadRequestException('newProblemId is conceptMismatch=true; refusing to swap in');
+    }
+    if (newProb.qualityStatus === 'EXCLUDED') {
+      throw new BadRequestException('newProblemId is qualityStatus=EXCLUDED; refusing to swap in');
+    }
+
+    const updated = [...lesson.masterySetProblemIds];
+    updated[idx] = dto.newProblemId;
+
+    if (isKR) {
+      await this.prisma.koreanConceptLesson.update({
+        where: { id: lesson.id },
+        data: { masterySetProblemIds: updated },
+      });
+    } else {
+      await this.prisma.conceptLesson.update({
+        where: { id: lesson.id },
+        data: { masterySetProblemIds: updated },
+      });
+    }
+
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[mastery-set-swap]',
+      JSON.stringify({
+        chapterCode, curriculum: isKR ? 'KR' : 'IN', index: idx,
+        oldProblemId: dto.oldProblemId, newProblemId: dto.newProblemId,
+        reason: dto.reason.slice(0, 200), at: new Date().toISOString(),
+      }),
+    );
+
+    return {
+      ok: true,
+      chapterCode,
+      index: idx,
+      oldProblemId: dto.oldProblemId,
+      newProblemId: dto.newProblemId,
+      masterySetProblemIds: updated,
+    };
+  }
+
+  /**
+   * Sprint 7: list student-reported problems for operator review.
+   *
+   * Surfaces every Problem with 'STUDENT_REPORTED' in qualityCriticalFlags —
+   * regardless of current qualityStatus (post-restore still shows up so we
+   * can see the history). Joined with the chapter source-of-truth so the
+   * operator sees "where this problem lives" without a separate lookup.
+   *
+   * Optional filter:
+   *   curriculum: 'KR' | 'IN' — restrict to one curriculum.
+   */
+  async listReportedProblems(filter: { curriculum?: 'KR' | 'IN' } = {}) {
+    const where: any = { qualityCriticalFlags: { has: 'STUDENT_REPORTED' } };
+    if (filter.curriculum === 'KR') where.koreanConceptLessonId = { not: null };
+    else if (filter.curriculum === 'IN') where.conceptLessonId = { not: null };
+
+    const rows = await this.prisma.problem.findMany({
+      where,
+      select: {
+        id: true,
+        source: true,
+        body: true,
+        difficulty: true,
+        difficultyLevel: true,
+        qualityStatus: true,
+        qualityCriticalFlags: true,
+        conceptLessonId: true,
+        koreanConceptLessonId: true,
+        conceptLesson: { select: { chapterCode: true, titleEn: true } },
+        koreanConceptLesson: { select: { chapterCode: true, titleKo: true } },
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 200,
+    });
+
+    return rows.map((p) => ({
+      problemId: p.id,
+      source: p.source,
+      body: p.body.slice(0, 160),
+      difficulty: p.difficulty,
+      difficultyLevel: p.difficultyLevel,
+      qualityStatus: p.qualityStatus,
+      flags: p.qualityCriticalFlags,
+      curriculum: p.koreanConceptLessonId ? 'KR' : p.conceptLessonId ? 'IN' : 'LEGACY',
+      chapterCode:
+        p.koreanConceptLesson?.chapterCode ?? p.conceptLesson?.chapterCode ?? null,
+      chapterTitle:
+        p.koreanConceptLesson?.titleKo ?? p.conceptLesson?.titleEn ?? null,
+      reportedAt: p.updatedAt, // best-effort — Problem.updatedAt is the report stamp
+    }));
+  }
+
+  /**
+   * Sprint 7: restore a student-reported problem back into the active pool.
+   *
+   * - Removes 'STUDENT_REPORTED' from qualityCriticalFlags.
+   * - If no other critical flags remain, also resets qualityStatus to NULL
+   *   so the row passes the active-pool filter again (NULL = legacy/USABLE).
+   * - If other flags remain (e.g. CHAPTER_MISMATCH from LLM grader), keeps
+   *   qualityStatus=EXCLUDED so the row stays out.
+   *
+   * Operator note: a restored row is back in front of students immediately.
+   * Use this when the report turned out to be a false alarm.
+   */
+  async restoreReportedProblem(problemId: string) {
+    const p = await this.prisma.problem.findUnique({
+      where: { id: problemId },
+      select: { id: true, qualityStatus: true, qualityCriticalFlags: true },
+    });
+    if (!p) throw new NotFoundException(`Problem ${problemId} not found`);
+    if (!p.qualityCriticalFlags.includes('STUDENT_REPORTED')) {
+      throw new BadRequestException('Problem is not flagged STUDENT_REPORTED');
+    }
+
+    const remainingFlags = p.qualityCriticalFlags.filter((f) => f !== 'STUDENT_REPORTED');
+    const newStatus = remainingFlags.length === 0 ? null : p.qualityStatus;
+
+    await this.prisma.problem.update({
+      where: { id: problemId },
+      data: {
+        qualityCriticalFlags: remainingFlags,
+        qualityStatus: newStatus,
+      },
+    });
+
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[problem-report-restore]',
+      JSON.stringify({
+        problemId, priorStatus: p.qualityStatus, newStatus,
+        remainingFlags, at: new Date().toISOString(),
+      }),
+    );
+    return { ok: true, problemId, qualityStatus: newStatus, flags: remainingFlags };
   }
 }

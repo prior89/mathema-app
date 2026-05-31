@@ -5,11 +5,13 @@ import {
   fetchReportCurrent, fetchTimeVsAccuracy, fetchNextFocus,
   fetchAchievements, fetchMentorMessage, fetchMe,
 } from '../../lib/queries';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 
 export function ReportScreen() {
   const nav = useNavigate();
+  const { t } = useT();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const cur = useQuery({ queryKey: ['report-current'], queryFn: fetchReportCurrent });
   const tva = useQuery({ queryKey: ['tva'], queryFn: () => fetchTimeVsAccuracy() });
@@ -39,36 +41,36 @@ export function ReportScreen() {
     <div className="screen">
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => nav('/app/me')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
+          <button onClick={() => nav('/app/me')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label={t('lesson.back')}>
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div>
             <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{weekLabel}</div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>Weekly report</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{t('reportScreen.weekly')}</div>
           </div>
         </div>
       </div>
       <div style={{ flex: 1, overflow: 'auto' }}>
         <div style={{ padding: '12px 22px 0' }}>
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 12, color: 'var(--p-muted)' }}>Your week at a glance</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.01em' }}>Hello, <em style={{ color: 'var(--p-primary)' }}>{userName}</em></div>
+            <div style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('reportScreen.summary')}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.01em' }}>{t('reportScreen.hello')}<em style={{ color: 'var(--p-primary)' }}>{userName}</em></div>
           </div>
           {/* 4 stats */}
           <div className="stat-grid">
-            <Stat k="Study time" v={`${(cur.data?.totalHours ?? 0).toFixed(1)}`} u="h"
+            <Stat k={t('reportScreen.stat.studyTime')} v={`${(cur.data?.totalHours ?? 0).toFixed(1)}`} u="h"
                   delta={cur.data ? `${cur.data.hoursDelta >= 0 ? '↑' : '↓'} ${Math.abs(cur.data.hoursDelta).toFixed(1)}h` : ''}
                   deltaDown={(cur.data?.hoursDelta ?? 0) < 0} />
-            <Stat k="Problems" v={`${cur.data?.problemsSolved ?? 0}`}
-                  delta={cur.data ? `≈ ${cur.data.problemsPerDay}/day` : ''} />
-            <Stat k="Accuracy" v={`${cur.data?.accuracyPct ?? 0}`} u="%"
+            <Stat k={t('reportScreen.stat.problems')} v={`${cur.data?.problemsSolved ?? 0}`}
+                  delta={cur.data ? t('reportScreen.stat.problemsPerDay', { n: cur.data.problemsPerDay }) : ''} />
+            <Stat k={t('reportScreen.stat.accuracy')} v={`${cur.data?.accuracyPct ?? 0}`} u="%"
                   delta={cur.data ? `${cur.data.accuracyDelta >= 0 ? '↑' : '↓'} ${Math.abs(cur.data.accuracyDelta)}%` : ''}
                   deltaDown={(cur.data?.accuracyDelta ?? 0) < 0} />
             <Stat
-              k="AI Score"
+              k={t('reportScreen.stat.aiScore')}
               v={cur.data && cur.data.aiScore > 0 ? `${cur.data.aiScore.toFixed(1)}` : '—'}
               u={cur.data && cur.data.aiScore > 0 ? '/10' : ''}
-              delta={!cur.data || cur.data.aiScore === 0 ? 'No data yet' : ''}
+              delta={!cur.data || cur.data.aiScore === 0 ? t('reportScreen.stat.noData') : ''}
             />
           </div>
 
@@ -78,24 +80,24 @@ export function ReportScreen() {
               <div style={{ width: 26, height: 26, borderRadius: 8, background: 'var(--p-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--p-ink)' }}>
                 <Glyph.Sparkle accent="currentColor" size={13} />
               </div>
-              <span style={{ fontSize: 13.5, fontWeight: 700 }}>From your AI mentor</span>
+              <span style={{ fontSize: 13.5, fontWeight: 700 }}>{t('reportScreen.mentor.from')}</span>
             </div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, lineHeight: 1.3, letterSpacing: '-0.01em' }}>
               {mentor.data?.message
                 ? <>“{mentor.data.message.replace(/^"|"$/g, '')}”</>
-                : <>“Welcome, {userName}. Start practicing to unlock your first weekly mentor brief.”</>
+                : <>{t('reportScreen.mentor.welcome', { name: userName })}</>
               }
             </div>
             {mentor.data?.strength && (
               <div style={{ marginTop: 10, fontSize: 12, opacity: 0.85, lineHeight: 1.5 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.65, letterSpacing: '0.06em' }}>STRENGTH</span>{' '}
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.65, letterSpacing: '0.06em' }}>{t('reportScreen.mentor.strength')}</span>{' '}
                 {mentor.data.strength}
               </div>
             )}
             {mentor.data?.nextGoal && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, fontSize: 11, opacity: 0.7, fontFamily: 'var(--font-mono)' }}>
-                <span>NEXT: {String(mentor.data.nextGoal).toUpperCase()}</span>
-                {mentor.data.week && <span>WEEK {String(mentor.data.week).toUpperCase()}</span>}
+                <span>{t('reportScreen.mentor.next')} {String(mentor.data.nextGoal).toUpperCase()}</span>
+                {mentor.data.week && <span>{t('reportScreen.mentor.week')} {String(mentor.data.week).toUpperCase()}</span>}
               </div>
             )}
           </div>
@@ -103,12 +105,12 @@ export function ReportScreen() {
           {/* Time vs Accuracy */}
           <div className="card" style={{ marginTop: 12, padding: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span style={{ fontSize: 13, fontWeight: 600 }}>Time vs Accuracy</span>
-              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{data.length} WEEKS</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{t('reportScreen.tva.title')}</span>
+              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{t('reportScreen.tva.weeks', { n: data.length })}</span>
             </div>
             {data.length === 0 ? (
               <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--p-muted)', fontSize: 12.5 }}>
-                Not enough weeks tracked yet.
+                {t('reportScreen.tva.empty')}
               </div>
             ) : (
               <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 130, marginTop: 6 }}>
@@ -134,11 +136,11 @@ export function ReportScreen() {
             <div style={{ display: 'flex', gap: 14, marginTop: 4, fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--p-muted)' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 10, height: 10, background: 'var(--p-accent)', opacity: 0.5, borderRadius: 2 }} />
-                TIME (h)
+                {t('reportScreen.tva.legendTime')}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <div style={{ width: 10, height: 2, background: 'var(--p-primary)' }} />
-                ACCURACY (%)
+                {t('reportScreen.tva.legendAcc')}
               </span>
             </div>
           </div>
@@ -147,8 +149,8 @@ export function ReportScreen() {
           {nfx.data && nfx.data.length > 0 && (
             <div className="card" style={{ padding: 14, marginTop: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Next focus</span>
-                <span className="caption" style={{ fontSize: 11 }}>{nfx.data.length} items</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{t('reportScreen.nextFocus.title')}</span>
+                <span className="caption" style={{ fontSize: 11 }}>{t('reportScreen.nextFocus.items', { n: nfx.data.length })}</span>
               </div>
               {nfx.data.map((f, i) => (
                 <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: i < nfx.data!.length - 1 ? '1px dashed var(--p-border)' : 'none' }}>
@@ -166,8 +168,8 @@ export function ReportScreen() {
           {ach.data && ach.data.length > 0 && (
             <div className="card" style={{ padding: 14, marginTop: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Achievements</span>
-                <span className="caption" style={{ fontSize: 11 }}>{ach.data.length} unlocked</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{t('reportScreen.achievements.title')}</span>
+                <span className="caption" style={{ fontSize: 11 }}>{t('reportScreen.achievements.unlocked', { n: ach.data.length })}</span>
               </div>
               {ach.data.map((a, i) => (
                 <div key={i} className="achiev">

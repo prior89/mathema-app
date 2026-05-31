@@ -64,6 +64,10 @@ export class DraftPublisher {
           concept: payload.concept,
           hint: payload.hint,
           expectedTimeSec: payload.expectedTimeSec,
+          // examFormat passes through from LlmDraftService.generate() opts.
+          // null when the caller didn't specify (legacy / pre-classification);
+          // pool filters treat null as NCERT_TEXTBOOK by default.
+          examFormat: payload.examFormat ?? null,
           steps: {
             create: payload.steps.map((s, i) => ({
               stepIndex: i + 1,

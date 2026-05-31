@@ -37,6 +37,10 @@ class SolveResponse(BaseModel):
     answer: str
     isStudentCorrect: Optional[bool] = None
     explanation: str
+    # Step-by-step worked derivation. Each entry should be one Step
+    # (e.g. "Step 1. ..."). Rendered as a numbered list in the UI; LaTeX
+    # inline math ($...$) is preserved by the MathText component.
+    steps: List[str] = []
     personalizedLearning: Optional[str] = None
     mistakeDiagnosis: Optional[str] = None
     hints: List[str]

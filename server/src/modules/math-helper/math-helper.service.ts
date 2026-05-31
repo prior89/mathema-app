@@ -11,6 +11,15 @@ type DbStudentProfile = {
   weakConcepts: Array<Record<string, unknown>>;
   frequentUnits: Array<Record<string, unknown>>;
   recentWrongNotes: Array<Record<string, unknown>>;
+  /// Lv 2 RAG — APPROVED problems in the user's current chapter, injected
+  /// into the solve prompt as verified examples. nodes.py reads
+  /// student_profile["fewShotExamples"] and renders them in-prompt.
+  fewShotExamples: Array<{
+    question: string;
+    answer: string;
+    explanation?: string;
+    chapter?: string | null;
+  }>;
   source: 'database';
 };
 
@@ -25,6 +34,11 @@ type SolveHelperResponse = {
   answer?: string;
   isStudentCorrect?: boolean | null;
   explanation?: string;
+  /// Step-by-step worked derivation. Each entry is one "Step N." block,
+  /// possibly multi-line (literal "\n" preserved). Surfaced in the UI as
+  /// a numbered list with LaTeX rendered inline; persisted into
+  /// Problem.expectedSolutionSteps for the practice replay.
+  steps?: string[];
 };
 
 const GRADE_TO_CLASS: Record<string, number> = {
@@ -58,12 +72,14 @@ export class MathHelperService {
       dto.classLevel ? Promise.resolve(dto.classLevel) : this.defaultClassLevel(userId),
     ]);
 
+    const t0 = Date.now();
     const response = await this.request('POST', '/solve', this.withoutUndefined({
       classLevel: classLevel ?? 12,
       question: dto.question,
       studentAnswer: dto.studentAnswer,
       studentProfile: profile,
     })) as SolveHelperResponse;
+    const durationMs = Date.now() - t0;
 
     // recordSolveAttempt creates the persistent Problem row (when math-helper
     // returned an answer) and an Attempt; we expose its id so the UploadModal
@@ -73,6 +89,19 @@ export class MathHelperService {
       this.logger.warn(`Could not record solve attempt: ${(err as Error).message}`);
       return null;
     });
+
+    // Lv 1 — fire-and-forget audit log of every solve. Read by weekly review
+    // for prompt-tuning patterns + downstream few-shot bank curation.
+    this.logSolverAttempt({
+      userId,
+      problemId,
+      question: dto.question,
+      classLevel: classLevel ?? null,
+      studentAnswer: dto.studentAnswer ?? null,
+      response,
+      durationMs,
+      fewShotCount: profile.fewShotExamples.length,
+    }).catch((e) => this.logger.warn(`SolverAttempt log failed: ${(e as Error).message}`));
 
     return { ...response, problemId };
   }
@@ -137,8 +166,83 @@ export class MathHelperService {
     return user?.gradeLevel ? GRADE_TO_CLASS[user.gradeLevel] : 12;
   }
 
+  /// Lv 2 — fetch up to N APPROVED problems in the user's current chapter.
+  /// "Current chapter" = the conceptLessonId of the most-recent attempt that
+  /// has one (covers Study/Mastery/Test/Practice). When no recent attempt
+  /// has a conceptLesson (brand-new user or all uploads), returns [] and the
+  /// solve prompt falls back to its existing zero-shot behaviour.
+  private async buildFewShotExamples(userId: string, limit = 2): Promise<DbStudentProfile['fewShotExamples']> {
+    const recent = await this.prisma.attempt.findFirst({
+      where: { userId, problem: { conceptLessonId: { not: null } } },
+      orderBy: { createdAt: 'desc' },
+      select: { problem: { select: { conceptLessonId: true } } },
+    });
+    const conceptLessonId = recent?.problem?.conceptLessonId;
+    if (!conceptLessonId) return [];
+
+    const examples = await this.prisma.problem.findMany({
+      where: {
+        conceptLessonId,
+        qualityStatus: 'APPROVED',
+        expectedSolutionSteps: { not: undefined },
+      },
+      orderBy: [{ qualityScore: 'desc' }],
+      take: limit,
+      select: {
+        body: true,
+        answer: true,
+        concept: true,
+        expectedSolutionSteps: true,
+        conceptLesson: { select: { titleEn: true } },
+      },
+    });
+
+    return examples.map((p) => {
+      const steps = p.expectedSolutionSteps as { explanation?: string } | null;
+      return {
+        question: p.body,
+        answer: p.answer,
+        explanation: steps?.explanation ?? p.concept ?? undefined,
+        chapter: p.conceptLesson?.titleEn ?? null,
+      };
+    });
+  }
+
+  /// Lv 1 — append-only solve audit. Best-effort: failures are warned, not
+  /// thrown. studentCorrect populated later via Attempt joined on problemId.
+  private async logSolverAttempt(args: {
+    userId: string;
+    problemId: string | null;
+    question: string;
+    classLevel: number | null;
+    studentAnswer: string | null;
+    response: SolveHelperResponse;
+    durationMs: number;
+    fewShotCount: number;
+  }): Promise<void> {
+    const explanation = args.response.explanation ?? null;
+    const steps = args.response.steps ?? null;
+    await this.prisma.solverAttempt.create({
+      data: {
+        userId: args.userId,
+        problemId: args.problemId,
+        question: args.question,
+        classLevel: args.classLevel,
+        llmAnswer: args.response.answer ?? null,
+        llmExplanation: explanation,
+        llmSteps: steps && steps.length > 0 ? (steps as unknown as object) : undefined,
+        modelUsed: process.env.AI_LLM_MODEL ?? null,
+        durationMs: args.durationMs,
+        detected: args.response.detected ? (args.response.detected as object) : undefined,
+        studentAnswer: args.studentAnswer,
+        studentCorrect: args.response.isStudentCorrect ?? null,
+        fewShotCount: args.fewShotCount,
+      },
+    });
+  }
+
   private async buildStudentProfile(userId: string): Promise<DbStudentProfile> {
-    const [weakTrajectories, recentAttempts, recentWrongNotes] = await Promise.all([
+    const [weakTrajectories, recentAttempts, recentWrongNotes, fewShotExamples] = await Promise.all([
       this.prisma.masteryTrajectory.findMany({
         where: { userId, masteryScore: { lt: 70 } },
         orderBy: [{ masteryScore: 'asc' }, { evidenceCount: 'desc' }],
@@ -174,6 +278,7 @@ export class MathHelperService {
           },
         },
       }),
+      this.buildFewShotExamples(userId, 2),
     ]);
 
     const frequent = new Map<string, { unit: string; attempts: number; correct: number; wrong: number; label?: string }>();
@@ -214,6 +319,7 @@ export class MathHelperService {
         conceptCodes: note.problem.concepts.map((pc) => pc.concept.code),
         occurrences: note.occurrences,
       })),
+      fewShotExamples,
     };
   }
 
@@ -349,7 +455,13 @@ export class MathHelperService {
         concept: conceptText,
         answer,
         difficultyLevel: 3,
-        expectedSolutionSteps: response.explanation ? { explanation: response.explanation } : undefined,
+        expectedSolutionSteps:
+          response.explanation || (response.steps && response.steps.length > 0)
+            ? {
+                explanation: response.explanation ?? '',
+                steps: response.steps ?? [],
+              }
+            : undefined,
         conceptLessonId: lesson?.id ?? null,
         concepts: concepts.length > 0
           ? { create: concepts.map((c) => ({ conceptId: c.id, weight: 1 })) }

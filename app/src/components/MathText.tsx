@@ -58,16 +58,37 @@ function renderInline(src: string): string {
             displayMode: cls.display,
             throwOnError: false,
             strict: 'ignore',
+            // output='html' suppresses the parallel MathML span KaTeX
+            // normally emits for screen readers. The MathML sibling caused
+            // duplicated rendering ("a x a x") whenever the bundled
+            // katex.min.css rule that hides .katex-mathml didn't apply
+            // (Vite dev fast-refresh edge, CSS reorder, etc). We give up
+            // a small accessibility win to remove the visual duplication.
+            output: 'html',
           }),
         );
       } catch {
         parts.push(escapeHtml(tk));
       }
     } else {
-      parts.push(escapeHtml(tk).replace(/\n/g, '<br/>'));
+      parts.push(renderTextPart(tk));
     }
   }
   return parts.join('');
+}
+
+// Plain-text segments between math tokens get HTML escaped, then a small
+// allow-list of markdown emphasis is restored:
+//   **bold** → <strong>bold</strong>
+// Newlines become <br/>. Everything else stays escaped so we never inject
+// raw HTML from user content.
+function renderTextPart(s: string): string {
+  let out = escapeHtml(s);
+  // Markdown bold — escapeHtml leaves '*' untouched (it isn't HTML-special).
+  // Use a non-greedy match that doesn't cross newlines so a forgotten close
+  // marker can't gobble the whole document.
+  out = out.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
+  return out.replace(/\n/g, '<br/>');
 }
 
 function escapeHtml(s: string): string {

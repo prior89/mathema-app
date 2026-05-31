@@ -7,7 +7,7 @@ export type Lang = 'ko' | 'en' | 'hi';
 
 type I18nContext = {
   lang: Lang;
-  setLang: (l: Lang) => void;
+  setLang: (l: Lang, opts?: { reload?: boolean }) => void;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 };
 
@@ -37,14 +37,22 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     return 'en';
   });
 
-  const setLang = (l: Lang) => {
+  const setLang = (l: Lang, opts?: { reload?: boolean }) => {
     const prev = lang;
     setLangState(l);
     localStorage.setItem(STORAGE_KEY, l);
     document.documentElement.lang = l;
     // 언어 변경 시 백엔드에서 가져온 콘텐츠(문제/AI코치/유닛명 등)도 새 언어로 다시 받아와야 하므로
     // 모든 쿼리 캐시를 무효화하고 재요청. 가장 단순·확실한 방법은 브라우저 새로고침.
-    if (prev !== l) {
+    //
+    // 2026-05-27: opts.reload=false escape hatch added for onboarding —
+    // ScreenCountry needs to flip language so the next screens render in
+    // KR, but reloading wipes the onboarding useState and bounces the user
+    // back to welcome. In onboarding there's no backend content to invalidate
+    // (lessons/problems come later, post-/app entry), so skipping the reload
+    // is safe.
+    const shouldReload = opts?.reload ?? true;
+    if (prev !== l && shouldReload) {
       // setTimeout으로 setState 반영 후 reload
       setTimeout(() => window.location.reload(), 50);
     }

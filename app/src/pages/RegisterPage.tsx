@@ -59,6 +59,10 @@ export default function RegisterPage() {
   // TEACHER
   const [tenantCode, setTenantCode] = useState('');
 
+  // 국가 — 가입 시점에 확정. 이후 PATCH /me 로 바꿀 수 없음.
+  // (i18n setLang 도 KR 선택 시 즉시 ko 로 전환)
+  const [country, setCountry] = useState<'IN' | 'KR'>('IN');
+
   // 동의
   const [consentAnalytics, setConsentAnalytics] = useState(true);
   const [consentAiTraining, setConsentAiTraining] = useState(false);
@@ -83,6 +87,7 @@ export default function RegisterPage() {
       await register({
         email, password, name,
         role,
+        country,
         ...(role === 'STUDENT' ? {
           examDate: new Date(examDate).toISOString(),
           targetGrade: Number(targetGrade),
@@ -164,6 +169,8 @@ export default function RegisterPage() {
                     email={email} setEmail={setEmail}
                     password={password} setPassword={setPassword}
                     name={name} setName={setName}
+                    country={country} setCountry={setCountry}
+                    setLang={setLang}
                     gsiRef={gsiRef}
                     t={t}
                   />
@@ -243,7 +250,23 @@ export default function RegisterPage() {
 }
 
 // ─── Step 0 : 역할 + 기본 정보 + Google ───────────────────────
-function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setPassword, name, setName, gsiRef, t }: any) {
+function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setPassword, name, setName, country, setCountry, setLang, gsiRef, t }: any) {
+  // Country chip group — same set as OnboardingPage.ScreenCountry. KR
+  // 선택 시 setLang('ko') 즉시 호출 → 이후 라벨/모든 화면 한국어.
+  // v1 active = IN + KR. 4국 (US/UK/AU/SG) coming-soon disabled.
+  const COUNTRIES: Array<{ id: 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG'; flag: string; name: string; active: boolean }> = [
+    { id: 'IN', flag: '🇮🇳', name: 'India',          active: true  },
+    { id: 'KR', flag: '🇰🇷', name: '대한민국',         active: true  },
+    { id: 'US', flag: '🇺🇸', name: 'United States',  active: false },
+    { id: 'UK', flag: '🇬🇧', name: 'United Kingdom', active: false },
+    { id: 'AU', flag: '🇦🇺', name: 'Australia',      active: false },
+    { id: 'SG', flag: '🇸🇬', name: 'Singapore',      active: false },
+  ];
+  const pickCountry = (c: typeof COUNTRIES[number]['id']) => {
+    setCountry(c);
+    if (c === 'KR') setLang('ko');
+    else setLang('en');
+  };
   // PARENT/TEACHER 가입은 별도 대시보드 출시 전까지 잠금. 카드는 보이되 선택은 불가
   // — 향후 메뉴 재배치 비용을 줄이고 사용자에게 로드맵을 자연스럽게 노출.
   const roles: { id: RegisterRole; Icon: any; label: string; sub: string; popular?: boolean; comingSoon?: boolean }[] = [
@@ -288,7 +311,7 @@ function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setP
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--p-ink)' }}>{r.label}</span>
                   {r.popular && <span className="chip primary">{t('reg.role.popular')}</span>}
-                  {r.comingSoon && <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>Coming soon</span>}
+                  {r.comingSoon && <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('reg.role.comingSoon')}</span>}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
               </div>
@@ -308,14 +331,50 @@ function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setP
       </div>
       <div className="field">
         <label>{t('auth.name')}</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Aarav Sharma" />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('reg.name.placeholder')} />
+      </div>
+
+      {/* Country picker — drives curriculum (IN→NCERT, KR→Korean 2022 개정)
+          + immediate lang flip. Symmetric with OnboardingPage ScreenCountry. */}
+      <div className="field">
+        <label>{country === 'KR' ? '국가' : 'Country'}</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+          {COUNTRIES.map((c) => {
+            const selected = country === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => c.active && pickCountry(c.id)}
+                disabled={!c.active}
+                style={{
+                  padding: '10px 12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  cursor: c.active ? 'pointer' : 'not-allowed',
+                  opacity: c.active ? 1 : 0.45,
+                  border: selected ? '2px solid var(--p-primary)' : '1px solid var(--p-border)',
+                  background: selected ? 'var(--p-primary-tint)' : 'var(--p-surface)',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: 18, lineHeight: 1 }}>{c.flag}</span>
+                <span style={{ fontWeight: selected ? 600 : 500, color: 'var(--p-ink)' }}>{c.name}</span>
+                {!c.active && <span className="chip" style={{ marginLeft: 'auto', padding: '1px 6px', fontSize: 10 }}>Soon</span>}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {GOOGLE_CLIENT_ID && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-            <span className="caption" style={{ fontSize: 11 }}>OR</span>
+            <span className="caption" style={{ fontSize: 11 }}>{t('reg.or')}</span>
             <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
           </div>
           <div ref={gsiRef} style={{ display: 'flex', justifyContent: 'center' }} />

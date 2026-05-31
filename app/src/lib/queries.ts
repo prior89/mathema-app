@@ -55,6 +55,21 @@ export type MentorMessage = { week: string; generatedAt: string; message: string
 export type Heatmap = Array<{ day: number; intensity: number }>;
 export type ActivityStats = { avgMinutesPerDay: number; totalProblems: number; avgAccuracy: number };
 export type Trajectory = Array<{ name: string; score: number; grade: number; target: number | null }>;
+
+/** Sprint 2 A9 response — adaptive daily 20-problem session. */
+export type AdaptiveProblem = {
+  id: string;
+  reason: string;
+  targetSkill: string | null;
+  difficultyLevel: number;
+};
+export type AdaptiveStartResponse = {
+  sessionId: string | null;
+  title: string;
+  reason: string;
+  problems: AdaptiveProblem[];
+};
+
 export type ExamResult = { id: string; name: string; date: string; score: number; grade: number; percentile: number; time: string };
 export type MockSummary = {
   lastScore: number | null; expectedGrade: number | null;
@@ -81,6 +96,7 @@ export type Achievement = { icon: string; title: string; sub: string; color: str
 export type GradeLevel = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12';
 export type UserRole = 'STUDENT' | 'PARENT' | 'TEACHER' | 'ADMIN';
 export type StudyGoal = 'BOARD' | 'JEE' | 'SCHOOL' | 'CATCHUP';
+export type CountryCode = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'GLOBAL';
 export type Me = {
   id: string; name: string; email: string;
   examDate: string; targetGrade: number; dDay: number;
@@ -88,6 +104,7 @@ export type Me = {
   studyGoal?: StudyGoal | null;
   role?: UserRole;
   tenantId?: string | null;
+  country?: CountryCode;
 };
 
 // fetchers
@@ -329,7 +346,13 @@ export type Problem = {
   imageUrl: string | null; hint: string | null;
   steps?: ProblemStep[];
 };
-export type Hint = { hint: string | null };
+export type Hint = {
+  hint: string | null;
+  /** Key formula for the problem — primary content of Hint Lv1. */
+  formula: string | null;
+  /** Concept name / one-line explanation — fallback when formula is empty. */
+  concept: string | null;
+};
 export type StudySession = {
   id: string; unitId: string; sessionNumber: number; totalSessions: number;
   currentStep: number; startedAt: string; endedAt: string | null;
@@ -368,7 +391,14 @@ export type ReviewQueueNext = {
     problemId: string;
     problemBody: string;
     source: string;
+    /** One-line nudge — null until the user has racked up 3+ wrong attempts
+     *  on this problem (matheo-ux-spec-full §Test). UI should hide the hint
+     *  button entirely while null. */
     hint: string | null;
+    /** True once the 3-wrong threshold is crossed. Frontend uses this to
+     *  surface the hint button + one-line nudge; the full solution is never
+     *  revealed via the review-queue path. */
+    hintAvailable: boolean;
     occurrences: number;
     createdAt: string;
   } | null;
@@ -380,6 +410,9 @@ export const fetchReviewQueueNext = () =>
   get<ReviewQueueNext>('/wrong-notes/queue/next');
 export const fetchProblem = (id: string) => get<Problem>(`/problems/${id}`);
 export const fetchProblemHint = (id: string) => get<Hint>(`/problems/${id}/hint`);
+/** Hint Lv2 — AI walkthrough generated on demand (Gemini 2.5 Flash, ≤6 short steps). */
+export const fetchProblemHintWalkthrough = (id: string) =>
+  get<{ steps: string[] }>(`/problems/${id}/hint-walkthrough`);
 export const fetchStudySession = (id: string) => get<StudySession>(`/study-sessions/${id}`);
 export const fetchSessionGuide = (id: string, perspective: string) =>
   get<SessionGuide>(`/study-sessions/${id}/guide`, { perspective });
@@ -458,15 +491,153 @@ export type ConceptStep = {
 export type ConceptLessonDetail = ConceptLessonSummary & {
   steps: ConceptStep[];
   progress: {
+    /** Count of Attempts this user has on any problem mapped to this
+     *  chapter. 0 = first-time entry → ConceptLessonScreen forces concept
+     *  phase regardless of conceptWalkthroughAt. */
+    practiceAttempts: number;
     currentStep: number;
     completedSteps: number[];
     masteredAt: string | null;
+    /** When the user finished the concept walkthrough — distinct from
+     *  masteredAt (which is the 20-problem Study-unlock gate). */
+    conceptWalkthroughAt: string | null;
     retrievalScore: number | null;
-  } | null;
+  };
 };
 
 export const fetchConceptLessons = (ncertClass?: NcertClass) =>
   get<ConceptLessonSummary[]>('/concept-lessons', ncertClass ? { ncertClass } : undefined);
+
+// ─── Korean curriculum (2022 개정) parallel hub ─────────────────────────
+
+export type KoreanGrade =
+  | 'MIDDLE_1' | 'MIDDLE_2' | 'MIDDLE_3'
+  | 'HIGH_1' | 'HIGH_2' | 'HIGH_3';
+
+export type KoreanSubject =
+  | 'MIDDLE_MATH_1' | 'MIDDLE_MATH_2' | 'MIDDLE_MATH_3'
+  | 'HIGH_COMMON_1' | 'HIGH_COMMON_2'
+  | 'HIGH_ALGEBRA' | 'HIGH_CALCULUS_1' | 'HIGH_CALCULUS_2'
+  | 'HIGH_STATISTICS' | 'HIGH_GEOMETRY';
+
+export type KoreanConceptLessonSummary = {
+  id: string;
+  chapterCode: string;
+  koreanGrade: KoreanGrade;
+  koreanSubject: KoreanSubject;
+  chapterNumber: number;
+  titleKo: string;
+  titleEn: string | null;
+  bigIdeaKo: string;
+  estimatedMin: number;
+  cognitiveLoad: number;
+  prerequisiteCodes: string[];
+  /** KoreanConceptProgress.masteredAt presence — backend computes per-user.
+   *  StudyScreen filters on this when country='KR' to mirror the NCERT
+   *  "mastered chapters only" picker semantics. */
+  mastered: boolean;
+};
+
+export const fetchKoreanConceptLessons = (args?: {
+  koreanGrade?: KoreanGrade;
+  koreanSubject?: KoreanSubject;
+}) =>
+  get<KoreanConceptLessonSummary[]>('/korean-concept-lessons', {
+    ...(args?.koreanGrade ? { koreanGrade: args.koreanGrade } : {}),
+    ...(args?.koreanSubject ? { koreanSubject: args.koreanSubject } : {}),
+  });
+
+export type KoreanConceptStep = {
+  id: string;
+  stepIndex: number;
+  kind:
+    | 'HOOK' | 'CONCRETE' | 'PICTORIAL' | 'ABSTRACT'
+    | 'WORKED_EXAMPLE' | 'GUIDED_PRACTICE' | 'RETRIEVAL'
+    | 'MISCONCEPTION' | 'REFLECT';
+  title: string;
+  body: string;
+  visualType: string | null;
+  visualUrl: string | null;
+  visualData: any | null;
+  // The KO seed stores these as-is (no flattening). Each block is the raw
+  // JSON from the seed file — components should guard for shape.
+  misconception: { wrongKo: string; whyKo: string; correctKo: string } | null;
+  workedSteps: Array<{ step: number; math: string; narrationKo: string }> | null;
+  retrievalCheck: {
+    prompt: string;
+    accept: string[];
+    explainKo?: string;
+    distractors?: Array<{ text: string; rationale?: string }>;
+  } | null;
+  reflectPrompts: { prompts: string[] } | null;
+};
+
+export type KoreanConceptLessonDetail = KoreanConceptLessonSummary & {
+  steps: KoreanConceptStep[];
+  /** First problem in masterySetProblemIds the user has NOT yet attempted.
+   *  null when chapter fully attempted or masterySet not 20-frozen. Frontend
+   *  KoreanConceptLessonScreen passes this to KoreanPracticePhase.startProblemId
+   *  so "연습 문제 풀기" lands on the in-progress problem. */
+  nextProblemId: string | null;
+  /** KoreanConceptProgress.masteredAt presence — Study tab unlock signal. */
+  mastered: boolean;
+};
+
+export const fetchKoreanConceptLesson = (chapterCode: string) =>
+  get<KoreanConceptLessonDetail>(`/korean-concept-lessons/${chapterCode}`);
+
+export type KoreanPracticeChoice = {
+  id: string;
+  choiceIndex: number;
+  text: string;
+  isCorrect: boolean;
+  distractorErrorCode: string | null;
+  rationale: string | null;
+};
+
+export type KoreanPracticeStep = {
+  id: string;
+  stepIndex: number;
+  stepType: 'CONCEPT' | 'PROCESS' | 'ANSWER';
+  prompt: string;
+  choices: KoreanPracticeChoice[];
+};
+
+/// 3-step multi-step problem per user spec 2026-05-24. Each problem carries
+/// CONCEPT/PROCESS/ANSWER steps; each step has 5 choices. Backend filters out
+/// legacy single-step seed (see korean-concept-lessons.service.practiceProblems).
+export type KoreanPracticeProblem = {
+  id: string;
+  stem: string;
+  concept: string | null;
+  difficulty: string;
+  difficultyLevel: number;
+  requiredSkills: string[];
+  answer: string;
+  solution: string | null;
+  steps: KoreanPracticeStep[];
+};
+
+export const fetchKoreanPracticeProblems = (chapterCode: string) =>
+  get<KoreanPracticeProblem[]>(`/korean-concept-lessons/${chapterCode}/practice-problems`);
+
+/** KR Study (single-step) pool problem. Mastery 3-step과 별도. */
+export type KoreanStudyProblem = {
+  id: string;
+  stem: string;
+  concept: string | null;
+  difficulty: string;
+  difficultyLevel: number;
+  requiredSkills: string[];
+  answer: string;
+  solution: string | null;
+  stepId: string;
+  stepIndex: number;
+  choices: KoreanPracticeChoice[];
+};
+
+export const fetchKoreanStudyProblems = (chapterCode: string) =>
+  get<KoreanStudyProblem[]>(`/korean-concept-lessons/${chapterCode}/study-problems`);
 
 export const fetchConceptLessonsForUnit = (unitId: string) =>
   get<ConceptLessonSummary[]>(`/concept-lessons/by-unit/${unitId}`);
@@ -524,3 +695,25 @@ export const uploadProblemImage = (
   if (durationSec && durationSec > 0) fd.append('durationSec', String(Math.floor(durationSec)));
   return post<UploadAnalysisResult>('/math-helper/ocr-solve', fd, { isMultipart: true });
 };
+
+/** Sprint 2 A9: POST /study-sessions/adaptive/start. country-agnostic; the
+ *  backend AdaptiveNextProblemService filters Problem candidates by the
+ *  caller's user.country, so KR users get KR problems and IN users get NCERT. */
+export const startAdaptiveSession = (mode: 'daily' | 'chapter' = 'daily', chapterCode?: string) =>
+  post<AdaptiveStartResponse>('/study-sessions/adaptive/start', { mode, chapterCode });
+
+/** Sprint 3 A13: student-side "이 문제 신고" — flips Problem to EXCLUDED
+ *  + tags 'STUDENT_REPORTED'. Server is idempotent; duplicate flag = no-op. */
+export const reportProblem = (problemId: string, reason?: string) =>
+  post<{ ok: true; duplicate: boolean }>(`/problems/${problemId}/report`, { reason });
+
+/** Public policy document — surfaces on /privacy and /terms before login.
+ *  Backend Privacy controller marks `policy` as @Public so the SPA can fetch
+ *  without a token (Play Store + DPDP require a public Privacy URL). */
+export type PolicyDoc = {
+  version: string;
+  effectiveDate: string;
+  title: string;
+  sections: Array<{ heading: string; body: string }>;
+};
+export const fetchPolicy = () => get<PolicyDoc>('/privacy/policy');

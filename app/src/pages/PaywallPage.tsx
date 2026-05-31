@@ -59,7 +59,7 @@ export default function PaywallPage() {
   if (!isBillingAvailable()) {
     return (
       <div style={{ padding: 32, textAlign: 'center' }}>
-        Premium subscriptions are available in the Matheo Android app only.
+        {t('paywall.androidOnly')}
       </div>
     );
   }
@@ -67,10 +67,10 @@ export default function PaywallPage() {
   if (status.data?.premium) {
     return (
       <div style={{ padding: 32, textAlign: 'center' }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>You're already Premium</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 700 }}>{t('paywall.already')}</h2>
         {status.data.subscription?.expiryTime && (
           <p style={{ color: '#6B7280', marginTop: 8 }}>
-            Renews on {new Date(status.data.subscription.expiryTime).toLocaleDateString()}
+            {t('paywall.renewAt', { date: new Date(status.data.subscription.expiryTime).toLocaleDateString() })}
           </p>
         )}
       </div>
@@ -128,7 +128,7 @@ export default function PaywallPage() {
             opacity: busy ? 0.6 : 1,
           }}
         >
-          Subscribe
+          {t('paywall.subscribe')}
         </button>
       </div>
     );
@@ -155,20 +155,20 @@ export default function PaywallPage() {
           </div>
         </div>
       )}
-      <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Matheo Premium</h1>
+      <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>{t('paywall.title')}</h1>
       <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 20 }}>
-        Unlimited problems · AI explanations · Mistake analysis · Weekly reports
+        {t('paywall.tagline')}
       </p>
 
-      {products.isLoading && <div style={{ padding: 24 }}>Loading prices...</div>}
+      {products.isLoading && <div style={{ padding: 24 }}>{t('paywall.loading')}</div>}
       {products.isError && (
         <div style={{ padding: 16, color: '#B91C1C' }}>
-          Could not load prices. Please try again.
+          {t('paywall.loadFailed')}
         </div>
       )}
 
-      {renderProduct('premium_monthly', 'Monthly', 'month')}
-      {renderProduct('premium_yearly', 'Yearly', 'year')}
+      {renderProduct('premium_monthly', t('paywall.monthly'), t('paywall.monthly.per'))}
+      {renderProduct('premium_yearly', t('paywall.yearly'), t('paywall.yearly.per'))}
 
       <button
         onClick={async () => {
@@ -191,7 +191,7 @@ export default function PaywallPage() {
           cursor: busy ? 'not-allowed' : 'pointer',
         }}
       >
-        Already purchased? Restore
+        {t('paywall.restore')}
       </button>
     </div>
   );

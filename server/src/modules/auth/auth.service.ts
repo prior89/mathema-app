@@ -90,6 +90,10 @@ export class AuthService {
       role,
       examDate,
       targetGrade,
+      // Country from onboarding country chip. Prisma default is IN so an
+      // omitted value still lands on India behaviour — KR sign-ups must
+      // explicitly send country: 'KR' for curriculum branching to fire.
+      country: (dto.country ?? 'IN') as any,
       ...(gradeLevel ? { gradeLevel } : {}),
       ...(studyGoal ? { studyGoal } : {}),
       ...(childOfUserId ? { childOfUserId } : {}),

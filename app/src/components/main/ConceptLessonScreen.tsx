@@ -5,13 +5,17 @@
  */
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   fetchConceptLesson, fetchPracticeProblems, fetchProblem,
+  fetchKoreanConceptLesson, fetchKoreanPracticeProblems,
   type ConceptStep, type Problem, type ProblemStep as ProblemStepData,
+  type KoreanConceptStep, type KoreanPracticeProblem,
 } from '../../lib/queries';
 import { post } from '../../lib/api';
 import { track } from '../../lib/analytics';
+import { useShuffledChoices } from '../../lib/shuffle';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
@@ -30,6 +34,16 @@ const STEP_TONE: Record<string, { eyebrow: string; tint: string }> = {
 
 export function ConceptLessonScreen() {
   const { code } = useParams<{ code: string }>();
+  // Korean curriculum chapters use the K- prefix (e.g. K-G10-CS1-CH01-...)
+  // and live in a separate KoreanConceptLesson table served by a different
+  // endpoint. Route those into the dedicated KO renderer (concept-only,
+  // no practice problems yet — Phase 4 adds the KO problem pool).
+  if (code?.startsWith('K-')) return <KoreanConceptLessonScreen code={code} />;
+  return <NcertConceptLessonScreen code={code} />;
+}
+
+function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
+  const { t } = useT();
   const [sp] = useSearchParams();
   // Deep-link target: when arriving from /app/notes (wrong-note card) or any
   // "retry this exact problem" link, the URL carries ?problemId=<id>.
@@ -43,7 +57,11 @@ export function ConceptLessonScreen() {
   // phase 'concept' = all concept steps on one screen
   //       'practice' = Problem 3-step MC; iterates through ALL linked practice problems
   //       'done'     = chapter complete
-  const [phase, setPhase] = useState<'concept' | 'practice' | 'done'>('concept');
+  // Default is null until the lesson detail loads; the useEffect below resolves
+  // it to 'concept' (first time) or 'practice' (returning user with
+  // conceptWalkthroughAt set) so a re-entry via Home's progress card resumes
+  // at the next problem instead of replaying the concept phase.
+  const [phase, setPhase] = useState<'concept' | 'practice' | 'done' | null>(null);
   const [practiceProblemIdx, setPracticeProblemIdx] = useState(0); // index into problemList
   const [practiceStepIdx, setPracticeStepIdx] = useState(1);       // 1..3 within current problem
 
@@ -60,16 +78,33 @@ export function ConceptLessonScreen() {
   const totalProblems = problemList.data?.length ?? 0;
   const currentProblemId = problemList.data?.[practiceProblemIdx]?.id ?? null;
 
-  // When ?problemId=<id> is in the URL and the list has loaded, jump straight
-  // to that problem in practice phase. Runs once per (data, target) pair.
+  // Resolve initial phase once lesson + problemList have loaded.
+  // Priority order (user-report 2026-05-23 — Korean dogfood):
+  //   1. practiceAttempts === 0 → force concept walkthrough first, even if
+  //      Home / Mastery sent a ?problemId=<id> deep-link. Reading the concept
+  //      page without solving a problem doesn't count as "progressed".
+  //   2. ?problemId=<id> in URL → jump straight to that problem (Notes
+  //      "retry this problem" deep-link, valid only after first solve).
+  //   3. practiceAttempts > 0 → resume practice from the first problem.
   useEffect(() => {
-    if (!targetProblemId || !problemList.data) return;
-    const idx = problemList.data.findIndex((p) => p.id === targetProblemId);
-    if (idx < 0) return;
+    if (phase !== null) return; // already resolved
+    if (!lesson.data || !problemList.data) return;
+    const attempts = lesson.data.progress?.practiceAttempts ?? 0;
+    if (attempts === 0) {
+      setPhase('concept');
+      return;
+    }
+    if (targetProblemId) {
+      const idx = problemList.data.findIndex((p) => p.id === targetProblemId);
+      setPhase('practice');
+      setPracticeProblemIdx(idx >= 0 ? idx : 0);
+      setPracticeStepIdx(1);
+      return;
+    }
     setPhase('practice');
-    setPracticeProblemIdx(idx);
+    setPracticeProblemIdx(0);
     setPracticeStepIdx(1);
-  }, [problemList.data, targetProblemId]);
+  }, [phase, lesson.data, problemList.data, targetProblemId]);
   const problem = useQuery({
     queryKey: ['problem', currentProblemId],
     queryFn: () => fetchProblem(currentProblemId!),
@@ -96,8 +131,12 @@ export function ConceptLessonScreen() {
     },
   });
 
-  if (lesson.isLoading) return <Shell back={() => nav('/app/learn')}><Centered msg="Loading lesson…" /></Shell>;
-  if (lesson.isError || !lesson.data) return <Shell back={() => nav('/app/learn')}><Centered msg="Could not load this lesson." /></Shell>;
+  if (lesson.isLoading) return <Shell back={() => nav('/app/learn')}><Centered msg={t('lesson.loading')} /></Shell>;
+  if (lesson.isError || !lesson.data) return <Shell back={() => nav('/app/learn')}><Centered msg={t('lesson.error')} /></Shell>;
+  // phase resolves in the useEffect once both lesson + problemList are ready.
+  // Until then keep showing the spinner so we never flash the concept walkthrough
+  // for returning users.
+  if (phase === null) return <Shell back={() => nav('/app/learn')}><Centered msg={t('lesson.loading')} /></Shell>;
 
   // Indicator: 1 (concept) + N problems
   const segments = 1 + Math.max(1, totalProblems);
@@ -154,7 +193,7 @@ export function ConceptLessonScreen() {
           steps={conceptSteps}
           bigIdea={lesson.data.bigIdea}
           onContinue={goFromConcept}
-          ctaLabel={hasProblems ? `Continue to ${totalProblems} practice problem${totalProblems > 1 ? 's' : ''}` : 'Finish chapter'}
+          ctaLabel={hasProblems ? t('lesson.cta.continue', { n: totalProblems }) : t('lesson.cta.finishChapter')}
         />
       )}
       {phase === 'practice' && problem.data && currentSteps[practiceStepIdx - 1] && (
@@ -170,7 +209,7 @@ export function ConceptLessonScreen() {
         />
       )}
       {phase === 'practice' && (!problem.data || problem.isLoading) && (
-        <Centered msg="Loading next problem…" />
+        <Centered msg={t('lesson.loadingNext')} />
       )}
       {phase === 'done' && (
         <DonePhase chapterTitle={lesson.data.title} onBack={() => nav('/app/learn')} />
@@ -182,11 +221,12 @@ export function ConceptLessonScreen() {
 function Shell({ children, back, title, pill }: {
   children: React.ReactNode; back: () => void; title?: string; pill?: string;
 }) {
+  const { t } = useT();
   return (
     <div className="screen">
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <button onClick={back} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
+          <button onClick={back} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label={t('lesson.back')}>
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
@@ -215,6 +255,7 @@ function SegmentIndicator({ total, active }: { total: number; active: number }) 
 function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
   steps: ConceptStep[]; bigIdea: string; onContinue: () => void; ctaLabel: string;
 }) {
+  const { t } = useT();
   return (
     <>
       <div style={{ flex: 1, overflow: 'auto', padding: '12px 22px 16px', minHeight: 0 }}>
@@ -222,7 +263,7 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
             longer sticky-pinned at the top. */}
         {bigIdea && (
           <div style={{ paddingBottom: 12 }}>
-            <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>BIG IDEA</span>
+            <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>{t('lesson.bigIdea')}</span>
             {/* Strip trailing period — Big Idea reads as a headline, not a
                 sentence. LLM-generated bigIdea strings often end in `.` */}
             <h3 className="title" style={{ fontSize: 22, marginTop: 6, lineHeight: 1.2 }}>{bigIdea.replace(/\.$/, '')}</h3>
@@ -241,6 +282,7 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
 }
 
 function ConceptStepBlock({ step }: { step: ConceptStep }) {
+  const { t } = useT();
   const tone = STEP_TONE[step.kind] ?? STEP_TONE.ABSTRACT;
   const mc = step.misconception;
   const hasMisconception = !!(mc && (mc.wrong || mc.why || mc.correct));
@@ -256,7 +298,7 @@ function ConceptStepBlock({ step }: { step: ConceptStep }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <span className="chip" style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>{tone.eyebrow}</span>
+        <span className="chip" style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>{t(`step.eyebrow.${step.kind}` as any) || tone.eyebrow}</span>
         <span style={{ fontSize: 14, fontWeight: 600 }}>{step.title}</span>
       </div>
       {step.body && (
@@ -316,6 +358,7 @@ function BulletizedMathText({ text }: { text: string }) {
 }
 
 function Misconception({ data }: { data: ConceptStep['misconception'] }) {
+  const { t } = useT();
   if (!data) return null;
   const wrong = data.wrong;
   const why = data.why;
@@ -323,12 +366,12 @@ function Misconception({ data }: { data: ConceptStep['misconception'] }) {
   if (!wrong && !why && !correct) return null;
   return (
     <div className="card" style={{ marginTop: 10, padding: 14, borderColor: 'var(--p-danger)' }}>
-      <div className="eyebrow" style={{ color: 'var(--p-danger)' }}>COMMON MISTAKE</div>
+      <div className="eyebrow" style={{ color: 'var(--p-danger)' }}>{t('lesson.common.mistake')}</div>
       {wrong && <div style={{ marginTop: 6, fontSize: 14, color: 'var(--p-ink)' }}><MathText text={wrong} /></div>}
-      {why && <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-muted)' }}>Why it’s wrong: <MathText text={why} /></div>}
+      {why && <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-muted)' }}>{t('lesson.misconception.whyWrong')} <MathText text={why} /></div>}
       {correct && (
         <div style={{ marginTop: 8, padding: 10, background: 'var(--p-success-tint)', borderRadius: 8, fontSize: 13, color: 'var(--p-success)' }}>
-          Correct: <MathText text={correct} />
+          {t('lesson.misconception.correct')} <MathText text={correct} />
         </div>
       )}
     </div>
@@ -336,12 +379,13 @@ function Misconception({ data }: { data: ConceptStep['misconception'] }) {
 }
 
 function WorkedExample({ steps }: { steps: NonNullable<ConceptStep['workedSteps']> }) {
+  const { t } = useT();
   return (
     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
       {steps.map((s, i) => (
         <div key={i} className="card" style={{ padding: 12, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <span className="chip primary" style={{ fontSize: 10.5, padding: '2px 8px' }}>STEP {i + 1}</span>
+            <span className="chip primary" style={{ fontSize: 10.5, padding: '2px 8px' }}>{t('lesson.workedExample.step', { n: i + 1 })}</span>
           </div>
           <div className="math-big" style={{ fontSize: 16 }}><MathText text={s.math} /></div>
           <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)' }}><MathText text={s.narration} /></div>
@@ -352,11 +396,12 @@ function WorkedExample({ steps }: { steps: NonNullable<ConceptStep['workedSteps'
 }
 
 function ReflectPrompts({ prompts }: { prompts: string[] }) {
+  const { t } = useT();
   return (
     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
       {prompts.map((p, i) => (
         <div key={i} className="card" style={{ padding: 12, borderStyle: 'dashed', background: 'transparent' }}>
-          <span className="eyebrow" style={{ fontSize: 10 }}>REFLECT</span>
+          <span className="eyebrow" style={{ fontSize: 10 }}>{t('lesson.reflect')}</span>
           <div style={{ marginTop: 6, fontSize: 14 }}><MathText text={p} /></div>
         </div>
       ))}
@@ -373,6 +418,10 @@ type StepResult = {
   isCorrect: boolean;
   selectedChoice: { id: string; text: string; distractorType: string | null; rationale: string | null } | null;
   correctChoice: { id: string; text: string } | null;
+  // Set true on submit network/5xx/BadRequest failure (vs. legitimate "wrong
+  // answer"). Lets the UI tell the student "the server couldn't grade your
+  // answer" instead of pretending their pick was wrong.
+  error?: boolean;
 };
 
 function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemTotal, onNext }: {
@@ -380,6 +429,7 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
   problemIdx: number; problemTotal: number; onNext: () => void;
 }) {
   const qc = useQueryClient();
+  const { t } = useT();
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [startedAt] = useState(() => Date.now());
   const [result, setResult] = useState<StepResult | null>(null);
@@ -418,7 +468,7 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
   const letters = ['A', 'B', 'C', 'D', 'E'];
   // 정답 맞추기 전까지 lock 안 함 — 오답이면 retry 허용. 정답이면 lock.
   const locked = submit.isPending || result?.isCorrect === true;
-  const choices = step.choices ?? [];
+  const choices = useShuffledChoices(step.choices ?? []);
 
   // 새로운 답을 선택하면 직전 result 클리어 (retry 모드).
   const pickChoice = (id: string) => {
@@ -434,7 +484,7 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
             of the practice screen — no longer sticky-pinned at the top. */}
         <div style={{ paddingBottom: 4 }}>
           <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>
-            QUESTION {problemIdx} OF {problemTotal} · STEP {stepIdx} OF {stepTotal} · {STEP_TYPE_LABEL[step.stepType] ?? step.stepType}
+            {t('lesson.practice.questionHeader', { idx: problemIdx, total: problemTotal, step: stepIdx, steps: stepTotal, label: STEP_TYPE_LABEL[step.stepType] ?? step.stepType })}
           </span>
           <h3 className="title" style={{ fontSize: 20, marginTop: 6, lineHeight: 1.25 }}>
             <MathText text={step.prompt} />
@@ -478,21 +528,21 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
         <div style={{ marginTop: 16 }}>
           {!result ? (
             <button className="btn" disabled={!pickedId || submit.isPending} onClick={() => submit.mutate()}>
-              {submit.isPending ? 'Checking…' : 'Check answer'}
+              {submit.isPending ? t('solo.checking') : t('solo.checkAnswer')}
               <Glyph.ChevronR />
             </button>
           ) : result.isCorrect ? (
             <button className="btn" onClick={onNext}>
               {stepIdx < stepTotal
-                ? `Continue to STEP ${stepIdx + 1}`
+                ? t('lesson.practice.continueStep', { n: stepIdx + 1 })
                 : problemIdx < problemTotal
-                  ? `Next question (${problemIdx + 1}/${problemTotal})`
-                  : 'Finish chapter'}
+                  ? t('lesson.practice.nextQuestion', { next: problemIdx + 1, total: problemTotal })
+                  : t('lesson.practice.finishChapter')}
               <Glyph.ChevronR />
             </button>
           ) : (
             <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
-              Try again
+              {t('solo.tryAgain')}
             </button>
           )}
         </div>
@@ -501,22 +551,22 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
   );
 }
 
-const DISTRACTOR_HINT: Record<string, string> = {
-  CONCEPT_CONFUSION: 'You may be mixing this concept with a related one — re-read the abstract step above.',
-  CALC_ERROR: 'Numerical / sign / arithmetic slip — redo the calculation step-by-step.',
-  PROCESS_SKIP: 'A step in the solution was skipped — walk through every step explicitly.',
-  TIME_PRESSURE_GUESS: 'Looks like a guess — slow down, the answer is reachable from the given info.',
-};
-
 function FeedbackCard({ result }: { result: StepResult }) {
+  const { t } = useT();
   const correct = result.isCorrect;
   const sel = result.selectedChoice;
   // 정답은 절대 노출하지 않음 — retry 학습.
   const distractorTypeText = sel?.distractorType ? sel.distractorType.replace(/_/g, ' ') : null;
+  const distractorHint: Record<string, string> = {
+    CONCEPT_CONFUSION: t('lesson.feedback.distractor.concept'),
+    CALC_ERROR: t('lesson.feedback.distractor.calc'),
+    PROCESS_SKIP: t('lesson.feedback.distractor.process'),
+    TIME_PRESSURE_GUESS: t('lesson.feedback.distractor.time'),
+  };
   // Why-line: prefer DB rationale; else map by distractor type; else generic.
   const whyLine = sel?.rationale
-    ?? (sel?.distractorType ? DISTRACTOR_HINT[sel.distractorType] : null)
-    ?? (correct ? null : 'That option does not lead to the answer — look at the prompt again and pick a different one.');
+    ?? (sel?.distractorType ? distractorHint[sel.distractorType] : null)
+    ?? (correct ? null : t('lesson.feedback.distractor.other'));
 
   return (
     <div
@@ -529,12 +579,12 @@ function FeedbackCard({ result }: { result: StepResult }) {
       }}
     >
       <div style={{ fontWeight: 700, color: correct ? 'var(--p-success)' : 'var(--p-danger)', fontSize: 14 }}>
-        {correct ? '✓ Correct' : '✗ Not quite — pick a different option and check again'}
+        {correct ? t('lesson.feedback.correct') : t('lesson.feedback.wrong')}
       </div>
       {whyLine && (
         <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
           <strong style={{ color: 'var(--p-ink)' }}>
-            {correct ? 'Why this works: ' : 'Why your pick missed: '}
+            {correct ? t('lesson.feedback.whyWorks') : t('lesson.feedback.whyMissed')}
           </strong>
           <MathText text={whyLine} />
         </div>
@@ -550,6 +600,7 @@ function FeedbackCard({ result }: { result: StepResult }) {
 
 // ───────── Phase 2: Done / chapter complete ─────────
 function DonePhase({ chapterTitle, onBack }: { chapterTitle: string; onBack: () => void }) {
+  const { t } = useT();
   return (
     <>
       <div style={{ flex: 1, overflow: 'auto', padding: '24px 22px 16px', minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 16 }}>
@@ -560,14 +611,14 @@ function DonePhase({ chapterTitle, onBack }: { chapterTitle: string; onBack: () 
           <Glyph.Check accent="var(--p-primary)" size={36} />
         </div>
         <div>
-          <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>CHAPTER COMPLETE</span>
+          <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>{t('lesson.done.eyebrow')}</span>
           <h2 className="title" style={{ fontSize: 26, marginTop: 6 }}>{chapterTitle}</h2>
           <p className="subtitle" style={{ maxWidth: 320 }}>
-            Your attempts are saved. Your AI coach will use this data to surface weak patterns and target the next chapter.
+            {t('lesson.done.body')}
           </p>
         </div>
         <button className="btn" onClick={onBack} style={{ marginTop: 16, maxWidth: 280 }}>
-          Back to chapters
+          {t('lesson.done.backChapters')}
           <Glyph.ChevronR />
         </button>
       </div>
@@ -578,5 +629,459 @@ function DonePhase({ chapterTitle, onBack }: { chapterTitle: string; onBack: () 
 function Centered({ msg }: { msg: string }) {
   return (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--p-muted)' }}>{msg}</div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Korean curriculum lesson renderer (concept phase only).
+//  Practice / mastery 게이팅은 Korean Problem pool (Phase 4) 들어온 뒤
+//  ConceptLessonsService 의 country=KR 분기와 함께 추가됨.
+// ─────────────────────────────────────────────────────────────────────────
+function KoreanConceptLessonScreen({ code }: { code: string }) {
+  const nav = useNavigate();
+  const { t } = useT();
+  const location = useLocation();
+  // Deep-link target: when Home chapter-progress card sends ?problemId=X
+  // the screen skips the concept walkthrough and lands the student straight
+  // in the practice phase at that problem. (User spec 2026-05-24: Home 카드
+  // 클릭 → 진행 중 문제로 바로.)
+  const deepProblemId = new URLSearchParams(location.search).get('problemId');
+  const [phase, setPhase] = useState<'concept' | 'practice' | 'done'>(
+    deepProblemId ? 'practice' : 'concept',
+  );
+  const lesson = useQuery({ queryKey: ['ko-lesson', code], queryFn: () => fetchKoreanConceptLesson(code) });
+  const practice = useQuery({
+    queryKey: ['ko-practice', code],
+    queryFn: () => fetchKoreanPracticeProblems(code),
+    enabled: !!code,
+  });
+
+  if (lesson.isLoading) {
+    return <Shell back={() => nav('/app/learn')}><Centered msg={t('lesson.loading')} /></Shell>;
+  }
+  if (lesson.isError || !lesson.data) {
+    return <Shell back={() => nav('/app/learn')}><Centered msg={t('lesson.error')} /></Shell>;
+  }
+
+  // Phase 'practice' — multi-step practice.
+  //   startProblemId priority:
+  //     1) ?problemId=X from URL  (Home chapter-progress card deep-link)
+  //     2) lesson.nextProblemId   (Learn-chapter-click → "연습 문제 풀기"
+  //                                lands on user's in-progress problem)
+  //     3) null                   (cold entry / mastered re-attempt → Q1)
+  //
+  //   Bug fix 2026-05-27: gate mounting KoreanPracticePhase on practice.data
+  //   actually being loaded. The phase computes its initial problemIdx via
+  //   useState(() => problems.findIndex(...)) — if we mount with an empty
+  //   problems array (practice still loading), the findIndex returns -1 →
+  //   fallback to 0 → useState locks problemIdx=0 forever. Result was the
+  //   Home → chapter-progress card deep-link silently landing on Q1 instead
+  //   of the user's actual in-progress problem ("어떤 챕터는 연결 안 됨"
+  //   report). Showing the lesson-level loading shell here keeps the practice
+  //   phase from initializing with a stale empty array.
+  if (phase === 'practice') {
+    if (practice.isLoading || !practice.data) {
+      return <Shell back={() => setPhase('concept')}><Centered msg={t('lesson.loading')} /></Shell>;
+    }
+    const startId = deepProblemId ?? lesson.data.nextProblemId ?? null;
+    return (
+      <KoreanPracticePhase
+        chapterCode={code}
+        titleKo={lesson.data.titleKo}
+        problems={practice.data}
+        isLoading={false}
+        startProblemId={startId}
+        onBack={() => setPhase('concept')}
+        onDone={() => setPhase('done')}
+      />
+    );
+  }
+
+  if (phase === 'done') {
+    return (
+      <Shell back={() => nav('/app/learn')}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 }}>
+          <div style={{ fontSize: 18, fontFamily: 'var(--font-display)' }}>{lesson.data.titleKo} 학습 완료</div>
+          <div style={{ fontSize: 13, color: 'var(--p-muted)' }}>다음 챕터로 이어가거나 다른 챕터를 골라보세요.</div>
+          <button className="btn" onClick={() => nav('/app/learn')}>{t('lesson.done.backChapters')}<Glyph.ChevronR /></button>
+        </div>
+      </Shell>
+    );
+  }
+
+  const { titleKo, bigIdeaKo, steps } = lesson.data;
+  const problemCount = practice.data?.length ?? 0;
+
+  return (
+    <Shell back={() => nav('/app/learn')}>
+      {/* Scroll container — Shell itself doesn't scroll; the children take
+          flex:1 + overflow:auto so the full 7-card concept cycle is reachable
+          on phones where the stack exceeds viewport height. */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflow: 'auto',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '12px 20px 24px' }}>
+          {/* Title + caption */}
+          <div>
+            <div className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, opacity: 0.7, letterSpacing: '0.1em' }}>
+              {code}
+            </div>
+            <h1 className="display" style={{ marginTop: 6, fontSize: 24, lineHeight: 1.25 }}>{titleKo}</h1>
+          </div>
+
+          {/* BIG IDEA — NCERT 포맷과 동일하게 eyebrow + 큰 헤드라인.
+              trailing period 제거: 큰 글씨 헤드라인은 문장이 아니라 슬로건. */}
+          {bigIdeaKo && (
+            <div>
+              <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>{t('lesson.bigIdea')}</span>
+              <h3 className="title" style={{ fontSize: 22, marginTop: 6, lineHeight: 1.2 }}>
+                <MathText text={bigIdeaKo.replace(/\.$/, '')} />
+              </h3>
+            </div>
+          )}
+
+          {steps.length === 0 && (
+            <div className="card" style={{ padding: 16, color: 'var(--p-muted)', fontSize: 13 }}>
+              이 챕터의 학습 콘텐츠가 아직 준비되지 않았어요.
+            </div>
+          )}
+
+          {steps.map((s) => (
+            <KoreanStepCard key={s.id} step={s} />
+          ))}
+
+          {/* CTA — concept 끝나면 practice phase 로 진입. 문제 풀이 없으면
+              그냥 챕터 목록으로. */}
+          {/* CTA: distinguish three states so we never tell the user
+              "준비 중" while practice is still loading.
+                practice.isLoading  → "..." skeleton button (no decision yet)
+                problemCount > 0    → 연습 문제 풀기
+                else                → 진짜로 준비 중 메시지 */}
+          {practice.isLoading ? (
+            <button className="btn" disabled style={{ marginTop: 8, maxWidth: 320, alignSelf: 'center', opacity: 0.6 }}>
+              불러오는 중…
+            </button>
+          ) : problemCount > 0 ? (
+            <button
+              className="btn"
+              onClick={() => setPhase('practice')}
+              style={{ marginTop: 8, maxWidth: 320, alignSelf: 'center' }}
+            >
+              연습 문제 풀기 ({problemCount}문제)<Glyph.ChevronR />
+            </button>
+          ) : (
+            <>
+              <div style={{ fontSize: 12.5, color: 'var(--p-muted)', textAlign: 'center', marginTop: 8 }}>
+                이 챕터의 연습 문제는 아직 준비 중입니다.
+              </div>
+              <button className="btn" onClick={() => nav('/app/learn')} style={{ marginTop: 4, maxWidth: 280, alignSelf: 'center' }}>
+                {t('lesson.done.backChapters')}
+                <Glyph.ChevronR />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Korean practice phase — multi-step (CONCEPT → PROCESS → ANSWER)
+//  per user spec 2026-05-24. Mirrors NCERT PracticePhase patterns:
+//   - POST /attempts per step submission (server-side grading + Attempt row)
+//   - retry on wrong (lock only on correct, matches Study Try Again policy)
+//   - advance step → advance problem → onDone()
+//   - reuses NCERT FeedbackCard for distractor rationale display
+// ─────────────────────────────────────────────────────────────────────────
+function KoreanPracticePhase({
+  chapterCode, titleKo, problems, isLoading, startProblemId, onBack, onDone,
+}: {
+  chapterCode: string;
+  titleKo: string;
+  problems: KoreanPracticeProblem[];
+  isLoading: boolean;
+  /** Deep-link target: when set, the phase opens at this problem's index
+   *  (Home chapter-progress card → ?problemId=X). null/undefined = start
+   *  at problem 1 (Learn chapter-click cold entry). */
+  startProblemId?: string | null;
+  onBack: () => void;
+  onDone: () => void;
+}) {
+  // Initial problem index: deep-link target if present and found, else 0.
+  const initialIdx = (() => {
+    if (!startProblemId) return 0;
+    const i = problems.findIndex((p) => p.id === startProblemId);
+    return i >= 0 ? i : 0;
+  })();
+  const [problemIdx, setProblemIdx] = useState(initialIdx);
+  const [stepIdx, setStepIdx] = useState(0);
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const [result, setResult] = useState<StepResult | null>(null);
+  const [startedAt, setStartedAt] = useState(() => Date.now());
+  const qc = useQueryClient();
+
+  if (isLoading) {
+    return <Shell back={onBack}><Centered msg="문제를 불러오는 중…" /></Shell>;
+  }
+  if (problems.length === 0) {
+    return (
+      <Shell back={onBack}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
+          <div style={{ fontSize: 14, color: 'var(--p-muted)' }}>이 챕터의 연습 문제는 아직 준비 중입니다.</div>
+        </div>
+      </Shell>
+    );
+  }
+
+  const problem = problems[problemIdx];
+  const step = problem.steps[stepIdx];
+  // 보기 셔플: step 이 바뀔 때 자동 재셔플 (choice id 집합 변경 감지).
+  const shuffledChoices = useShuffledChoices(step?.choices ?? []);
+  const stepTotal = problem.steps.length;
+  const problemTotal = problems.length;
+  // Reference chapterCode so the prop isn't flagged as unused — future
+  // analytics will key per-chapter attempt logs on it.
+  void chapterCode;
+
+  const submit = useMutation({
+    mutationFn: () => post<{
+      isCorrect: boolean;
+      selectedChoice: StepResult['selectedChoice'];
+      correctChoice: StepResult['correctChoice'];
+    }>(`/attempts`, {
+      problemId: problem.id,
+      choiceId: pickedId,
+      stepIndex: step.stepIndex,
+      durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
+      context: 'PRACTICE',
+    }),
+    onSuccess: (r) => {
+      setResult({
+        isCorrect: r.isCorrect,
+        selectedChoice: r.selectedChoice,
+        correctChoice: r.correctChoice,
+      });
+      if (!r.isCorrect) {
+        qc.invalidateQueries({ queryKey: ['wn-list'] });
+        qc.invalidateQueries({ queryKey: ['wn-stats'] });
+      }
+      qc.invalidateQueries({ queryKey: ['ko-practice', chapterCode] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      // Sprint 1 smoke fix: HomeScreen uses ['chapter-progress'] (country-aware
+      // backend dispatch). NCERT branch (line ~463) already invalidates this
+      // — the KR branch was missing it, so Home stayed stale until manual
+      // refresh after every KR practice attempt.
+      qc.invalidateQueries({ queryKey: ['chapter-progress'] });
+    },
+    // 2026-05-27 KR audit follow-up: previously a network failure / 5xx /
+    // BadRequest from the new stepIndex cross-check would silently surface as
+    // a normal "wrong answer" feedback card — making the student believe
+    // their (possibly correct) pick was wrong. Surface the real error and
+    // log to console for triage so we never gaslight the learner again.
+    onError: (e: any) => {
+      // eslint-disable-next-line no-console
+      console.error('[ko-practice] /attempts failed', {
+        problemId: problem.id,
+        choiceId: pickedId,
+        stepIndex: step.stepIndex,
+        status: e?.response?.status,
+        body: e?.response?.data,
+      });
+      setResult({ isCorrect: false, selectedChoice: null, correctChoice: null, error: true });
+    },
+  });
+
+  const locked = submit.isPending || result?.isCorrect === true;
+  const pickChoice = (id: string) => {
+    if (locked) return;
+    if (result && !result.isCorrect) setResult(null);
+    setPickedId(id);
+  };
+
+  const advance = () => {
+    setResult(null);
+    setPickedId(null);
+    setStartedAt(Date.now());
+    if (stepIdx + 1 < stepTotal) {
+      setStepIdx(stepIdx + 1);
+    } else if (problemIdx + 1 < problemTotal) {
+      setProblemIdx(problemIdx + 1);
+      setStepIdx(0);
+    } else {
+      onDone();
+    }
+  };
+
+  const stepLabel = step.stepType; // 'CONCEPT' | 'PROCESS' | 'ANSWER'
+  const letters = ['A', 'B', 'C', 'D', 'E'];
+
+  return (
+    <Shell back={onBack} title={titleKo} pill={`${problemIdx + 1} / ${problemTotal}`}>
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ padding: '12px 20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>
+            문제 {problemIdx + 1} / {problemTotal} · 단계 {stepIdx + 1} / {stepTotal} · {stepLabel}
+          </span>
+          <h3 className="title" style={{ fontSize: 18, lineHeight: 1.3, marginTop: 4 }}>
+            <MathText text={step.prompt} />
+          </h3>
+          {problem.stem && (
+            <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
+              <div className="math-big" style={{ fontSize: 15, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
+                <MathText text={problem.stem} />
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {shuffledChoices.map((c, i) => {
+              const isPicked = pickedId === c.id;
+              const isRevealedCorrect = result?.isCorrect && isPicked;
+              const isWrongPick = result && !result.isCorrect && isPicked;
+              const cls = isRevealedCorrect ? 'choice correct' : isPicked ? 'choice selected' : 'choice';
+              return (
+                <div
+                  key={c.id}
+                  className={cls}
+                  onClick={() => pickChoice(c.id)}
+                  style={isWrongPick ? { borderColor: 'var(--p-danger)' } : undefined}
+                >
+                  <div className="letter">{letters[i] ?? c.choiceIndex}</div>
+                  <span className="text"><MathText text={c.text} /></span>
+                </div>
+              );
+            })}
+          </div>
+
+          {result && result.error ? (
+            <div role="alert" style={{
+              background: 'var(--p-danger-tint)',
+              color: 'var(--p-danger)',
+              border: '1px solid var(--p-danger)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              fontSize: 14.5,
+              lineHeight: 1.45,
+              marginTop: 8,
+            }}>
+              서버가 답을 채점하지 못했어요. 잠시 후 다시 시도해주세요.
+              <br />
+              (네트워크 또는 일시적인 서버 오류입니다 — 정답/오답 판정이 아닙니다.)
+            </div>
+          ) : result ? <FeedbackCard result={result} /> : null}
+
+          <div style={{ marginTop: 12 }}>
+            {!result ? (
+              <button className="btn" disabled={!pickedId || submit.isPending} onClick={() => submit.mutate()}>
+                {submit.isPending ? '확인 중…' : '답 확인'}
+                <Glyph.ChevronR />
+              </button>
+            ) : result.error ? (
+              <button className="btn outline" onClick={() => setResult(null)}>
+                다시 시도
+              </button>
+            ) : result.isCorrect ? (
+              <button className="btn" onClick={advance}>
+                {stepIdx + 1 < stepTotal
+                  ? `다음 단계 (${stepIdx + 2} / ${stepTotal})`
+                  : problemIdx + 1 < problemTotal
+                    ? `다음 문제 (${problemIdx + 2} / ${problemTotal})`
+                    : '학습 완료'}
+                <Glyph.ChevronR />
+              </button>
+            ) : (
+              <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
+                다시 시도
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+
+function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
+  const { t } = useT();
+  const tone = STEP_TONE[step.kind] ?? STEP_TONE.ABSTRACT;
+  return (
+    <div className="card" style={{ padding: '16px 18px', background: tone.tint, borderColor: 'transparent' }}>
+      <div className="eyebrow" style={{ fontSize: 10.5, marginBottom: 8, opacity: 0.75 }}>{t(`step.eyebrow.${step.kind}` as any) || tone.eyebrow}</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, marginBottom: 10, lineHeight: 1.35 }}>{step.title}</div>
+      <div style={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--p-ink)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+        <MathText text={step.body} />
+      </div>
+
+      {step.kind === 'WORKED_EXAMPLE' && step.workedSteps && step.workedSteps.length > 0 && (
+        <ol style={{ marginTop: 12, paddingLeft: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
+          {step.workedSteps.map((ws, i) => (
+            <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{
+                flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
+                background: 'var(--p-primary)', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700,
+              }}>{ws.step}</span>
+              <div style={{ fontSize: 13, lineHeight: 1.55 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', marginBottom: 2 }}>
+                  <MathText text={ws.math} />
+                </div>
+                <div style={{ color: 'var(--p-ink-2)' }}>
+                  <MathText text={ws.narrationKo} />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {step.kind === 'MISCONCEPTION' && step.misconception && (
+        <div style={{ marginTop: 12, display: 'grid', gap: 8, fontSize: 13, lineHeight: 1.65 }}>
+          <div style={{ padding: 10, borderRadius: 8, background: 'var(--p-danger-tint)', color: 'var(--p-danger)' }}>
+            <strong>잘못된 추론: </strong><MathText text={step.misconception.wrongKo} />
+          </div>
+          <div style={{ color: 'var(--p-ink-2)' }}>
+            <strong>왜 그럴까: </strong><MathText text={step.misconception.whyKo} />
+          </div>
+          <div style={{ padding: 10, borderRadius: 8, background: 'var(--p-success-tint)', color: 'var(--p-success)' }}>
+            <strong>올바른 사고: </strong><MathText text={step.misconception.correctKo} />
+          </div>
+        </div>
+      )}
+
+      {step.kind === 'RETRIEVAL' && step.retrievalCheck && (() => {
+        // retrievalCheck.accept entries are stored as raw LaTeX-source text
+        // ("x^2-25", "2^3·3^2") without $...$ delimiters, so MathText was
+        // emitting them as literal text — the `^` and superscripts never
+        // rendered. Wrapping in $...$ forces KaTeX inline math mode.
+        const first = (step.retrievalCheck.accept ?? [])[0] ?? '';
+        return (
+          <div style={{ marginTop: 12, padding: 10, borderRadius: 8, background: 'var(--p-surface)', border: '1px solid var(--p-border)', fontSize: 13, lineHeight: 1.65 }}>
+            <div style={{ color: 'var(--p-muted)', marginBottom: 4 }}>
+              예시 정답: {first ? <MathText text={`$${first}$`} /> : null}
+            </div>
+            {step.retrievalCheck.explainKo && (
+              <div style={{ color: 'var(--p-ink-2)' }}>
+                <MathText text={step.retrievalCheck.explainKo} />
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {step.kind === 'REFLECT' && step.reflectPrompts && Array.isArray(step.reflectPrompts.prompts) && (
+        <ul style={{ marginTop: 10, paddingLeft: 18, fontSize: 13, color: 'var(--p-ink-2)' }}>
+          {step.reflectPrompts.prompts.map((p, i) => <li key={i} style={{ marginBottom: 4 }}>{p}</li>)}
+        </ul>
+      )}
+    </div>
   );
 }

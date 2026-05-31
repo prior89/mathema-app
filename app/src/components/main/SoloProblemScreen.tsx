@@ -5,25 +5,21 @@
  * step to /attempts so AttemptsRepository's built-in wrongNote.upsert refreshes
  * the user's review queue automatically. Done → back to /app/notes.
  */
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
-import { fetchProblem, fetchProblemSolution } from '../../lib/queries';
+import { fetchProblem, fetchProblemSolution, reportProblem } from '../../lib/queries';
 import { masterWrongNoteByProblem } from '../../lib/mutations';
 import { post } from '../../lib/api';
+import { useShuffledChoices } from '../../lib/shuffle';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
 
 const STEP_TYPE_LABEL: Record<string, string> = {
   CONCEPT: 'CONCEPT', PROCESS: 'PROCESS', ANSWER: 'ANSWER',
-};
-
-const DISTRACTOR_HINT: Record<string, string> = {
-  CONCEPT_CONFUSION: 'You may be mixing this concept with a related one — re-read the prompt carefully.',
-  CALC_ERROR: 'Numerical / sign / arithmetic slip — redo the calculation step-by-step.',
-  PROCESS_SKIP: 'A step in the solution was skipped — walk through every step explicitly.',
-  TIME_PRESSURE_GUESS: 'Looks like a guess — slow down, the answer is reachable from the given info.',
 };
 
 type StepResult = {
@@ -36,6 +32,7 @@ export function SoloProblemScreen() {
   const { problemId } = useParams<{ problemId: string }>();
   const nav = useNavigate();
   const qc = useQueryClient();
+  const { t } = useT();
   const [stepIdx, setStepIdx] = useState(0);
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [result, setResult] = useState<StepResult | null>(null);
@@ -53,8 +50,101 @@ export function SoloProblemScreen() {
     enabled: !!problemId,
   });
 
-  const steps = problem.data?.steps ?? [];
+  // Sprint 3 A12: detect adaptive-session context. HomeScreen's "오늘의
+  // 맞춤 20문제" card stashes the picked problems in sessionStorage; if the
+  // current /app/practice/:problemId matches a queue entry, we're inside
+  // that session and the "finish" button advances to the next picked problem
+  // instead of jumping back to /app/notes.
+  const adaptiveQueue = useMemo(() => {
+    try {
+      const raw = sessionStorage.getItem('adaptive:queue');
+      if (!raw) return null;
+      const q = JSON.parse(raw) as {
+        sessionId: string;
+        problems: Array<{ id: string; reason: string }>;
+        cursor: number;
+      };
+      if (!q.problems || typeof q.cursor !== 'number') return null;
+      const currentIdx = q.problems.findIndex((p) => p.id === problemId);
+      if (currentIdx < 0) return null;
+      return { ...q, currentIdx };
+    } catch {
+      return null;
+    }
+  }, [problemId]);
+  const isAdaptive = !!adaptiveQueue;
+  const adaptiveNext = adaptiveQueue
+    ? adaptiveQueue.problems[adaptiveQueue.currentIdx + 1] ?? null
+    : null;
+  const adaptiveTotal = adaptiveQueue?.problems.length ?? 0;
+  const adaptiveCursorLabel = adaptiveQueue
+    ? `${adaptiveQueue.currentIdx + 1} / ${adaptiveTotal}`
+    : null;
+
+  // Advance to the next adaptive problem, or clear the queue and return home
+  // when the last one is solved.
+  // Sprint 3 A13: student "이 문제 신고" — fires reportProblem then advances
+  // (if inside an adaptive session) or returns to /app. EXCLUDED rows never
+  // reach students again via Study / Practice / Adaptive (Sprint 1 B1 +
+  // Sprint 2 A7 quality filter).
+  const reportMutation = useMutation({
+    mutationFn: (payload: { reason?: string }) => reportProblem(problemId!, payload.reason),
+    onSuccess: () => {
+      // Invalidate any cached single-problem view + adaptive/practice pools
+      // so the reported problem disappears from the user's surfaces.
+      qc.invalidateQueries({ queryKey: ['problem', problemId] });
+      qc.invalidateQueries({ queryKey: ['chapter-progress'] });
+      qc.invalidateQueries({ queryKey: ['ko-practice'] });
+      if (isAdaptive) goAdaptiveNext();
+      else nav('/app/notes');
+    },
+    onError: (e: any) => {
+      // eslint-disable-next-line no-console
+      console.error('[problem-report] failed', e?.response?.data ?? e);
+      window.alert('신고 처리 중 오류가 발생했어요.');
+    },
+  });
+
+  function handleReport() {
+    if (!problemId || reportMutation.isPending) return;
+    const ok = window.confirm('이 문제를 신고하시겠어요?\n정답이 옵션에 없거나 풀이가 이상한 경우 사용해 주세요. 신고된 문제는 더 이상 추천되지 않습니다.');
+    if (!ok) return;
+    reportMutation.mutate({ reason: undefined });
+  }
+
+  function goAdaptiveNext() {
+    if (!adaptiveQueue) return;
+    if (adaptiveNext) {
+      try {
+        sessionStorage.setItem('adaptive:queue', JSON.stringify({
+          sessionId: adaptiveQueue.sessionId,
+          problems: adaptiveQueue.problems,
+          cursor: adaptiveQueue.currentIdx + 1,
+        }));
+      } catch { /* non-critical */ }
+      nav(`/app/practice/${adaptiveNext.id}`);
+    } else {
+      try { sessionStorage.removeItem('adaptive:queue'); } catch { /* noop */ }
+      nav('/app');
+    }
+  }
+
+  // L3 (2026-05-24 user spec): Notes single-step UI 통일.
+  // 3-step problem (Mastery)의 오답도 ANSWER step만 풀이 (body + 연습장 + 5지선다).
+  // CONCEPT/PROCESS step은 노출 X — DB엔 보존되어 분석/통계로만 사용.
+  // legacy single-step problem은 ANSWER 못 찾으면 마지막 step fallback.
+  const allSteps = problem.data?.steps ?? [];
+  const steps = (() => {
+    const ans = allSteps.find((s) => s.stepType === 'ANSWER');
+    if (ans) return [ans];
+    return allSteps.length > 0 ? [allSteps[allSteps.length - 1]] : [];
+  })();
   const step = steps[stepIdx] ?? null;
+  // 보기 셔플 — 같은 step 보는 동안 순서 고정, 새 step / 재진입 시 새 셔플.
+  const shuffledChoices = useShuffledChoices(step?.choices ?? []);
+  // Always single-step UI (body + canvas + choices) — 3-step 분기 제거.
+  const isSingleStep = true;
+  const canvasRef = useRef<HandwritingCanvasHandle>(null);
 
   const submit = useMutation({
     mutationFn: () => post<{
@@ -126,32 +216,49 @@ export function SoloProblemScreen() {
     <div className="screen">
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <button onClick={() => nav('/app/notes')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
+          <button onClick={() => nav('/app/notes')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label={t('solo.back')}>
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
             {/* Attribution (problem.source) intentionally not rendered. */}
-            <div style={{ fontSize: 14, fontWeight: 600 }}>Practice this problem</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{t('solo.title')}</div>
           </div>
         </div>
-        {steps.length > 0 && !done && (
+        {steps.length > 1 && !done && (
           <span className="step-pill">
-            STEP {stepIdx + 1} / {steps.length} · {STEP_TYPE_LABEL[step?.stepType ?? ''] ?? ''}
+            {t('solo.stepPill', { n: stepIdx + 1, total: steps.length, label: STEP_TYPE_LABEL[step?.stepType ?? ''] ?? '' })}
           </span>
+        )}
+        {/* Sprint 3 A13: small text-link "신고" — kept low-prominence so it
+            doesn't tempt false reports. Visible only when a problem is loaded. */}
+        {problemId && problem.data && (
+          <button
+            type="button"
+            onClick={handleReport}
+            disabled={reportMutation.isPending}
+            style={{
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              fontSize: 11.5, color: 'var(--p-ink-2)', textDecoration: 'underline',
+              marginLeft: 8,
+            }}
+            aria-label="이 문제 신고"
+          >
+            {reportMutation.isPending ? '신고 중…' : '신고'}
+          </button>
         )}
       </div>
 
       {problem.isLoading && (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--p-muted)' }}>
-          Loading the problem…
+          {t('solo.loading')}
         </div>
       )}
 
       {problem.isError && (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22, textAlign: 'center', color: 'var(--p-muted)' }}>
-          Could not load this problem.
+          {t('solo.errorLoad')}
           <button className="btn" style={{ maxWidth: 200, marginTop: 12 }} onClick={() => nav('/app/notes')}>
-            Back to Notes
+            {t('solo.backNotes')}
           </button>
         </div>
       )}
@@ -163,22 +270,50 @@ export function SoloProblemScreen() {
         <NoStepsReview problemId={problem.data.id} problemBody={problem.data.body} />
       )}
 
-      {/* 3-step MC walk-through */}
+      {/* MC walk-through — branches on step count per user-spec 2026-05-23. */}
       {problem.data && step && !done && (
         <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0 }}>
           <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
-            <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
+            <div className="eyebrow" style={{ fontSize: 10 }}>{t('solo.problemEyebrow')}</div>
             <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}>
               <MathText text={problem.data.body} />
             </div>
           </div>
 
-          <div style={{ marginTop: 14, fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>
-            <MathText text={step.prompt} />
-          </div>
+          {/* Single-step problems get a working canvas (Study-tab UI). The
+              step.prompt for single-step is a generic "Solve and pick" line
+              that adds nothing on top of the body, so it's suppressed. */}
+          {isSingleStep ? (
+            <div style={{ marginTop: 12 }}>
+              <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('solo.workingsEyebrow')}</div>
+              <HandwritingCanvas ref={canvasRef} height={260} extendable />
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => canvasRef.current?.undo()}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
+                >
+                  {t('solo.undo')}
+                </button>
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => canvasRef.current?.clear()}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
+                >
+                  {t('solo.clear')}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginTop: 14, fontSize: 15, fontWeight: 600, lineHeight: 1.35 }}>
+              <MathText text={step.prompt} />
+            </div>
+          )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-            {(step.choices ?? []).map((c, i) => {
+            {shuffledChoices.map((c, i) => {
               const isPicked = pickedId === c.id;
               const isRevealedCorrect = result?.isCorrect && isPicked;
               const isWrongPick = result && !result.isCorrect && isPicked;
@@ -212,24 +347,20 @@ export function SoloProblemScreen() {
             <>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-primary)' }}>✓</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--p-ink)' }}>
-                Mastered — clean sweep.
+                {t('solo.done.cleanSweep.title')}
               </div>
               <div style={{ fontSize: 13.5, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
-                Every step right on the first try. This problem is graduating
-                from your wrong-note book.
+                {t('solo.done.cleanSweep.body')}
               </div>
             </>
           ) : (
             <>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-danger)' }}>↻</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--p-ink)' }}>
-                Not quite this time.
+                {t('solo.done.again.title')}
               </div>
               <div style={{ fontSize: 13.5, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
-                {mistakesThisCycle} step{mistakesThisCycle === 1 ? '' : 's'} missed
-                this cycle, so the problem stays in your Notes. Re-open it from
-                Notes whenever you want — graduate only on a perfect 3-step
-                sweep.
+                {t('solo.done.again.body', { n: mistakesThisCycle })}
               </div>
             </>
           )}
@@ -237,29 +368,34 @@ export function SoloProblemScreen() {
       )}
 
       <div className="screen-foot" style={{ paddingTop: 6 }}>
-        {done ? (
+        {done && isAdaptive ? (
+          <button className="btn" onClick={goAdaptiveNext}>
+            {adaptiveNext ? `다음 문제 (${adaptiveCursorLabel})` : '오늘의 학습 완료'}
+            <Glyph.ChevronR />
+          </button>
+        ) : done ? (
           <button className="btn" onClick={() => nav('/app/notes')}>
-            Back to Notes
+            {t('solo.backNotes')}
             <Glyph.ChevronR />
           </button>
         ) : steps.length === 0 ? (
           <button className="btn" onClick={() => nav('/app/notes')}>
-            Back to Notes
+            {t('solo.backNotes')}
             <Glyph.ChevronR />
           </button>
         ) : !result ? (
           <button className="btn" disabled={!pickedId || submit.isPending} onClick={() => submit.mutate()}>
-            {submit.isPending ? 'Checking…' : 'Check answer'}
+            {submit.isPending ? t('solo.checking') : t('solo.checkAnswer')}
             <Glyph.ChevronR />
           </button>
         ) : result.isCorrect ? (
           <button className="btn" onClick={advance}>
-            {stepIdx + 1 < steps.length ? `Continue to STEP ${stepIdx + 2}` : 'Finish'}
+            {stepIdx + 1 < steps.length ? t('solo.continueStep', { n: stepIdx + 2 }) : t('solo.finish')}
             <Glyph.ChevronR />
           </button>
         ) : (
           <button className="btn outline" onClick={retry}>
-            Try again
+            {t('solo.tryAgain')}
           </button>
         )}
       </div>
@@ -269,6 +405,7 @@ export function SoloProblemScreen() {
 }
 
 function NoStepsReview({ problemId, problemBody }: { problemId: string; problemBody: string }) {
+  const { t } = useT();
   // Pull the solution endpoint which exposes both `answer` and `explanation`
   // (the latter populated by the AI Solver pipeline via expectedSolutionSteps).
   // This screen is the Notes / review surface for AI-Solver-uploaded problems,
@@ -285,7 +422,7 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
     <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* PROBLEM card */}
       <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
-        <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
+        <div className="eyebrow" style={{ fontSize: 10 }}>{t('solo.problemEyebrow')}</div>
         <div className="math-big" style={{ fontSize: 16, marginTop: 8, whiteSpace: 'pre-wrap' }}>
           <MathText text={problemBody} />
         </div>
@@ -294,7 +431,7 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
       {/* Concept chip */}
       {concept && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-          <span className="eyebrow" style={{ fontSize: 10 }}>CONCEPT</span>
+          <span className="eyebrow" style={{ fontSize: 10 }}>{t('solo.noSteps.conceptEyebrow')}</span>
           <span className="chip" style={{ fontSize: 11.5 }}>
             <MathText text={concept} />
           </span>
@@ -305,18 +442,18 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
           headline of this review screen. */}
       {solution.isLoading ? (
         <div className="card" style={{ padding: 14, textAlign: 'center', color: 'var(--p-muted)', fontSize: 13 }}>
-          Loading solution…
+          {t('solo.noSteps.solution.loading')}
         </div>
       ) : explanation ? (
         <div className="card" style={{ padding: 14, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
-          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>SOLUTION STEPS</div>
+          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('solo.noSteps.solution.eyebrow')}</div>
           <div style={{ fontSize: 14, lineHeight: 1.65, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap' }}>
             <MathText text={explanation} />
           </div>
         </div>
       ) : (
         <div className="card" style={{ padding: 14, fontSize: 13, color: 'var(--p-muted)', lineHeight: 1.55 }}>
-          No saved step-by-step solution for this problem yet.
+          {t('solo.noSteps.solution.none')}
         </div>
       )}
 
@@ -327,7 +464,7 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
           background: 'var(--p-primary-tint)',
           borderColor: 'var(--p-primary)',
         }}>
-          <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>ANSWER</div>
+          <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>{t('solo.noSteps.answer.eyebrow')}</div>
           <div style={{ marginTop: 6, fontSize: 20, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
             <MathText text={answer} />
           </div>
@@ -338,12 +475,19 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
 }
 
 function FeedbackCard({ result }: { result: StepResult }) {
+  const { t } = useT();
   const correct = result.isCorrect;
   const sel = result.selectedChoice;
   const distractorTypeText = sel?.distractorType ? sel.distractorType.replace(/_/g, ' ') : null;
+  const distractorHint: Record<string, string> = {
+    CONCEPT_CONFUSION: t('solo.feedback.distractor.concept'),
+    CALC_ERROR: t('solo.feedback.distractor.calc'),
+    PROCESS_SKIP: t('solo.feedback.distractor.process'),
+    TIME_PRESSURE_GUESS: t('solo.feedback.distractor.time'),
+  };
   const whyLine = sel?.rationale
-    ?? (sel?.distractorType ? DISTRACTOR_HINT[sel.distractorType] : null)
-    ?? (correct ? null : 'That option does not lead to the answer — look at the prompt again and pick a different one.');
+    ?? (sel?.distractorType ? distractorHint[sel.distractorType] : null)
+    ?? (correct ? null : t('solo.feedback.distractor.other'));
 
   return (
     <div
@@ -356,12 +500,12 @@ function FeedbackCard({ result }: { result: StepResult }) {
       }}
     >
       <div style={{ fontWeight: 700, color: correct ? 'var(--p-success)' : 'var(--p-danger)', fontSize: 14 }}>
-        {correct ? '✓ Correct' : '✗ Not quite — pick a different option and check again'}
+        {correct ? t('solo.feedback.correct') : t('solo.feedback.wrong')}
       </div>
       {whyLine && (
         <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
           <strong style={{ color: 'var(--p-ink)' }}>
-            {correct ? 'Why this works: ' : 'Why your pick missed: '}
+            {correct ? t('solo.feedback.whyWorks') : t('solo.feedback.whyMissed')}
           </strong>
           <MathText text={whyLine} />
         </div>

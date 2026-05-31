@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { get, post, del, downloadExport, tokens } from '../../lib/api';
 import { fetchMe } from '../../lib/queries';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 
@@ -21,6 +22,7 @@ type Consent = {
 export function SettingsScreen() {
   const nav = useNavigate();
   const qc = useQueryClient();
+  const { t } = useT();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const consents = useQuery({
     queryKey: ['consents'],
@@ -47,22 +49,22 @@ export function SettingsScreen() {
   const confirmOk = confirmText === 'DELETE';
 
   const items: Array<{ kind: Consent['kind']; name: string; desc: string; req?: boolean }> = [
-    { kind: 'DATA_PROCESSING', name: 'Essential data', desc: 'Required to run the app. Revoke = delete account.', req: true },
-    { kind: 'ANALYTICS', name: 'Learning analytics', desc: 'Helps the AI coach surface your weak patterns.' },
-    { kind: 'AI_TRAINING', name: 'Improve AI for everyone', desc: 'Anonymised samples for model training.' },
-    { kind: 'MARKETING', name: 'Updates and offers', desc: 'Occasional emails on new chapters / mocks.' },
+    { kind: 'DATA_PROCESSING', name: t('settingsScreen.privacy.essential.name'), desc: t('settingsScreen.privacy.essential.desc'), req: true },
+    { kind: 'ANALYTICS', name: t('settingsScreen.privacy.analytics.name'), desc: t('settingsScreen.privacy.analytics.desc') },
+    { kind: 'AI_TRAINING', name: t('settingsScreen.privacy.aiTraining.name'), desc: t('settingsScreen.privacy.aiTraining.desc') },
+    { kind: 'MARKETING', name: t('settingsScreen.privacy.marketing.name'), desc: t('settingsScreen.privacy.marketing.desc') },
   ];
 
   return (
     <div className="screen">
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => nav('/app/me')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
+          <button onClick={() => nav('/app/me')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label={t('lesson.back')}>
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>PROFILE</div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>Settings</div>
+            <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{t('settingsScreen.eyebrow')}</div>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{t('settingsScreen.title')}</div>
           </div>
         </div>
       </div>
@@ -70,13 +72,13 @@ export function SettingsScreen() {
       <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0 }}>
         {/* Account */}
         <div className="section-h">
-          <span className="label">Account</span>
+          <span className="label">{t('settingsScreen.account.section')}</span>
         </div>
         <div className="card" style={{ padding: 14 }}>
-          <Row k="Name" v={me.data?.name ?? '—'} />
-          <Row k="Email" v={me.data?.email ?? '—'} />
-          <Row k="Role" v={me.data?.role ?? 'STUDENT'} />
-          <Row k="Class" v={({
+          <Row k={t('settingsScreen.row.name')} v={me.data?.name ?? '—'} />
+          <Row k={t('settingsScreen.row.email')} v={me.data?.email ?? '—'} />
+          <Row k={t('settingsScreen.row.role')} v={me.data?.role ?? t('me.role.default')} />
+          <Row k={t('settingsScreen.row.class')} v={({
             CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
             CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
           } as Record<string, string>)[me.data?.gradeLevel ?? ''] ?? me.data?.gradeLevel ?? '—'} last />
@@ -84,7 +86,7 @@ export function SettingsScreen() {
 
         {/* Privacy */}
         <div className="section-h">
-          <span className="label">Privacy · DPDP 2023</span>
+          <span className="label">{t('settingsScreen.privacy.section')}</span>
         </div>
         <div className="card" style={{ padding: '4px 16px' }}>
           {items.map((it) => {
@@ -107,7 +109,7 @@ export function SettingsScreen() {
                 <div className="info">
                   <div className="name">
                     {it.name}
-                    {it.req && <span className="req-pill">Required</span>}
+                    {it.req && <span className="req-pill">{t('settingsScreen.privacy.required')}</span>}
                   </div>
                   <div className="desc">{it.desc}</div>
                 </div>
@@ -118,17 +120,17 @@ export function SettingsScreen() {
 
         {/* Data rights */}
         <div className="section-h">
-          <span className="label">Your data</span>
+          <span className="label">{t('settingsScreen.data.section')}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <button
             className="btn outline"
             onClick={() => { tokens.clear(); nav('/login'); }}
           >
-            Log out
+            {t('settingsScreen.logout')}
           </button>
           <button className="btn outline" onClick={() => downloadExport()}>
-            Download my data (JSON)
+            {t('settingsScreen.download')}
           </button>
           {!deletingConfirm ? (
             <button
@@ -136,20 +138,18 @@ export function SettingsScreen() {
               style={{ color: 'var(--p-danger)', borderColor: 'var(--p-danger)' }}
               onClick={() => setDeletingConfirm(true)}
             >
-              Delete my account
+              {t('settingsScreen.delete')}
             </button>
           ) : (
             <div className="card" style={{ padding: 14, borderColor: 'var(--p-danger)' }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--p-danger)' }}>
-                This permanently and irreversibly deletes your account.
+                {t('settingsScreen.delete.warnTitle')}
               </div>
               <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 4, lineHeight: 1.5 }}>
-                Every attempt, wrong note, mock-exam result, mastery snapshot,
-                and consent record is purged. You can register again with the
-                same email but no progress can be restored.
+                {t('settingsScreen.delete.warnDesc')}
               </div>
               <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 10, fontFamily: 'var(--font-mono)' }}>
-                Type DELETE to confirm
+                {t('settingsScreen.delete.typePrompt')}
               </div>
               <input
                 value={confirmText}
@@ -169,7 +169,7 @@ export function SettingsScreen() {
                   onClick={() => { setDeletingConfirm(false); setConfirmText(''); }}
                   style={{ flex: 1 }}
                 >
-                  Cancel
+                  {t('settingsScreen.delete.cancel')}
                 </button>
                 <button
                   className="btn"
@@ -182,7 +182,7 @@ export function SettingsScreen() {
                     cursor: confirmOk && !deleteAccount.isPending ? 'pointer' : 'not-allowed',
                   }}
                 >
-                  {deleteAccount.isPending ? 'Deleting…' : 'Delete permanently'}
+                  {deleteAccount.isPending ? t('settingsScreen.delete.deleting') : t('settingsScreen.delete.confirm')}
                 </button>
               </div>
             </div>
@@ -191,7 +191,7 @@ export function SettingsScreen() {
 
         {/* About */}
         <div style={{ marginTop: 24, padding: 12, textAlign: 'center', fontSize: 11, color: 'var(--p-muted)' }}>
-          Matheo · Policy v2026.05.01
+          {t('settingsScreen.about')}
         </div>
       </div>
       <TabBar />

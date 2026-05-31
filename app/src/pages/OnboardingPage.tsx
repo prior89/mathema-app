@@ -6,21 +6,27 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { post, patch, tokens, get } from '../lib/api';
 import { Glyph } from '../components/onboarding/Glyph';
+import MathText from '../components/MathText';
 import { BrandLogo } from '../components/Brand';
 import type { Me } from '../lib/queries';
 import { useAuth } from '../context/AuthContext';
+import { useT } from '../lib/i18n';
 import '../styles/onboarding.css';
 
 const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
 
-type StepKey = 'welcome' | 'auth' | 'role' | 'profile' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
+type StepKey = 'welcome' | 'country' | 'auth' | 'role' | 'profile' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
 type Role = 'STUDENT' | 'PARENT' | 'TEACHER';
 type GradeId = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12';
 type GoalId = 'BOARD' | 'JEE' | 'SCHOOL' | 'CATCHUP';
 type ConsentKey = 'ANALYTICS' | 'AI_TRAINING' | 'MARKETING';
 type ConsentMap = Record<ConsentKey, boolean>;
+// Country chip — v1 ships with IN + KR active. Others kept in the type so a
+// later launch can flip them on without a code change; their chips render
+// "Coming soon" until then.
+type CountryId = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG';
 
-const STEP_FLOW: StepKey[] = ['welcome', 'auth', 'role', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready'];
+const STEP_FLOW: StepKey[] = ['welcome', 'country', 'auth', 'role', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready'];
 
 // CLASS_X (UI) → GradeLevel (backend enum)
 const GRADE_MAP: Record<GradeId, string> = {
@@ -40,16 +46,11 @@ function chapterCountByClass(grade: GradeId): number {
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
-  // 인도 PoC — 온보딩 진입 시 EN 강제 (KO 잔존 차단).
-  useEffect(() => {
-    const saved = localStorage.getItem('mathema.lang');
-    if (saved === 'ko') {
-      localStorage.setItem('mathema.lang', 'en');
-      window.location.reload();
-    } else if (!saved) {
-      localStorage.setItem('mathema.lang', 'en');
-    }
-  }, []);
+  // Onboarding runs pre-auth, so we can't read User.country yet to pick a
+  // language. We respect whatever the user already has saved (or i18n.tsx's
+  // browser-default of 'en'). The country-aware flip happens after login
+  // via <I18nCountrySync /> in App.tsx — when a KR account is detected and
+  // no explicit lang preference is set, lang switches to 'ko' there.
   return (
     <div className="mathema-app">
       <div className="mathema-viewport">
@@ -67,11 +68,18 @@ type DiagnosticResult = { sessionId: string; attempted: number; correct: number;
 function Flow({ onFinish }: { onFinish: () => void }) {
   const [step, setStep] = useState<StepKey>('welcome');
   const [role, setRole] = useState<Role | ''>('STUDENT');
+  // Default placeholder name — India onboarding gets 'Aarav'. KR users
+  // type over it (and the language switches to KO post-login via country
+  // sync). No t() because this is an initial form value, not a UI label.
   const [name, setName] = useState('Aarav');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [grade, setGrade] = useState<GradeId | ''>('CLASS_11');
   const [goal, setGoal] = useState<GoalId | ''>('BOARD');
+  // Country defaults to IN. The country step (after welcome) lets the user
+  // flip to KR — picking KR also calls i18n setLang('ko') immediately so the
+  // remaining onboarding screens render in Korean.
+  const [country, setCountry] = useState<CountryId>('IN');
   const [consents, setConsents] = useState<ConsentMap>({ ANALYTICS: true, AI_TRAINING: false, MARKETING: false });
   const [notif, setNotif] = useState(true);
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
@@ -85,6 +93,8 @@ function Flow({ onFinish }: { onFinish: () => void }) {
   switch (step) {
     case 'welcome':
       return <ScreenWelcome onNext={next} onSignIn={onFinish} />;
+    case 'country':
+      return <ScreenCountry step={stepIndex} onBack={back} onNext={next} country={country} setCountry={setCountry} />;
     case 'auth':
       return (
         <ScreenAuth
@@ -92,12 +102,13 @@ function Flow({ onFinish }: { onFinish: () => void }) {
           name={name}
           email={email} setEmail={setEmail}
           password={password} setPassword={setPassword}
+          country={country}
         />
       );
     case 'role':
       return <ScreenRole step={stepIndex} onBack={back} onNext={next} role={role} setRole={setRole} />;
     case 'profile':
-      return <ScreenProfile step={stepIndex} onBack={back} onNext={next} name={name} setName={setName} grade={grade} setGrade={setGrade} />;
+      return <ScreenProfile step={stepIndex} onBack={back} onNext={next} name={name} setName={setName} grade={grade} setGrade={setGrade} country={country} />;
     case 'goal':
       return <ScreenGoal step={stepIndex} onBack={back} onNext={next} goal={goal} setGoal={setGoal} />;
     case 'diagnostic':
@@ -136,6 +147,7 @@ function Flow({ onFinish }: { onFinish: () => void }) {
 function TopScaffold({
   step, total = 7, onBack, showBack = true, right,
 }: { step: number; total?: number; onBack?: () => void; showBack?: boolean; right?: React.ReactNode }) {
+  const { t } = useT();
   return (
     <>
       <div className="steps" style={{ marginTop: 8 }}>
@@ -145,7 +157,7 @@ function TopScaffold({
       </div>
       <div className="top-bar">
         {showBack ? (
-          <button className="back" onClick={onBack} aria-label="Back">
+          <button className="back" onClick={onBack} aria-label={t('onboarding.back')}>
             <Glyph.ArrowL />
           </button>
         ) : (
@@ -159,19 +171,20 @@ function TopScaffold({
 
 // ─────────── 01 Welcome ───────────
 function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () => void }) {
+  const { t } = useT();
   return (
     <div className="screen">
       <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <BrandLogo size="sm" />
-        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>CLASS 7–12</span>
+        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>{t('onboarding.classLabel')}</span>
       </div>
       <div className="screen-body" style={{ paddingTop: 28, gap: 24 }}>
         <div className="hero-glyph">
           <div className="grid-bg" />
           <div style={{ position: 'absolute', inset: 0, padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', opacity: 0.8 }}>FIG. 01 — DEFINITE INTEGRAL</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.6 }}>CLASS 12 · INTEGRALS</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', opacity: 0.8 }}>{t('onboarding.welcome.figureLabel')}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.6 }}>{t('onboarding.welcome.figureSub')}</span>
             </div>
             <div style={{ flex: 1, marginTop: -8 }}>
               <Glyph.WelcomeHero accent="#fff" />
@@ -179,22 +192,112 @@ function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () 
           </div>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-          <span className="eyebrow">Welcome</span>
+          <span className="eyebrow">{t('onboarding.welcome.eyebrow')}</span>
           <h1 className="display" style={{ marginTop: 10 }}>
-            Master math,<br />one <em>concept</em><br />at a time.
+            {t('onboarding.welcome.title.line1')}<br />{t('onboarding.welcome.title.line2')} <em>{t('onboarding.welcome.title.em')}</em>{t('onboarding.welcome.title.line3')}<br />{t('onboarding.welcome.title.line4')}
           </h1>
           <p className="subtitle" style={{ maxWidth: 320 }}>
-            An adaptive maths coach for Class&nbsp;7 to Class&nbsp;12 — every chapter, every concept.
+            {t('onboarding.welcome.tagline')}
           </p>
         </div>
       </div>
       <div className="screen-foot">
         <button className="btn" onClick={onNext}>
-          Get started
+          {t('onboarding.welcome.cta.start')}
           <Glyph.ChevronR />
         </button>
         <button className="btn text" onClick={onSignIn}>
-          I already have an account
+          {t('onboarding.welcome.cta.signin')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────── 01b Country — picks curriculum + locale, drives every step after ───────────
+function ScreenCountry({
+  step, onBack, onNext, country, setCountry,
+}: { step: number; onBack: () => void; onNext: () => void; country: CountryId; setCountry: (c: CountryId) => void }) {
+  const { t, setLang } = useT();
+  // v1 active = IN + KR. Others compile but show as disabled "Coming soon"
+  // chips so a later launch (US/UK/AU/SG) is one flag flip away.
+  const COUNTRIES: Array<{ id: CountryId; flag: string; name: string; sub: string; active: boolean }> = [
+    { id: 'IN', flag: '🇮🇳', name: 'India',         sub: 'NCERT / CBSE / JEE',     active: true  },
+    { id: 'KR', flag: '🇰🇷', name: '대한민국',       sub: '2022 개정 교육과정 · 수능', active: true  },
+    { id: 'US', flag: '🇺🇸', name: 'United States', sub: 'Common Core / SAT',      active: false },
+    { id: 'UK', flag: '🇬🇧', name: 'United Kingdom', sub: 'GCSE / A-Level',         active: false },
+    { id: 'AU', flag: '🇦🇺', name: 'Australia',     sub: 'ACARA',                  active: false },
+    { id: 'SG', flag: '🇸🇬', name: 'Singapore',     sub: 'MOE',                    active: false },
+  ];
+  const pick = (c: CountryId) => {
+    setCountry(c);
+    // BUG FIX 2026-05-27: flip i18n WITHOUT triggering a page reload. Earlier
+    // this was a plain setLang() which reloads in 50ms — fine for in-app
+    // language switching but catastrophic mid-onboarding (useState state
+    // resets to initial and the user lands back at welcome). The opts.reload
+    // escape hatch keeps the language change visible (so the remaining
+    // onboarding screens render in KR / EN) without nuking React state.
+    if (c === 'KR') setLang('ko', { reload: false });
+    else setLang('en', { reload: false });
+  };
+  return (
+    <div className="screen">
+      <TopScaffold step={step} onBack={onBack} />
+      <div className="screen-body" style={{ gap: 20 }}>
+        <div>
+          <span className="eyebrow">Region</span>
+          <h2 className="title" style={{ marginTop: 10 }}>
+            {country === 'KR' ? '어느 나라에서 공부하나요?' : 'Where are you studying?'}
+          </h2>
+          <p className="subtitle" style={{ marginTop: 8, fontSize: 13.5 }}>
+            {country === 'KR'
+              ? '커리큘럼·언어·결제 통화가 선택한 국가에 맞춰 설정돼요.'
+              : 'Curriculum, language, and currency follow your selection.'}
+          </p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {COUNTRIES.map((c) => {
+            const selected = country === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                className={`card ${selected ? 'selected' : ''}`}
+                onClick={() => c.active && pick(c.id)}
+                disabled={!c.active}
+                style={{
+                  padding: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  cursor: c.active ? 'pointer' : 'not-allowed',
+                  opacity: c.active ? 1 : 0.45,
+                  border: selected ? '2px solid var(--p-primary)' : '1px solid var(--p-border)',
+                  background: selected ? 'var(--p-primary-tint)' : 'var(--p-surface)',
+                  textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: 28, lineHeight: 1, flexShrink: 0 }}>{c.flag}</span>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--p-ink)' }}>{c.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 2 }}>{c.sub}</div>
+                </div>
+                {!c.active && (
+                  <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>Coming soon</span>
+                )}
+                {selected && (
+                  <Glyph.ChevronR accent="var(--p-primary)" size={16} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ flex: 1 }} />
+      </div>
+      <div className="screen-foot">
+        <button className="btn" onClick={onNext} disabled={!country} style={{ opacity: country ? 1 : 0.45 }}>
+          {country === 'KR' ? '계속하기' : 'Continue'}
+          <Glyph.ChevronR />
         </button>
       </div>
     </div>
@@ -203,13 +306,16 @@ function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () 
 
 // ─────────── 02 Auth — real email/password (+ optional Google) signup ───────────
 function ScreenAuth({
-  step, onBack, onNext, name, email, setEmail, password, setPassword,
+  step, onBack, onNext, name, email, setEmail, password, setPassword, country,
 }: {
   step: number; onBack: () => void; onNext: () => void;
   name: string;
   email: string; setEmail: (v: string) => void;
   password: string; setPassword: (v: string) => void;
+  country: CountryId;
 }) {
+  const { t } = useT();
+  const { refreshUser } = useAuth();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const gsiRef = useRef<HTMLDivElement | null>(null);
@@ -219,7 +325,10 @@ function ScreenAuth({
     setErr(null);
 
     // 이미 토큰 있으면(뒤로갔다 다시 온 경우, /login 거쳐서 온 경우) 그대로 진행.
-    if (tokens.get()) { onNext(); return; }
+    // Sync AuthContext.user with whatever the existing token represents so a
+    // ProtectedRoute mount anywhere in the rest of onboarding doesn't think
+    // the user is unauthed and bounce them to /login.
+    if (tokens.get()) { await refreshUser().catch(() => {}); onNext(); return; }
 
     // DEV 빠른 진입: 입력 비어있으면 dev-login (production 빌드에선 이 분기 dead-code).
     if (import.meta.env.DEV && (!email || !password)) {
@@ -227,29 +336,89 @@ function ScreenAuth({
       try {
         const t = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
         tokens.set(t.accessToken, t.refreshToken);
+        // Hydrate AuthContext.user from the freshly-issued token so the rest
+        // of /onboarding (and any reactive component reading useAuth())
+        // sees the logged-in identity instead of `user: null`.
+        await refreshUser().catch(() => {});
         onNext();
       } catch (e: any) {
-        setErr(e?.response?.data?.error?.message ?? 'Dev sign-in failed');
+        const status = e?.response?.status;
+        if (status === 429) {
+          setErr(country === 'KR'
+            ? '잠시 후 다시 시도해주세요. (요청이 너무 많아 1분간 제한됐어요.)'
+            : 'Please retry in a minute — too many requests.');
+        } else if (!status) {
+          setErr(country === 'KR'
+            ? '서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'
+            : 'Cannot reach the server. Check your connection.');
+        } else {
+          setErr(e?.response?.data?.error?.message ?? t('onboarding.auth.devLogin.failed'));
+        }
       } finally { setBusy(false); }
       return;
     }
 
     // Production / 일반: 진짜 가입.
-    if (!email.includes('@')) { setErr('Please enter a valid email.'); return; }
-    if (password.length < 8)  { setErr('Password must be at least 8 characters.'); return; }
+    if (!email.includes('@')) { setErr(t('onboarding.auth.invalidEmail')); return; }
+    if (password.length < 8)  { setErr(t('onboarding.auth.shortPw')); return; }
 
     setBusy(true);
     try {
       // 최소 페이로드 — role/grade/goal/consents 등은 이후 step 에서 patch.
-      const t = await post<{ accessToken: string; refreshToken: string }>('/auth/register', {
+      // country는 register 시점에 확정 — 이후 PATCH /me로 변경하지 않음.
+      const tk = await post<{ accessToken: string; refreshToken: string }>('/auth/register', {
         email: email.trim().toLowerCase(),
         password,
         name: name || 'Student',
+        country,
       });
-      tokens.set(t.accessToken, t.refreshToken);
+      tokens.set(tk.accessToken, tk.refreshToken);
+      // P2 fix 2026-05-27: hydrate AuthContext.user immediately so the rest
+      // of onboarding has a non-null user. Before this, the user stayed
+      // `null` until ScreenReady.finalize() ran refreshUser at the very end,
+      // which meant any stray ProtectedRoute mount mid-onboarding (e.g. a
+      // wrong link click) would bounce to /login despite valid tokens.
+      // Best-effort: if /users/me fails (rare — same token just succeeded),
+      // we proceed anyway; ScreenReady will retry.
+      await refreshUser().catch(() => {});
       onNext();
     } catch (e: any) {
-      setErr(e?.response?.data?.error?.message ?? 'Sign-up failed');
+      // Map backend error codes → Korean-friendly messages. User-report
+      // 2026-05-27: PASSWORD_BREACHED came through as the raw English string
+      // at 13px under the button, so users perceived the click as "no
+      // response". Surface the actionable guidance instead.
+      const status = e?.response?.status;
+      const code = e?.response?.data?.error?.code;
+      const rawMsg = e?.response?.data?.error?.message;
+      let friendly: string;
+      if (status === 429) {
+        // P4 fix 2026-05-27: register endpoint throttles at 5/min. After
+        // hitting it the user used to see a raw generic error and assumed
+        // the app was broken. Explicit "try again in a minute" copy.
+        friendly = country === 'KR'
+          ? '잠시 후 다시 시도해주세요. (요청이 너무 많아 1분간 제한됐어요.)'
+          : 'Please retry in a minute — too many sign-up attempts.';
+      } else if (code === 'PASSWORD_BREACHED') {
+        friendly = country === 'KR'
+          ? '이 비밀번호는 보안 사고로 노출된 적이 있어요. 다른 비밀번호를 골라주세요 (8자 이상, 너무 흔하지 않은 것).'
+          : 'This password has been seen in a public data breach. Please pick a different one (8+ chars, not common).';
+      } else if (rawMsg === 'email already used') {
+        friendly = country === 'KR'
+          ? '이미 가입된 이메일이에요. 로그인 페이지로 이동해주세요.'
+          : 'This email is already registered. Please sign in instead.';
+      } else if (!status) {
+        friendly = country === 'KR'
+          ? '서버에 연결할 수 없어요. 인터넷 연결을 확인하고 다시 시도해주세요.'
+          : 'Cannot reach the server. Check your connection and try again.';
+      } else {
+        friendly = rawMsg ?? t('onboarding.auth.register.failed');
+      }
+      // Console-log the full error so dev tools surfaces the underlying
+      // detail (status code, axios payload) — easier triage than the
+      // user-facing message alone.
+      // eslint-disable-next-line no-console
+      console.error('[onboarding] register failed', { code, rawMsg, error: e });
+      setErr(friendly);
     } finally { setBusy(false); }
   }
 
@@ -265,14 +434,28 @@ function ScreenAuth({
         callback: async (resp: { credential: string }) => {
           setErr(null); setBusy(true);
           try {
-            const t = await post<{ accessToken: string; refreshToken: string }>(
+            const tk = await post<{ accessToken: string; refreshToken: string }>(
               '/auth/google/id-token',
               { idToken: resp.credential },
             );
-            tokens.set(t.accessToken, t.refreshToken);
+            tokens.set(tk.accessToken, tk.refreshToken);
+            // Same P2 fix path — sync AuthContext.user post-Google-signup so
+            // the rest of onboarding has a non-null user.
+            await refreshUser().catch(() => {});
             onNext();
           } catch (e: any) {
-            setErr(e?.response?.data?.error?.message ?? 'Google sign-in failed');
+            const status = e?.response?.status;
+            if (status === 429) {
+              setErr(country === 'KR'
+                ? '잠시 후 다시 시도해주세요. (요청이 너무 많아 1분간 제한됐어요.)'
+                : 'Please retry in a minute — too many requests.');
+            } else if (!status) {
+              setErr(country === 'KR'
+                ? '서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'
+                : 'Cannot reach the server. Check your connection.');
+            } else {
+              setErr(e?.response?.data?.error?.message ?? t('onboarding.auth.google.failed'));
+            }
           } finally { setBusy(false); }
         },
       });
@@ -293,13 +476,13 @@ function ScreenAuth({
       <TopScaffold step={step} onBack={onBack} />
       <div className="screen-body" style={{ gap: 20 }}>
         <div>
-          <span className="eyebrow">Step 01 · Account</span>
-          <h2 className="title" style={{ marginTop: 10 }}>Create your Matheo account</h2>
-          <p className="subtitle">Email and password — you can add Google later.</p>
+          <span className="eyebrow">{t('onboarding.auth.eyebrow')}</span>
+          <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.auth.title')}</h2>
+          <p className="subtitle">{t('onboarding.auth.tagline')}</p>
         </div>
 
         <div className="field">
-          <label>Email</label>
+          <label>{t('onboarding.auth.email')}</label>
           <input
             type="email" autoComplete="email"
             value={email} onChange={(e) => setEmail(e.target.value)}
@@ -307,16 +490,37 @@ function ScreenAuth({
           />
         </div>
         <div className="field">
-          <label>Password (8+ characters)</label>
+          <label>{t('onboarding.auth.password')}</label>
           <input
             type="password" autoComplete="new-password"
             value={password} onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
+        {/* Error banner — moved above the CTA at 14.5px in a tinted card so
+            users actually see backend rejection (PASSWORD_BREACHED, email
+            already used, etc.) instead of perceiving the click as "no
+            response". Was 13px under the button. */}
+        {err && (
+          <div
+            role="alert"
+            style={{
+              background: 'var(--p-danger-tint)',
+              color: 'var(--p-danger)',
+              border: '1px solid var(--p-danger)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              fontSize: 14.5,
+              lineHeight: 1.45,
+            }}
+          >
+            {err}
+          </div>
+        )}
+
         <button className="btn" onClick={continueWithEmail} disabled={busy}>
           <Glyph.Mail />
-          <span>{busy ? 'Working…' : 'Continue with email'}</span>
+          <span>{busy ? t('onboarding.auth.busy') : t('onboarding.auth.emailCta')}</span>
           <Glyph.ChevronR />
         </button>
 
@@ -324,31 +528,33 @@ function ScreenAuth({
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
               <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-              <span className="caption" style={{ fontSize: 11 }}>OR</span>
+              <span className="caption" style={{ fontSize: 11 }}>{t('onboarding.auth.or')}</span>
               <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
             </div>
             <div ref={gsiRef} style={{ display: 'flex', justifyContent: 'center' }} />
           </>
         )}
 
-        {err && <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>}
-
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
           <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-          <span className="caption" style={{ fontSize: 11 }}>SECURE · DPDP 2023</span>
+          <span className="caption" style={{ fontSize: 11 }}>{t('onboarding.auth.secure')}</span>
           <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
         </div>
 
         <div style={{ flex: 1 }} />
 
         <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--p-muted)' }}>
-          Already have an account?{' '}
+          {t('onboarding.auth.haveAccount')}{' '}
           <Link to="/login" style={{ color: 'var(--p-primary)', fontWeight: 600, textDecoration: 'none' }}>
-            Sign in
+            {t('onboarding.auth.signin')}
           </Link>
         </div>
         <p className="caption" style={{ textAlign: 'center', maxWidth: 280, alignSelf: 'center', fontSize: 11 }}>
-          By continuing you agree to our <span style={{ color: 'var(--p-primary)', textDecoration: 'underline' }}>Terms</span> and acknowledge the <span style={{ color: 'var(--p-primary)', textDecoration: 'underline' }}>Privacy Notice</span>.
+          {t('onboarding.auth.policyNote.pre')}
+          <Link to="/terms" style={{ color: 'var(--p-primary)', textDecoration: 'underline' }}>{t('onboarding.auth.policyNote.tos')}</Link>
+          {t('onboarding.auth.policyNote.mid')}
+          <Link to="/privacy" style={{ color: 'var(--p-primary)', textDecoration: 'underline' }}>{t('onboarding.auth.policyNote.privacy')}</Link>
+          {t('onboarding.auth.policyNote.post')}
         </p>
       </div>
     </div>
@@ -359,22 +565,23 @@ function ScreenAuth({
 function ScreenRole({
   step, onBack, onNext, role, setRole,
 }: { step: number; onBack: () => void; onNext: () => void; role: Role | ''; setRole: (r: Role) => void }) {
+  const { t } = useT();
   // PARENT/TEACHER are visible-but-disabled until the per-role dashboards ship.
   // We keep them rendered (vs. removed) so future Student users instantly see
   // the product roadmap and we don't need to redesign the card stack later.
   const roles: Array<{ id: Role; icon: typeof Glyph.Person; label: string; sub: string; comingSoon?: boolean }> = [
-    { id: 'STUDENT', icon: Glyph.Person, label: 'Student', sub: 'I’m here to learn and practice math.' },
-    { id: 'PARENT', icon: Glyph.Parent, label: 'Parent', sub: 'Track my child’s progress and reports.', comingSoon: true },
-    { id: 'TEACHER', icon: Glyph.Teacher, label: 'Teacher / Tutor', sub: 'Run a class or tutor a small group.', comingSoon: true },
+    { id: 'STUDENT', icon: Glyph.Person, label: t('onboarding.role.student.label'), sub: t('onboarding.role.student.sub') },
+    { id: 'PARENT', icon: Glyph.Parent, label: t('onboarding.role.parent.label'), sub: t('onboarding.role.parent.sub'), comingSoon: true },
+    { id: 'TEACHER', icon: Glyph.Teacher, label: t('onboarding.role.teacher.label'), sub: t('onboarding.role.teacher.sub'), comingSoon: true },
   ];
   return (
     <div className="screen">
       <TopScaffold step={step} onBack={onBack} />
       <div className="screen-body" style={{ gap: 24 }}>
         <div>
-          <span className="eyebrow">Step 02 · You</span>
-          <h2 className="title" style={{ marginTop: 10 }}>Who’s using Matheo?</h2>
-          <p className="subtitle">We tailor the home screen and reports to your role.</p>
+          <span className="eyebrow">{t('onboarding.role.eyebrow')}</span>
+          <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.role.title')}</h2>
+          <p className="subtitle">{t('onboarding.role.tagline')}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {roles.map((r) => {
@@ -401,8 +608,8 @@ function ScreenRole({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 16, fontWeight: 600 }}>{r.label}</span>
-                    {r.id === 'STUDENT' && <span className="chip primary" style={{ padding: '2px 8px', fontSize: 10.5 }}>Most popular</span>}
-                    {r.comingSoon && <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>Coming soon</span>}
+                    {r.id === 'STUDENT' && <span className="chip primary" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('onboarding.role.popular')}</span>}
+                    {r.comingSoon && <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('onboarding.role.comingSoon')}</span>}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
                 </div>
@@ -417,7 +624,7 @@ function ScreenRole({
       </div>
       <div className="screen-foot">
         <button className="btn" onClick={onNext} disabled={!role} style={{ opacity: role ? 1 : 0.45 }}>
-          Continue
+          {t('onboarding.role.continue')}
           <Glyph.ChevronR />
         </button>
       </div>
@@ -427,30 +634,44 @@ function ScreenRole({
 
 // ─────────── 04 Profile (name + class) ───────────
 function ScreenProfile({
-  step, onBack, onNext, name, setName, grade, setGrade,
-}: { step: number; onBack: () => void; onNext: () => void; name: string; setName: (n: string) => void; grade: GradeId | ''; setGrade: (g: GradeId) => void }) {
-  const grades: Array<{ id: GradeId; num: string; lbl: string }> = [
-    { id: 'CLASS_7', num: '7', lbl: 'GRADE' },
-    { id: 'CLASS_8', num: '8', lbl: 'GRADE' },
-    { id: 'CLASS_9', num: '9', lbl: 'GRADE' },
-    { id: 'CLASS_10', num: '10', lbl: 'GRADE · BOARD' },
-    { id: 'CLASS_11', num: '11', lbl: 'GRADE' },
-    { id: 'CLASS_12', num: '12', lbl: 'GRADE · BOARD' },
-  ];
+  step, onBack, onNext, name, setName, grade, setGrade, country,
+}: { step: number; onBack: () => void; onNext: () => void; name: string; setName: (n: string) => void; grade: GradeId | ''; setGrade: (g: GradeId) => void; country: CountryId }) {
+  const { t } = useT();
+  // Grade chips re-label by country. Backend stores GradeLevel (CLASS_N), so
+  // KR labels (중1~고3) map onto the same CLASS_7..CLASS_12 IDs the IN
+  // pickers use. Mapping mirrors NCERT_TO_KR_GRADE in HomeScreen/LearnScreen:
+  //   CLASS_7→중1, CLASS_8→중2, CLASS_9→중3, CLASS_10→고1, CLASS_11→고2, CLASS_12→고3
+  const grades: Array<{ id: GradeId; num: string; lbl: string }> = country === 'KR'
+    ? [
+        { id: 'CLASS_7',  num: '중1', lbl: '중학교 1학년' },
+        { id: 'CLASS_8',  num: '중2', lbl: '중학교 2학년' },
+        { id: 'CLASS_9',  num: '중3', lbl: '중학교 3학년' },
+        { id: 'CLASS_10', num: '고1', lbl: '공통수학' },
+        { id: 'CLASS_11', num: '고2', lbl: '선택과목' },
+        { id: 'CLASS_12', num: '고3', lbl: '수능 준비' },
+      ]
+    : [
+        { id: 'CLASS_7',  num: '7',  lbl: t('onboarding.profile.gradeLabel') },
+        { id: 'CLASS_8',  num: '8',  lbl: t('onboarding.profile.gradeLabel') },
+        { id: 'CLASS_9',  num: '9',  lbl: t('onboarding.profile.gradeLabel') },
+        { id: 'CLASS_10', num: '10', lbl: t('onboarding.profile.gradeBoard') },
+        { id: 'CLASS_11', num: '11', lbl: t('onboarding.profile.gradeLabel') },
+        { id: 'CLASS_12', num: '12', lbl: t('onboarding.profile.gradeBoard') },
+      ];
   return (
     <div className="screen">
       <TopScaffold step={step} onBack={onBack} />
       <div className="screen-body" style={{ gap: 24 }}>
         <div>
-          <span className="eyebrow">Step 03 · Profile</span>
-          <h2 className="title" style={{ marginTop: 10 }}>Tell us about yourself.</h2>
+          <span className="eyebrow">{t('onboarding.profile.eyebrow')}</span>
+          <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.profile.title')}</h2>
         </div>
         <div className="field">
-          <label>Your name</label>
-          <input placeholder="e.g. Aarav Sharma" value={name} onChange={(e) => setName(e.target.value)} />
+          <label>{t('onboarding.profile.nameLabel')}</label>
+          <input placeholder={t('onboarding.profile.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="field">
-          <label>What class are you in?</label>
+          <label>{t('onboarding.profile.classQ')}</label>
           <div className="grade-grid">
             {grades.map((g) => (
               <div key={g.id} className={`grade-pill ${grade === g.id ? 'selected' : ''}`} onClick={() => setGrade(g.id)}>
@@ -465,9 +686,9 @@ function ScreenProfile({
             <Glyph.Sparkle accent="#fff" size={14} />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>Chapter-aligned content</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>{t('onboarding.profile.callout.title')}</div>
             <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 2 }}>
-              We map every chapter to your class. You can change this later.
+              {t('onboarding.profile.callout.body')}
             </div>
           </div>
         </div>
@@ -475,7 +696,7 @@ function ScreenProfile({
       </div>
       <div className="screen-foot">
         <button className="btn" onClick={onNext} disabled={!name || !grade} style={{ opacity: name && grade ? 1 : 0.45 }}>
-          Continue
+          {t('onboarding.profile.continue')}
           <Glyph.ChevronR />
         </button>
       </div>
@@ -487,20 +708,21 @@ function ScreenProfile({
 function ScreenGoal({
   step, onBack, onNext, goal, setGoal,
 }: { step: number; onBack: () => void; onNext: () => void; goal: GoalId | ''; setGoal: (g: GoalId) => void }) {
+  const { t } = useT();
   const goals: Array<{ id: GoalId; title: string; sub: string }> = [
-    { id: 'BOARD', title: 'Ace my board exam', sub: 'CBSE Class 10 or 12 board' },
-    { id: 'JEE', title: 'Prepare for JEE / NEET', sub: 'Foundation & advanced problem sets' },
-    { id: 'SCHOOL', title: 'Keep up with school', sub: 'Weekly practice and concept clarity' },
-    { id: 'CATCHUP', title: 'Catch up & build foundation', sub: 'Fill gaps from earlier classes' },
+    { id: 'BOARD', title: t('onboarding.goal.board.title'), sub: t('onboarding.goal.board.sub') },
+    { id: 'JEE', title: t('onboarding.goal.jee.title'), sub: t('onboarding.goal.jee.sub') },
+    { id: 'SCHOOL', title: t('onboarding.goal.school.title'), sub: t('onboarding.goal.school.sub') },
+    { id: 'CATCHUP', title: t('onboarding.goal.catchup.title'), sub: t('onboarding.goal.catchup.sub') },
   ];
   return (
     <div className="screen">
       <TopScaffold step={step} onBack={onBack} />
       <div className="screen-body" style={{ gap: 22 }}>
         <div>
-          <span className="eyebrow">Step 04 · Goal</span>
-          <h2 className="title" style={{ marginTop: 10 }}>What brings you here?</h2>
-          <p className="subtitle">Pick one — we’ll prioritise the right topics for you.</p>
+          <span className="eyebrow">{t('onboarding.goal.eyebrow')}</span>
+          <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.goal.title')}</h2>
+          <p className="subtitle">{t('onboarding.goal.tagline')}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {goals.map((g) => {
@@ -522,7 +744,7 @@ function ScreenGoal({
       </div>
       <div className="screen-foot">
         <button className="btn" onClick={onNext} disabled={!goal} style={{ opacity: goal ? 1 : 0.45 }}>
-          Continue
+          {t('onboarding.goal.continue')}
           <Glyph.ChevronR />
         </button>
       </div>
@@ -539,6 +761,7 @@ type DiagProblem = {
 function ScreenDiagnostic({
   step, onBack, onNext, onComplete,
 }: { step: number; onBack: () => void; onNext: () => void; onComplete: (r: DiagnosticResult) => void }) {
+  const { t } = useT();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [problems, setProblems] = useState<DiagProblem[]>([]);
   const [qIdx, setQIdx] = useState(0);
@@ -546,7 +769,10 @@ function ScreenDiagnostic({
   const [confidence, setConfidence] = useState(2);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  // submitted state removed 2026-05-24 — onboarding diagnostic now submits +
+  // advances in one click (no in-line correct/incorrect display per user spec).
+  // The previous two-step ('submit' then 'next') used a `submitted` boolean
+  // to gate; the new flow doesn't need it.
 
   useEffect(() => {
     (async () => {
@@ -555,7 +781,7 @@ function ScreenDiagnostic({
         setSessionId(r.sessionId);
         setProblems(r.problems);
       } catch (e: any) {
-        setErr(e?.response?.data?.error?.message ?? 'Could not start diagnostic.');
+        setErr(e?.response?.data?.error?.message ?? t('onboarding.diag.startFailed'));
       }
     })();
   }, []);
@@ -566,34 +792,24 @@ function ScreenDiagnostic({
   async function submitOrAdvance() {
     if (busy) return;
     if (!cur || !choice || !sessionId) return;
-    if (!submitted) {
-      // 1차 제출 — 답안 전송 + 정/오답 표시 모드.
-      setBusy(true);
-      try {
-        await post('/diagnostic/answer', { sessionId, problemId: cur.id, choiceId: choice, confidence });
-        setSubmitted(true);
-      } catch (e: any) {
-        setErr(e?.response?.data?.error?.message ?? 'Could not submit answer.');
-      } finally {
-        setBusy(false);
-      }
-      return;
-    }
-    // 다음 문항으로 (또는 마지막이면 finish).
-    if (qIdx + 1 < problems.length) {
-      setQIdx(qIdx + 1);
-      setChoice(null);
-      setSubmitted(false);
-      setConfidence(2);
-      return;
-    }
+    // User-spec 2026-05-24: onboarding diagnostic shouldn't grade in-line.
+    // Submit + advance in a single click. The previous "submit → show correct/
+    // incorrect → click Next" two-step was felt as friction during onboarding
+    // (the result screen already summarises mastery per concept).
     setBusy(true);
     try {
+      await post('/diagnostic/answer', { sessionId, problemId: cur.id, choiceId: choice, confidence });
+      if (qIdx + 1 < problems.length) {
+        setQIdx(qIdx + 1);
+        setChoice(null);
+        setConfidence(2);
+        return;
+      }
       const r = await post<DiagnosticResult>(`/diagnostic/${sessionId}/finish`, {});
       onComplete(r);
       onNext();
     } catch (e: any) {
-      setErr(e?.response?.data?.error?.message ?? 'Could not finalise diagnostic.');
+      setErr(e?.response?.data?.error?.message ?? t('onboarding.diag.answerFailed'));
     } finally {
       setBusy(false);
     }
@@ -602,13 +818,13 @@ function ScreenDiagnostic({
   return (
     <div className="screen">
       <TopScaffold step={step} onBack={onBack} right={
-        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>Q {qIdx + 1} / {total}</span>
+        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{t('onboarding.diag.qProgress', { n: qIdx + 1, total })}</span>
       } />
       <div className="screen-body" style={{ gap: 18 }}>
         <div>
-          <span className="eyebrow">Step 05 · Quick check</span>
-          <h2 className="title" style={{ marginTop: 10 }}>A 4-question warm-up.</h2>
-          <p className="subtitle">No grades, no time pressure — just so we know where to start.</p>
+          <span className="eyebrow">{t('onboarding.diag.eyebrow')}</span>
+          <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.diag.title')}</h2>
+          <p className="subtitle">{t('onboarding.diag.tagline')}</p>
         </div>
 
         {err && (
@@ -616,21 +832,23 @@ function ScreenDiagnostic({
         )}
 
         {!cur && !err && (
-          <div className="card" style={{ padding: 16, textAlign: 'center', color: 'var(--p-muted)' }}>Loading questions…</div>
+          <div className="card" style={{ padding: 16, textAlign: 'center', color: 'var(--p-muted)' }}>{t('onboarding.diag.loadingQ')}</div>
         )}
 
         {cur && (
           <>
             <div className="card" style={{ padding: 18, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <span className="chip" style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.08em' }}>CONCEPT</span>
+                <span className="chip" style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.08em' }}>{t('onboarding.diag.concept')}</span>
                 <span className="caption" style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{cur.difficulty}</span>
               </div>
               <div className="math-big" style={{ fontSize: 16, lineHeight: 1.5, whiteSpace: 'pre-wrap', color: 'var(--p-ink)' }}>
-                {cur.body}
+                <MathText text={cur.body} />
               </div>
               {cur.step?.prompt && (
-                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--p-ink-2)' }}>{cur.step.prompt}</div>
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--p-ink-2)' }}>
+                  <MathText text={cur.step.prompt} />
+                </div>
               )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -638,30 +856,28 @@ function ScreenDiagnostic({
                 const sel = choice === c.id;
                 const cls = sel ? 'choice selected' : 'choice';
                 return (
-                  <div key={c.id} className={cls} onClick={() => !submitted && setChoice(c.id)}>
+                  <div key={c.id} className={cls} onClick={() => setChoice(c.id)}>
                     <div className="letter">{['A', 'B', 'C', 'D', 'E'][i] ?? c.choiceIndex}</div>
-                    <span className="text">{c.text}</span>
+                    <span className="text"><MathText text={c.text} /></span>
                   </div>
                 );
               })}
             </div>
-            {!submitted && (
-              <div className="card" style={{ padding: 12, background: 'transparent', borderStyle: 'dashed' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span className="caption" style={{ fontSize: 12 }}>How sure are you?</span>
-                  <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{confidence}/4</span>
-                </div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {[1, 2, 3, 4].map((n) => (
-                    <div key={n} onClick={() => setConfidence(n)} style={{
-                      flex: 1, height: 8, borderRadius: 4,
-                      background: n <= confidence ? 'var(--p-primary)' : 'var(--p-border)',
-                      cursor: 'pointer', transition: 'background .12s',
-                    }} />
-                  ))}
-                </div>
+            <div className="card" style={{ padding: 12, background: 'transparent', borderStyle: 'dashed' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span className="caption" style={{ fontSize: 12 }}>{t('onboarding.diag.confidence.q')}</span>
+                <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{t('onboarding.diag.confidence.fmt', { n: confidence })}</span>
               </div>
-            )}
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[1, 2, 3, 4].map((n) => (
+                  <div key={n} onClick={() => setConfidence(n)} style={{
+                    flex: 1, height: 8, borderRadius: 4,
+                    background: n <= confidence ? 'var(--p-primary)' : 'var(--p-border)',
+                    cursor: 'pointer', transition: 'background .12s',
+                  }} />
+                ))}
+              </div>
+            </div>
           </>
         )}
         <div style={{ flex: 1 }} />
@@ -673,7 +889,7 @@ function ScreenDiagnostic({
           disabled={!cur || !choice || busy}
           style={{ opacity: !cur || !choice ? 0.45 : 1 }}
         >
-          {busy ? 'Saving…' : !submitted ? 'Submit answer' : qIdx + 1 < total ? 'Next question' : 'See my results'}
+          {busy ? t('onboarding.diag.saving') : qIdx + 1 < total ? t('onboarding.diag.submit') : t('onboarding.diag.viewResult')}
           <Glyph.ChevronR />
         </button>
       </div>
@@ -685,6 +901,7 @@ function ScreenDiagnostic({
 function ScreenResults({
   step, onBack, onNext, name, result,
 }: { step: number; onBack: () => void; onNext: () => void; name: string; result: DiagnosticResult | null }) {
+  const { t } = useT();
   // 실 mastery 결과 → UI shape 으로 매핑 (없으면 빈 안내).
   const concepts: Array<{ name: string; value: number; tag: 'Focus' | 'Steady' | 'Strong' }> =
     (result?.masteries ?? []).slice(0, 5).map((m) => ({
@@ -698,22 +915,22 @@ function ScreenResults({
       <TopScaffold step={step} onBack={onBack} />
       <div className="screen-body" style={{ gap: 20 }}>
         <div>
-          <span className="eyebrow">Step 06 · Your map</span>
+          <span className="eyebrow">{t('onboarding.results.eyebrow')}</span>
           <h2 className="title" style={{ marginTop: 10 }}>
-            Here’s where you <em style={{ fontStyle: 'italic', color: 'var(--p-primary)', fontFamily: 'var(--font-display)' }}>stand</em> today.
+            {t('onboarding.results.title.pre')}<em style={{ fontStyle: 'italic', color: 'var(--p-primary)', fontFamily: 'var(--font-display)' }}>{t('onboarding.results.title.em')}</em>{t('onboarding.results.title.post')}
           </h2>
-          <p className="subtitle">{name ? `${name}, a` : 'A'} first read on your strengths — this evolves as you practice.</p>
+          <p className="subtitle">{name ? t('onboarding.results.tagline', { name }) : t('onboarding.results.taglineNoName')}</p>
         </div>
         <div className="card" style={{ padding: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 600 }}>Concept mastery</span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>{t('onboarding.results.mastery')}</span>
             <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-              {result ? `${result.correct} / ${result.attempted} CORRECT` : 'NO DATA'}
+              {result ? t('onboarding.results.scoreFmt', { correct: result.correct, attempted: result.attempted }) : t('onboarding.results.noData')}
             </span>
           </div>
           {concepts.length === 0 ? (
             <div style={{ padding: '14px 0', textAlign: 'center', color: 'var(--p-muted)', fontSize: 13 }}>
-              No diagnostic data yet — practice problems will build your mastery map.
+              {t('onboarding.results.empty')}
             </div>
           ) : concepts.map((c) => (
             <div key={c.name} className="mastery-row">
@@ -731,16 +948,16 @@ function ScreenResults({
               <Glyph.Sparkle accent="#fff" size={16} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--p-ink)' }}>Your AI coach suggests</div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--p-ink)' }}>{t('onboarding.results.coach.title')}</div>
               <div style={{ fontSize: 13, color: 'var(--p-ink-2)', marginTop: 4, lineHeight: 1.45 }}>
                 {focusConcept
-                  ? <>Start with <strong>{focusConcept.conceptName}</strong>. Lift this from {Math.round(focusConcept.score)} → ~70 with focused practice.</>
-                  : <>Practice your first chapter — your AI coach will surface weak topics from real attempts.</>}
+                  ? <><strong>{focusConcept.conceptName}</strong>{t('onboarding.results.coach.body', { from: Math.round(focusConcept.score) })}</>
+                  : <>{t('onboarding.results.coach.empty')}</>}
               </div>
-              <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-                {focusConcept && <span className="chip" style={{ fontSize: 11 }}>{focusConcept.conceptCode}</span>}
-                <span className="chip" style={{ fontSize: 11 }}>Adaptive</span>
-              </div>
+              {/* Diagnostic result chips removed 2026-05-24 per user spec —
+                  the conceptCode chip ("C7-CH01-INTEGERS") leaked internal
+                  identifiers; the "맞춤형" tailored chip was decorative noise
+                  the coach paragraph above already implies. */}
             </div>
           </div>
         </div>
@@ -748,7 +965,7 @@ function ScreenResults({
       </div>
       <div className="screen-foot">
         <button className="btn" onClick={onNext}>
-          Continue
+          {t('onboarding.results.continue')}
           <Glyph.ChevronR />
         </button>
       </div>
@@ -764,12 +981,13 @@ function ScreenConsents({
   consents: ConsentMap; setConsents: (m: ConsentMap) => void;
   notif: boolean; setNotif: (b: boolean) => void;
 }) {
+  const { t } = useT();
   const toggle = (k: ConsentKey) => setConsents({ ...consents, [k]: !consents[k] });
   const items: Array<{ id: 'DATA_PROCESSING' | ConsentKey; req?: boolean; name: string; desc: string }> = [
-    { id: 'DATA_PROCESSING', req: true, name: 'Essential data', desc: 'Process your account, attempts, and progress so the app works. Required by DPDP 2023.' },
-    { id: 'ANALYTICS', name: 'Learning analytics', desc: 'Let us analyse error patterns so your AI coach gets sharper over time.' },
-    { id: 'AI_TRAINING', name: 'Improve AI for everyone', desc: 'Anonymised samples may help train future models. You can revoke anytime.' },
-    { id: 'MARKETING', name: 'Updates and offers', desc: 'Occasional emails on new chapters, mock exams, and tutor programs.' },
+    { id: 'DATA_PROCESSING', req: true, name: t('onboarding.consents.essential.name'), desc: t('onboarding.consents.essential.desc') },
+    { id: 'ANALYTICS', name: t('onboarding.consents.analytics.name'), desc: t('onboarding.consents.analytics.desc') },
+    { id: 'AI_TRAINING', name: t('onboarding.consents.aiTraining.name'), desc: t('onboarding.consents.aiTraining.desc') },
+    { id: 'MARKETING', name: t('onboarding.consents.marketing.name'), desc: t('onboarding.consents.marketing.desc') },
   ];
   const isChecked = (id: 'DATA_PROCESSING' | ConsentKey) =>
     id === 'DATA_PROCESSING' ? true : consents[id];
@@ -778,9 +996,9 @@ function ScreenConsents({
       <TopScaffold step={step} onBack={onBack} />
       <div className="screen-body" style={{ gap: 22 }}>
         <div>
-          <span className="eyebrow">Step 07 · Privacy</span>
-          <h2 className="title" style={{ marginTop: 10 }}>Your data, your call.</h2>
-          <p className="subtitle">We follow India’s DPDP Act 2023. Change any of these later in Settings.</p>
+          <span className="eyebrow">{t('onboarding.consents.eyebrow')}</span>
+          <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.consents.title')}</h2>
+          <p className="subtitle">{t('onboarding.consents.tagline')}</p>
         </div>
         {/* Push reminders are gated on FCM credentials, which aren't wired yet
             (server boot logs "FCM credentials not set — push notifications
@@ -792,10 +1010,10 @@ function ScreenConsents({
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 14.5, fontWeight: 600 }}>Daily study reminders</div>
-              <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>Coming soon</span>
+              <div style={{ fontSize: 14.5, fontWeight: 600 }}>{t('onboarding.consents.notif.title')}</div>
+              <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('onboarding.consents.notif.comingSoon')}</span>
             </div>
-            <div style={{ fontSize: 12.5, color: 'var(--p-muted)', marginTop: 2 }}>Keep your streak alive — one nudge per day.</div>
+            <div style={{ fontSize: 12.5, color: 'var(--p-muted)', marginTop: 2 }}>{t('onboarding.consents.notif.sub')}</div>
           </div>
           <div className="toggle" style={{ cursor: 'not-allowed', opacity: 0.5 }} aria-disabled />
         </div>
@@ -812,7 +1030,7 @@ function ScreenConsents({
               <div className="info">
                 <div className="name">
                   {it.name}
-                  {it.req && <span className="req-pill">Required</span>}
+                  {it.req && <span className="req-pill">{t('onboarding.consents.required')}</span>}
                 </div>
                 <div className="desc">{it.desc}</div>
               </div>
@@ -823,11 +1041,11 @@ function ScreenConsents({
       </div>
       <div className="screen-foot">
         <button className="btn" onClick={onNext}>
-          Agree &amp; continue
+          {t('onboarding.consents.cta')}
           <Glyph.ChevronR />
         </button>
         <p className="caption" style={{ textAlign: 'center', fontSize: 11.5 }}>
-          Policy v2026.05.01 · You can withdraw consent in Settings → Privacy.
+          {t('onboarding.consents.policy')}
         </p>
       </div>
     </div>
@@ -841,50 +1059,83 @@ function ScreenReady({
   step: number; name: string; role: Role; grade: GradeId; goal: GoalId;
   consents: ConsentMap; notif: boolean; onFinish: () => void;
 }) {
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const { refreshUser } = useAuth();
+
+  // Detect KR language client-side so the alert/error copy localizes even if
+  // the country prop isn't threaded into this screen.
+  const isKR = (typeof window !== 'undefined' && localStorage.getItem('mathema.lang') === 'ko');
 
   async function finalize() {
     if (busy) return;
+    setErr(null);
     setBusy(true);
     try {
       // 토큰은 ScreenAuth(가입/Google/로그인) 단계에서 이미 확보되어 있어야 함.
       // DEV: 토큰 없으면 dev-login 으로 빠르게 진입 — production 빌드에선 이 분기 dead-code.
       if (!tokens.get()) {
         if (import.meta.env.DEV) {
-          const t = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
-          tokens.set(t.accessToken, t.refreshToken);
+          const tk = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
+          tokens.set(tk.accessToken, tk.refreshToken);
         } else {
           // 인증 흐름이 끊겼다 — 가입 화면으로 보냄.
           window.location.assign('/register');
           return;
         }
       }
-      // 프로필 best-effort 반영 — name, gradeLevel, studyGoal 모두 백엔드 User row 에 저장.
-      try {
-        await patch<Me>('/users/me', { name, gradeLevel: GRADE_MAP[grade], studyGoal: goal });
-      } catch { /* ignore */ }
-      // 선택 동의 3종을 백엔드 Consent 테이블에 저장 (DPDP 이력).
+      // 프로필 반영 — name, gradeLevel, studyGoal 모두 백엔드 User row 에 저장.
+      // P3 fix 2026-05-27: this PATCH used to be silent-catch. If it failed
+      // (network blip, 429, 5xx), the user lined up at /app with
+      // user.gradeLevel still null on the server, which made ProtectedRoute
+      // bounce them right back to /onboarding — and finalize would re-run,
+      // re-fail, re-bounce, forever. Now: surface the error visibly, abort
+      // finalize so the user can hit the CTA again to retry. The
+      // onboardingCompleted localStorage flag (set further down) is the
+      // safety net that lets ProtectedRoute let them through if they later
+      // hit the bouncing case anyway.
+      await patch<Me>('/users/me', { name, gradeLevel: GRADE_MAP[grade], studyGoal: goal });
+
+      // 선택 동의 3종을 백엔드 Consent 테이블에 저장 (DPDP 이력). 이건 여전히
+      // best-effort — consent 저장 실패는 사용자가 onboarding 진입을 막을 만큼
+      // 치명적 X (재시도는 설정 페이지에서도 가능).
       const consentKinds: ConsentKey[] = ['ANALYTICS', 'AI_TRAINING', 'MARKETING'];
       for (const k of consentKinds) {
         try {
           if (consents[k]) await post(`/privacy/consents/${k.toLowerCase()}`, {});
-          // 미동의는 default revoked 상태 — 명시적 revoke 불필요 (한 번도 grant 한 적 없음).
         } catch { /* ignore — best effort */ }
       }
       // localStorage 에 onboarding 결과 저장 (백엔드 미저장 항목: goal, notif 토글).
       localStorage.setItem('mathema.onboarding', JSON.stringify({
         role, grade, goal, notif, completedAt: new Date().toISOString(),
       }));
-      // Refresh AuthContext.user so ProtectedRoute drops the !gradeLevel
-      // guard before we navigate into /app. Without this the freshly-saved
-      // gradeLevel sits only on the server and ProtectedRoute bounces the
-      // user right back to /onboarding — infinite loop.
+      // Refresh AuthContext.user so ProtectedRoute sees gradeLevel filled.
       await refreshUser();
       onFinish();
-    } catch (e) {
-      if (import.meta.env.DEV) console.warn('onboarding finalize failed', e);
-      onFinish();
+    } catch (e: any) {
+      const status = e?.response?.status;
+      const rawMsg = e?.response?.data?.error?.message;
+      // eslint-disable-next-line no-console
+      console.error('[onboarding] finalize failed', { status, rawMsg, error: e });
+      let friendly: string;
+      if (status === 429) {
+        friendly = isKR
+          ? '잠시 후 다시 시도해주세요. (요청이 너무 많아 일시적으로 제한됐어요.)'
+          : 'Please retry in a moment — too many requests just now.';
+      } else if (!status) {
+        friendly = isKR
+          ? '서버에 연결할 수 없어요. 인터넷 연결을 확인하고 다시 시도해주세요.'
+          : 'Cannot reach the server. Check your connection and try again.';
+      } else {
+        friendly = isKR
+          ? '저장에 실패했어요. 다시 시도해주세요.'
+          : 'Save failed. Please try again.';
+      }
+      setErr(friendly);
+      // Do NOT call onFinish() on failure. User stays on this screen, sees
+      // the red error banner, and the CTA flips back to enabled — one tap
+      // retries the whole finalize() sequence (the PATCH is idempotent).
     } finally {
       setBusy(false);
     }
@@ -895,44 +1146,30 @@ function ScreenReady({
       <TopScaffold step={step} showBack={false} />
       <div className="screen-body" style={{ gap: 20, justifyContent: 'space-between' }}>
         <div style={{ marginTop: 12 }}>
-          <span className="eyebrow">All set</span>
+          <span className="eyebrow">{t('onboarding.ready.eyebrow')}</span>
           <h1 className="display" style={{ marginTop: 10 }}>
-            Welcome,<br />
-            <em>{name || 'Aarav'}</em>.
+            {t('onboarding.ready.title.line1')}<br />
+            <em>{name || t('onboarding.ready.title.fallback')}</em>.
           </h1>
           <p className="subtitle" style={{ maxWidth: 320 }}>
-            Your plan is ready. Let’s start with a 12-minute concept lesson.
+            {t('onboarding.ready.tagline')}
           </p>
         </div>
-        <div className="card" style={{ padding: 0, overflow: 'hidden', borderColor: 'var(--p-border-strong)' }}>
-          <div style={{ background: 'var(--p-primary)', color: 'var(--p-primary-fg)', padding: '16px 18px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', opacity: 0.85 }}>LESSON 01 · CLASS 12 INTEGRALS</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginTop: 6, fontStyle: 'italic' }}>Integration as antiderivative</div>
-              </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontStyle: 'italic', opacity: 0.95 }}>∫</div>
-            </div>
-          </div>
-          <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span className="caption" style={{ fontSize: 11.5 }}>READY · 9 STEPS</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>~12 min · Hook → Worked example → Retrieval</span>
-            </div>
-            <div style={{ width: 38, height: 38, borderRadius: 999, background: 'var(--p-primary)', color: 'var(--p-primary-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Glyph.ChevronR accent="#fff" size={18} />
-            </div>
-          </div>
-        </div>
+        {/* Lesson preview card removed 2026-05-24 per user spec — the
+            previous block hard-coded "LESSON 01 · 12학년 적분 / 역도함수로서의
+            적분 / 약 12분 · 도입 → 풀이 예시 → 회상 연습" regardless of the
+            student's actual grade or curriculum, so a Class 7 KR student
+            saw Class 12 NCERT calculus on signup completion. Stats grid
+            below still shows real grade + chapter count, so the screen
+            doesn't feel empty. */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {/* Onboarding-ready stats. Each is a verifiable fact rather than a
               promise of pace — earlier copy said "5 lessons/week" and "25m
               daily target" which were placeholders the app never enforced. */}
           {[
-            { k: grade ? grade.replace('CLASS_', '') : '—', v: 'Your class' },
-            { k: grade ? String(chapterCountByClass(grade)) : '—', v: 'Chapters' },
-            { k: '∞', v: 'Practice pool' },
+            { k: grade ? grade.replace('CLASS_', '') : '—', v: t('onboarding.ready.stats.grade') },
+            { k: grade ? String(chapterCountByClass(grade)) : '—', v: t('onboarding.ready.stats.chapters') },
+            { k: '∞', v: t('onboarding.ready.stats.problems') },
           ].map((s) => (
             <div key={s.v} className="card" style={{ padding: 12, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--p-ink)', fontStyle: 'italic' }}>{s.k}</div>
@@ -942,12 +1179,33 @@ function ScreenReady({
         </div>
       </div>
       <div className="screen-foot">
+        {/* Error banner above CTA — P3 fix 2026-05-27. Previously a failed
+            PATCH /users/me was silently swallowed and the user got bounced
+            to /app → /onboarding forever. Now they see what went wrong and
+            the same CTA retries. */}
+        {err && (
+          <div
+            role="alert"
+            style={{
+              background: 'var(--p-danger-tint)',
+              color: 'var(--p-danger)',
+              border: '1px solid var(--p-danger)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              fontSize: 14.5,
+              lineHeight: 1.45,
+              marginBottom: 8,
+            }}
+          >
+            {err}
+          </div>
+        )}
         <button className="btn" onClick={finalize} disabled={busy}>
-          {busy ? 'Setting up…' : 'Start my first lesson'}
+          {busy ? t('onboarding.ready.cta.busy') : (err ? (isKR ? '다시 시도' : 'Retry') : t('onboarding.ready.cta.start'))}
           <Glyph.ChevronR />
         </button>
         <button className="btn text" onClick={finalize} disabled={busy}>
-          Go to dashboard
+          {t('onboarding.ready.cta.dashboard')}
         </button>
       </div>
     </div>

@@ -9,6 +9,7 @@ import { SessionContext } from '../../common/enums/session-context.enum';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { CHOICE_EN } from '../../common/i18n/content-en';
 import { AdaptiveNextProblemService } from '../recommendations/services/adaptive-next-problem.service';
+import { AdaptiveStartDto } from './dto/adaptive-start.dto';
 
 @Injectable()
 export class StudySessionsService {
@@ -212,4 +213,98 @@ export class StudySessionsService {
 
   next(userId: string, id: string) { return this.repo.advanceStep(userId, id); }
   end(userId: string, id: string) { return this.repo.endSession(userId, id); }
+
+  /**
+   * Sprint 2 A9: POST /study-sessions/adaptive/start.
+   *
+   * Builds a 20-problem session driven by AdaptiveNextProblemService — each
+   * getNext() call respects the user's mastery, error pattern, prerequisite
+   * gaps, and 48h spacing window. KR/IN both supported (the engine filters
+   * candidate Problems by country internally — Sprint 2 A7).
+   *
+   * Picks each problem in sequence so that the 48h-spacing exclusion
+   * naturally diversifies the set (same problemId can't appear twice in
+   * the same loop because RecommendationLog rows pile up).
+   *
+   * Response shape mirrors what HomeScreen "오늘의 맞춤 20문제" card needs:
+   *   { sessionId, title, reason, problems[]: { id, reason, targetSkill, difficultyLevel } }
+   *
+   * If the engine returns no problems at all (cold-start with no Concept
+   * for this gradeLevel, or exhausted candidate pool), returns an empty
+   * problems[] with a friendly title — frontend shows an empty-state.
+   */
+  async startAdaptive(userId: string, dto: AdaptiveStartDto) {
+    const target = 20;
+    const picks: Awaited<ReturnType<AdaptiveNextProblemService['getNext']>>[] = [];
+    // NOTE: chapterCode filtering not wired into AdaptiveNextProblemService
+    // yet — Sprint 2 MVP supports mode='daily' only. chapterCode is parsed
+    // but ignored; frontend can still call without it for the daily picker.
+    for (let i = 0; i < target; i++) {
+      const pick = await this.adaptive.getNext(userId);
+      if (!pick) break;
+      picks.push(pick);
+    }
+
+    if (picks.length === 0) {
+      return {
+        sessionId: null,
+        title: '오늘의 맞춤 문제',
+        reason: '학습 데이터를 더 모으면 맞춤 추천이 시작됩니다.',
+        problems: [],
+      };
+    }
+
+    // Build StudySession row anchored to the first problem's unit, so attempts
+    // inside this session feed the same unit-balance analytics as a regular
+    // StudySession. Multi-concept scope is tracked via RecommendationLog rows
+    // (each pick already created one with sessionId=null).
+    const firstProblem = await this.prisma.problem.findUnique({
+      where: { id: picks[0]!.problemId },
+      select: { unitId: true },
+    });
+    if (!firstProblem) {
+      return {
+        sessionId: null,
+        title: '오늘의 맞춤 문제',
+        reason: '추천된 문제를 불러오지 못했습니다.',
+        problems: [],
+      };
+    }
+
+    const session = await this.prisma.studySession.create({
+      data: {
+        userId,
+        unitId: firstProblem.unitId,
+        sessionNumber: 1,
+        totalSessions: 1,
+        context: SessionContext.STUDY,
+        problemCount: picks.length,
+      },
+    });
+
+    // Look up Concept.code for each targetConceptId so the response carries
+    // a stable string skill identifier (not a uuid) that the frontend can use.
+    const conceptIds = Array.from(new Set(picks.map((p) => p!.targetConceptId)));
+    const concepts = await this.prisma.concept.findMany({
+      where: { id: { in: conceptIds } },
+      select: { id: true, code: true },
+    });
+    const codeByConceptId = new Map(concepts.map((c) => [c.id, c.code]));
+
+    // Surface Problem.difficultyLevel from the engine pick itself (already
+    // chosen for flow state) — no extra query needed.
+    return {
+      sessionId: session.id,
+      title: '오늘의 맞춤 ' + picks.length + '문제',
+      // The top-line reason is a brief summary; per-problem reasons are
+      // already specific (from buildReason → ERROR_CODE_LABEL_KO).
+      reason: '약점·오답 패턴·진도를 종합해 구성했어요.',
+      problems: picks.map((p) => ({
+        id: p!.problemId,
+        reason: p!.reason,
+        targetSkill: codeByConceptId.get(p!.targetConceptId) ?? null,
+        difficultyLevel: p!.expectedDifficulty,
+      })),
+    };
+  }
 }

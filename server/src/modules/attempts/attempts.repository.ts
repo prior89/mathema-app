@@ -38,6 +38,7 @@ export class AttemptsRepository {
     let isCorrect: boolean;
     let answerText: string;
     let distractorType: string | null = null;
+    let distractorErrorCode: string | null = null;
 
     if (dto.choiceId) {
       // P0-1 fix: choiceId must belong to a step of dto.problemId. Without
@@ -47,8 +48,9 @@ export class AttemptsRepository {
       const choice = await this.prisma.problemChoice.findUnique({
         where: { id: dto.choiceId },
         select: {
-          id: true, text: true, isCorrect: true, distractorType: true, stepId: true,
-          step: { select: { problemId: true } },
+          id: true, text: true, isCorrect: true, distractorType: true,
+          distractorErrorCode: true, stepId: true,
+          step: { select: { problemId: true, stepIndex: true } },
         },
       });
       if (!choice) throw new BadRequestException(`Invalid choiceId: ${dto.choiceId}`);
@@ -57,9 +59,31 @@ export class AttemptsRepository {
           `choiceId does not belong to problemId ${dto.problemId}`,
         );
       }
+      // 2026-05-27 KR audit follow-up: warn-only mismatch detector for
+      // stale-step submissions. The earlier strict throw blocked a legit
+      // KR Q15 PROCESS submit in the wild (data was correct, all 5 students'
+      // tries 400'd as "choiceId belongs to step undefined") — turning the
+      // defence into a denial-of-service. Now we log the mismatch and let
+      // grading continue using the choice's actual step. Future telemetry
+      // on this counter will tell us whether the original threat (stale
+      // pickedId crossing step boundaries) ever materialises in real use.
+      if (typeof dto.stepIndex === 'number'
+          && typeof choice.step.stepIndex === 'number'
+          && choice.step.stepIndex !== dto.stepIndex) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[attempts] stepIndex mismatch (silent): choiceId=${dto.choiceId} ` +
+          `choice.step.stepIndex=${choice.step.stepIndex} dto.stepIndex=${dto.stepIndex} ` +
+          `problemId=${dto.problemId}`,
+        );
+      }
       isCorrect = choice.isCorrect;
       answerText = choice.text;
       distractorType = choice.distractorType ?? null;
+      // KR distractor taxonomy (SIGN_ERROR, DENOMINATOR_ERROR, ...) carried
+      // through to Attempt for ErrorPatternProfile + adaptive recommender.
+      // NULL when the choice was correct or the seed didn't tag an errorCode.
+      distractorErrorCode = !choice.isCorrect ? (choice.distractorErrorCode ?? null) : null;
     } else {
       // Math-answer normalization — case-insensitive + all whitespace stripped.
       // Single source of truth for text grading; wrong-note review queue
@@ -131,6 +155,7 @@ export class AttemptsRepository {
         timeOfDay,
         stepIndex: typeof dto.stepIndex === 'number' ? dto.stepIndex : null,
         choiceId: dto.choiceId ?? null,
+        distractorErrorCode,
         studySessionId: dto.studySessionId ?? null,
         mockExamResultId: dto.mockExamResultId ?? null,
       },
@@ -180,6 +205,9 @@ export class AttemptsRepository {
       isRetry,
       errorTypeForSnapshot: legacyErrorType,
       errorCodes,
+      // Sprint 1 A3: emitted in attempt.completed payload so listeners can
+      // feed ErrorPatternProfile without re-querying ProblemChoice.
+      distractorErrorCode,
       tenantId,
       conceptIds,
       conceptTags: conceptCodes.map((c) => c.code),       // 명세서 §1-2

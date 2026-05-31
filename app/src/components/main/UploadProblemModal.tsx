@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadProblemImage, UploadAnalysisResult } from '../../lib/queries';
+import { useT } from '../../lib/i18n';
 import MathText from '../MathText';
 import { Glyph } from '../onboarding/Glyph';
 
@@ -24,6 +25,7 @@ type Phase = 'pick' | 'analyzing' | 'result' | 'error';
 
 export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   const nav = useNavigate();
+  const { t } = useT();
   const [phase, setPhase] = useState<Phase>('pick');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -106,7 +108,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       setResult(r);
       setPhase('result');
     } catch (e) {
-      const msg = extractErrorMessage(e) ?? 'Upload failed';
+      const msg = extractErrorMessage(e) ?? t('upload.error.failed');
       setError(msg);
       setPhase('error');
     }
@@ -145,14 +147,14 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
           <div>
-            <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>AI Solver</span>
+            <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>{t('upload.title.eyebrow')}</span>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, letterSpacing: '-0.01em', marginTop: 4 }}>
-              Solve a problem
+              {t('upload.title')}
             </div>
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('upload.closeAria')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--p-ink-2)', fontSize: 22, lineHeight: 1, padding: 4 }}
           >×</button>
         </div>
@@ -181,7 +183,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
         )}
 
         {phase === 'error' && (
-          <ErrorPhase error={error ?? 'Unknown error'} onRetry={retry} onClose={onClose} />
+          <ErrorPhase error={error ?? t('upload.error.unknown')} onRetry={retry} onClose={onClose} />
         )}
       </div>
     </div>
@@ -206,11 +208,27 @@ function PickPhase({
   onStudentAnswer: (value: string) => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
 }) {
+  const { t } = useT();
   return (
     <div>
       <p style={{ fontSize: 13, color: 'var(--p-ink-2)', margin: '0 0 14px' }}>
-        Take a photo, upload a PDF, drag a file here, or paste a screenshot. Add your answer if you want it checked and saved to wrong notes when it is wrong.
+        {t('upload.pick.intro')}
       </p>
+      {/* Multi-part advisory — user-spec 2026-05-23: the SolveResponse schema
+          returns one `answer` string per request, so a photo containing two
+          labelled sub-problems forces the solver to merge them, often with the
+          wrong-answer-for-the-wrong-part artefact the user saw (60000 for the
+          (1)+(2) sequence problem). Solver prompt now demands a labelled
+          multi-line answer when it detects parts, but the cleanest signal
+          remains "one problem per upload". */}
+      <div
+        style={{
+          padding: '10px 12px', marginBottom: 14, borderRadius: 8, fontSize: 12,
+          background: 'var(--p-accent-tint)', color: 'var(--p-ink-2)', lineHeight: 1.45,
+        }}
+      >
+        {t('upload.pick.tip')}
+      </div>
 
       {/* Preview area */}
       <div
@@ -240,17 +258,17 @@ function PickPhase({
           </div>
         ) : (
           <div style={{ color: 'var(--p-muted)', fontSize: 13 }}>
-            Drop, paste, take a photo, or pick a file below.
+            {t('upload.pick.preview.empty')}
           </div>
         )}
       </div>
 
-      <label style={{ ...fieldLabel, marginTop: 12 }}>Your answer optional
+      <label style={{ ...fieldLabel, marginTop: 12 }}>{t('upload.pick.answer.label')}
         <input
           value={studentAnswer}
           onChange={(e) => onStudentAnswer(e.target.value)}
           style={inputStyle}
-          placeholder="e.g. x = 4"
+          placeholder={t('upload.pick.answer.placeholder')}
         />
       </label>
 
@@ -265,7 +283,7 @@ function PickPhase({
             background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none', cursor: 'pointer',
           }}
         >
-          Take photo
+          {t('upload.pick.takePhoto')}
         </button>
         <button
           type="button"
@@ -275,7 +293,7 @@ function PickPhase({
             background: 'var(--p-surface)', color: 'var(--p-ink)', border: '1px solid var(--p-border)', cursor: 'pointer',
           }}
         >
-          Choose file
+          {t('upload.pick.chooseFile')}
         </button>
       </div>
 
@@ -304,7 +322,7 @@ function PickPhase({
               background: 'transparent', border: '1px solid var(--p-border)', color: 'var(--p-ink-2)',
               padding: '9px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 13,
             }}
-          >Change</button>
+          >{t('upload.pick.change')}</button>
         )}
         <button
           onClick={onAnalyze}
@@ -316,7 +334,7 @@ function PickPhase({
             cursor: file ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600,
           }}
         >
-          Analyze
+          {t('upload.pick.analyze')}
         </button>
       </div>
     </div>
@@ -324,6 +342,7 @@ function PickPhase({
 }
 
 function AnalyzingPhase({ fileName }: { fileName: string }) {
+  const { t } = useT();
   return (
     <div style={{ padding: '34px 8px', textAlign: 'center' }}>
       <div style={{
@@ -332,12 +351,12 @@ function AnalyzingPhase({ fileName }: { fileName: string }) {
         margin: '0 auto 14px', animation: 'mathema-spin 0.9s linear infinite',
       }} />
       <style>{`@keyframes mathema-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
-      <div style={{ fontSize: 14, fontWeight: 600 }}>Analyzing the problem</div>
+      <div style={{ fontSize: 14, fontWeight: 600 }}>{t('upload.analyzing.title')}</div>
       <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 4 }}>
         {fileName}
       </div>
       <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 10 }}>
-        Reading text, identifying concept, solving step-by-step. PDFs may take a little longer.
+        {t('upload.analyzing.desc')}
       </div>
     </div>
   );
@@ -351,6 +370,7 @@ function ResultPhase({
   onClose: () => void;
   onPracticeNow?: () => void;
 }) {
+  const { t } = useT();
   const solve = result.result;
   const checked = solve.isStudentCorrect !== undefined && solve.isStudentCorrect !== null;
   const conceptText = [solve.detected.chapter, solve.detected.topic].filter(Boolean).join(' · ');
@@ -358,7 +378,7 @@ function ResultPhase({
     <div>
       {/* PROBLEM card -- matches the Mastery / Study problem card style */}
       <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
-        <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
+        <div className="eyebrow" style={{ fontSize: 10 }}>{t('upload.result.problem.eyebrow')}</div>
         <div className="math-big" style={{ fontSize: 15, marginTop: 6, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
           <MathText text={result.extractedText} />
         </div>
@@ -367,29 +387,67 @@ function ResultPhase({
       {/* Concept chip */}
       {conceptText && (
         <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-          <span className="eyebrow" style={{ fontSize: 10 }}>CONCEPT</span>
+          <span className="eyebrow" style={{ fontSize: 10 }}>{t('upload.result.concept.eyebrow')}</span>
           <span className="chip" style={{ fontSize: 11.5 }}>
             <MathText text={conceptText} />
           </span>
         </div>
       )}
 
-      {/* Solution steps -- de-emphasised body card so the answer below pops */}
-      {solve.explanation && (
+      {/* Solution steps -- numbered list when the solver emitted structured
+          step text. Falls back to a single explanation paragraph if the
+          solver only returned the legacy `explanation` field (older clients
+          or deterministic-check path). The `explanation` summary, when both
+          exist, renders BELOW the steps as a brief takeaway. */}
+      {(solve.steps && solve.steps.length > 0) || solve.explanation ? (
         <div className="card" style={{ padding: 14, marginTop: 12, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
-          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>SOLUTION STEPS</div>
-          <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap' }}>
-            <MathText text={solve.explanation} />
-          </div>
+          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>{t('upload.result.solution.eyebrow')}</div>
+          {solve.steps && solve.steps.length > 0 ? (
+            <ol style={{
+              margin: 0,
+              paddingLeft: 0,
+              listStyle: 'none',
+              display: 'grid',
+              gap: 10,
+              fontSize: 13.5,
+              lineHeight: 1.6,
+              color: 'var(--p-ink-2)',
+            }}>
+              {solve.steps.map((step, idx) => (
+                <li key={idx} style={{ whiteSpace: 'pre-wrap' }}>
+                  <MathText text={step} />
+                </li>
+              ))}
+            </ol>
+          ) : null}
+          {solve.explanation && solve.steps && solve.steps.length > 0 ? (
+            <div style={{
+              marginTop: 12,
+              paddingTop: 10,
+              borderTop: '1px solid var(--p-border)',
+              fontSize: 12.5,
+              lineHeight: 1.55,
+              color: 'var(--p-ink-3)',
+              fontStyle: 'italic',
+              whiteSpace: 'pre-wrap',
+            }}>
+              <MathText text={solve.explanation} />
+            </div>
+          ) : null}
+          {solve.explanation && (!solve.steps || solve.steps.length === 0) ? (
+            <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap' }}>
+              <MathText text={solve.explanation} />
+            </div>
+          ) : null}
         </div>
-      )}
+      ) : null}
 
       {/* Answer card -- primary accent so it reads as the headline result */}
       <div className="card" style={{
         marginTop: 12, padding: '14px 16px',
         background: 'var(--p-primary-tint)', borderColor: 'var(--p-primary)',
       }}>
-        <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>ANSWER</div>
+        <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>{t('upload.result.answer.eyebrow')}</div>
         <div style={{ marginTop: 6, fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
           <MathText text={solve.answer || '—'} />
         </div>
@@ -404,22 +462,22 @@ function ResultPhase({
           display: 'flex', alignItems: 'center', gap: 8,
         }}>
           <Glyph.Check accent="currentColor" size={14} />
-          <span>{solve.isStudentCorrect ? 'Your answer looks correct.' : 'Your answer looks wrong — filed to your Notes for review.'}</span>
+          <span>{solve.isStudentCorrect ? t('upload.result.correct') : t('upload.result.wrong')}</span>
         </div>
       )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
         <button className="btn outline" onClick={onRetry} style={{ flex: 1 }}>
-          Try another
+          {t('upload.result.tryAnother')}
         </button>
         {onPracticeNow ? (
           <button className="btn" onClick={onPracticeNow} style={{ flex: 1 }}>
-            Save to Notes
+            {t('upload.result.saveNotes')}
             <Glyph.ChevronR />
           </button>
         ) : (
           <button className="btn" onClick={onClose} style={{ flex: 1 }}>
-            Done
+            {t('upload.result.done')}
             <Glyph.ChevronR />
           </button>
         )}
@@ -432,6 +490,7 @@ const fieldLabel: React.CSSProperties = { display: 'flex', flexDirection: 'colum
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid var(--p-border)', background: 'var(--p-surface)', color: 'var(--p-ink)', font: 'inherit', fontSize: 12.5 };
 
 function ErrorPhase({ error, onRetry, onClose }: { error: string; onRetry: () => void; onClose: () => void }) {
+  const { t } = useT();
   return (
     <div>
       <div style={{
@@ -447,14 +506,14 @@ function ErrorPhase({ error, onRetry, onClose }: { error: string; onRetry: () =>
             background: 'transparent', border: '1px solid var(--p-border)', color: 'var(--p-ink-2)',
             padding: '9px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 13,
           }}
-        >Close</button>
+        >{t('upload.error.close')}</button>
         <button
           onClick={onRetry}
           style={{
             background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
             padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
           }}
-        >Try again</button>
+        >{t('upload.error.retry')}</button>
       </div>
     </div>
   );

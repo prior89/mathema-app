@@ -23,6 +23,21 @@ function mockPrisma(over: any = {}) {
       updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       ...over.wrongNote,
     },
+    // 2026-05-27: getQueueNext now reads User.country to country-gate the
+    // review queue (KR users see only KR notes, IN users see only NCERT).
+    // Without this delegate the spec crashes with "Cannot read properties
+    // of undefined (reading 'findUnique')" on every queue test.
+    user: {
+      findUnique: jest.fn().mockResolvedValue({ country: 'IN' }),
+      ...over.user,
+    },
+    // Same era: queueNext also reads Attempt.count to drive the 3-wrong
+    // hint reveal (Hint Lv1). Provide a zero-default so existing tests stay
+    // green without needing per-spec wiring.
+    attempt: {
+      count: jest.fn().mockResolvedValue(0),
+      ...over.attempt,
+    },
   };
 }
 function mockAttempts(): AnyMock {

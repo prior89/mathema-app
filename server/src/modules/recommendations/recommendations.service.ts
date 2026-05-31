@@ -5,6 +5,7 @@ import { MaintainStrengthStrategy } from './strategies/maintain-strength.strateg
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { StudyBalanceService } from './services/study-balance.service';
 import { generateAdaptivePlan, AdaptivePlan } from '../../infrastructure/ai/langchain/chains/adaptive-recommendation.chain';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 
 /**
  * 대시보드 "오늘의 맞춤 학습" 카드 — 데이터가 있을 때만 실제 카드 반환.
@@ -26,6 +27,7 @@ export class RecommendationsService {
     private readonly reinforce: ReinforceWeaknessStrategy,
     private readonly maintain: MaintainStrengthStrategy,
     private readonly balance: StudyBalanceService,
+    private readonly prisma: PrismaService,
   ) {}
 
   /** 단원별 공부 시간 균형 분석 — Weakness Dashboard 의 데이터 원천. */
@@ -72,8 +74,24 @@ export class RecommendationsService {
   /**
    * 오늘의 추천 카드 — 데이터 있는 만큼만 반환 (최대 3, 최소 0).
    * frontend 는 length 로 empty state 분기.
+   *
+   * country='KR' 사용자: 빈 배열 반환. 3 strategy 모두 NCERT Unit/ConceptLesson
+   * 기반이라 KR 사용자에게 NCERT 챕터를 추천하면 cross-curriculum 노출.
+   * KR recommendation strategies (KoreanConceptLesson 기반) 는 Phase 4 작업.
+   * 그 전까지 KR 사용자는 빈 응답 → HomeScreen EmptyCta ("No tasks yet").
+   *
+   * Country는 controller에서 안 보내고 service가 직접 fetch — JwtStrategy.validate
+   * 가 country를 req.user에 포함시키지 않아서 (현재 {id}만 반환). controller에서
+   * 추가 fetch 추가하면 JwtStrategy 변경 OR controller에 PrismaService 주입
+   * 둘 다 blast radius 크므로 service self-contained가 가장 surgical.
    */
   async today(userId: string, lang: Lang = 'en') {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { country: true },
+    });
+    if (user?.country === 'KR') return [];
+
     const exclude: string[] = [];
     const cards: any[] = [];
 

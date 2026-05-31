@@ -14,10 +14,13 @@
  *   • the server can adapt difficulty to live performance later (future).
  */
 import { useEffect, useRef, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { post } from '../../lib/api';
 import { nextStudyProblem } from '../../lib/mutations';
+import { fetchProblemHint, fetchProblemHintWalkthrough } from '../../lib/queries';
+import { useShuffledChoices } from '../../lib/shuffle';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
@@ -52,6 +55,7 @@ export function StudyPracticeScreen() {
   const { chapterCode } = useParams<{ chapterCode: string }>();
   const nav = useNavigate();
   const qc = useQueryClient();
+  const { t } = useT();
 
   const [current, setCurrent] = useState<StudyProblem | null>(null);
   const [pickedId, setPickedId] = useState<string | null>(null);
@@ -61,8 +65,26 @@ export function StudyPracticeScreen() {
   const [questionNum, setQuestionNum] = useState(0);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** 0 = not shown, 1 = formula (cached, instant), 2 = AI walkthrough (Gemini call). */
+  const [hintLevel, setHintLevel] = useState<0 | 1 | 2>(0);
   const startedAtRef = useRef(Date.now());
   const canvasRef = useRef<HandwritingCanvasHandle>(null);
+
+  // Hint Lv1 — formula + concept + hint cached on the Problem row.
+  const hintQuery = useQuery({
+    queryKey: ['problem-hint', current?.id],
+    queryFn: () => fetchProblemHint(current!.id),
+    enabled: hintLevel >= 1 && !!current?.id,
+  });
+  // Hint Lv2 — Gemini-generated step-by-step walkthrough. Only fired when
+  // the student taps Hint a second time. Cached per problem id so re-opening
+  // the hint doesn't re-bill another LLM call.
+  const walkQuery = useQuery({
+    queryKey: ['problem-walkthrough', current?.id],
+    queryFn: () => fetchProblemHintWalkthrough(current!.id),
+    enabled: hintLevel >= 2 && !!current?.id,
+    staleTime: Infinity,
+  });
 
   const fetchNext = useMutation({
     mutationFn: () => nextStudyProblem(chapterCode!),
@@ -75,13 +97,14 @@ export function StudyPracticeScreen() {
       setCurrent(problem as StudyProblem);
       setPickedId(null);
       setResult(null);
+      setHintLevel(0);
       startedAtRef.current = Date.now();
       canvasRef.current?.clear();
       setError(null);
       setQuestionNum((n) => n + 1);
     },
     onError: (e: any) => {
-      setError(e?.response?.data?.error?.message ?? 'Could not fetch the next problem');
+      setError(e?.response?.data?.error?.message ?? t('practice.fetch.failed'));
     },
   });
 
@@ -94,6 +117,8 @@ export function StudyPracticeScreen() {
   }, [chapterCode]);
 
   const step = current?.steps?.[0];
+  // 보기 셔플 — 새 문제 fetch 마다 자동 재셔플.
+  const shuffledChoices = useShuffledChoices(step?.choices ?? []);
 
   const submit = useMutation({
     mutationFn: () => {
@@ -147,30 +172,28 @@ export function StudyPracticeScreen() {
             <>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-muted)' }}>📒</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, lineHeight: 1.25 }}>
-                This chapter doesn't have practice problems yet.
+                {t('practice.done.notRegistered.icon')}
               </div>
               <div style={{ fontSize: 13, color: 'var(--p-ink-2)', maxWidth: 320, lineHeight: 1.55 }}>
-                We're curating problems for it by hand to keep quality up.
-                Try a different chapter, or check back soon.
+                {t('practice.done.notRegistered.desc')}
               </div>
             </>
           ) : (
             <>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-primary)' }}>✓</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 24 }}>Practice done.</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 24 }}>{t('practice.done.summary.title')}</div>
               <div style={{ fontSize: 14, color: 'var(--p-ink-2)', lineHeight: 1.6 }}>
-                <strong>{correctCount}</strong> right · <strong>{wrongCount}</strong> filed to Notes.
+                {t('practice.done.summary.body', { right: correctCount, wrong: wrongCount })}
               </div>
               <div style={{ fontSize: 12, color: 'var(--p-muted)', maxWidth: 320, lineHeight: 1.55 }}>
-                Wrong answers are now in your wrong-note book. Re-open them from Notes
-                whenever you want — a single perfect retry graduates them.
+                {t('practice.done.summary.note')}
               </div>
             </>
           )}
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-            <button className="btn outline" onClick={() => nav('/app/study')}>Back to Study</button>
+            <button className="btn outline" onClick={() => nav('/app/study')}>{t('practice.done.backStudy')}</button>
             {wrongCount > 0 && (
-              <button className="btn" onClick={() => nav('/app/notes')}>Open Notes</button>
+              <button className="btn" onClick={() => nav('/app/notes')}>{t('practice.done.openNotes')}</button>
             )}
           </div>
         </div>
@@ -188,15 +211,14 @@ export function StudyPracticeScreen() {
             <>
               <div style={{ fontSize: 14, color: 'var(--p-danger)' }}>{error}</div>
               <button className="btn outline" style={{ maxWidth: 200 }} onClick={() => nav('/app/study')}>
-                Back to Study
+                {t('practice.done.backStudy')}
               </button>
             </>
           ) : (
             <>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 18 }}>Building your first question…</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 18 }}>{t('practice.firstLoad.title')}</div>
               <div style={{ fontSize: 12, lineHeight: 1.6, maxWidth: 320 }}>
-                A new problem is being assembled — usually under 30 seconds. The next ones come
-                from your chapter's shared pool and arrive instantly.
+                {t('practice.firstLoad.desc')}
               </div>
             </>
           )}
@@ -212,15 +234,15 @@ export function StudyPracticeScreen() {
     <div className="screen" key={current.id}>
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <button onClick={() => nav('/app/study')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
+          <button onClick={() => nav('/app/study')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label={t('practice.back')}>
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-              PRACTICE
+              {t('practice.eyebrow')}
             </div>
             <div style={{ fontSize: 13, fontWeight: 600 }}>
-              Q {questionNum} · {correctCount} right / {wrongCount} wrong
+              {t('practice.status', { n: questionNum, right: correctCount, wrong: wrongCount })}
             </div>
           </div>
         </div>
@@ -232,7 +254,7 @@ export function StudyPracticeScreen() {
             padding: '6px 10px', fontSize: 11, color: 'var(--p-ink-2)', cursor: 'pointer',
           }}
         >
-          Stop
+          {t('practice.stop')}
         </button>
       </div>
 
@@ -240,7 +262,7 @@ export function StudyPracticeScreen() {
           question while picking an answer or working on the canvas below. */}
       <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
         <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
-          <div className="eyebrow" style={{ fontSize: 10 }}>PROBLEM</div>
+          <div className="eyebrow" style={{ fontSize: 10 }}>{t('practice.problemEyebrow')}</div>
           <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}>
             <MathText text={current.body} />
           </div>
@@ -250,7 +272,7 @@ export function StudyPracticeScreen() {
       {/* Scrollable middle (canvas + choices + feedback) */}
       <div style={{ flex: 1, overflow: 'auto', padding: '12px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
-          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>WORKINGS</div>
+          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('practice.workingsEyebrow')}</div>
           <HandwritingCanvas ref={canvasRef} height={300} extendable />
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
             <button
@@ -259,7 +281,7 @@ export function StudyPracticeScreen() {
               onClick={() => canvasRef.current?.undo()}
               style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
             >
-              Undo
+              {t('practice.undo')}
             </button>
             <button
               type="button"
@@ -267,14 +289,76 @@ export function StudyPracticeScreen() {
               onClick={() => canvasRef.current?.clear()}
               style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
             >
-              Clear
+              {t('practice.clear')}
+            </button>
+            <button
+              type="button"
+              className="btn outline"
+              onClick={() => setHintLevel((lv) => (lv >= 2 ? 2 : ((lv + 1) as 0 | 1 | 2)))}
+              disabled={hintLevel >= 2}
+              style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
+            >
+              💡 {hintLevel === 0 ? t('practice.hint.btn0') : hintLevel === 1 ? t('practice.hint.btn1') : t('practice.hint.btn2')}
             </button>
           </div>
+          {/* Hint Lv1 — DB-cached formula / concept / hint. Instant; no LLM. */}
+          {hintLevel >= 1 && (
+            <div
+              className="card"
+              style={{
+                padding: 12, marginTop: 8, fontSize: 13, lineHeight: 1.5,
+                background: 'var(--p-accent-tint)', borderColor: 'transparent',
+              }}
+            >
+              <div className="eyebrow" style={{ fontSize: 10, marginBottom: 4 }}>{t('practice.hint.formulaEyebrow')}</div>
+              {hintQuery.isLoading ? (
+                <div style={{ color: 'var(--p-ink-2)' }}>{t('practice.hint.loading')}</div>
+              ) : hintQuery.data?.formula ? (
+                <MathText text={hintQuery.data.formula} />
+              ) : hintQuery.data?.concept ? (
+                <MathText text={hintQuery.data.concept} />
+              ) : hintQuery.data?.hint ? (
+                <MathText text={hintQuery.data.hint} />
+              ) : (
+                <span style={{ color: 'var(--p-muted)' }}>{t('practice.hint.empty')}</span>
+              )}
+            </div>
+          )}
+          {/* Hint Lv2 — AI walkthrough (step-by-step). Styled like a notebook
+              annotation so it visually overlays "on the canvas" per user-spec
+              2026-05-23 ("AI가 노트에 써준다"). */}
+          {hintLevel >= 2 && (
+            <div
+              className="card"
+              style={{
+                padding: 12, marginTop: 8, fontSize: 13, lineHeight: 1.55,
+                background: 'var(--p-surface-2)',
+                borderLeft: '3px solid var(--p-primary)',
+                borderTop: 'none', borderRight: 'none', borderBottom: 'none',
+                borderRadius: 4,
+              }}
+            >
+              <div className="eyebrow" style={{ fontSize: 10, marginBottom: 4 }}>{t('practice.hint.walkthroughEyebrow')}</div>
+              {walkQuery.isLoading ? (
+                <div style={{ color: 'var(--p-ink-2)' }}>{t('practice.hint.writing')}</div>
+              ) : walkQuery.isError ? (
+                <div style={{ color: 'var(--p-danger)' }}>{t('practice.hint.error')}</div>
+              ) : walkQuery.data?.steps?.length ? (
+                <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {walkQuery.data.steps.map((s, i) => (
+                    <li key={i}><MathText text={s} /></li>
+                  ))}
+                </ol>
+              ) : (
+                <span style={{ color: 'var(--p-muted)' }}>{t('practice.hint.noWalkthrough')}</span>
+              )}
+            </div>
+          )}
         </div>
 
         {step && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-            {step.choices.map((c, i) => {
+            {shuffledChoices.map((c, i) => {
               const isPicked = pickedId === c.id;
               const isRevealedCorrect = result?.isCorrect && isPicked;
               const isWrongPick = result && !result.isCorrect && isPicked;
@@ -308,19 +392,20 @@ export function StudyPracticeScreen() {
               borderColor: 'transparent', fontWeight: 600,
             }}
           >
-            {result.isCorrect
-              ? '✓ Correct — tap Next for a new problem.'
-              : '✗ Wrong — filed to your Notes. Tap Next when ready.'}
+            {result.isCorrect ? t('practice.correct.msg') : t('practice.wrong.msg')}
             {result.correctChoice && !result.isCorrect && (
               <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)', fontWeight: 400 }}>
-                Correct answer: <MathText text={result.correctChoice.text} />
+                {t('practice.wrong.correctAnswer')} <MathText text={result.correctChoice.text} />
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* Sticky footer — Check / Next */}
+      {/* Sticky footer — Check / Try Again / Next.
+          User-spec 2026-05-23: Next is locked until the student answers
+          correctly. Wrong answers route to Try Again, which clears the pick
+          + result (canvas stays, so working isn't lost). */}
       <div className="screen-foot" style={{ paddingTop: 6 }}>
         {!result ? (
           <button
@@ -328,13 +413,24 @@ export function StudyPracticeScreen() {
             disabled={!pickedId || submit.isPending}
             onClick={onSubmit}
           >
-            {submit.isPending ? 'Checking…' : 'Check'}
+            {submit.isPending ? t('practice.checking') : t('practice.check')}
+            <Glyph.ChevronR />
+          </button>
+        ) : result.isCorrect ? (
+          <button className="btn" onClick={onNext} disabled={fetchNext.isPending}>
+            {fetchNext.isPending ? t('practice.loading') : t('practice.nextProblem')}
             <Glyph.ChevronR />
           </button>
         ) : (
-          <button className="btn" onClick={onNext} disabled={fetchNext.isPending}>
-            {fetchNext.isPending ? 'Loading…' : 'Next problem'}
-            <Glyph.ChevronR />
+          <button
+            className="btn"
+            onClick={() => {
+              setResult(null);
+              setPickedId(null);
+              startedAtRef.current = Date.now();
+            }}
+          >
+            {t('practice.tryAgain')}
           </button>
         )}
       </div>

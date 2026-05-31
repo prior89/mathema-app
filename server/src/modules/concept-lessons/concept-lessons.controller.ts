@@ -7,6 +7,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { NcertClass } from '@prisma/client';
 import { ConceptLessonsService } from './concept-lessons.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -18,6 +19,10 @@ import {
   FinalizeConceptDto,
 } from './dto/concept-step.dto';
 
+// 2026-05-27 fix: NCERT mastery hits this controller on every step/problem
+// navigation. Same reasoning as the KR sibling — JWT is the right gate,
+// IP-bucketed throttler false-positives on normal learners.
+@SkipThrottle()
 @UseGuards(JwtAuthGuard)
 @Controller('concept-lessons')
 export class ConceptLessonsController {

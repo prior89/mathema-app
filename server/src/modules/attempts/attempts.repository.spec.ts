@@ -139,7 +139,11 @@ describe('AttemptsRepository.create', () => {
   it('does NOT graduate WrongNote on a correct multi-step attempt (stepIndex provided)', async () => {
     const prisma = mockPrisma();
     prisma.problemChoice.findUnique = jest.fn().mockResolvedValue({
-      id: 'ch-1', text: '42', isCorrect: true, distractorType: null, stepId: 's-1', step: { problemId: 'p1' },
+      id: 'ch-1', text: '42', isCorrect: true, distractorType: null, stepId: 's-1',
+      // 2026-05-27: choice.step.stepIndex must match dto.stepIndex per the
+      // new cross-check (stale-step-id defence). Without this the assertion
+      // crashes with BadRequest before reaching the WrongNote guard.
+      step: { problemId: 'p1', stepIndex: 1 },
     });
     const { repo } = build({ prisma });
     await repo.create('u1', { problemId: 'p1', choiceId: 'ch-1', stepIndex: 1 });
@@ -150,7 +154,8 @@ describe('AttemptsRepository.create', () => {
   it('skips WrongNote upsert on a wrong retry (same session+problem+stepIndex)', async () => {
     const prisma = mockPrisma();
     prisma.problemChoice.findUnique = jest.fn().mockResolvedValue({
-      id: 'ch-x', text: '0', isCorrect: false, distractorType: null, stepId: 's-1', step: { problemId: 'p1' },
+      id: 'ch-x', text: '0', isCorrect: false, distractorType: null, stepId: 's-1',
+      step: { problemId: 'p1', stepIndex: 1 },
     });
     prisma.attempt.count = jest.fn().mockResolvedValue(1); // previous attempt exists
     const { repo } = build({ prisma });

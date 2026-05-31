@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { get } from '../../lib/api';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
@@ -48,6 +49,7 @@ const STEP_LABEL: Record<number, string> = { 1: 'CONCEPT', 2: 'PROCESS', 3: 'ANS
 export function MockResultDetailScreen() {
   const { resultId } = useParams<{ resultId: string }>();
   const nav = useNavigate();
+  const { t } = useT();
   const detail = useQuery({
     queryKey: ['mock-result', resultId],
     queryFn: () => get<ResultDetail>(`/mock-exams/results/${resultId}`),
@@ -65,13 +67,13 @@ export function MockResultDetailScreen() {
     <div className="screen">
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <button onClick={() => nav(backTarget)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
+          <button onClick={() => nav(backTarget)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label={t('mockResult.back')}>
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>REVIEW</div>
+            <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{t('mockResult.eyebrow')}</div>
             <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {detail.data?.name ?? 'Loading…'}
+              {detail.data?.name ?? t('mockResult.loading')}
             </div>
           </div>
         </div>
@@ -79,11 +81,11 @@ export function MockResultDetailScreen() {
 
       <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0 }}>
         {detail.isLoading && (
-          <div style={{ padding: 22, textAlign: 'center', color: 'var(--p-muted)' }}>Loading…</div>
+          <div style={{ padding: 22, textAlign: 'center', color: 'var(--p-muted)' }}>{t('mockResult.loading')}</div>
         )}
         {detail.isError && (
           <div className="card" style={{ padding: 14, color: 'var(--p-danger)' }}>
-            Could not load this result.
+            {t('mockResult.errorLoad')}
           </div>
         )}
 
@@ -94,25 +96,25 @@ export function MockResultDetailScreen() {
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 48, fontStyle: 'italic', color: 'var(--p-primary)', lineHeight: 1 }}>
                 {detail.data.score}
               </div>
-              <div className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, marginTop: 6 }}>OUT OF 100</div>
+              <div className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, marginTop: 6 }}>{t('mockResult.outOf')}</div>
             </div>
 
             <div className="stat-grid" style={{ marginTop: 10 }}>
-              <Cell k="Grade" v={gradeBand(detail.data.grade)} />
-              <Cell k="Percentile" v={`${detail.data.percentile}`} u="%" />
-              <Cell k="Correct" v={`${correct}/${total}`} />
-              <Cell k="Duration" v={`${detail.data.durationMin}m`} sub={`of ${detail.data.totalMinutes}m`} />
+              <Cell k={t('mockResult.cell.grade')} v={gradeBand(detail.data.grade)} />
+              <Cell k={t('mockResult.cell.percentile')} v={`${detail.data.percentile}`} u="%" />
+              <Cell k={t('mockResult.cell.correct')} v={`${correct}/${total}`} />
+              <Cell k={t('mockResult.cell.duration')} v={t('mockResult.duration.suffix', { n: detail.data.durationMin })} sub={t('mockResult.duration.sub', { total: detail.data.totalMinutes })} />
             </div>
 
             <div className="section-h">
-              <span className="label">Question review</span>
-              <span className="more">{total} questions</span>
+              <span className="label">{t('mockResult.review.section')}</span>
+              <span className="more">{t('mockResult.review.count', { n: total })}</span>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {detail.data.problems.length === 0 && (
                 <div className="card" style={{ padding: 14, textAlign: 'center', color: 'var(--p-muted)' }}>
-                  No questions were attempted in this exam.
+                  {t('mockResult.empty')}
                 </div>
               )}
               {detail.data.problems.map((p, i) => (
@@ -121,7 +123,7 @@ export function MockResultDetailScreen() {
                     <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18 }}>{i + 1}.</span>
                     {/* Attribution (p.source) intentionally not rendered. */}
                     <span className="chip" style={{ marginLeft: 'auto', fontSize: 10.5, background: p.allCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)', color: p.allCorrect ? 'var(--p-success)' : 'var(--p-danger)' }}>
-                      {p.allCorrect ? '✓ ALL' : '✗ MISSED'}
+                      {p.allCorrect ? t('mockResult.problem.allCorrect') : t('mockResult.problem.missed')}
                     </span>
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap', marginBottom: 8 }}><MathText text={p.body} /></div>
@@ -130,14 +132,16 @@ export function MockResultDetailScreen() {
                     {p.steps.map((s) => (
                       <div key={s.stepIndex} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12 }}>
                         <span className="chip" style={{ fontSize: 9.5, padding: '1px 6px', minWidth: 60, textAlign: 'center' }}>
-                          STEP {s.stepIndex} {STEP_LABEL[s.stepIndex] ? `· ${STEP_LABEL[s.stepIndex]}` : ''}
+                          {STEP_LABEL[s.stepIndex]
+                            ? t('mockResult.step.pill', { n: s.stepIndex, label: STEP_LABEL[s.stepIndex] })
+                            : t('mockResult.step.pillNoLabel', { n: s.stepIndex })}
                         </span>
                         <span style={{ color: s.isCorrect ? 'var(--p-success)' : 'var(--p-danger)', fontWeight: 600 }}>
                           {s.isCorrect ? '✓' : '✗'}
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ color: 'var(--p-ink-2)' }}>
-                            <strong style={{ color: 'var(--p-ink)' }}>Your pick:</strong> {s.myChoice ? <MathText text={s.myChoice} /> : '—'}
+                            <strong style={{ color: 'var(--p-ink)' }}>{t('mockResult.myPick')}</strong> {s.myChoice ? <MathText text={s.myChoice} /> : '—'}
                           </div>
                           {!s.isCorrect && s.rationale && (
                             <div style={{ marginTop: 2, color: 'var(--p-muted)', fontSize: 11.5 }}>

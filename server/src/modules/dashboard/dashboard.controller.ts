@@ -1,8 +1,12 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
+// 2026-05-27: dashboard endpoints fire on every Home mount + react-query
+// refetch. Same throttle-false-positive risk as the mastery surface; skip.
+@SkipThrottle()
 @UseGuards(JwtAuthGuard)
 @Controller('dashboard')
 export class DashboardController {

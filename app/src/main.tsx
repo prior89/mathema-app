@@ -27,13 +27,11 @@ const queryClient = new QueryClient({
 // 안드로이드 래퍼 전용 초기화 — web 빌드에서는 모두 no-op.
 initCapacitorBridge().catch(() => { /* ignore */ });
 
-// 인도 PoC — 한국인 개발자의 브라우저 ko-KR 이 자동으로 'ko' 로 저장돼버린 경우 강제로 'en' 으로 리셋.
-// production 출시 시점에는 ko 토글로 명시 선택 가능 (그 때는 이 reset 제거).
-try {
-  if (localStorage.getItem('mathema.lang') === 'ko') {
-    localStorage.setItem('mathema.lang', 'en');
-  }
-} catch { /* ignore */ }
+// Korean curriculum lands as a real country branch (User.country === 'KR'),
+// so 'ko' is now a legitimate persisted language. The startup ko→en force-
+// reset that protected the India PoC against dev browser locale ko-KR has
+// been removed — i18n.tsx's init no longer picks ko from browser locale,
+// and KR users get ko set explicitly via I18nCountrySync after login.
 
 /**
  * Backspace guard — in some environments (Capacitor, old Edge, keyboard hook

@@ -11,34 +11,34 @@ except ImportError:  # pragma: no cover
 
 _logger = logging.getLogger(__name__)
 
-# Single-vendor stack — Gemini 2.5 Flash does OCR (multimodal), problem
-# solving, and final-answer rendering. The Pro tier was tested 2026-05-22
-# but the user's preference is "everything on Flash" for vendor unity,
-# pricing predictability, and DPDP residency (Vertex AI Mumbai path).
+# Primary: Gemini 3.5 Flash. Selected 2026-05-23 after a head-to-head
+# benchmark on the hardest in-scope problem (the user's multi-part
+# 수열·절대값합 question that had been returning 60000):
 #
-# Pricing: $0.075 / $0.30 per 1M tokens → ~$0.0005 per math solve.
-# Accuracy on AIME / NCERT word problems sits around 80-85%, lower than
-# Pro's ~95% but high enough for the v1 launch — promote back to Pro only
-# if Flash falters on a class of problems we can't fix with prompting.
-# Primary: gpt-4o. Gemini 3.5 Flash kept falting on multi-step Korean
-# sequence/series problems even with the token cap lifted — falling back
-# to OpenAI's frontier mini-flagship gives ~90%+ accuracy on the same
-# class. Pricing $2.50/$10 per 1M is roughly 30x Flash, justified while
-# we're tuning the Solver for launch correctness over per-call cost.
-_openai_primary = ChatOpenAI(
-    model="gpt-4o",
-    temperature=0,
-    max_tokens=8192,
-)
-
-# Cross-cloud fallback — Gemini 3.5 Flash. Same multimodal model used for
-# OCR in mathpix.service.ts, so a single key keeps both paths alive when
-# OpenAI is rate-limited or auth-failing.
-# Was gemini-1.5-flash until 2026-05-22 — Google deprecated that id and returns
-# 404 NOT_FOUND on v1beta. 3.5-flash is the current stable multimodal tier.
-_gemini_flash = (
+#   model                     latency   part1   part2
+#   gemini-3.5-flash          13.5s     ✓       ✓     ← primary
+#   gemini-flash-latest       13.8s     ✓       ✓     (alias)
+#   o3-mini                   14.4s     ✓       ✓
+#   gemini-2.5-pro            40.2s     ✓       ✓     (3x slower)
+#   gpt-4o                     4.3s     ✗       ✗     (old primary, wrong)
+#   gpt-4.1                   35.0s     ✗       ✗
+#   gpt-5-* family            400/404   (API plan / Responses format gap)
+#
+# Flash matches Pro's accuracy on this hard test while being ~3x faster
+# and ~10-15x cheaper ($0.075/$0.30 per 1M tokens vs $1.25/$5). Same model
+# already powers the OCR path in mathpix.service.ts → one Gemini key, one
+# model id, one DPDP residency story (Vertex AI Mumbai migration is a
+# single config change).
+#
+# 2026-05-23 (afternoon): dropped from 3.5-flash → 2.5-flash. 3.5-flash
+# advertises "thinking: true" and silently generates 5-15K reasoning tokens
+# per call (billed at output rate) — ₩24K burnt in one Tier 2 sweep hour.
+# Disabling thinking via langchain-google-genai's kwarg wasn't reliable
+# across versions, so we use the older 2.5-flash which has no thinking
+# branch. NestJS direct-fetch sites stay on 3.5-flash + thinkingBudget=0.
+_primary = (
     ChatGoogleGenerativeAI(
-        model="gemini-3.5-flash",
+        model="gemini-2.5-flash",
         temperature=0,
         max_output_tokens=8192,
     )
@@ -46,25 +46,59 @@ _gemini_flash = (
     else None
 )
 
+# Same-vendor Pro fallback — different quota pool than Flash so a transient
+# Flash rate-limit can be ridden out without dropping to a different cloud.
+# `gemini-pro-latest` is the auto-rolling stable Pro alias; benchmark
+# showed identical correctness on the test problem (30s latency).
+_gemini_pro_fallback = (
+    ChatGoogleGenerativeAI(
+        model="gemini-pro-latest",
+        temperature=0,
+        max_output_tokens=8192,
+    )
+    if ChatGoogleGenerativeAI is not None and os.environ.get("GEMINI_API_KEY")
+    else None
+)
+
+# Cross-cloud last-resort — o3-mini (OpenAI reasoning, 14s, ✓ on the test
+# problem). Kept so a Gemini-wide incident doesn't take the Solver down.
+# Note: o3-mini uses max_completion_tokens, not max_tokens, and refuses
+# temperature ≠ 1 — defaults are fine.
+# Cap output tokens explicitly: o3-mini bills reasoning tokens as output and
+# defaults to a very high cap. Bounding to 8192 mirrors the Gemini side and
+# prevents a Gemini-wide outage cascading into a runaway OpenAI bill.
+_openai_fallback = ChatOpenAI(
+    model="o3-mini",
+    max_completion_tokens=8192,
+)
+
 
 async def structured(prompt: str, schema: type[BaseModel]):
-    """Schema-constrained LLM call with cross-cloud failure fallback.
+    """Schema-constrained LLM call with vendor + tier failover.
 
-    Order: gpt-4o → Gemini 3.5 Flash (if configured) → re-raise.
-    `with_structured_output(schema)` honoured by both sides so callers
+    Order: gemini-3.5-flash → gemini-pro-latest → o3-mini → re-raise.
+    `with_structured_output(schema)` honoured by all three so callers
     don't care which provider answered.
     """
-    try:
-        return await _openai_primary.with_structured_output(schema).ainvoke(prompt)
-    except Exception as e:
-        if _gemini_flash is None:
-            raise
-        _logger.warning(
-            "gpt-4o structured() failed (%s) — falling back to Gemini 3.5 Flash",
-            type(e).__name__,
-        )
-        return await _gemini_flash.with_structured_output(schema).ainvoke(prompt)
+    if _primary is not None:
+        try:
+            return await _primary.with_structured_output(schema).ainvoke(prompt)
+        except Exception as e:
+            _logger.warning(
+                "gemini-3.5-flash structured() failed (%s) — falling back to gemini-pro-latest",
+                type(e).__name__,
+            )
+    if _gemini_pro_fallback is not None:
+        try:
+            return await _gemini_pro_fallback.with_structured_output(schema).ainvoke(prompt)
+        except Exception as e:
+            _logger.warning(
+                "gemini-pro-latest structured() failed (%s) — falling back to o3-mini",
+                type(e).__name__,
+            )
+    return await _openai_fallback.with_structured_output(schema).ainvoke(prompt)
 
 
-# Direct-invoke alias for legacy callers (graph.py imports `llm`).
-llm = _openai_primary
+# Direct-invoke alias for legacy callers (graph.py imports `llm`). Same
+# resolution order — Flash if configured, then OpenAI as last resort.
+llm = _primary if _primary is not None else _openai_fallback

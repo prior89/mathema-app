@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, UseGuards, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { AttemptsService } from './attempts.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -6,6 +7,14 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { SimilarProblemService } from '../recommendations/services/similar-problem.service';
 import { CreateAttemptDto } from './dto/create-attempt.dto';
 
+// 2026-05-27 fix: attempts is the core grading endpoint students hit on
+// every choice click. Even with user-bucketed throttler the natural pace
+// of a 20-problem × 3-step mastery run plus react-query refetches can
+// brush the global ceiling, and a throttle here looks identical to a
+// network error to the learner ("서버가 답을 채점하지 못했어요"). JWT auth
+// alone is the right control surface — fraud-detection belongs to a
+// separate analytics layer, not the rate limiter.
+@SkipThrottle()
 @UseGuards(JwtAuthGuard)
 @Controller('attempts')
 export class AttemptsController {

@@ -27,6 +27,21 @@ export class AttemptsService {
     const attempt = await this.repo.create(userId, dto);
     this.events.emit('attempt.completed', attempt);
 
+    // Mastery → Study unlock gate (user-spec 2026-05-24 정정): the chapter's
+    // ConceptProgress.masteredAt fires when the user has submitted an
+    // ANSWER-step attempt on every problem in the chapter's canonical
+    // Mastery 20-set, regardless of correctness. Triggered on every
+    // ANSWER-step submit in PRACTICE context (right or wrong) so a stuck
+    // problem can't permanently block Study access. Idempotent + sticky.
+    if (attempt.stepIndex === 3 && attempt.context === 'PRACTICE') {
+      // Fire-and-forget — checking 20 attempts shouldn't block the user's
+      // next-problem render. Errors are logged but don't fail the request.
+      void this.checkAndUnlockMastery(userId, attempt.problemId).catch((e) => {
+        // eslint-disable-next-line no-console
+        console.warn('[mastery-unlock] failed:', (e as Error).message);
+      });
+    }
+
     // Pull selected choice + correct choice for rationale rendering.
     let selectedChoice: any = null;
     let correctChoice: any = null;
@@ -54,6 +69,103 @@ export class AttemptsService {
       selectedChoice,
       correctChoice,
     };
+  }
+
+  /**
+   * Check if the user has now attempted every problem in the chapter's
+   * canonical Mastery 20-set, and if so stamp ConceptProgress.masteredAt
+   * (sticky). This is the Study-unlock gate.
+   *
+   * Definition of "완주" (user-spec 2026-05-24 정정):
+   *   At least one Attempt row exists on stepIndex=3 (ANSWER step) for the
+   *   given problem in STUDY or PRACTICE context. Correctness is irrelevant
+   *   — the gate is "submitted an answer", not "submitted a correct answer"
+   *   (and definitely not perfect-cycle). A stuck-on-one-problem learner
+   *   should still graduate to Study so they can drill further.
+   */
+  private async checkAndUnlockMastery(userId: string, problemId: string): Promise<void> {
+    const problem = await this.prisma.problem.findUnique({
+      where: { id: problemId },
+      select: { conceptLessonId: true, koreanConceptLessonId: true },
+    });
+    if (!problem) return;
+
+    // Country gate by which lesson the problem belongs to:
+    //   NCERT problem (conceptLessonId set)         → ConceptProgress
+    //   Korean problem (koreanConceptLessonId set)  → KoreanConceptProgress
+    // A problem maps to one or the other, never both; both paths use the same
+    // "submitted ANSWER-step on every canonical-set problem" gate.
+    if (problem.koreanConceptLessonId) {
+      await this.unlockKorean(userId, problem.koreanConceptLessonId);
+      return;
+    }
+    if (problem.conceptLessonId) {
+      await this.unlockNcert(userId, problem.conceptLessonId);
+    }
+  }
+
+  private async unlockNcert(userId: string, lessonId: string): Promise<void> {
+    const lesson = await this.prisma.conceptLesson.findUnique({
+      where: { id: lessonId },
+      select: { masterySetProblemIds: true },
+    });
+    if (!lesson || lesson.masterySetProblemIds.length !== 20) return;
+
+    const attemptedRows = await this.prisma.attempt.findMany({
+      where: {
+        userId,
+        problemId: { in: lesson.masterySetProblemIds },
+        stepIndex: 3,
+        context: { in: ['STUDY' as const, 'PRACTICE' as const] },
+      },
+      distinct: ['problemId'],
+      select: { problemId: true },
+    });
+    if (attemptedRows.length < 20) return;
+
+    const existing = await this.prisma.conceptProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId } },
+      select: { masteredAt: true },
+    });
+    if (existing?.masteredAt) return;
+
+    await this.prisma.conceptProgress.upsert({
+      where: { userId_lessonId: { userId, lessonId } },
+      create: { userId, lessonId, masteredAt: new Date() },
+      update: { masteredAt: new Date() },
+    });
+  }
+
+  private async unlockKorean(userId: string, lessonId: string): Promise<void> {
+    const lesson = await this.prisma.koreanConceptLesson.findUnique({
+      where: { id: lessonId },
+      select: { masterySetProblemIds: true },
+    });
+    if (!lesson || lesson.masterySetProblemIds.length !== 20) return;
+
+    const attemptedRows = await this.prisma.attempt.findMany({
+      where: {
+        userId,
+        problemId: { in: lesson.masterySetProblemIds },
+        stepIndex: 3,
+        context: { in: ['STUDY' as const, 'PRACTICE' as const] },
+      },
+      distinct: ['problemId'],
+      select: { problemId: true },
+    });
+    if (attemptedRows.length < 20) return;
+
+    const existing = await this.prisma.koreanConceptProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId } },
+      select: { masteredAt: true },
+    });
+    if (existing?.masteredAt) return;
+
+    await this.prisma.koreanConceptProgress.upsert({
+      where: { userId_lessonId: { userId, lessonId } },
+      create: { userId, lessonId, masteredAt: new Date() },
+      update: { masteredAt: new Date() },
+    });
   }
 
   private buildBasicFeedback(a: { isCorrect: boolean; errorCodes: ErrorCode[]; hintUsed: boolean; durationSec: number }): string {

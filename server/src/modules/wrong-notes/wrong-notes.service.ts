@@ -31,22 +31,53 @@ export class WrongNotesService {
   getDue(userId: string, limit?: number, lang: Lang = 'en') { return this.repo.findDue(userId, limit, lang); }
 
   /**
-   * Review queue — FIFO with 3-day cooldown + sequential gate.
+   * Review queue — FIFO with 3-day cooldown + sequential gate + 3-wrong hint.
    *
    * Returns the SINGLE oldest wrong note ready for review:
    *  - status != MASTERED
    *  - createdAt < now − 3 days   (so the user has time to absorb the lesson
    *    before re-encountering the problem; deliberate spaced-practice gap)
    *
-   * The frontend renders exactly one problem at a time and won't advance until
-   * the user solves it (forced sequential review). Returns null when nothing
-   * is ready (queue empty or every item still in cooldown).
+   * Sequential lock: the returned note is the user's "current" review problem
+   * until they MASTER it. Wrong attempts via POST /:id/check do NOT bump
+   * createdAt (attempts.repository.create's WrongNote upsert only increments
+   * `occurrences`), so the same note re-appears at the front of the FIFO on
+   * every queueNext call. Skip is impossible by construction — there's no
+   * other endpoint that yields a different non-current note.
+   *
+   * 3-wrong hint policy (matheo-ux-spec-full): after the user has 3 wrong
+   * Attempts on the current note's problem in PRACTICE context, the queue
+   * payload exposes `hintAvailable: true` plus the cached one-line `hint`
+   * string. The full solution is NEVER returned here — per spec the nudge
+   * is one line only, the solver route stays separate.
+   *
+   * Returns wrongNote=null when nothing is ready (queue empty or cooldown).
    */
   async getQueueNext(userId: string) {
     const COOLDOWN_DAYS = 3;
+    const HINT_WRONG_THRESHOLD = 3;
     const threshold = new Date(Date.now() - COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
+
+    // Country gate: cross-curriculum cleanup. KR 사용자의 review queue 는
+    // KR problem (koreanConceptLessonId IS NOT NULL) 만, IN/그외는 NCERT
+    // problem (conceptLessonId IS NOT NULL) 만. 현재 사용자 흐름상 IN 은
+    // NCERT 만, KR 은 KR 만 푸는 게 정상이라 결함 발생 가능성 낮지만
+    // history 적 cross-attempt (수동 import, 옛 시드 등) 가 큐에 새는 걸 차단.
+    const me = await this.prisma.user.findUnique({
+      where: { id: userId }, select: { country: true },
+    });
+    const isKR = me?.country === 'KR';
+    const problemCurriculumWhere = isKR
+      ? { koreanConceptLessonId: { not: null } }
+      : { conceptLessonId: { not: null } };
+
     const note = await this.prisma.wrongNote.findFirst({
-      where: { userId, status: { not: 'MASTERED' }, createdAt: { lte: threshold } },
+      where: {
+        userId,
+        status: { not: 'MASTERED' },
+        createdAt: { lte: threshold },
+        problem: problemCurriculumWhere,
+      },
       orderBy: { createdAt: 'asc' },
       include: {
         problem: {
@@ -55,8 +86,33 @@ export class WrongNotesService {
       },
     });
     const totalEligible = await this.prisma.wrongNote.count({
-      where: { userId, status: { not: 'MASTERED' }, createdAt: { lte: threshold } },
+      where: {
+        userId,
+        status: { not: 'MASTERED' },
+        createdAt: { lte: threshold },
+        problem: problemCurriculumWhere,
+      },
     });
+    // 3-wrong hint unlock — only when a note is in flight. Counts every
+    // wrong PRACTICE attempt on this problem ever; reaching the threshold
+    // is sticky for the rest of the note's lifetime (until MASTERED), so
+    // a 4th wrong doesn't re-hide the hint.
+    let hintAvailable = false;
+    let hintLine: string | null = null;
+    if (note) {
+      const wrongCount = await this.prisma.attempt.count({
+        where: {
+          userId,
+          problemId: note.problemId,
+          context: 'PRACTICE',
+          isCorrect: false,
+        },
+      });
+      if (wrongCount >= HINT_WRONG_THRESHOLD) {
+        hintAvailable = true;
+        hintLine = note.problem.hint ?? null;
+      }
+    }
     // Next-up timestamp (when the OLDEST non-eligible note becomes eligible) —
     // useful for UI copy like "Next problem unlocks Wed 5pm" when the queue is
     // empty but some notes are still in cooldown.
@@ -77,7 +133,11 @@ export class WrongNotesService {
             // problem.answer is NOT included in the payload — clients used to
             // grade locally, which leaked the answer via DevTools and skipped
             // Attempt creation. Channel all grading through POST /:id/check.
-            hint: note.problem.hint,
+            // The `hint` field below stays null until the user has racked up
+            // HINT_WRONG_THRESHOLD wrong attempts — the spec keeps the
+            // initial pass "no help" so the user actually has to think.
+            hint: hintAvailable ? hintLine : null,
+            hintAvailable,
             occurrences: note.occurrences,
             createdAt: note.createdAt.toISOString(),
           }

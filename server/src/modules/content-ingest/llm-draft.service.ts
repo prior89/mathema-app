@@ -43,6 +43,13 @@ export type DraftPayload = {
   difficulty: 'MIDDLE' | 'UPPER_MIDDLE' | 'SEMI_KILLER' | 'KILLER';
   difficultyLevel: 1 | 2 | 3 | 4 | 5;
   expectedTimeSec: number;
+  /// Target exam style — set by the caller via generate() opts.examFormat
+  /// and echoed back in the payload so draft-publisher can persist it to
+  /// Problem.examFormat without re-plumbing the option through.
+  examFormat?:
+    | 'NCERT_TEXTBOOK' | 'CBSE_BOARD'
+    | 'JEE_MAIN' | 'JEE_ADVANCED' | 'NEET'
+    | 'KSAT' | 'KR_INTERNAL' | 'KR_MOCK_EVAL';
   steps: DraftStep[]; // length 1 (Study) or 3 (Mastery)
 };
 
@@ -134,6 +141,38 @@ Rules:
 - Match the requested NCERT class + chapter difficulty band. Do not exceed the chapter's topic boundary.
 - All strings in English. Output JSON ONLY.`;
 
+/**
+ * Per-exam-style framing prepended to the LLM prompt. Each line is a short
+ * directive the LLM applies on top of the base system prompt. NCERT_TEXTBOOK
+ * (the default) returns null because the base prompts already match its
+ * voice — the hint adds nothing.
+ *
+ * Calibrated for the 2026-05-22 user spec ([[matheo-ux-spec-full]]):
+ *   - India: NCERT base + JEE/NEET/CBSE variants
+ *   - Korea: KSAT (수능) + 내신 + 평가원 모의고사 variants
+ */
+function examStyleHint(format: DraftPayload['examFormat'] | undefined): string | null {
+  if (!format || format === 'NCERT_TEXTBOOK') return null;
+  switch (format) {
+    case 'CBSE_BOARD':
+      return 'Authoring style: CBSE Class 10/12 board exam. Step marks visible in the solution flow, formal language, formula-recall over trick shortcuts.';
+    case 'JEE_MAIN':
+      return 'Authoring style: JEE Main (NTA). Concise numerical / single-correct MCQ. Distractors must reflect classic shortcut errors and sign / index slips under 2-min-per-question pressure.';
+    case 'JEE_ADVANCED':
+      return 'Authoring style: JEE Advanced. Multi-concept fusion (e.g. coordinate + calculus + trig in one problem). One distractor should target the "wrong concept invoked" misread; another the "right concept, off-by-one limit" slip.';
+    case 'NEET':
+      return 'Authoring style: NEET. Bias toward formula-recall and direct application. Distractors should target unit-conversion slips, sign flips, and trigonometric-identity confusions common in biology-bound students with weaker math fluency.';
+    case 'KSAT':
+      return 'Authoring style: 한국 수능 수학 영역. 5지선다, 정답 1개. 객관식 풀이 시간 ~3분 가정. 4개 오답은 (i) 개념 혼동, (ii) 부호·차원 실수, (iii) 풀이 중간 단계 누락, (iv) 흔한 함정 (예: 정의역 누락) 패턴을 각각 반영.';
+    case 'KR_INTERNAL':
+      return 'Authoring style: 한국 고교 내신. 교과서 예제 / 평가 기준에 충실. 풀이 길이 4~6줄, 단답 친화. 오답은 교사가 흔히 보는 풀이 실수 (계산 오류, 공식 적용 오류) 위주.';
+    case 'KR_MOCK_EVAL':
+      return 'Authoring style: 한국 평가원 모의고사 (3월·6월·9월). 수능 형식과 동일하나 신유형 1개 포함 권장. 오답은 EBS 빈출 함정 + 평가원 특유 비주얼 트릭 (좌표·그래프 오독) 반영.';
+    default:
+      return null;
+  }
+}
+
 @Injectable()
 export class LlmDraftService {
   private readonly logger = new Logger(LlmDraftService.name);
@@ -155,7 +194,7 @@ export class LlmDraftService {
       qIndex?: number;
       text: string;
     },
-    opts: { mode?: DraftMode; userId?: string | null } = {},
+    opts: { mode?: DraftMode; userId?: string | null; examFormat?: DraftPayload['examFormat'] } = {},
   ): Promise<DraftResult> {
     const mode: DraftMode = opts.mode ?? 'multi-step';
 
@@ -188,7 +227,13 @@ export class LlmDraftService {
       input.qIndex ? `Q: ${input.qIndex}` : null,
     ].filter(Boolean).join(' · ');
 
-    const prompt = `${ctxLine ? ctxLine + '\n\n' : ''}Source problem:\n"""\n${input.text}\n"""\n\nReturn the strict JSON draft now.`;
+    // Per-exam-style framing — appended to the system prompt so the LLM
+    // shapes vocabulary, distractor flavour, and difficulty calibration to
+    // match the target exam culture. Empty for NCERT_TEXTBOOK (the default,
+    // which already matches the base system prompt).
+    const styleHint = examStyleHint(opts.examFormat);
+
+    const prompt = `${ctxLine ? ctxLine + '\n\n' : ''}${styleHint ? styleHint + '\n\n' : ''}Source problem:\n"""\n${input.text}\n"""\n\nReturn the strict JSON draft now.`;
 
     const system = mode === 'multi-step' ? SYSTEM_PROMPT_MULTI_STEP : SYSTEM_PROMPT_SINGLE_STEP;
     // Single-step payload is ~1/3 the token budget of multi-step.
@@ -209,6 +254,10 @@ export class LlmDraftService {
       jsonObject: true,       // OpenAI: response_format=json_object — provider-side JSON guarantee
     });
     const payload = this.parseAndValidate(res.text, mode);
+    // Echo back the requested exam format so the downstream publisher can
+    // persist it to Problem.examFormat without re-plumbing the option. The
+    // LLM never sees / sets this field — it's a caller-side tag.
+    if (opts.examFormat) payload.examFormat = opts.examFormat;
     return {
       payload,
       tokensIn: res.inputTokens,

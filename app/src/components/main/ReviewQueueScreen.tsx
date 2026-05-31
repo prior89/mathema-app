@@ -15,6 +15,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchProblemHint, fetchReviewQueueNext } from '../../lib/queries';
 import { checkReviewAnswer } from '../../lib/mutations';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
@@ -25,6 +26,7 @@ const HINT_UNLOCK_AFTER = 3; // wrong submits before Hint button activates
 export function ReviewQueueScreen() {
   const nav = useNavigate();
   const qc = useQueryClient();
+  const { t } = useT();
 
   const queue = useQuery({ queryKey: ['queue-next'], queryFn: fetchReviewQueueNext });
 
@@ -36,21 +38,21 @@ export function ReviewQueueScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           <button
             onClick={() => nav('/app/test')}
-            aria-label="Back"
+            aria-label={t('review.back')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
-              REVIEW QUEUE
+              {t('review.eyebrow')}
             </div>
             <div style={{ fontSize: 13, fontWeight: 600 }}>
               {queue.data?.wrongNote
-                ? `${queue.data.totalEligible} ready`
+                ? t('review.ready', { n: queue.data.totalEligible })
                 : queue.data
-                  ? 'Caught up'
-                  : 'Loading…'}
+                  ? t('review.caughtUp')
+                  : t('review.loading')}
             </div>
           </div>
         </div>
@@ -58,7 +60,7 @@ export function ReviewQueueScreen() {
 
       {queue.isLoading && (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--p-muted)' }}>
-          Loading review…
+          {t('review.loadingScreen')}
         </div>
       )}
 
@@ -99,30 +101,31 @@ export function ReviewQueueScreen() {
 // ───────── Empty state ─────────
 
 function EmptyState({ nextEligibleAt, onBack }: { nextEligibleAt: string | null; onBack: () => void }) {
+  const { t } = useT();
   let countdown: string | null = null;
   if (nextEligibleAt) {
     const ms = new Date(nextEligibleAt).getTime() - Date.now();
     if (ms > 0) {
       const h = Math.floor(ms / 3_600_000);
       const d = Math.floor(h / 24);
-      countdown = d > 0 ? `${d} day${d === 1 ? '' : 's'}` : `${h} hour${h === 1 ? '' : 's'}`;
+      countdown = d > 0 ? t('test.duration.days', { n: d }) : t('test.duration.hours', { n: h });
     }
   }
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '24px 22px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 14 }}>
       <div style={{ fontFamily: 'var(--font-display)', fontSize: 32, color: 'var(--p-primary)' }}>✓</div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--p-ink)' }}>All caught up.</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--p-ink)' }}>{t('review.empty.icon.title')}</div>
       <p style={{ fontSize: 13.5, color: 'var(--p-ink-2)', lineHeight: 1.5, maxWidth: 320, margin: '0 auto' }}>
         {countdown
-          ? `Your next review unlocks in ${countdown}. Wrong notes ripen for three days so you have time to re-read the concept before re-trying.`
-          : 'No wrong notes are waiting. Practice a chapter in Study to fill the queue.'}
+          ? t('review.empty.body.countdown', { countdown })
+          : t('review.empty.body.none')}
       </p>
       <button
         className="btn"
         onClick={onBack}
         style={{ maxWidth: 240, alignSelf: 'center', marginTop: 8 }}
       >
-        Back to Test
+        {t('review.empty.back')}
         <Glyph.ChevronR />
       </button>
     </div>
@@ -144,6 +147,7 @@ function ActiveProblem({
   };
   onMastered: () => Promise<void> | void;
 }) {
+  const { t } = useT();
   const canvasRef = useRef<HandwritingCanvasHandle>(null);
   const [studentAnswer, setStudentAnswer] = useState('');
   const [feedback, setFeedback] = useState<{ kind: 'correct' | 'wrong'; msg: string } | null>(null);
@@ -167,7 +171,7 @@ function ActiveProblem({
     }),
     onSuccess: async (r) => {
       if (r.isCorrect) {
-        setFeedback({ kind: 'correct', msg: '✓ Correct — moving to the next.' });
+        setFeedback({ kind: 'correct', msg: t('review.correct') });
         setTimeout(async () => { await onMastered(); }, 700);
       } else {
         const next = wrongCount + 1;
@@ -175,13 +179,13 @@ function ActiveProblem({
         setFeedback({
           kind: 'wrong',
           msg: next >= HINT_UNLOCK_AFTER
-            ? 'Not quite. Hint unlocked — tap the 💡 to see a nudge.'
-            : 'Not quite. Try again.',
+            ? t('review.wrong.unlock')
+            : t('review.wrong.retry'),
         });
       }
     },
     onError: () => {
-      setFeedback({ kind: 'wrong', msg: 'Could not submit — try again in a moment.' });
+      setFeedback({ kind: 'wrong', msg: t('review.submit.failed') });
     },
   });
 
@@ -210,13 +214,13 @@ function ActiveProblem({
           </div>
           {note.occurrences > 1 && (
             <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 8, fontFamily: 'var(--font-mono)' }}>
-              SEEN {note.occurrences}× · 3-day cooldown done
+              {t('review.seen', { n: note.occurrences })}
             </div>
           )}
         </div>
 
         <div>
-          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>WORKINGS</div>
+          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('review.workingsEyebrow')}</div>
           <HandwritingCanvas ref={canvasRef} height={420} extendable />
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
             <button
@@ -225,7 +229,7 @@ function ActiveProblem({
               onClick={() => canvasRef.current?.undo()}
               style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
             >
-              Undo
+              {t('review.undo')}
             </button>
             <button
               type="button"
@@ -233,7 +237,7 @@ function ActiveProblem({
               onClick={() => canvasRef.current?.clear()}
               style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
             >
-              Clear
+              {t('review.clear')}
             </button>
           </div>
         </div>
@@ -243,7 +247,7 @@ function ActiveProblem({
             className="card"
             style={{ padding: 12, background: 'var(--p-accent-tint)', borderColor: 'transparent' }}
           >
-            <div className="eyebrow" style={{ fontSize: 10 }}>HINT</div>
+            <div className="eyebrow" style={{ fontSize: 10 }}>{t('review.hintEyebrow')}</div>
             <div style={{ fontSize: 13, color: 'var(--p-ink)', marginTop: 4, lineHeight: 1.5 }}>
               <MathText text={hintText} />
             </div>
@@ -270,13 +274,13 @@ function ActiveProblem({
 
       {/* Sticky bottom — hint + answer input + check */}
       <div className="screen-foot" style={{ paddingTop: 8 }}>
-        <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>ANSWER</div>
+        <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('review.answerEyebrow')}</div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
             type="button"
             onClick={onHintClick}
             disabled={!hintUnlocked}
-            aria-label="Hint"
+            aria-label={t('review.hintAria')}
             style={{
               width: 44, height: 44, borderRadius: 12, flexShrink: 0,
               background: hintUnlocked ? 'var(--p-primary-tint)' : 'var(--p-surface-2)',
@@ -291,7 +295,7 @@ function ActiveProblem({
           <input
             value={studentAnswer}
             onChange={(e) => setStudentAnswer(e.target.value)}
-            placeholder="Type the final answer…"
+            placeholder={t('review.answer.placeholder')}
             onKeyDown={(e) => { if (e.key === 'Enter') onCheck(); }}
             style={{
               flex: 1, height: 44, padding: '0 14px', borderRadius: 12,
@@ -306,7 +310,7 @@ function ActiveProblem({
             disabled={!studentAnswer.trim() || check.isPending}
             style={{ width: 'auto', height: 44, padding: '0 18px', fontSize: 14, flexShrink: 0 }}
           >
-            {check.isPending ? '…' : 'Check'}
+            {check.isPending ? t('review.checking') : t('review.check')}
           </button>
         </div>
       </div>
