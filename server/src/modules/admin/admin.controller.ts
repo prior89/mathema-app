@@ -41,6 +41,18 @@ export class AdminController {
    *  hand-curation now that LLM auto-topup is off (2026-05-22). */
   @Get('content/pool-gaps')
   poolGaps() { return this.service.poolGaps(); }
+
+  /** Phase 1 LessonProblemSet shadow inventory. country/setType optional —
+   *  defaults to all rows. Read-only; the student runtime still uses the
+   *  legacy masterySetProblemIds arrays. Use this to answer "which chapters
+   *  have a READY mastery set per the same contract in IN and KR". */
+  @Get('content/readiness')
+  readiness(
+    @Query('country') country?: 'IN' | 'KR',
+    @Query('setType') setType?: 'MASTERY_3STEP' | 'STUDY_1STEP' | 'DIAGNOSTIC',
+  ) {
+    return this.service.lessonProblemSetReadiness({ country, setType });
+  }
   @Get('insights/distractors') distractors(@CurrentLang() lang: Lang, @Query('days') days = 30) {
     return this.service.distractorInsights(+days, lang);
   }

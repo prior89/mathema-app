@@ -473,6 +473,92 @@ export class AdminService {
     }));
   }
 
+  /** Phase 1 readiness inventory off the LessonProblemSet shadow table.
+   *  Read-only: the student runtime still consumes masterySetProblemIds
+   *  on ConceptLesson / KoreanConceptLesson. This view exists so admin can
+   *  measure IN and KR set completeness with the same contract.
+   *
+   *  Behaviour:
+   *  - per (country, chapterCode, setType) returns the active (non-retired)
+   *    version row when present.
+   *  - lessons that have no LessonProblemSet row at all are surfaced with
+   *    status=MISSING so the gap is explicit.
+   *  - filters: country=IN|KR, setType=MASTERY_3STEP|STUDY_1STEP|DIAGNOSTIC. */
+  async lessonProblemSetReadiness(opts: {
+    country?: 'IN' | 'KR';
+    setType?: 'MASTERY_3STEP' | 'STUDY_1STEP' | 'DIAGNOSTIC';
+  }) {
+    const country = opts.country;
+    const setType = opts.setType ?? 'MASTERY_3STEP';
+
+    // Authoritative lesson lists per side — these are the "should exist"
+    // universe; LessonProblemSet rows are the "do exist" overlay.
+    const wantIN = !country || country === 'IN';
+    const wantKR = !country || country === 'KR';
+
+    const ncert = wantIN ? await this.prisma.conceptLesson.findMany({
+      select: { id: true, chapterCode: true, ncertClass: true, chapterNumber: true, titleEn: true },
+      orderBy: [{ ncertClass: 'asc' }, { chapterNumber: 'asc' }],
+    }) : [];
+    const korean = wantKR ? await this.prisma.koreanConceptLesson.findMany({
+      select: { id: true, chapterCode: true, koreanGrade: true, koreanSubject: true, chapterNumber: true, titleKo: true },
+      orderBy: [{ koreanGrade: 'asc' }, { koreanSubject: 'asc' }, { chapterNumber: 'asc' }],
+    }) : [];
+
+    const sets = await this.prisma.lessonProblemSet.findMany({
+      where: {
+        ...(country ? { country } : {}),
+        setType,
+        retiredAt: null,
+      },
+      select: {
+        country: true, chapterCode: true, status: true, version: true,
+        problemIds: true, curatedAt: true, updatedAt: true,
+      },
+    });
+    const byKey = new Map<string, typeof sets[number]>();
+    for (const s of sets) {
+      byKey.set(`${s.country}:${s.chapterCode}`, s);
+    }
+
+    const inRows = ncert.map((l) => {
+      const s = byKey.get(`IN:${l.chapterCode}`);
+      return {
+        country: 'IN' as const,
+        chapterCode: l.chapterCode,
+        label: `${l.ncertClass} CH${String(l.chapterNumber).padStart(2, '0')} — ${l.titleEn}`,
+        status: s?.status ?? 'MISSING',
+        version: s?.version ?? null,
+        problemCount: s?.problemIds.length ?? 0,
+        curatedAt: s?.curatedAt ?? null,
+      };
+    });
+    const krRows = korean.map((l) => {
+      const s = byKey.get(`KR:${l.chapterCode}`);
+      return {
+        country: 'KR' as const,
+        chapterCode: l.chapterCode,
+        label: `${l.koreanGrade} ${l.koreanSubject} CH${String(l.chapterNumber).padStart(2, '0')} — ${l.titleKo}`,
+        status: s?.status ?? 'MISSING',
+        version: s?.version ?? null,
+        problemCount: s?.problemIds.length ?? 0,
+        curatedAt: s?.curatedAt ?? null,
+      };
+    });
+
+    const all = [...inRows, ...krRows];
+    const summary = {
+      country: country ?? 'ALL',
+      setType,
+      totalChapters: all.length,
+      ready: all.filter((r) => r.status === 'READY').length,
+      needsReview: all.filter((r) => r.status === 'NEEDS_REVIEW').length,
+      draft: all.filter((r) => r.status === 'DRAFT').length,
+      missing: all.filter((r) => r.status === 'MISSING').length,
+    };
+    return { summary, chapters: all };
+  }
+
   /** HTTP-callable equivalent of scripts/prewarm-mastery.ts. Blocks until done.
    *  Each chapter takes ~30-60s × (target - existing)/5 — a full sweep can
    *  run for minutes. Caller (AdminController) holds the HTTP connection open. */
