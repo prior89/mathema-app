@@ -94,6 +94,35 @@ enum NcertClass {
   CLASS_12
 }
 
+/// Korean school grade — primary classification axis for KoreanConceptLesson.
+/// Matches the 2022 개정 교육과정 sequence. country=KR users see chapters
+/// keyed by this grade × KoreanSubject grid; country=IN users continue to
+/// see NcertClass × NCERT chapters via the parallel ConceptLesson tree.
+enum KoreanGrade {
+  MIDDLE_1 // 중1
+  MIDDLE_2 // 중2
+  MIDDLE_3 // 중3
+  HIGH_1   // 고1
+  HIGH_2   // 고2
+  HIGH_3   // 고3
+}
+
+/// Korean math subject — secondary axis (a single Korean grade can offer
+/// multiple subjects, e.g. 고2 takes 대수 + 미적분Ⅰ + 확률과 통계 등).
+/// All names match the 2022 개정 교육과정 official curriculum.
+enum KoreanSubject {
+  MIDDLE_MATH_1   // 수학 1 (중1)
+  MIDDLE_MATH_2   // 수학 2 (중2)
+  MIDDLE_MATH_3   // 수학 3 (중3)
+  HIGH_COMMON_1   // 공통수학1 (고1, 필수)
+  HIGH_COMMON_2   // 공통수학2 (고1, 필수)
+  HIGH_ALGEBRA    // 대수 (고2 일반선택, 수능 출제)
+  HIGH_CALCULUS_1 // 미적분Ⅰ (고2 일반선택, 수능 출제)
+  HIGH_CALCULUS_2 // 미적분Ⅱ (진로선택)
+  HIGH_STATISTICS // 확률과 통계 (일반선택, 수능 출제)
+  HIGH_GEOMETRY   // 기하 (진로선택)
+}
+
 /// Step kinds within a single concept-lesson session — translates the 6 cognitive-psychology principles into stages.
 ///   HOOK            activate interest / prior knowledge (Ausubel advance organizer)
 ///   CONCRETE        concrete objects / manipulation (Bruner CPA — Concrete)
@@ -147,6 +176,23 @@ enum StudyGoal {
   CATCHUP
 }
 
+/// Problem authoring style / target exam. Drives LLM-generation prompts
+/// (NCERT plain text vs JEE/NEET MCQ flavour) and lets the recommender
+/// match a student's StudyGoal to format-appropriate problems. NULL =
+/// not yet classified; treated as NCERT_TEXTBOOK by default.
+///   IN: NCERT_TEXTBOOK / CBSE_BOARD / JEE_MAIN / JEE_ADVANCED / NEET
+///   KR: KSAT (수능) / KR_INTERNAL (내신) / KR_MOCK_EVAL (평가원 모의고사)
+enum ExamFormat {
+  NCERT_TEXTBOOK
+  CBSE_BOARD
+  JEE_MAIN
+  JEE_ADVANCED
+  NEET
+  KSAT
+  KR_INTERNAL
+  KR_MOCK_EVAL
+}
+
 /// User role — basis for the spec §1 split UI of student / parent / teacher / admin.
 enum UserRole {
   STUDENT
@@ -155,16 +201,36 @@ enum UserRole {
   ADMIN
 }
 
-/// Error-cause codes — the spec's errorCodes. Used by both ErrorPatternProfile and Attempt.
+/// Error-cause codes — the spec's errorCodes. Used by both ErrorPatternProfile,
+/// Attempt, and ProblemChoice.distractorErrorCode (distractor taxonomy).
+///
+/// Legacy 8 (top): kept as-is for backward compat with existing Attempt rows
+/// and analytics dashboards. New entries (bottom) follow the 2026-05-24 user-
+/// spec taxonomy + per-chapter specific codes used when authoring KR Mastery
+/// 20-problem sets (정수와 유리수 ADD_NUMERATOR_ONLY, 일차함수
+/// SLOPE_INTERCEPT_CONFUSION, 도형 닮음 CORRESPONDING_PART_ERROR /
+/// AREA_RATIO_ERROR, etc.).
 enum ErrorCode {
-  SIGN // sign handling
-  ALG // algebraic transformation
-  CON // conceptual misunderstanding / misapplied definition
-  FORMULA // formula misuse
-  GRAPH // graph interpretation
+  // Legacy 8 — preserved verbatim. Spec-name mapping shown in comments:
+  SIGN // SIGN_ERROR — sign handling (±, 부등호 방향)
+  ALG // ALGEBRA_ERROR — algebraic transformation (전개, 이항, 약분)
+  CON // CONCEPT_MISUNDERSTANDING — misapplied definition
+  FORMULA // FORMULA_SELECTION_ERROR — formula misuse
+  GRAPH // GRAPH_READING_ERROR — graph/coord/slope interpretation
   UNIT // unit conversion
-  CALC // calculation mistake
+  CALC // ARITHMETIC_ERROR — calculation mistake
   LOGIC // logical flow / case separation
+  // Newly added 2026-05-24 (user spec 12 + per-chapter specific):
+  CONDITION_MISSING // 문제 조건을 놓쳐 풀이가 어긋남
+  DENOMINATOR_ERROR // 통분/분모 처리 실수
+  GEOMETRY_PROPERTY_ERROR // 도형 성질 (각·변·합동 조건 등) 오해
+  RATIO_SCALE_ERROR // 비례·닮음비·단위 스케일 오류
+  PROBABILITY_COUNTING_ERROR // 경우의 수·확률 세기 실수
+  STATISTICS_INTERPRETATION_ERROR // 평균·분산·표준편차 해석 오류
+  SLOPE_INTERCEPT_CONFUSION // 기울기와 y절편을 혼동 (일차함수 단원)
+  CORRESPONDING_PART_ERROR // 닮음·합동에서 대응변·대응각 짝짓기 실패
+  AREA_RATIO_ERROR // 길이비를 그대로 넓이비로 적용 (제곱 누락)
+  ADD_NUMERATOR_ONLY // 분모를 고려하지 않고 분자만 더함 (분수 덧셈 첫 단계 함정)
 }
 
 /// Status of a recurring-mistake pattern — expressed to the student as an "improvable state", not a fixed ability.
@@ -312,6 +378,7 @@ model User {
   analyticsEvents         AnalyticsEvent[]
   deviceTokens            DeviceToken[]
   conceptProgress         ConceptProgress[]
+  koreanConceptProgress   KoreanConceptProgress[]
   consents                Consent[]
   masteryTrajectories     MasteryTrajectory[]
   masteryEvents           MasteryEvent[]
@@ -409,10 +476,35 @@ model Problem {
   /// Expected solving time (seconds). Used for response-time comparison.
   expectedTimeSec       Int?
 
+  /// Target exam / authoring style. NULL = pre-classification (legacy seed
+  /// rows). Newly generated LLM problems write this from the prompt variant
+  /// (e.g. JEE_MAIN when the prompt asks for JEE-style 4-option multi-choice).
+  examFormat            ExamFormat?
+
   /// Mapped ConceptLesson — once the unit's concept learning is done, this problem becomes the 3-step MC problem.
   /// Filled by chapter-name matching in seed/migration. NULL = not mapped to concept learning (legacy).
   conceptLessonId String?
   conceptLesson   ConceptLesson? @relation(fields: [conceptLessonId], references: [id])
+
+  /// Parallel mapping for the Korean curriculum (2022 개정). A single Problem
+  /// row may map to a NCERT chapter, a Korean chapter, both, or neither.
+  /// When country=KR the practice / mastery pipeline queries by this column
+  /// instead of conceptLessonId. NULL = not mapped to Korean curriculum.
+  koreanConceptLessonId String?
+  koreanConceptLesson   KoreanConceptLesson? @relation("KoreanLessonProblems", fields: [koreanConceptLessonId], references: [id])
+
+  /// LLM-judged quality (Tier 2 rubric grading). Active pool filters by
+  /// qualityStatus IN ('APPROVED','USABLE') so EXCLUDED rows never reach
+  /// students. NULL = not yet graded (treated as USABLE by default so
+  /// brand-new admin entries don't get filtered before the grade pass).
+  qualityScore          Float?
+  qualityRubric         Json?
+  qualityStatus         QualityStatus?
+  qualityModel          String?
+  qualityPromptVersion  String?
+  qualityScoredAt       DateTime?
+  qualityCriticalFlags  String[]       @default([])
+  conceptMismatch       Boolean        @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -428,6 +520,16 @@ model Problem {
   @@index([unitId, difficulty])
   @@index([difficultyLevel])
   @@index([conceptLessonId])
+  @@index([koreanConceptLessonId])
+  @@index([qualityStatus])
+}
+
+/// Tier 2 LLM grading outcome for Problem rows. Drives the active-pool
+/// filter in Mastery/Study endpoints.
+enum QualityStatus {
+  APPROVED       // finalScore >= 4.2 and no hard flag
+  USABLE         // 3.5 <= finalScore < 4.2 and no hard flag
+  EXCLUDED       // finalScore < 3.5 OR any hard flag (CHAPTER_MISMATCH, OUT_OF_CURRICULUM, MULTIPLE_CORRECT_OPTIONS, NO_CORRECT_OPTION, MISSING_GIVEN, LATEX_RENDERING_RISK)
 }
 
 /// 3-stage multiple-choice (CONCEPT → PROCESS → ANSWER) for a single problem
@@ -454,6 +556,11 @@ model ProblemChoice {
   isCorrect      Boolean         @default(false)
   /// Distractor classification (NULL if this choice is the correct answer)
   distractorType DistractorType?
+  /// Free-form distractor error code from the curriculum-specific taxonomy
+  /// (e.g. SIGN_ERROR, DENOMINATOR_ERROR, GRAPH_READING_ERROR). Kept as
+  /// String rather than enum so each curriculum (KR vs IN) can extend its
+  /// own vocabulary without a Prisma migration. NULL on the correct option.
+  distractorErrorCode String?
   /// Analyst-facing note — hypothesis on why a student might pick this distractor
   rationale      String?         @db.Text
 
@@ -462,6 +569,38 @@ model ProblemChoice {
 
   @@unique([stepId, choiceIndex])
   @@index([stepId])
+}
+
+/// Append-only log of every math-helper /solve call. Drives the
+/// "AI 학습" feedback loop: each row pairs the question we asked, the
+/// answer the LLM produced, and (once the student attempts it) whether
+/// the student got it right. Used for weekly review of LLM accuracy,
+/// few-shot example curation (high-confidence rows feed Lv 2 RAG),
+/// and downstream fine-tune dataset extraction.
+///
+/// No FK to User/Problem — log rows must outlive user/problem deletion
+/// for retrospective analysis, and skipping FKs makes the insert cheap
+/// (single roundtrip, no constraint check).
+model SolverAttempt {
+  id              String    @id @default(uuid())
+  userId          String?
+  problemId       String?
+  question        String    @db.Text
+  classLevel      Int?
+  llmAnswer       String?   @db.Text
+  llmExplanation  String?   @db.Text
+  llmSteps        Json?
+  modelUsed       String?
+  durationMs      Int?
+  detected        Json?
+  studentAnswer   String?   @db.Text
+  studentCorrect  Boolean?
+  fewShotCount    Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([problemId])
 }
 
 // ---------- ATTEMPT (the source of all statistics) ----------
@@ -498,6 +637,12 @@ model Attempt {
   stepIndex           Int?
   /// The ProblemChoice the student selected. NULL = free-form / single-answer mode
   choiceId            String?
+  /// Curriculum-specific error code copied from the selected distractor at
+  /// grade time (e.g. SIGN_ERROR, DENOMINATOR_ERROR). NULL when correct or
+  /// when no distractor errorCode was set. Drives ErrorPatternProfile updates
+  /// and adaptive recommendations for KR curriculum where the structured
+  /// errorCodes enum is intentionally limited.
+  distractorErrorCode String?
   studySessionId      String?
   mockExamResultId    String?
   createdAt           DateTime       @default(now())
@@ -867,6 +1012,13 @@ model ConceptLesson {
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
+  /// Optional FK into Curriculum metadata index (added 2026-05-24, Option C
+  /// of the multi-country structure). Nullable so existing rows survive the
+  /// migration with curriculumId=NULL; a backfill script then assigns the
+  /// right Curriculum row per (countryCode='IN', grade=ncertClass, courseCode='NCERT').
+  curriculumId   String?
+  curriculum     Curriculum? @relation(fields: [curriculumId], references: [id])
+
   steps    ConceptStep[]
   unit     Unit?             @relation(fields: [unitId], references: [id])
   subUnit  SubUnit?          @relation(fields: [subUnitId], references: [id])
@@ -876,6 +1028,7 @@ model ConceptLesson {
 
   @@index([ncertClass, chapterNumber])
   @@index([unitId])
+  @@index([curriculumId])
 }
 
 model ConceptStep {
@@ -927,7 +1080,13 @@ model ConceptProgress {
   currentStep    Int       @default(1)
   /// Array of completed step indices.
   completedSteps Int[]     @default([])
-  /// Time the most recent RETRIEVAL was passed. Must pass at least once to unlock problem-solving for the unit.
+  /// When the user finished reading the concept walkthrough (not unlock signal).
+  /// Filled by finalize-concept. Separate from masteredAt so the Study unlock
+  /// gate isn't tripped by simply scrolling through the lesson.
+  conceptWalkthroughAt DateTime?
+  /// Study unlock signal — set ONLY when the user has answered the ANSWER step
+  /// of every problem in the chapter's canonical Mastery 20-set correctly
+  /// (retries allowed; user-spec 2026-05-23). Sticky once set.
   masteredAt     DateTime?
   /// Most recent RETRIEVAL score (0~100).
   retrievalScore Float?
@@ -941,6 +1100,154 @@ model ConceptProgress {
 
   @@unique([userId, lessonId])
   @@index([userId, masteredAt])
+}
+
+// ---------- KOREAN CURRICULUM (2022 개정 교육과정) ----------
+//
+// Full fork of the concept-learning tree for country=KR users. Parallel to
+// the NCERT-driven ConceptLesson tree (above). Why fork instead of mapping:
+//   - Korean curriculum chapter boundaries do not line up 1:1 with NCERT
+//     (e.g., one NCERT chapter splits across two Korean 단원).
+//   - Korean problems / 수능 PYP differ in shape and pedagogy from NCERT
+//     exercises — sharing the same Problem rows would be lossy.
+//   - Korean curriculum revisions (2015 → 2022 → future) need to evolve
+//     independently from India's NCERT track.
+//
+// One KoreanConceptLesson = one chapter (단원) inside one Korean subject
+// (수학 1 / 공통수학1 / 대수 / 미적분Ⅰ ...). ConceptStep mirror lives in
+// KoreanConceptStep. ConceptProgress will be extended in a later phase to
+// accept either lesson type — for Phase 1 we just stand up the data shape.
+
+/// Curriculum — top-level metadata index for "what country / grade / course
+/// does this set of ConceptLessons belong to". Lets the app enumerate
+/// 'available curricula' from a single table instead of branching across
+/// NCERT (ConceptLesson) and Korean (KoreanConceptLesson) parallel tables.
+///
+/// One Curriculum row groups a body of chapters that share a country +
+/// grade-band + course. Examples:
+///   - { IN, CLASS_7,   "NCERT",            "Class 7 · Mathematics" }
+///   - { IN, CLASS_11,  "NCERT",            "Class 11 · Mathematics" }
+///   - { KR, MIDDLE_1,  "MIDDLE_MATH_1",    "중1 수학 1" }
+///   - { KR, HIGH_1,    "HIGH_COMMON_1",    "고1 공통수학1" }
+///   - { KR, HIGH_2,    "HIGH_ALGEBRA",     "고2 대수" }
+///
+/// Existing ConceptLesson + KoreanConceptLesson rows keep their primary
+/// data shape; they just get a nullable curriculumId FK pointing here.
+/// Backend country-aware branching (H1~H5 of 2026-05-24) keeps working
+/// unchanged — Curriculum is a *metadata index* on top, not a replacement.
+/// Future US/UK/AU rollouts add Curriculum rows + their own chapter pool
+/// without forcing a single-table migration.
+model Curriculum {
+  id            String   @id @default(cuid())
+  /// ISO country code mirroring User.country / CountryCode enum.
+  countryCode   String
+  /// Grade band — internal code. NCERT uses GradeLevel ("CLASS_7"~"CLASS_12"),
+  /// Korea uses KoreanGrade ("MIDDLE_1"~"HIGH_3"). Stored as String here so
+  /// the table doesn't bind to either enum.
+  grade         String
+  /// Course code inside this grade band. NCERT = "NCERT" (single course per
+  /// class). Korea = KoreanSubject ("MIDDLE_MATH_1", "HIGH_COMMON_1", ...).
+  courseCode    String
+  /// Display name in the curriculum's primary language. "Class 7 · Mathematics"
+  /// for IN, "중1 수학 1" / "고1 공통수학1" for KR.
+  name          String
+  /// Sort order inside the country's curriculum list.
+  order         Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  conceptLessons       ConceptLesson[]
+  koreanConceptLessons KoreanConceptLesson[]
+
+  @@unique([countryCode, grade, courseCode])
+  @@index([countryCode, order])
+}
+
+model KoreanConceptLesson {
+  id                String        @id @default(uuid())
+  koreanGrade       KoreanGrade
+  koreanSubject     KoreanSubject
+  /// Order inside its (grade, subject) bucket — 1..N.
+  chapterNumber     Int
+  /// Stable identifier, e.g. "K-G7-MATH1-CH02-INTEGERS".
+  chapterCode       String        @unique
+  titleKo           String // "정수와 유리수"
+  /// English fallback for analytics / parents.
+  titleEn           String?
+  bigIdeaKo         String        @db.Text
+  bigIdeaEn         String?       @db.Text
+  estimatedMin      Int           @default(15)
+  cognitiveLoad     Int           @default(1)
+  /// Prerequisite chapterCodes — references other KoreanConceptLesson rows.
+  prerequisiteCodes String[]      @default([])
+  /// Canonical Mastery 20-problem set, mirroring the NCERT side. Curated once
+  /// per Korean chapter from the Korean problem pool. Empty until Phase 3.
+  masterySetProblemIds String[]   @default([])
+  masterySetCuratedAt  DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  /// Optional FK into Curriculum (same as NCERT side). Backfilled by the
+  /// migration script to (countryCode='KR', grade=koreanGrade, courseCode=koreanSubject).
+  curriculumId   String?
+  curriculum     Curriculum? @relation(fields: [curriculumId], references: [id])
+
+  steps    KoreanConceptStep[]
+  problems Problem[]            @relation("KoreanLessonProblems")
+  progress KoreanConceptProgress[]
+
+  @@unique([koreanGrade, koreanSubject, chapterNumber])
+  @@index([koreanGrade, koreanSubject])
+  @@index([curriculumId])
+}
+
+/// KR-side per-user chapter progress. Parallel to ConceptProgress (NCERT).
+/// Stores Mastery → Study unlock signal for Korean chapters: masteredAt is
+/// stamped (sticky) once the user has submitted an ANSWER-step attempt on
+/// every problem in KoreanConceptLesson.masterySetProblemIds (matches the
+/// "다 풀면 완주" gate from attempts.service.checkAndUnlockMastery).
+///
+/// Mirrors NCERT shape only for the fields KR currently uses. Other NCERT
+/// progress columns (conceptWalkthroughAt, currentStep, completedSteps,
+/// retrievalScore, durationSec) are intentionally omitted until KR side
+/// needs them — Phase 4 progress aggregation can add them then.
+model KoreanConceptProgress {
+  id              String    @id @default(uuid())
+  userId          String
+  lessonId        String
+  /// Study unlock signal — sticky once set. attempts.service.checkAndUnlockMastery
+  /// branches on Problem.koreanConceptLessonId; when KR all-attempted, stamps this.
+  masteredAt      DateTime?
+  startedAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user   User                @relation(fields: [userId], references: [id])
+  lesson KoreanConceptLesson @relation(fields: [lessonId], references: [id])
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+}
+
+model KoreanConceptStep {
+  id             String          @id @default(uuid())
+  lessonId       String
+  stepIndex      Int
+  kind           ConceptStepKind
+  titleKo        String
+  bodyKo         String          @db.Text
+  visualType     String?
+  visualUrl      String?
+  visualData     Json?
+  misconception  Json?
+  workedSteps    Json?
+  retrievalCheck Json?
+  reflectPrompts Json?
+
+  lesson KoreanConceptLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, stepIndex])
+  @@index([lessonId])
 }
 
 // ---------- WEEKLY REPORT ----------
