@@ -289,7 +289,7 @@ function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sess
         <div className="grain" style={{ backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '32px', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
             <div>
-              <div style={sectionLabelStyle}>No 01 — Mastery Map</div>
+              <div style={sectionLabelStyle}>No 01 — 숙련도 지도</div>
               <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('dashboard.section.masteryMap')}</h2>
             </div>
             {diagnosis.data?.weakUnit && (
@@ -318,7 +318,7 @@ function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sess
 
         <div>
           <div style={{ marginBottom: '20px' }}>
-            <div style={sectionLabelStyle}>No 02 — Today</div>
+            <div style={sectionLabelStyle}>No 02 — 오늘</div>
             <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('dashboard.section.today')}</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -366,7 +366,7 @@ function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sess
       <section style={{ marginBottom: '48px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div>
-            <div style={sectionLabelStyle}>No 03 — Wrong Notes</div>
+            <div style={sectionLabelStyle}>No 03 — 오답노트</div>
             <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>
               {t('dashboard.section.wrongNotes')}
               <span style={{ fontSize: '14px', color: '#5C6B85', marginLeft: '12px', fontFamily: '"Pretendard", sans-serif', fontWeight: 400 }}>{t('dashboard.section.wrongNotes.sub')}</span>
@@ -421,7 +421,7 @@ function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sess
         <div className="grain" style={{ backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '32px', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
             <div>
-              <div style={sectionLabelStyle}>No 04 — Consistency</div>
+              <div style={sectionLabelStyle}>No 04 — 학습 꾸준함</div>
               <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('dashboard.section.consistency')}</h2>
               <div style={{ fontSize: '12px', color: '#5C6B85', marginTop: '4px' }}>{t('dashboard.heatmap.weeksAgo')} · <span style={{ color: '#5A8A45', fontWeight: 600 }}>{t('dashboard.streakNow', { days: stats?.streakDays ?? 0 })}</span></div>
             </div>
@@ -465,7 +465,7 @@ function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sess
         <div style={{ backgroundColor: '#142850', color: '#EFEBDF', borderRadius: '4px', padding: '32px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(180,83,9,0.2) 0%, transparent 70%)' }} />
           <div style={{ position: 'relative' }}>
-            <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: '#AAB4C5', textTransform: 'uppercase', marginBottom: '6px' }}>No 05 — Error DNA</div>
+            <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: '#AAB4C5', textTransform: 'uppercase', marginBottom: '6px' }}>No 05 — 오답 DNA</div>
             <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0, marginBottom: '4px' }}>{t('dashboard.section.errorDna')}</h2>
             <div style={{ fontSize: '12px', color: '#AAB4C5', marginBottom: '28px' }}>{t('dashboard.section.errorDna.sub')}</div>
             <div style={{ marginBottom: '24px' }}>
@@ -497,7 +497,7 @@ function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sess
         <div style={{ fontSize: '11px', color: '#8B95AB', letterSpacing: '0.05em' }}>
           {diagnosis.data?.updatedAgo ? t('dashboard.lastUpdate', { ago: diagnosis.data.updatedAgo, version: diagnosis.data.version ?? '' }) : ''}
         </div>
-        <div className="serif" style={{ fontSize: '13px', fontStyle: 'italic', color: '#5C6B85' }}>"Excellence is a habit not an act" — Aristotle</div>
+        <div className="serif" style={{ fontSize: '13px', fontStyle: 'italic', color: '#5C6B85' }}>"탁월함은 행동이 아니라 습관이다" — 아리스토텔레스</div>
       </div>
 
       <WrongNoteDetailModal
@@ -767,7 +767,7 @@ function WrongNotesPage({ onStartStudy }: { onStartStudy: (sessionId: string, fo
       <div style={{ backgroundColor: '#142850', color: '#EFEBDF', borderRadius: '4px', padding: '40px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(180,83,9,0.15) 0%, transparent 70%)' }} />
         <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: '#AAB4C5', textTransform: 'uppercase', marginBottom: '6px' }}>AI Pattern Analysis</div>
+          <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: '#AAB4C5', textTransform: 'uppercase', marginBottom: '6px' }}>AI 패턴 분석</div>
           <h2 className="serif" style={{ fontSize: '32px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0, marginBottom: '32px' }}>
             {t('wn.aiPattern.title')}
           </h2>
@@ -1067,7 +1067,7 @@ function StudySession({ sessionId, focusProblemId, onClear }: { sessionId: strin
       <div style={{ marginBottom: '32px' }} className="fade-up">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
-            <div style={sectionLabelStyle}>Session {String(session.data?.sessionNumber ?? 1).padStart(2, '0')} of {String(total).padStart(2, '0')}</div>
+            <div style={sectionLabelStyle}>세션 {String(session.data?.sessionNumber ?? 1).padStart(2, '0')} / {String(total).padStart(2, '0')}</div>
             <h1 className="serif" style={{ fontSize: '32px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0, marginTop: '4px' }}>
               {currentProblem?.source ?? t('study.problem.loading')}
             </h1>
@@ -1105,7 +1105,7 @@ function StudySession({ sessionId, focusProblemId, onClear }: { sessionId: strin
         <div className="grain" style={{ backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '40px', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
             <div>
-              <div style={sectionLabelStyle}>Problem {String(step).padStart(2, '0')}</div>
+              <div style={sectionLabelStyle}>문제 {String(step).padStart(2, '0')}</div>
               <div className="serif" style={{ fontSize: '14px', color: '#8B95AB', fontStyle: 'italic' }}>
                 {currentProblem?.source ?? '—'}
               </div>
@@ -1151,7 +1151,7 @@ function StudySession({ sessionId, focusProblemId, onClear }: { sessionId: strin
                   })}
                 </div>
                 <div style={{ fontSize: 14, color: '#142850', fontWeight: 600, marginTop: 12, lineHeight: 1.5 }}>
-                  Q{problemStep}. {currentStep.prompt}
+                  문항 {problemStep}. {currentStep.prompt}
                 </div>
               </div>
 
@@ -1353,7 +1353,7 @@ function StudySession({ sessionId, focusProblemId, onClear }: { sessionId: strin
 
         <div>
           <div style={{ marginBottom: '20px' }}>
-            <div style={sectionLabelStyle}>AI Multi-Modal Guide</div>
+            <div style={sectionLabelStyle}>AI 멀티모달 가이드</div>
             <h2 className="serif" style={{ fontSize: '24px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('study.aiGuide.title')}</h2>
           </div>
           <div style={{ marginBottom: '16px' }}>
@@ -1492,7 +1492,7 @@ function MockExamPage({ onStartExam }: { onStartExam: (exam: M.ExamPackage) => v
       <section style={{ marginBottom: '48px' }} className="fade-up">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#5A8A45' }} className="pulse-warm" />
-          <span style={{ fontSize: '11px', letterSpacing: '0.25em', color: '#8B95AB', textTransform: 'uppercase' }}>Mock Exam Trajectory</span>
+          <span style={{ fontSize: '11px', letterSpacing: '0.25em', color: '#8B95AB', textTransform: 'uppercase' }}>모의고사 변화 추이</span>
         </div>
         <h1 className="serif" style={{
           fontSize: '48px', lineHeight: 1.15, letterSpacing: '-0.025em', fontWeight: 400, margin: 0, maxWidth: '880px',
@@ -1534,7 +1534,7 @@ function MockExamPage({ onStartExam }: { onStartExam: (exam: M.ExamPackage) => v
 
       <div className="grain" style={{ backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '32px', marginBottom: '32px', position: 'relative' }}>
         <div style={{ marginBottom: '24px' }}>
-          <div style={sectionLabelStyle}>No 01 — Score Trajectory</div>
+          <div style={sectionLabelStyle}>No 01 — 점수 추이</div>
           <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('mock.section.trajectory')}</h2>
         </div>
         <div style={{ height: '320px' }}>
@@ -1569,7 +1569,7 @@ function MockExamPage({ onStartExam }: { onStartExam: (exam: M.ExamPackage) => v
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '32px' }}>
         <div>
           <div style={{ marginBottom: '20px' }}>
-            <div style={sectionLabelStyle}>No 02 — Recent Exams</div>
+            <div style={sectionLabelStyle}>No 02 — 최근 응시</div>
             <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('mock.section.recent')}</h2>
           </div>
           <div style={{ borderTop: '1px solid #14285015' }}>
@@ -1613,7 +1613,7 @@ function MockExamPage({ onStartExam }: { onStartExam: (exam: M.ExamPackage) => v
 
         <div>
           <div style={{ marginBottom: '20px' }}>
-            <div style={sectionLabelStyle}>No 03 — Take Exam</div>
+            <div style={sectionLabelStyle}>No 03 — 시험 응시</div>
             <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('mock.section.take')}</h2>
           </div>
           <div style={{ backgroundColor: '#142850', color: '#EFEBDF', borderRadius: '4px', padding: '32px', marginBottom: '16px' }}>
@@ -1687,7 +1687,7 @@ function ReportPage() {
       <section style={{ marginBottom: '48px' }} className="fade-up">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#142850' }} className="pulse-warm" />
-          <span style={{ fontSize: '11px', letterSpacing: '0.25em', color: '#8B95AB', textTransform: 'uppercase' }}>Weekly Performance Report</span>
+          <span style={{ fontSize: '11px', letterSpacing: '0.25em', color: '#8B95AB', textTransform: 'uppercase' }}>주간 학습 리포트</span>
         </div>
         <h1 className="serif" style={{
           fontSize: '48px', lineHeight: 1.15, letterSpacing: '-0.025em', fontWeight: 400, margin: 0, maxWidth: '880px',
@@ -1725,7 +1725,7 @@ function ReportPage() {
       <div style={{ backgroundColor: '#142850', color: '#EFEBDF', borderRadius: '4px', padding: '40px', marginBottom: '32px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '40px', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: '#D9A055', textTransform: 'uppercase', marginBottom: '12px' }}>AI Mentor Message</div>
+            <div style={{ fontSize: '11px', letterSpacing: '0.2em', color: '#D9A055', textTransform: 'uppercase', marginBottom: '12px' }}>AI 멘토 메시지</div>
             <div className="serif mono" style={{ fontSize: '72px', fontWeight: 400, lineHeight: 1, color: '#D9A055', marginBottom: '12px' }}>"</div>
             <div style={{ fontSize: '11px', color: '#AAB4C5', letterSpacing: '0.05em' }}>
               {mentor.data?.generatedAt ? new Date(mentor.data.generatedAt).toLocaleDateString() : ''} · {t('report.mentor.weeklyDone')}
@@ -1752,7 +1752,7 @@ function ReportPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '32px', marginBottom: '32px' }}>
         <div className="grain" style={{ backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '32px' }}>
           <div style={{ marginBottom: '24px' }}>
-            <div style={sectionLabelStyle}>No 01 — Time vs Accuracy</div>
+            <div style={sectionLabelStyle}>No 01 — 학습시간과 정답률</div>
             <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('report.section.timeAcc')}</h2>
           </div>
           <div style={{ height: '300px' }}>
@@ -1772,7 +1772,7 @@ function ReportPage() {
 
         <div style={{ backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '32px' }}>
           <div style={{ marginBottom: '24px' }}>
-            <div style={sectionLabelStyle}>No 02 — Unit Mastery</div>
+            <div style={sectionLabelStyle}>No 02 — 단원별 진척도</div>
             <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('report.section.unitMastery')}</h2>
           </div>
           {(mastery.data ?? []).map((u, i) => (
@@ -1796,7 +1796,7 @@ function ReportPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
         <div style={{ backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '32px' }}>
           <div style={{ marginBottom: '24px' }}>
-            <div style={sectionLabelStyle}>No 03 — Next Focus</div>
+            <div style={sectionLabelStyle}>No 03 — 다음 집중 영역</div>
             <h2 className="serif" style={{ fontSize: '24px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('report.section.nextFocus')}</h2>
           </div>
           {(focus.data ?? []).map((item, i) => (
@@ -1816,7 +1816,7 @@ function ReportPage() {
 
         <div style={{ backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '32px' }}>
           <div style={{ marginBottom: '24px' }}>
-            <div style={sectionLabelStyle}>No 04 — Achievements</div>
+            <div style={sectionLabelStyle}>No 04 — 이번 주 성취</div>
             <h2 className="serif" style={{ fontSize: '24px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('report.section.achievements')}</h2>
           </div>
           {(ach.data ?? []).map((a, i) => (
@@ -1837,7 +1837,7 @@ function ReportPage() {
       <div className="grain" style={{ marginTop: '32px', backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '32px', position: 'relative' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
           <div>
-            <div style={sectionLabelStyle}>No 05 — Metacognitive Calibration</div>
+            <div style={sectionLabelStyle}>No 05 — 메타인지 캘리브레이션</div>
             <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('report.section.calibration')}</h2>
             <div style={{ fontSize: '12px', color: '#5C6B85', marginTop: '4px' }}>
               {cal.data && cal.data.attemptCount > 0
@@ -1862,7 +1862,7 @@ function ReportPage() {
                   <XAxis dataKey="bucket" axisLine={false} tickLine={false} tick={{ fill: '#5C6B85', fontSize: 11 }} />
                   <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#5C6B85', fontSize: 11 }} />
                   <Tooltip contentStyle={{ backgroundColor: '#142850', border: 'none', borderRadius: '4px', color: '#EFEBDF', fontSize: '12px' }} />
-                  <Line type="monotone" dataKey="ideal" stroke="#5A8A45" strokeDasharray="4 4" strokeWidth={1.5} dot={false} name="ideal (y=x)" />
+                  <Line type="monotone" dataKey="ideal" stroke="#5A8A45" strokeDasharray="4 4" strokeWidth={1.5} dot={false} name="이상값 (y=x)" />
                   <Line type="monotone" dataKey="conf" stroke="#AAB4C5" strokeWidth={2} dot={{ fill: '#AAB4C5', r: 4 }} name={t('study.confidence.label')} />
                   <Line type="monotone" dataKey="acc" stroke="#C25E2E" strokeWidth={2.5} dot={{ fill: '#C25E2E', r: 5 }} name={t('report.stat.weeklyAccuracy')} />
                 </LineChart>

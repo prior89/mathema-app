@@ -4,6 +4,7 @@ import { Lang } from '../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN, SUB_UNIT_NAME_EN } from '../../common/i18n/content-en';
 import { UNIT_NAME_HI, SUB_UNIT_NAME_HI } from '../../common/i18n/content-hi';
 import { GradeLevel, GRADE_LEVELS } from '../../common/enums/unit.enum';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 
 function localizeUnit(name: string, lang: Lang): string {
   if (lang === 'hi') return UNIT_NAME_HI[name] ?? UNIT_NAME_EN[name] ?? name;
@@ -18,7 +19,32 @@ function localizeSub(name: string, lang: Lang): string {
 
 @Injectable()
 export class CurriculumService {
-  constructor(private readonly repo: CurriculumRepository) {}
+  constructor(
+    private readonly repo: CurriculumRepository,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  /** Curriculum metadata catalog (H8/Option C). Lightweight list of
+   *  available country × grade × course rows. Frontend picker / chapter
+   *  label source. Optional countryCode filter — no auth (catalog is
+   *  publicly browseable post-login per JwtAuthGuard at controller). */
+  async catalog(countryCode?: string) {
+    return this.prisma.curriculum.findMany({
+      where: {
+        isActive: true,
+        ...(countryCode ? { countryCode } : {}),
+      },
+      orderBy: [{ countryCode: 'asc' }, { order: 'asc' }],
+      select: {
+        id: true,
+        countryCode: true,
+        grade: true,
+        courseCode: true,
+        name: true,
+        order: true,
+      },
+    });
+  }
 
   async tree(lang: Lang = 'en', grade?: string) {
     const g = this.normalizeGrade(grade);

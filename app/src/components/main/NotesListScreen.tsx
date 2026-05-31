@@ -3,23 +3,23 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchWrongNotes, fetchWrongNotesStats, fetchPatterns } from '../../lib/queries';
+import { useT } from '../../lib/i18n';
+import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
-import { UploadProblemModal } from './UploadProblemModal';
-import { QuotaMeter } from '../QuotaMeter';
 
 type StatusFilter = 'active' | 'mastered' | 'all';
 
-const FILTERS: Array<{ id: StatusFilter; label: string }> = [
-  { id: 'active', label: 'In progress' },
-  { id: 'mastered', label: 'Mastered' },
-  { id: 'all', label: 'All' },
+const FILTERS: Array<{ id: StatusFilter; labelKey: TranslationKey }> = [
+  { id: 'active', labelKey: 'notes.filter.active' },
+  { id: 'mastered', labelKey: 'notes.filter.mastered' },
+  { id: 'all', labelKey: 'notes.filter.all' },
 ];
 
 export function NotesListScreen() {
   const nav = useNavigate();
-  const [uploadOpen, setUploadOpen] = useState(false);
+  const { t } = useT();
   // Default to 'active' so the grid surfaces what still needs attention.
   // Without a filter every MASTERED note stays visible forever, so heavy users
   // ended up scrolling past months of done items to reach their open queue.
@@ -42,17 +42,17 @@ export function NotesListScreen() {
           scrolls, so the user can swap filters without re-finding the stats. */}
       <div className="app-head" style={{ paddingBottom: 0, flexShrink: 0 }}>
         <div>
-          <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>Library</div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, marginTop: 2, letterSpacing: '-0.01em' }}>Wrong notes</div>
+          <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('notes.tab.label')}</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, marginTop: 2, letterSpacing: '-0.01em' }}>{t('notes.tab.title')}</div>
         </div>
       </div>
       <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
         {/* 4 stats compact */}
         <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-          <StatMini k="TOTAL" v={stats.data?.total ?? 0} />
-          <StatMini k="ANALYZED" v={stats.data?.analyzed ?? 0} />
-          <StatMini k="MASTERED" v={stats.data?.mastered ?? 0} />
-          <StatMini k="REDO %" v={Math.round(stats.data?.retryAccuracy ?? 0)} />
+          <StatMini k={t('notes.stat.total')} v={stats.data?.total ?? 0} />
+          <StatMini k={t('notes.stat.analyzed')} v={stats.data?.analyzed ?? 0} />
+          <StatMini k={t('notes.stat.mastered')} v={stats.data?.mastered ?? 0} />
+          <StatMini k={t('notes.stat.retry')} v={Math.round(stats.data?.retryAccuracy ?? 0)} />
         </div>
 
         {/* AI pattern banner */}
@@ -62,7 +62,7 @@ export function NotesListScreen() {
               <Glyph.Sparkle accent="#fff" size={14} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--p-ink)' }}>Pattern detected · {patterns.data[0].title}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--p-ink)' }}>{t('notes.pattern.detected', { title: patterns.data[0].title })}</div>
               <div style={{ fontSize: 11.5, color: 'var(--p-ink-2)' }}>{patterns.data[0].desc}</div>
             </div>
             <Glyph.ChevronR accent="var(--p-primary)" size={16} />
@@ -79,7 +79,7 @@ export function NotesListScreen() {
               style={{ flex: '0 0 calc((100% - 12px) / 3)', textAlign: 'center' }}
               onClick={() => setFilter(f.id)}
             >
-              {f.label}
+              {t(f.labelKey)}
             </span>
           ))}
         </div>
@@ -87,15 +87,15 @@ export function NotesListScreen() {
 
       {/* Scrollable grid only */}
       <div style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '8px 22px' }}>
-        {notes.isLoading && <Empty msg="Loading wrong notes…" />}
-        {notes.data && notes.data.length === 0 && <Empty msg="No wrong notes yet — practice problems to start building." />}
+        {notes.isLoading && <Empty msg={t('notes.loading')} />}
+        {notes.data && notes.data.length === 0 && <Empty msg={t('notes.empty.none')} />}
         {notes.data && notes.data.length > 0 && visibleNotes.length === 0 && (
           <Empty msg={
             filter === 'mastered'
-              ? 'No mastered notes yet — solve a wrong-note review to graduate one.'
+              ? t('notes.empty.mastered')
               : filter === 'active'
-                ? 'All caught up — every wrong note is mastered. Practice more chapters to grow the queue.'
-                : 'No wrong notes match this filter.'
+                ? t('notes.empty.active')
+                : t('notes.empty.noFilter')
           } />
         )}
         <div className="notes-grid">
@@ -122,11 +122,11 @@ export function NotesListScreen() {
                     const s = (n.status ?? '').toLowerCase();
                     return (
                       <span className={`status-chip ${s}`}>
-                        {s === 'pending' && '· PENDING'}
-                        {s === 'analyzing' && '· ANALYZING'}
+                        {s === 'pending' && t('notes.status.pending')}
+                        {s === 'analyzing' && t('notes.status.analyzing')}
                         {s === 'mastered' && (
                           <>
-                            <Glyph.Check accent="currentColor" size={10} />MASTERED
+                            <Glyph.Check accent="currentColor" size={10} />{t('notes.status.mastered')}
                           </>
                         )}
                       </span>
@@ -140,30 +140,12 @@ export function NotesListScreen() {
         <div style={{ height: 90 }} />
       </div>
 
-      {/* Quota meter floats above the FAB so the user sees their remaining
-          AI Solver calls before tapping the "+" to upload a problem. */}
-      <div
-        style={{
-          position: 'absolute',
-          right: 22,
-          bottom: 86,
-          padding: '4px 10px',
-          background: 'var(--p-surface)',
-          border: '1px solid var(--p-border)',
-          borderRadius: 999,
-          boxShadow: '0 2px 8px rgba(31,26,20,0.06)',
-          zIndex: 5,
-        }}
-      >
-        <QuotaMeter />
-      </div>
-      <div className="fab" onClick={() => setUploadOpen(true)} aria-label="Upload a problem">
-        <svg viewBox="0 0 24 24" width="24" height="24">
-          <path d="M 12 5 V 19 M 5 12 H 19" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-        </svg>
-      </div>
-      <UploadProblemModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
       <TabBar />
+      {/* AI Solver removed from Notes (2026-05-23) — its place was a "+" FAB,
+          which read as "add a note" but actually opens the upload-and-solve
+          flow. With the solver now producing full step-by-step LaTeX
+          solutions, it belongs alongside Study (SolverButton lives there).
+          Notes stays focused on reviewing past wrongs. */}
     </div>
   );
 }

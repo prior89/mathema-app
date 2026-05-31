@@ -2,6 +2,28 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LoadingSplash } from './Brand';
 
+// Has the user reached the end of /onboarding (= ScreenReady.finalize ran
+// to the localStorage write)? This is a SECONDARY signal — the backend's
+// User.gradeLevel is the source of truth, but PATCH /users/me can fail
+// transiently (offline, throttle, 5xx) and we don't want a temporary save
+// miss to ricochet the user back into /onboarding from /app forever.
+//
+// Audit 2026-05-27: the prior guard was gradeLevel-only, so finalize()'s
+// silent-catch on the PATCH meant any blip during onboarding left the
+// account permanently stuck in /onboarding ↔ /app oscillation. P3
+// separately makes finalize loud about that failure so the user can retry;
+// this flag is the safety net so the user isn't trapped in the meantime.
+function onboardingCompletedLocally(): boolean {
+  try {
+    const raw = localStorage.getItem('mathema.onboarding');
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return !!parsed?.completedAt;
+  } catch {
+    return false;
+  }
+}
+
 export default function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { user, ready } = useAuth();
   const location = useLocation();
@@ -11,8 +33,10 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
   // Google sign-up creates users without a class. Force them through the
-  // NCERT picker (CLASS_7..CLASS_12) before /app/* is reachable.
-  if (!user.gradeLevel) {
+  // NCERT picker (CLASS_7..CLASS_12) before /app/* is reachable — UNLESS
+  // the user has already finished onboarding locally (PATCH may have just
+  // missed a beat; we don't want to loop them).
+  if (!user.gradeLevel && !onboardingCompletedLocally()) {
     return <Navigate to="/onboarding" replace />;
   }
   return children;

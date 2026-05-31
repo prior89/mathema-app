@@ -71,6 +71,18 @@ export class DashboardService {
    * stays glanceable.
    */
   async chapterProgress(userId: string) {
+    // Country-aware: KR uses KoreanConceptLesson + Problem.koreanConceptLessonId,
+    // IN/그외 uses NCERT ConceptLesson + Problem.conceptLessonId. KR side
+    // packs Korean grade/subject into the same response shape (titleKo in
+    // titleEn slot, KoreanSubject in ncertClass slot) so the frontend
+    // ChapterProgressCard renders both curricula without a type switch.
+    const me = await this.prisma.user.findUnique({
+      where: { id: userId }, select: { country: true },
+    });
+    if (me?.country === 'KR') {
+      return this.chapterProgressKorean(userId);
+    }
+
     const rows = await this.prisma.$queryRawUnsafe<Array<{
       chapter_code: string;
       title_en: string;
@@ -103,12 +115,25 @@ export class DashboardService {
       // straight into the next question instead of restarting from problem 1.
       // Returns NULL when every reachable problem has been attempted under
       // STUDY/PRACTICE (chapter is 100%).
+      // Canonical-20 scoping: when ConceptLesson.masterySetProblemIds is the
+      // frozen 20, BOTH the progress count AND the next-problem deep-link
+      // must restrict to that exact set — otherwise a student who attempted
+      // a non-canonical problem would inflate progress to 25/20, and the
+      // Home card deep-link would land on a problem id the practiceProblems
+      // endpoint never returns (causing a fallback to the concept walkthrough,
+      // which felt like "starting from problem 1" per user-report 2026-05-23).
+      // 2026-05-29 fix (mirrors KR fix below): problems_attempted +
+      // next_problem_id require stepIndex=3 (ANSWER) attempt, matching
+      // attempts.service.checkAndUnlockMastery's NCERT branch. Without this
+      // a student who tapped only CONCEPT/PROCESS would have the chapter
+      // show "20/20" but the Mastery-unlock signal never fired and the
+      // deep-link still routed back to the first unfinished problem.
       `SELECT cl."chapterCode"    AS chapter_code,
               cl."titleEn"        AS title_en,
               cl."ncertClass"     AS ncert_class,
               cl."chapterNumber"  AS chapter_number,
               COUNT(DISTINCT p.id)                                                AS problems_total,
-              COUNT(DISTINCT CASE WHEN a.id IS NOT NULL THEN p.id END)            AS problems_attempted,
+              COUNT(DISTINCT CASE WHEN a.id IS NOT NULL AND a."stepIndex" = 3 THEN p.id END) AS problems_attempted,
               COUNT(a.id)                                                         AS total_attempts,
               SUM(CASE WHEN a."isCorrect" THEN 1 ELSE 0 END)                      AS correct_attempts,
               MAX(a."createdAt")                                                  AS last_attempt_at,
@@ -119,13 +144,22 @@ export class DashboardService {
                     SELECT 1 FROM "ProblemStep" ps2
                     WHERE ps2."problemId" = p2.id AND ps2."stepIndex" = 1
                   )
+                  AND (
+                    COALESCE(array_length(cl."masterySetProblemIds", 1), 0) <> 20
+                    OR p2.id = ANY(cl."masterySetProblemIds")
+                  )
                   AND NOT EXISTS (
                     SELECT 1 FROM "Attempt" a2
                     WHERE a2."problemId" = p2.id
                       AND a2."userId" = $1
                       AND a2."context" IN ('STUDY', 'PRACTICE')
+                      AND a2."stepIndex" = 3
                   )
-                ORDER BY p2.source ASC
+                ORDER BY
+                  CASE WHEN COALESCE(array_length(cl."masterySetProblemIds", 1), 0) = 20
+                       THEN array_position(cl."masterySetProblemIds", p2.id)
+                       ELSE NULL END ASC NULLS LAST,
+                  p2.source ASC
                 LIMIT 1
               )                                                                    AS next_problem_id
        FROM "ConceptLesson" cl
@@ -133,6 +167,10 @@ export class DashboardService {
                               AND EXISTS (
                                 SELECT 1 FROM "ProblemStep" ps
                                 WHERE ps."problemId" = p.id AND ps."stepIndex" = 1
+                              )
+                              AND (
+                                COALESCE(array_length(cl."masterySetProblemIds", 1), 0) <> 20
+                                OR p.id = ANY(cl."masterySetProblemIds")
                               )
        LEFT JOIN "Attempt"   a ON a."problemId" = p.id
                               AND a."userId" = $1
@@ -162,6 +200,116 @@ export class DashboardService {
         chapterCode: r.chapter_code,
         titleEn: r.title_en,
         ncertClass: r.ncert_class,
+        chapterNumber: r.chapter_number,
+        problemsTotal,
+        problemsAttempted,
+        totalAttempts,
+        correctAttempts,
+        progress: problemsTotal > 0 ? problemsAttempted / problemsTotal : 0,
+        accuracy: totalAttempts > 0 ? correctAttempts / totalAttempts : 0,
+        lastAttemptAt: r.last_attempt_at?.toISOString() ?? null,
+        nextProblemId: r.next_problem_id,
+      };
+    });
+  }
+
+  /**
+   * Korean curriculum chapter-progress (parallel to NCERT chapterProgress).
+   * Same response shape — titleKo packed into titleEn slot, KoreanSubject
+   * label into ncertClass slot, KR grade label ("중1" / "고2 대수") computed
+   * client-side from card-renderer logic. Filters mirror NCERT version:
+   *   - only problems with steps.length=3 (KR 3-step Mastery seed)
+   *   - only Attempt rows with context IN ('STUDY','PRACTICE')
+   *   - cap problemsTotal at 20 (Mastery canonical-set invariant)
+   *   - chapters with zero attempts hidden (HAVING COUNT(a.id) > 0)
+   */
+  private async chapterProgressKorean(userId: string) {
+    const rows = await this.prisma.$queryRawUnsafe<Array<{
+      chapter_code: string;
+      title_ko: string;
+      korean_grade: string;
+      chapter_number: number;
+      problems_total: bigint;
+      problems_attempted: bigint;
+      total_attempts: bigint;
+      correct_attempts: bigint;
+      last_attempt_at: Date | null;
+      next_problem_id: string | null;
+    }>>(
+      // 2026-05-29 fix: `problems_attempted` and `next_problem_id` now
+      // both require an ANSWER-step (stepIndex=3) attempt — same gate as
+      // KoreanConceptLessonsService.detail and attempts.service.unlockKorean.
+      // Previously the dashboard counted any attempt (CONCEPT / PROCESS too)
+      // and a chapter showed "20/20 100%" while the deep-link still routed
+      // to a problem whose ANSWER step the student had not seen, because
+      // unlockKorean and the deep-link both checked stepIndex=3 only. The
+      // mismatch also blocked Study-tab unlock (KoreanConceptProgress flag).
+      `SELECT kcl."chapterCode"        AS chapter_code,
+              kcl."titleKo"             AS title_ko,
+              kcl."koreanGrade"::text   AS korean_grade,
+              kcl."chapterNumber"       AS chapter_number,
+              COUNT(DISTINCT p.id)                                                AS problems_total,
+              COUNT(DISTINCT CASE WHEN a.id IS NOT NULL AND a."stepIndex" = 3 THEN p.id END) AS problems_attempted,
+              COUNT(a.id)                                                         AS total_attempts,
+              SUM(CASE WHEN a."isCorrect" THEN 1 ELSE 0 END)                      AS correct_attempts,
+              MAX(a."createdAt")                                                  AS last_attempt_at,
+              (
+                SELECT p2.id FROM "Problem" p2
+                WHERE p2."koreanConceptLessonId" = kcl.id
+                  AND (SELECT COUNT(*) FROM "ProblemStep" ps2 WHERE ps2."problemId" = p2.id) = 3
+                  AND (
+                    COALESCE(array_length(kcl."masterySetProblemIds", 1), 0) <> 20
+                    OR p2.id = ANY(kcl."masterySetProblemIds")
+                  )
+                  AND NOT EXISTS (
+                    SELECT 1 FROM "Attempt" a2
+                    WHERE a2."problemId" = p2.id
+                      AND a2."userId" = $1
+                      AND a2."context" IN ('STUDY', 'PRACTICE')
+                      AND a2."stepIndex" = 3
+                  )
+                ORDER BY
+                  CASE WHEN COALESCE(array_length(kcl."masterySetProblemIds", 1), 0) = 20
+                       THEN array_position(kcl."masterySetProblemIds", p2.id)
+                       ELSE NULL END ASC NULLS LAST,
+                  p2."source" ASC
+                LIMIT 1
+              )                                                                    AS next_problem_id
+       FROM "KoreanConceptLesson" kcl
+       LEFT JOIN "Problem"   p ON p."koreanConceptLessonId" = kcl.id
+                              AND (SELECT COUNT(*) FROM "ProblemStep" ps WHERE ps."problemId" = p.id) = 3
+                              AND (
+                                COALESCE(array_length(kcl."masterySetProblemIds", 1), 0) <> 20
+                                OR p.id = ANY(kcl."masterySetProblemIds")
+                              )
+       LEFT JOIN "Attempt"   a ON a."problemId" = p.id
+                              AND a."userId" = $1
+                              AND a."context" IN ('STUDY', 'PRACTICE')
+       GROUP BY kcl.id, kcl."chapterCode", kcl."titleKo", kcl."koreanGrade", kcl."chapterNumber"
+       HAVING COUNT(a.id) > 0
+       ORDER BY MAX(a."createdAt") DESC NULLS LAST
+       LIMIT 10`,
+      userId,
+    );
+
+    return rows.map((r) => {
+      const MASTERY_CAP = 20;
+      const rawTotal = Number(r.problems_total);
+      const rawAttempted = Number(r.problems_attempted);
+      const problemsTotal = Math.min(rawTotal, MASTERY_CAP);
+      const problemsAttempted = Math.min(rawAttempted, problemsTotal);
+      const totalAttempts = Number(r.total_attempts);
+      const correctAttempts = Number(r.correct_attempts);
+      return {
+        chapterCode: r.chapter_code,
+        // Pack KR title into NCERT titleEn slot — same field name lets the
+        // frontend ChapterProgressCard render without a country switch.
+        titleEn: r.title_ko,
+        // KoreanGrade ('MIDDLE_1' / 'HIGH_2' / ...) packed in ncertClass slot.
+        // The ChapterProgressCard renderer's "CLASS_" replace is a no-op for
+        // these strings (so the chip shows "MIDDLE_1 · CH 1" — readable
+        // although not fully localized). UI polish is a follow-up.
+        ncertClass: r.korean_grade,
         chapterNumber: r.chapter_number,
         problemsTotal,
         problemsAttempted,

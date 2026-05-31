@@ -99,12 +99,22 @@ async function bootstrap() {
     'http://localhost',      // Capacitor dev / iOS simulator
     ...extra,
   ]);
+  // Dev-only escape hatch: when Vite's 5173 port is busy it auto-falls back to
+  // 5174 / 5175 / 5176... If the backend's static allow-list only contains
+  // 5173+5174 (the configured webOrigin + adminOrigin), the next port shows
+  // "서버 연결 실패" with no obvious cause. Permit the http://localhost:51xx
+  // range so a port collision during local development doesn't blow up
+  // auth/CORS. Production stays strict — this only triggers under NODE_ENV
+  // !== 'production', and only for the localhost loopback.
+  const isDev = process.env.NODE_ENV !== 'production';
+  const devLocalhostRange = /^https?:\/\/localhost:(517[0-9]|3000|4173)$/;
   app.enableCors({
     origin: (origin, cb) => {
       // Allow requests with no Origin header (curl, mobile WebView same-origin
       // navigation) and any origin explicitly in the allow-list. Reject the
       // rest with a CORS error rather than silently letting them through.
       if (!origin || allowedOrigins.has(origin)) return cb(null, true);
+      if (isDev && devLocalhostRange.test(origin)) return cb(null, true);
       cb(new Error(`CORS: origin not allowed (${origin})`));
     },
     credentials: true,

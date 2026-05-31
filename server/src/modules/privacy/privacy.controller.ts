@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nes
 import { ConsentKind } from '@prisma/client';
 import { PrivacyService, CURRENT_POLICY_VERSION } from './privacy.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CurrentLang, Lang } from '../../common/i18n/current-lang.decorator';
 
@@ -40,7 +41,13 @@ const POLICY_SUMMARY: Record<Lang, { title: string; sections: Array<{ heading: s
 export class PrivacyController {
   constructor(private readonly service: PrivacyService) {}
 
-  /** 현재 정책 문서 — 가입/설정 화면에서 표시. */
+  /**
+   * Public policy document — surfaced on the unauthenticated /privacy and
+   * /terms SPA routes plus the Settings screen. Play Store + DPDP require a
+   * Privacy URL reachable without login, so this is the one endpoint in the
+   * controller that escapes the JwtAuthGuard.
+   */
+  @Public()
   @Get('policy')
   policy(@CurrentLang() lang: Lang) {
     return {

@@ -75,9 +75,19 @@ export class ProblemsRepository {
     return sanitizeForClient(row, lang);
   }
 
+  // Returns the cheap "Hint Lv1" payload — formula + concept + the
+  // free-form hint. Hint Lv2 (AI walks the solution onto the canvas) goes
+  // through a separate /hint-walkthrough endpoint that calls the LLM.
   async findHint(id: string) {
-    const p = await this.prisma.problem.findUnique({ where: { id }, select: { hint: true } });
-    return { hint: p?.hint };
+    const p = await this.prisma.problem.findUnique({
+      where: { id },
+      select: { hint: true, formula: true, concept: true },
+    });
+    return {
+      hint: p?.hint ?? null,
+      formula: p?.formula ?? null,
+      concept: p?.concept ?? null,
+    };
   }
 
   private buildWhere(q: any) {

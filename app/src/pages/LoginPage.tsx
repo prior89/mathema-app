@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { post, tokens, get } from '../lib/api';
 import type { Me } from '../lib/queries';
+import { useT } from '../lib/i18n';
 import { Glyph } from '../components/onboarding/Glyph';
 import { BrandLogo } from '../components/Brand';
 import '../styles/onboarding.css';
@@ -15,8 +16,9 @@ import '../styles/onboarding.css';
 const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
 
 export default function LoginPage() {
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const { t } = useT();
   // PoC dev-login은 DEV 빌드에서만 prefill — production은 빈 폼 (admin/admin 누른 사용자가
   // /auth/dev-login → "dev-login disabled in production" 에러를 받지 않도록).
   const [email, setEmail] = useState(import.meta.env.DEV ? 'admin' : '');
@@ -30,9 +32,9 @@ export default function LoginPage() {
       const v = sessionStorage.getItem('matheo.loginNotice');
       sessionStorage.removeItem('matheo.loginNotice');
       if (v === 'device_displaced')
-        return 'You were signed out because your account logged in on a new device.';
+        return t('login.notice.displaced');
       if (v === 'device_mismatch')
-        return 'Your session token did not match this device. Please sign in again.';
+        return t('login.notice.mismatch');
       return null;
     } catch { return null; }
   });
@@ -48,14 +50,33 @@ export default function LoginPage() {
       if (import.meta.env.DEV && email.trim().toLowerCase() === 'admin' && password === 'admin') {
         const tk = await post<{ accessToken: string; refreshToken: string }>('/auth/dev-login', {});
         tokens.set(tk.accessToken, tk.refreshToken);
-        await get<Me>('/users/me');
+        // 2026-05-27 fix: previously `await get<Me>('/users/me')` did fetch
+        // /users/me but the response was thrown away — AuthContext.user
+        // stayed null, so ProtectedRoute on /app bounced back to /login.
+        // Hydrate the context properly so the navigation actually sticks.
+        await refreshUser();
         navigate('/app');
         return;
       }
       await login(email, password);
       navigate('/app');
     } catch (e: any) {
-      setErr(e?.response?.data?.error?.message ?? 'Login failed');
+      // P4 fix 2026-05-27: surface 429 / network as actionable copy instead of
+      // raw backend message. Locale picked from localStorage since LoginPage
+      // sits before any country gate.
+      const isKR = (() => { try { return localStorage.getItem('mathema.lang') === 'ko'; } catch { return false; } })();
+      const status = e?.response?.status;
+      if (status === 429) {
+        setErr(isKR
+          ? '로그인 시도가 너무 많아요. 잠시 후 다시 시도해주세요.'
+          : 'Too many login attempts. Please retry in a minute.');
+      } else if (!status) {
+        setErr(isKR
+          ? '서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'
+          : 'Cannot reach the server. Check your connection.');
+      } else {
+        setErr(e?.response?.data?.error?.message ?? t('login.failed'));
+      }
     } finally {
       setBusy(false);
     }
@@ -76,7 +97,19 @@ export default function LoginPage() {
             await loginWithGoogle(resp.credential);
             navigate('/app');
           } catch (e: any) {
-            setErr(e?.response?.data?.error?.message ?? 'Google sign-in failed');
+            const isKR = (() => { try { return localStorage.getItem('mathema.lang') === 'ko'; } catch { return false; } })();
+            const status = e?.response?.status;
+            if (status === 429) {
+              setErr(isKR
+                ? '로그인 시도가 너무 많아요. 잠시 후 다시 시도해주세요.'
+                : 'Too many login attempts. Please retry in a minute.');
+            } else if (!status) {
+              setErr(isKR
+                ? '서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'
+                : 'Cannot reach the server. Check your connection.');
+            } else {
+              setErr(e?.response?.data?.error?.message ?? t('login.google.failed'));
+            }
           } finally {
             setBusy(false);
           }
@@ -108,17 +141,17 @@ export default function LoginPage() {
           <div className="screen">
             <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <BrandLogo size="sm" />
-              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>CLASS 7–12</span>
+              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>{t('login.subtitleClass')}</span>
             </div>
 
             <div className="screen-body" style={{ gap: 24, paddingTop: 32 }}>
               <div>
-                <span className="eyebrow">Welcome back</span>
+                <span className="eyebrow">{t('login.eyebrow')}</span>
                 <h1 className="display" style={{ marginTop: 10, fontSize: 36, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
-                  <span>Sign in to</span>
+                  <span>{t('login.title.short')}</span>
                   <BrandLogo size="md" />
                 </h1>
-                <p className="subtitle">Pick up where you left off — your progress and notes are saved.</p>
+                <p className="subtitle">{t('login.tagline')}</p>
               </div>
 
               {notice && (
@@ -137,7 +170,7 @@ export default function LoginPage() {
 
               <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="field">
-                  <label>Email or username</label>
+                  <label>{t('login.field.emailOrId')}</label>
                   <input
                     type="text"
                     value={email}
@@ -147,7 +180,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>Password</label>
+                  <label>{t('login.field.password')}</label>
                   <input
                     type="password"
                     value={password}
@@ -160,7 +193,7 @@ export default function LoginPage() {
                   <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>
                 )}
                 <button className="btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>
-                  {busy ? 'Signing in…' : 'Sign in'}
+                  {busy ? t('login.busy') : t('login.submit')}
                   <Glyph.ChevronR />
                 </button>
               </form>
@@ -169,27 +202,27 @@ export default function LoginPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-                    <span className="caption" style={{ fontSize: 11 }}>OR</span>
+                    <span className="caption" style={{ fontSize: 11 }}>{t('login.or')}</span>
                     <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
                   </div>
                   <div ref={gsiRef} style={{ display: 'flex', justifyContent: 'center' }} />
                 </div>
               )}
 
-              {import.meta.env.DEV && (
-                <div className="card" style={{ padding: 12, background: 'var(--p-surface-2)', borderColor: 'transparent', fontSize: 12, color: 'var(--p-ink-2)' }}>
-                  PoC dev login — type <strong style={{ color: 'var(--p-primary)' }}>admin / admin</strong> to enter without an account.
-                </div>
-              )}
+              {/* PoC dev-login hint card removed per user request 2026-05-27 —
+                  surfaced even in dogfood builds via import.meta.env.DEV and
+                  felt like a leaked internal note. The admin/admin shortcut
+                  still works for development; the on-screen reminder just
+                  isn't shown anymore. */}
 
               <div style={{ flex: 1 }} />
 
               <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <Link to="/onboarding" style={{ color: 'var(--p-primary)', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
-                  Start the onboarding flow →
+                  {t('login.goOnboarding')}
                 </Link>
                 <Link to="/forgot-password" style={{ color: 'var(--p-muted)', fontSize: 12, textDecoration: 'none' }}>
-                  Forgot your password?
+                  {t('login.forgotPw')}
                 </Link>
               </div>
             </div>

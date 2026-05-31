@@ -3,7 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
 
 // config
 import appConfig from './config/configuration';
@@ -31,6 +32,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CurriculumModule } from './modules/curriculum/curriculum.module';
 import { ConceptLessonsModule } from './modules/concept-lessons/concept-lessons.module';
+import { KoreanConceptLessonsModule } from './modules/korean-concept-lessons/korean-concept-lessons.module';
 import { ProblemsModule } from './modules/problems/problems.module';
 import { WrongNotesModule } from './modules/wrong-notes/wrong-notes.module';
 import { AttemptsModule } from './modules/attempts/attempts.module';
@@ -65,7 +67,17 @@ import { BillingModule } from './modules/billing/billing.module';
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
+    // Global throttle: 240 req/min/user in prod, 10000/min in dev (so that a
+    // dogfooding 3-step × 20-problem mastery run, paired with react-query
+    // refetches on every state change, doesn't trip the limiter). Bucketing
+    // is per-user-id (see UserAwareThrottlerGuard) — IP-only would lock out
+    // every student behind a shared NAT, and every dev tab on 127.0.0.1.
+    // Auth endpoints still apply their own stricter @Throttle({ auth: ... })
+    // limits on top of this.
+    ThrottlerModule.forRoot([{
+      ttl: 60_000,
+      limit: process.env.NODE_ENV === 'production' ? 240 : 10_000,
+    }]),
 
     // infra
     PrismaModule,
@@ -81,6 +93,7 @@ import { BillingModule } from './modules/billing/billing.module';
     UsersModule,
     CurriculumModule,
     ConceptLessonsModule,
+    KoreanConceptLessonsModule,
     ProblemsModule,
     AttemptsModule,
     WrongNotesModule,
@@ -108,14 +121,15 @@ import { BillingModule } from './modules/billing/billing.module';
     BillingModule,
   ],
   providers: [
-    // P1-3: global rate-limit. forRoot([{ ttl: 60_000, limit: 120 }]) above
-    // only registers the module; without APP_GUARD only controllers with an
-    // explicit @UseGuards(ThrottlerGuard) get throttled. AuthController
-    // already has it, but the rest of the API (attempts, mock-exams, etc.)
-    // was wide open. With APP_GUARD every endpoint inherits the global
-    // budget; per-route @Throttle() decorators still override per-endpoint
-    // (e.g. /auth/login at 5/min via a stricter named throttler).
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // P1-3 + 2026-05-27 fix: global rate-limit, bucketed per-user (JWT.sub)
+    // rather than per-IP. IP-only bucketing collapsed every dogfooder + NAT
+    // student onto one counter — a single user finishing a 20-problem
+    // mastery run could lock out the whole 127.0.0.1 cluster. The custom
+    // guard reads the Bearer token's `sub`/`id`/`userId` and keys on
+    // `u:<id>`, falling back to `ip:<addr>` for unauthenticated routes
+    // (e.g., /auth/login itself, /health/*). Per-route @Throttle() and
+    // @SkipThrottle() decorators still override per-endpoint.
+    { provide: APP_GUARD, useClass: UserAwareThrottlerGuard },
   ],
 })
 export class AppModule {}

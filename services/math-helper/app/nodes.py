@@ -166,16 +166,75 @@ async def solve(state):
             }
         }
 
+    # Lv 2 RAG — few-shot examples from APPROVED problems in the student's
+    # current chapter (selected by NestJS buildFewShotExamples). Injected as
+    # verified worked solutions so the LLM grounds its answer in our own
+    # quality-graded corpus instead of generic web priors. Empty list when no
+    # APPROVED neighbour exists → falls back to zero-shot behaviour.
+    few_shot = (student_profile or {}).get("fewShotExamples") or []
+    few_shot_block = ""
+    if few_shot:
+        rendered = []
+        for idx, ex in enumerate(few_shot, 1):
+            q = (ex.get("question") or "").strip()
+            a = (ex.get("answer") or "").strip()
+            expl = (ex.get("explanation") or "").strip()
+            chapter = ex.get("chapter") or ""
+            head = f"Example {idx}"
+            if chapter:
+                head += f" — {chapter}"
+            block = f"{head}\nQ: {q}\nA: {a}"
+            if expl:
+                block += f"\nSolution: {expl}"
+            rendered.append(block)
+        few_shot_block = (
+            "\n\nWorked examples from our verified curriculum bank "
+            "(same chapter, quality-graded APPROVED). Use them as anchors "
+            "for method and notation; do not copy unless the new question "
+            "is literally identical:\n\n" + "\n\n".join(rendered) + "\n"
+        )
+
     prompt = f"""
 Solve this maths problem for a Class {detected["classLevel"]} student.
 
+LANGUAGE: Write `steps` and `explanation` in the same language as the question. Korean question → Korean answer. English question → English answer. Hindi question → Hindi answer. Mathematical notation stays as LaTeX in every language.
+
+IMPORTANT — multi-part questions:
+If the input contains labelled sub-problems — e.g. (1), (2), (가), (나), (i), (ii), Part A, Part B — you MUST answer EVERY part. Put all answers into the single `answer` string, one per line, prefixed with the part label exactly as it appears in the source. Example:
+  "answer": "(1) n(n+1)(4n+3)/2\\n(2) 1977400"
+Do NOT silently drop a part. If you only solve one part, the response is considered wrong.
+
+Sequence-vs-calculus reminder:
+If the question gives the sum of the first n terms S_n of a sequence, the individual terms are recovered by **subtraction**: a_n = S_n − S_(n−1) for n ≥ 2, and a_1 = S_1. Never differentiate S_n with respect to n — these are discrete sequences, not continuous functions.
+
+STEPS FORMAT — strict requirements:
+- Produce 4-7 entries in the `steps` array, NOT a single hand-wavy paragraph.
+- Each entry MUST begin with "Step N." where N is 1, 2, 3, ... (or "Step N (Part A)." for multi-part).
+- After the "Step N." header, write 2-5 short lines that show:
+    (a) the insight or rule being applied (one short sentence), and
+    (b) the actual algebra/computation, with all formulas in inline LaTeX delimited by single dollar signs: $...$
+- Inline LaTeX example: "If $f(1) = g(1) = c$, then $\\lim_{{x\\to 1}} \\frac{{f(x)-g(x)}}{{x-1}} = f'(1) - g'(1) = 5$."
+- Multi-line entries: separate lines inside one step with a literal "\\n" newline. The UI preserves these.
+- The last step states the final answer plainly, prefixed with "최종 답:" (Korean), "Final answer:" (English), or "अंतिम उत्तर:" (Hindi) according to the language above, then the numeric/expression result.
+- Do NOT write meta-commentary like "We first analyze the conditions..." — show the derivation directly.
+
+`explanation` is a 1-2 sentence intuitive summary AFTER the steps array (e.g., what concept this connects to, what a student should remember). It is NOT a replacement for steps.
+
 Return JSON only:
-Example format:
+Example format (English):
 {{
-  "answer": "-3",
-  "steps": ["step 1", "step 2"],
-  "explanation": "student-friendly explanation"
+  "answer": "6",
+  "steps": [
+    "Step 1. Since the denominator $x-1 \\to 0$ in (가), the numerator must also vanish at $x=1$. Therefore $f(1) - g(1) = 0$, so $f(1) = g(1) = c$.",
+    "Step 2. Rewriting (가) as a derivative: $\\lim_{{x\\to 1}} \\frac{{f(x)-g(x)}}{{x-1}} = f'(1) - g'(1) = 5$.\\nSimilarly (나): $\\lim_{{x\\to 1}} \\frac{{f(x)+g(x)-2c}}{{x-1}} = f'(1) + g'(1) = 7$.",
+    "Step 3. Adding: $2 f'(1) = 12 \\Rightarrow f'(1) = 6$.\\nSubtracting: $-2 g'(1) = -2 \\Rightarrow g'(1) = 1$.",
+    "Step 4. For the third limit to be finite, $a = f(1) = c$. Then the left side equals $f'(1) = 6$ and the right side is $b \\cdot g(1) = b c$, so $bc = 6$.",
+    "Step 5. Therefore $ab = c \\cdot b = bc = 6$.\\nFinal answer: $ab = 6$."
+  ],
+  "explanation": "The key idea is that whenever a limit of the form $\\lim_{{x\\to 1}} \\frac{{F(x)}}{{x-1}}$ is finite, $F(1)$ must be 0, and the limit then equals $F'(1)$. Applying this to both given limits gives a 2×2 linear system in $f'(1)$ and $g'(1)$."
 }}
+
+For multi-part answers, the `steps` array should cover EACH part — label step headers like "Step 1 (Part 1).", "Step 2 (Part 1).", ..., "Step N (Part 2).", etc.
 
 Chapter: {detected["chapter"]}
 Topic: {detected["topic"]}
@@ -189,7 +248,7 @@ Student weak/frequent learning context:
 
 Personalized teaching focus:
 {personalized_context}
-
+{few_shot_block}
 Adapt the explanation to the personalized teaching focus when present. If the student has weak concepts, rebuild that prerequisite before solving. If the student often studies related units, connect the current method to those units without distracting from the solution.
 
 Question:
@@ -369,6 +428,7 @@ async def format_response(state):
             "answer": answer,
             "isStudentCorrect": is_correct,
             "explanation": draft["explanation"],
+            "steps": draft.get("steps", []) or [],
             "personalizedLearning": _personalized_learning_summary(state),
             "mistakeDiagnosis": mistake,
             "hints": [

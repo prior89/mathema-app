@@ -10,10 +10,16 @@
  * /mock-exams/chapter/:code/start checks ConceptProgress.masteredAt and
  * rejects unmastered chapters regardless of grade.
  */
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ReactNode, useRef, useState } from 'react';
-import { fetchConceptLessons } from '../../lib/queries';
+import {
+  fetchConceptLessons, fetchKoreanConceptLessons, fetchMe,
+  startAdaptiveSession,
+  type AdaptiveStartResponse,
+} from '../../lib/queries';
+import { track } from '../../lib/analytics';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import { UploadProblemModal } from './UploadProblemModal';
@@ -26,6 +32,7 @@ const CLASS_SHORT: Record<string, string> = {
 
 export function StudyScreen() {
   const nav = useNavigate();
+  const { t } = useT();
   const [chapter, setChapter] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
   // AI Solver -- each button owns its own native <input type="file"> so the
@@ -43,43 +50,149 @@ export function StudyScreen() {
     e.target.value = '';
   };
 
-  // Fetch every chapter the user has access to (all classes). The mastered
-  // flag in the response decides eligibility — no client-side class filter.
-  const chapters = useQuery({
+  // Country-aware chapter fetch (2026-05-24 user spec: KR mastered chapters
+  // also surface in Study). NCERT side: practice-set route → StudyPracticeScreen
+  // (single-MC + handwriting). KR side: navigate back to ConceptLessonScreen
+  // → KoreanPracticePhase (multi-step Q1부터, mastered 후 다시 풀기 모드 —
+  // detail() nextProblemId=null when mastered so startProblemId=null → Q1).
+  const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
+  const isKR = me.data?.country === 'KR';
+
+  const ncertChapters = useQuery({
     queryKey: ['concept-lessons', 'all'],
     queryFn: () => fetchConceptLessons(),
+    enabled: !!me.data && !isKR,
   });
-  const eligibleChapters = (chapters.data ?? [])
-    .filter((c) => c.mastered)
-    // Sort by class then chapter number so Class 7 → Class 12 reads naturally.
-    .sort((a, b) => {
-      if (a.ncertClass !== b.ncertClass) return a.ncertClass.localeCompare(b.ncertClass);
-      return a.chapterNumber - b.chapterNumber;
-    });
+  const krChapters = useQuery({
+    queryKey: ['ko-lessons', 'all'],
+    queryFn: () => fetchKoreanConceptLessons(),
+    enabled: !!me.data && isKR,
+  });
 
-  // Study is stateless one-at-a-time — StudyPracticeScreen owns the fetch
-  // loop. Just navigate with the chapter code; the screen mounts and
-  // pulls its first problem from POST /mock-exams/chapter/:code/next.
+  type EligibleChapter = { chapterCode: string; label: string; sortKey: string };
+  const eligibleChapters: EligibleChapter[] = (() => {
+    if (isKR) {
+      return (krChapters.data ?? [])
+        .filter((c) => c.mastered)
+        .sort((a, b) =>
+          a.koreanGrade !== b.koreanGrade
+            ? a.koreanGrade.localeCompare(b.koreanGrade)
+            : a.chapterNumber - b.chapterNumber,
+        )
+        .map((c) => ({
+          chapterCode: c.chapterCode,
+          label: `${c.titleKo} · ${c.chapterNumber}단원`,
+          sortKey: `${c.koreanGrade}-${c.chapterNumber}`,
+        }));
+    }
+    return (ncertChapters.data ?? [])
+      .filter((c) => c.mastered)
+      .sort((a, b) => {
+        if (a.ncertClass !== b.ncertClass) return a.ncertClass.localeCompare(b.ncertClass);
+        return a.chapterNumber - b.chapterNumber;
+      })
+      .map((c) => ({
+        chapterCode: c.chapterCode,
+        label: t('study.pick.chapterOption', {
+          n: (CLASS_SHORT[c.ncertClass] ?? c.ncertClass).replace('Class ', ''),
+          ch: c.chapterNumber,
+          title: c.title,
+        }),
+        sortKey: `${c.ncertClass}-${c.chapterNumber}`,
+      }));
+  })();
+  const chaptersLoading = isKR ? krChapters.isLoading : ncertChapters.isLoading;
+  const chaptersHasAny = isKR
+    ? (krChapters.data ?? []).length > 0
+    : (ncertChapters.data ?? []).length > 0;
+
+  // Route picker — NCERT goes through /app/practice-set (StudyPracticeScreen
+  // single-MC pool, server pull-next). KR goes to /app/ko-practice-set
+  // (KoreanStudyPracticeScreen — fetchKoreanStudyProblems 20-batch single-step
+  // pool, body + canvas + 5지선다).
   function startPractice() {
     if (!chapter) return;
     setMsg(null);
-    nav(`/app/practice-set/${chapter}`);
+    if (isKR) {
+      nav(`/app/ko-practice-set/${chapter}`);
+    } else {
+      nav(`/app/practice-set/${chapter}`);
+    }
   }
+
+  // 2026-05-29: adaptive entry moved here from Home (user feedback: the
+  // home card overlapped with this chapter picker). Same backend
+  // (POST /study-sessions/adaptive/start) — picks 20 problems by mastery
+  // score + errorPattern + prerequisite + grade match. Result lands on
+  // the first picked problem via SoloProblemScreen sequence (Sprint 3 A12).
+  const adaptive = useMutation({
+    mutationFn: () => startAdaptiveSession('daily'),
+    onSuccess: (r: AdaptiveStartResponse) => {
+      track('adaptive.start', {
+        sessionId: r.sessionId, count: r.problems.length, surface: 'study',
+      });
+      if (r.sessionId && r.problems.length > 0) {
+        try {
+          sessionStorage.setItem('adaptive:queue', JSON.stringify({
+            sessionId: r.sessionId, problems: r.problems, cursor: 0,
+          }));
+        } catch { /* private mode etc. — non-critical */ }
+        nav(`/app/practice/${r.problems[0].id}`);
+      } else {
+        setMsg('지금은 추천할 문제가 없어요. 챕터를 직접 선택해 풀어보세요.');
+      }
+    },
+    onError: () => {
+      setMsg('추천 시작에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    },
+  });
 
   return (
     <div className="screen">
       <div style={{ flex: 1, overflow: 'auto' }}>
         <div className="app-head" style={{ paddingBottom: 0 }}>
           <div>
-            <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>Practice</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, letterSpacing: '-0.01em' }}>Study</div>
+            <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('study.tab.label')}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, letterSpacing: '-0.01em' }}>{t('study.tab.title')}</div>
           </div>
         </div>
 
         <div style={{ padding: '12px 22px 0' }}>
+          {/* Adaptive entry — system-driven counterpart to the user-driven
+              chapter picker below. Backed by AdaptiveNextProblemService
+              (mastery·errorPattern·prerequisite, grade-filtered). */}
+          <button
+            type="button"
+            onClick={() => adaptive.mutate()}
+            disabled={adaptive.isPending}
+            className="card"
+            style={{
+              width: '100%', textAlign: 'left', padding: 14,
+              background: 'var(--p-primary-tint)', border: 'none', borderRadius: 12,
+              display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
+              marginBottom: 14,
+            }}
+          >
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              background: 'var(--p-primary)', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, fontWeight: 700, flexShrink: 0,
+            }}>20</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>
+                {adaptive.isPending ? '준비 중…' : '약점 기반 추천 20문제'}
+              </div>
+              <div style={{ fontSize: 11.5, color: 'var(--p-primary)', marginTop: 3, lineHeight: 1.4 }}>
+                숙련도·오답 패턴·진도를 종합해 자동으로 골라줘요
+              </div>
+            </div>
+            <span style={{ fontSize: 18, color: 'var(--p-primary)', fontWeight: 700 }}>›</span>
+          </button>
+
           <div className="section-h">
-            <span className="label">Pick a chapter</span>
-            <span className="more">Solve at your pace</span>
+            <span className="label">{t('study.pick.section')}</span>
+            <span className="more">{t('study.pick.more')}</span>
           </div>
 
           <div
@@ -87,17 +200,17 @@ export function StudyScreen() {
             style={{ background: 'var(--p-accent-tint)', borderColor: 'transparent' }}
           >
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
-              Practice one at a time
+              {t('study.pick.title')}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--p-muted)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
-              Solve · Next · Solve · Next — keep going as long as you like
+              {t('study.pick.sub')}
             </div>
 
             <select
               value={chapter}
               onChange={(e) => setChapter(e.target.value)}
-              disabled={chapters.isLoading}
-              aria-label="Chapter"
+              disabled={chaptersLoading}
+              aria-label={t('study.pick.chapterAria')}
               style={{
                 width: '100%', boxSizing: 'border-box', marginTop: 10,
                 padding: '10px 12px', borderRadius: 10,
@@ -107,15 +220,15 @@ export function StudyScreen() {
               }}
             >
               <option value="">
-                {chapters.isLoading
-                  ? 'Loading chapters…'
+                {chaptersLoading
+                  ? t('study.pick.loadingChapters')
                   : (eligibleChapters.length > 0
-                      ? 'Pick a chapter'
-                      : 'Master a chapter in Mastery to unlock')}
+                      ? t('study.pick.placeholder')
+                      : t('study.pick.lockedHint'))}
               </option>
               {eligibleChapters.map((c) => (
                 <option key={c.chapterCode} value={c.chapterCode}>
-                  {CLASS_SHORT[c.ncertClass] ?? c.ncertClass} · CH {c.chapterNumber}. {c.title}
+                  {c.label}
                 </option>
               ))}
             </select>
@@ -123,11 +236,11 @@ export function StudyScreen() {
             {/* Empty-state nudge — when the user has no mastered chapters in
                 ANY class, point at the Mastery tab so they know where to
                 unlock practice. */}
-            {!chapters.isLoading && eligibleChapters.length === 0 && (chapters.data ?? []).length > 0 && (
+            {!chaptersLoading && eligibleChapters.length === 0 && chaptersHasAny && (
               <div style={{ marginTop: 10, fontSize: 12, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
-                Finish the concept lesson for any chapter in{' '}
-                <strong style={{ color: 'var(--p-ink)' }}>Mastery</strong>{' '}
-                first — that unlocks it here, regardless of class.
+                {t('study.pick.emptyMastered.pre')}
+                <strong style={{ color: 'var(--p-ink)' }}>{t('study.pick.emptyMastered.tab')}</strong>
+                {t('study.pick.emptyMastered.post')}
               </div>
             )}
 
@@ -137,7 +250,7 @@ export function StudyScreen() {
               onClick={startPractice}
               style={{ marginTop: 12, height: 46, fontSize: 14 }}
             >
-              Start practice
+              {t('study.pick.startBtn')}
               <Glyph.ChevronR />
             </button>
           </div>
@@ -152,7 +265,7 @@ export function StudyScreen() {
               math-helper pipeline (Mathpix OCR -> LangGraph solver) returns a
               step-by-step solution + lifts the problem into the user's pool. */}
           <div className="section-h">
-            <span className="label">AI Solver</span>
+            <span className="label">{t('study.solver.section')}</span>
             {/* QuotaMeter renders nothing for premium / loading — it slots
                 here precisely so the free-tier user sees their remaining
                 calls before tapping a Solver button (Phase 5 quota UX). */}
@@ -160,12 +273,12 @@ export function StudyScreen() {
           </div>
           <div className="card" style={{ padding: 14, background: 'var(--p-primary-tint)', borderColor: 'transparent' }}>
             <div style={{ fontSize: 12.5, color: 'var(--p-ink-2)', marginBottom: 12, lineHeight: 1.5 }}>
-              Photograph any problem and we'll solve it step-by-step.
+              {t('study.solver.desc')}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <SolverButton
-                label="Take a photo"
-                hint="Open the camera"
+                label={t('study.solver.camera.label')}
+                hint={t('study.solver.camera.hint')}
                 onClick={() => cameraInputRef.current?.click()}
                 icon={
                   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -175,8 +288,8 @@ export function StudyScreen() {
                 }
               />
               <SolverButton
-                label="Upload"
-                hint="Pick a file"
+                label={t('study.solver.upload.label')}
+                hint={t('study.solver.upload.hint')}
                 onClick={() => galleryInputRef.current?.click()}
                 icon={
                   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -213,16 +326,15 @@ export function StudyScreen() {
           {/* How this works moved below the AI Solver so the heading reads as
               "you've seen the two paths -- here's the contract behind them". */}
           <div className="section-h">
-            <span className="label">How this works</span>
+            <span className="label">{t('study.howThis.section')}</span>
           </div>
           <div className="card" style={{ padding: 14, fontSize: 13, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
-            <strong style={{ color: 'var(--p-ink)' }}>Start practice</strong> unlocks a chapter
-            only after you complete its{' '}
-            <strong style={{ color: 'var(--p-ink)' }}>Mastery</strong> lesson — that's how the
-            chapter shows up in the dropdown above. Get one wrong and it joins
-            your <strong style={{ color: 'var(--p-ink)' }}>Notes</strong> for a future weekly
-            review. For problems outside the pool, snap them with the AI Solver
-            above and we'll add them to your library.
+            <strong style={{ color: 'var(--p-ink)' }}>{t('study.howThis.bStart')}</strong>
+            {t('study.howThis.body.mid')}
+            <strong style={{ color: 'var(--p-ink)' }}>{t('study.howThis.bMastery')}</strong>
+            {t('study.howThis.body.post')}
+            <strong style={{ color: 'var(--p-ink)' }}>{t('study.howThis.bNotes')}</strong>
+            {t('study.howThis.body.tail')}
           </div>
 
           <div style={{ height: 16 }} />

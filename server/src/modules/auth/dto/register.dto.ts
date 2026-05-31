@@ -7,6 +7,12 @@ export type RegisterRole = (typeof USER_ROLES)[number];
 export const STUDY_GOALS = ['BOARD', 'JEE', 'SCHOOL', 'CATCHUP'] as const;
 export type StudyGoal = (typeof STUDY_GOALS)[number];
 
+// Mirrors prisma `CountryCode` enum. Drives curriculum (NCERT vs Korean 2022
+// 개정), locale default, currency display. v1 launches IN + KR; other entries
+// kept compiled but should be flagged "Coming soon" in onboarding chip UI.
+export const COUNTRY_CODES = ['IN', 'KR', 'US', 'UK', 'AU', 'SG', 'GLOBAL'] as const;
+export type CountryCode = (typeof COUNTRY_CODES)[number];
+
 export class RegisterDto {
   @IsEmail() email!: string;
   @IsString() @MinLength(8) password!: string;
@@ -27,6 +33,12 @@ export class RegisterDto {
 
   /** TEACHER 일 때만 사용. 학원/기관 코드 (Tenant.code). 없으면 solo 교사. */
   @IsOptional() @IsString() tenantCode?: string;
+
+  /** Country selection from the onboarding country chip. Drives curriculum
+   *  (IN→NCERT, KR→Korean 2022 개정), locale auto-flip (KR→ko), currency.
+   *  Optional for backward compat — defaults to 'IN' if omitted. */
+  @IsOptional() @IsString() @IsIn(COUNTRY_CODES as unknown as string[])
+  country?: CountryCode;
 
   // ─── STUDENT 만 의미 — PARENT/TEACHER 일 때는 무시 ─────────────
   @IsOptional() @IsDateString() examDate?: string;

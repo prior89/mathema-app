@@ -31,9 +31,12 @@ export interface LlmResponse {
 
 /**
  * 외부 LLM 호출 어댑터.
- *   AI_LLM_PROVIDER=anthropic | openai
+ *   AI_LLM_PROVIDER=anthropic | openai | gemini
  *
  * 도메인 코드(ai-coach, study-sessions, wrong-notes)는 이 클래스만 의존한다.
+ *
+ * gemini 분기는 직접 fetch (langchain-google-genai 의존 안 함) — mathpix.service.ts
+ * 의 Gemini OCR 호출 패턴과 일관. 키는 GEMINI_API_KEY (별도 env) 사용.
  */
 @Injectable()
 export class LlmProvider {
@@ -41,6 +44,7 @@ export class LlmProvider {
   private readonly apiKey: string;
   private readonly provider: string;
   private readonly model: string;
+  private readonly geminiApiKey: string;
   private anthropic: Anthropic | null = null;
   private openai: OpenAI | null = null;
 
@@ -48,6 +52,8 @@ export class LlmProvider {
     this.apiKey = this.config.get<string>('ai.llm.apiKey') ?? '';
     this.provider = (this.config.get<string>('ai.llm.provider') ?? 'anthropic').toLowerCase();
     this.model = this.config.get<string>('ai.llm.model') ?? '';
+    // GEMINI_API_KEY env is shared with the OCR path (mathpix.service.ts:41).
+    this.geminiApiKey = process.env.GEMINI_API_KEY ?? '';
 
     if (this.isConfigured()) {
       if (this.provider === 'anthropic') {
@@ -55,10 +61,12 @@ export class LlmProvider {
       } else if (this.provider === 'openai') {
         this.openai = new OpenAI({ apiKey: this.apiKey });
       }
+      // gemini path uses direct fetch — no client instance needed.
     }
   }
 
   private isConfigured(): boolean {
+    if (this.provider === 'gemini') return !!this.geminiApiKey;
     return !!this.apiKey && this.apiKey !== 'PLACEHOLDER_KEY';
   }
 
@@ -111,6 +119,60 @@ export class LlmProvider {
         text: choice?.message?.content ?? '',
         inputTokens: res.usage?.prompt_tokens ?? 0,
         outputTokens: res.usage?.completion_tokens ?? 0,
+      };
+    }
+
+    if (this.provider === 'gemini') {
+      const model = this.model || 'gemini-3.5-flash';
+      // Vision input — Gemini multimodal accepts inline_data with mime + base64.
+      const parts: any[] = [];
+      // Gemini doesn't have a separate `system` role on v1beta — prepend it.
+      const userText = req.system ? `${req.system}\n\n${req.prompt}` : req.prompt;
+      parts.push({ text: userText });
+      if (req.imageBase64) {
+        parts.push({
+          inline_data: {
+            mime_type: req.imageMimeType ?? 'image/jpeg',
+            data: req.imageBase64,
+          },
+        });
+      }
+      const body: any = {
+        contents: [{ parts }],
+        generationConfig: {
+          temperature: req.temperature ?? 0.4,
+          maxOutputTokens: req.maxTokens ?? 1024,
+          // Gemini 3.5 Flash defaults to thinking-mode-on, which silently
+          // generates 5K-15K reasoning tokens billed at output rate. Our MC
+          // distractor + content drafting workloads don't need extended
+          // reasoning, so we cap thinking at 0 to keep per-call cost at the
+          // published flat rate (~$0.003/call vs ~$0.025 with thinking).
+          thinkingConfig: { thinkingBudget: 0 },
+        },
+      };
+      if (req.jsonObject) {
+        body.generationConfig.responseMimeType = 'application/json';
+      }
+      const url =
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}` +
+        `:generateContent?key=${encodeURIComponent(this.geminiApiKey)}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Gemini ${res.status}: ${errText.slice(0, 200)}`);
+      }
+      const json: any = await res.json();
+      const text: string =
+        json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+      const usage = json?.usageMetadata ?? {};
+      return {
+        text,
+        inputTokens: usage.promptTokenCount ?? 0,
+        outputTokens: usage.candidatesTokenCount ?? 0,
       };
     }
 

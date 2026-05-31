@@ -108,6 +108,19 @@ export class ConceptLessonsService {
     if (!lesson) throw new NotFoundException(`ConceptLesson ${chapterCode} not found`);
 
     const progress = lesson.progress[0] ?? null;
+    // Count *any* attempt this user has made on a problem mapped to this
+    // chapter. Drives the ConceptLessonScreen "first-time entry vs resume"
+    // gate: 0 attempts → always show the concept walkthrough first (even if
+    // conceptWalkthroughAt is already stamped from a previous read-through);
+    // ≥1 → resume in practice phase. User-report 2026-05-23: re-entry
+    // from Home progress card was skipping concept walkthrough when the
+    // user had read it but not yet answered a single problem.
+    const practiceAttempts = await this.prisma.attempt.count({
+      where: {
+        userId,
+        problem: { conceptLessonId: lesson.id },
+      },
+    });
     return {
       ...this.shapeSummary(lesson, lang),
       steps: lesson.steps.map((s) => {
@@ -164,14 +177,19 @@ export class ConceptLessonsService {
         reflectPrompts: s.reflectPrompts,
         };
       }),
-      progress: progress
-        ? {
-            currentStep: progress.currentStep,
-            completedSteps: progress.completedSteps,
-            masteredAt: progress.masteredAt,
-            retrievalScore: progress.retrievalScore,
-          }
-        : null,
+      // Always returned (even when no ConceptProgress row exists yet) so the
+      // frontend can read `progress.practiceAttempts` without null-guarding.
+      // First-time entry: progress = { practiceAttempts: 0, rest null }.
+      progress: {
+        currentStep: progress?.currentStep ?? 0,
+        completedSteps: progress?.completedSteps ?? [],
+        masteredAt: progress?.masteredAt ?? null,
+        // Kept for backwards-compat / analytics. The phase-resume gate is
+        // driven by practiceAttempts below, not by this timestamp.
+        conceptWalkthroughAt: progress?.conceptWalkthroughAt ?? null,
+        retrievalScore: progress?.retrievalScore ?? null,
+        practiceAttempts,
+      },
     };
   }
 
@@ -245,13 +263,16 @@ export class ConceptLessonsService {
     completed.add(stepIndex);
     const next = Math.min(stepIndex + 1, total);
 
-    // Mastery rule: every non-RETRIEVAL step is in the completed set.
-    // Once true, masteredAt is sticky (don't move the timestamp back).
+    // Concept-walkthrough rule: every non-RETRIEVAL step is in the completed
+    // set. This now stamps conceptWalkthroughAt — distinct from masteredAt,
+    // which is the Study-unlock signal driven by 20-problem ANSWER-step
+    // correctness in AttemptsService.create (user-spec 2026-05-23).
     const conceptStepIndexes = lesson.steps
       .filter((s) => s.kind !== 'RETRIEVAL')
       .map((s) => s.stepIndex);
     const allConceptDone = conceptStepIndexes.every((i) => completed.has(i));
-    const masteredAt = progress.masteredAt ?? (allConceptDone ? new Date() : null);
+    const conceptWalkthroughAt =
+      progress.conceptWalkthroughAt ?? (allConceptDone ? new Date() : null);
 
     return this.prisma.conceptProgress.update({
       where: { id: progress.id },
@@ -259,7 +280,7 @@ export class ConceptLessonsService {
         completedSteps: Array.from(completed).sort((a, b) => a - b),
         currentStep: next,
         durationSec: { increment: durationSec },
-        masteredAt,
+        conceptWalkthroughAt,
       },
     });
   }
@@ -304,8 +325,10 @@ export class ConceptLessonsService {
         // practice phase still drives Attempt rows for the retrieval / problems.
         currentStep: Math.max(progress.currentStep, conceptIndexes.length + 1),
         durationSec: { increment: Math.max(0, Math.floor(durationSec)) },
-        // Sticky — preserve the earliest mastered timestamp.
-        masteredAt: progress.masteredAt ?? new Date(),
+        // Concept-walkthrough complete signal — separate from masteredAt
+        // (which is set only when 20-problem Mastery is finished by
+        // AttemptsService.create). Sticky.
+        conceptWalkthroughAt: progress.conceptWalkthroughAt ?? new Date(),
       },
     });
   }
@@ -452,7 +475,19 @@ export class ConceptLessonsService {
     // Path 1 — canonical set already frozen. Hydrate + return in order.
     if (lesson.masterySetProblemIds.length === target) {
       const problems = await this.prisma.problem.findMany({
-        where: { id: { in: lesson.masterySetProblemIds } },
+        where: {
+          id: { in: lesson.masterySetProblemIds },
+          // Sprint 4: active-pool quality filter. If a previously-frozen row
+          // was later marked EXCLUDED (Tier 2 LLM grading or student report
+          // via Sprint 3 A13) or chapter-mismatched, it drops out here —
+          // the ordered.length check below catches the shortfall and falls
+          // through to Path 2 re-curation.
+          conceptMismatch: { not: true },
+          OR: [
+            { qualityStatus: null },
+            { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+          ],
+        },
         select: {
           id: true, source: true, unitId: true, subUnitId: true,
           difficulty: true, difficultyLevel: true, body: true,
@@ -479,6 +514,13 @@ export class ConceptLessonsService {
         AND: [
           { steps: { some: { stepIndex: 2 } } },
           { steps: { some: { stepIndex: 3 } } },
+        ],
+        // Sprint 4: never freeze an EXCLUDED / chapter-mismatched row into a
+        // canonical set.
+        conceptMismatch: { not: true },
+        OR: [
+          { qualityStatus: null },
+          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
         ],
       },
       orderBy: { source: 'asc' },

@@ -5,6 +5,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CurrentLang, Lang } from '../../common/i18n/current-lang.decorator';
 import { StartSessionDto } from './dto/start-session.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
+import { AdaptiveStartDto } from './dto/adaptive-start.dto';
 
 // 명세서 §5: /api/sessions/... 별칭과 기존 /api/study-sessions/... 둘 다 노출.
 @UseGuards(JwtAuthGuard)
@@ -15,6 +16,15 @@ export class StudySessionsController {
   @Post('start')
   start(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang, @Body() dto: StartSessionDto) {
     return this.service.start(userId, dto, lang);
+  }
+
+  /**
+   * Sprint 2 A9: POST /study-sessions/adaptive/start (alias /sessions/adaptive/start).
+   * Builds the "오늘의 맞춤 20문제" session — KR/IN both, country picked from JWT user.
+   */
+  @Post('adaptive/start')
+  startAdaptive(@CurrentUser('id') userId: string, @Body() dto: AdaptiveStartDto) {
+    return this.service.startAdaptive(userId, dto);
   }
 
   /** 특정 문제로 학습 시작 — 유사문제 "풀어보기" 동선용 */

@@ -21,6 +21,10 @@ export type MathHelperSolveResponse = {
   answer: string;
   isStudentCorrect?: boolean | null;
   explanation: string;
+  /// Step-by-step worked derivation. Each entry is one "Step N." block
+  /// from the solver and may contain literal "\n" newlines for multi-line
+  /// reasoning. Rendered as a numbered list in UploadProblemModal.
+  steps?: string[];
   personalizedLearning?: string | null;
   mistakeDiagnosis?: string | null;
   hints: string[];

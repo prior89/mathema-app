@@ -10,10 +10,16 @@ node_modules/
 .env.local
 **/.env
 **/.env.local
+# Vite mode-specific envs (production / staging) — may carry per-target
+# API URLs or analytics keys; never commit. CI injects them at build time.
+**/.env.production
+**/.env.staging
 # Android signing (keystore + passwords — never commit)
 .keystore.env
 *.jks
 *.keystore
+# Signed AAB artifacts — built locally for Play upload, never source-controlled
+release/
 # OS / Editor
 .DS_Store
 .vscode/

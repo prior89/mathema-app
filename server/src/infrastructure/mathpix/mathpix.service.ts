@@ -67,7 +67,12 @@ export class MathpixService {
               { inline_data: { mime_type: file.mimetype, data: imageBase64 } },
             ],
           }],
-          generationConfig: { temperature: 0, maxOutputTokens: 8192 },
+          generationConfig: {
+            temperature: 0,
+            maxOutputTokens: 8192,
+            // OCR transcription = pattern matching, not reasoning. Cap thinking.
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
       });
     } catch (err) {

@@ -6,6 +6,8 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { post } from '../../lib/api';
+import { useShuffledChoices } from '../../lib/shuffle';
+import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
@@ -47,6 +49,7 @@ export function MockExamPlayScreen() {
   const loc = useLocation();
   const nav = useNavigate();
   const qc = useQueryClient();
+  const { t } = useT();
 
   // Hydrate state from location OR from localStorage (refresh-survives).
   const storageKey = STORAGE_PREFIX + (resultId ?? '');
@@ -106,6 +109,8 @@ export function MockExamPlayScreen() {
   const total = problems.length;
   const cur = problems[problemIdx] ?? null;
   const curStep = cur?.steps[stepIdx] ?? null;
+  // 보기 셔플 — step 이 바뀔 때마다 자동 재셔플.
+  const shuffledChoices = useShuffledChoices(curStep?.choices ?? []);
 
   // 모든 hook 은 early-return 위에 위치 — Rules of Hooks 준수.
   const segments = useMemo(() => total * 3, [total]);
@@ -120,10 +125,10 @@ export function MockExamPlayScreen() {
     return (
       <div className="screen">
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 22, textAlign: 'center', color: 'var(--p-muted)' }}>
-          Session not found.
+          {t('mockPlay.sessionMissing')}
           <br />
           <button className="btn" style={{ marginTop: 16, maxWidth: 200 }} onClick={() => nav('/app/study')}>
-            Back to Study
+            {t('mockPlay.backStudy')}
           </button>
         </div>
         <TabBar />
@@ -155,7 +160,7 @@ export function MockExamPlayScreen() {
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['heatmap'] });
     } catch (e: any) {
-      setErr(e?.response?.data?.error?.message ?? 'Could not submit answer.');
+      setErr(e?.response?.data?.error?.message ?? t('mockPlay.submit.failed'));
     } finally {
       setBusy(false);
     }
@@ -195,7 +200,7 @@ export function MockExamPlayScreen() {
         state: { fromFinalize: true, origin: (state as any)?.origin ?? 'study', ...r },
       });
     } catch (e: any) {
-      setErr(e?.response?.data?.error?.message ?? 'Could not finalise exam.');
+      setErr(e?.response?.data?.error?.message ?? t('mockPlay.finalize.failed'));
       setBusy(false);
     }
   }
@@ -208,16 +213,16 @@ export function MockExamPlayScreen() {
     <div className="screen">
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <button onClick={() => nav(backTarget)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label="Back">
+          <button onClick={() => nav(backTarget)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label={t('mockPlay.back')}>
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{state.name}</div>
-            <div style={{ fontSize: 13, fontWeight: 600 }}>Q {problemIdx + 1} / {total}</div>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>{t('mockPlay.qProgress', { n: problemIdx + 1, total })}</div>
           </div>
         </div>
         <span className="step-pill">
-          {curStep ? `${STEP_LABEL[curStep.stepType] ?? 'STEP'} ${stepIdx + 1}/${cur?.steps.length}` : '—'}
+          {curStep ? t('mockPlay.stepPill', { label: STEP_LABEL[curStep.stepType] ?? 'STEP', step: stepIdx + 1, total: cur?.steps.length ?? 0 }) : '—'}
         </span>
       </div>
       <div className="steps" style={{ marginTop: 0, paddingTop: 4 }}>
@@ -228,7 +233,7 @@ export function MockExamPlayScreen() {
 
       <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0 }}>
         {!cur || !curStep ? (
-          <div style={{ padding: 22, textAlign: 'center', color: 'var(--p-muted)' }}>No questions in this exam.</div>
+          <div style={{ padding: 22, textAlign: 'center', color: 'var(--p-muted)' }}>{t('mockPlay.noQuestions')}</div>
         ) : (
           <>
             <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
@@ -243,7 +248,7 @@ export function MockExamPlayScreen() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-              {curStep.choices.map((c, i) => {
+              {shuffledChoices.map((c, i) => {
                 const sel = pickedId === c.id;
                 const revealedCorrect = feedback?.isCorrect && sel;
                 const wrongPick = feedback && !feedback.isCorrect && sel;
@@ -267,12 +272,12 @@ export function MockExamPlayScreen() {
             {feedback && (
               <div className="card" style={{ marginTop: 12, padding: 14, background: feedback.isCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)', borderColor: 'transparent' }}>
                 <div style={{ fontWeight: 700, color: feedback.isCorrect ? 'var(--p-success)' : 'var(--p-danger)', fontSize: 14 }}>
-                  {feedback.isCorrect ? '✓ Correct' : '✗ Not quite — pick a different option and check again'}
+                  {feedback.isCorrect ? t('mockPlay.correct') : t('mockPlay.wrong')}
                 </div>
                 {feedback.choice?.rationale && (
                   <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
                     <strong style={{ color: 'var(--p-ink)' }}>
-                      {feedback.isCorrect ? 'Why this works: ' : 'Why your pick missed: '}
+                      {feedback.isCorrect ? t('mockPlay.whyWorks') : t('mockPlay.whyMissed')}
                     </strong>
                     {feedback.choice.rationale}
                   </div>
@@ -294,15 +299,15 @@ export function MockExamPlayScreen() {
       <div className="screen-foot">
         {!feedback ? (
           <button className="btn" onClick={submitStep} disabled={!pickedId || busy} style={{ opacity: pickedId ? 1 : 0.45 }}>
-            {busy ? 'Saving…' : 'Submit'}
+            {busy ? t('mockPlay.saving') : t('mockPlay.submit')}
             <Glyph.ChevronR />
           </button>
         ) : (
           /* Exam = one-shot per step. Wrong answer still advances — no retry. */
           <button className="btn" onClick={advanceFromFeedback} disabled={busy}>
-            {busy ? 'Saving…' :
-              stepIdx + 1 < (cur?.steps.length ?? 0) ? `Continue to STEP ${stepIdx + 2}` :
-              problemIdx + 1 < total ? `Next question (${problemIdx + 2}/${total})` : 'Finish exam'}
+            {busy ? t('mockPlay.saving') :
+              stepIdx + 1 < (cur?.steps.length ?? 0) ? t('mockPlay.continueStep', { n: stepIdx + 2 }) :
+              problemIdx + 1 < total ? t('mockPlay.nextQuestion', { next: problemIdx + 2, total }) : t('mockPlay.finishExam')}
             <Glyph.ChevronR />
           </button>
         )}

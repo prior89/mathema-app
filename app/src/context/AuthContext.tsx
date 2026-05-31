@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import { post, tokens, get } from '../lib/api';
 import type { Me, GradeLevel } from '../lib/queries';
@@ -48,32 +49,59 @@ export type RegisterInput = {
   childEmail?: string;
   // TEACHER 전용 (선택)
   tenantCode?: string;
+  // Country chip (IN | KR | ...). Optional — backend defaults to IN when
+  // missing for back-compat with the pre-2026-05-24 onboarding flow.
+  country?: 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'GLOBAL';
   // DPDP/GDPR
   consentAnalytics?: boolean; consentMarketing?: boolean; consentAiTraining?: boolean;
 };
 
 const Ctx = createContext<AuthState | null>(null);
 
-// Demo auto-login — only honoured in dev builds. The earlier check looked at
-// VITE_ENABLE_DEMO_AUTO_LOGIN alone, which meant a misconfigured CI env var
-// would silently ship a prod bundle that auto-logs every visitor in as the
-// demo admin. import.meta.env.PROD is set by Vite at build time, so this
-// short-circuits to false in any prod build regardless of env vars present.
+// Demo auto-login — only honoured in dev builds. import.meta.env.PROD is set
+// by Vite at build time, so this short-circuits to false in any prod build
+// regardless of env vars present. Demo credentials must come from the
+// developer's local .env — there are no literal fallbacks so a prod bundle
+// can never embed real credentials, even if VITE_ENABLE_DEMO_AUTO_LOGIN is
+// accidentally true.
+const DEMO_EMAIL = (import.meta as any).env?.VITE_DEMO_EMAIL ?? '';
+const DEMO_PASSWORD = (import.meta as any).env?.VITE_DEMO_PASSWORD ?? '';
 const DEMO_AUTO_LOGIN =
   !import.meta.env.PROD &&
-  (import.meta as any).env?.VITE_ENABLE_DEMO_AUTO_LOGIN === 'true';
-const DEMO_EMAIL = (import.meta as any).env?.VITE_DEMO_EMAIL ?? 'polopot123@gmail.com';
-const DEMO_PASSWORD = (import.meta as any).env?.VITE_DEMO_PASSWORD ?? 'password1234';
+  (import.meta as any).env?.VITE_ENABLE_DEMO_AUTO_LOGIN === 'true' &&
+  DEMO_EMAIL.length > 0 &&
+  DEMO_PASSWORD.length > 0;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Mirror auth state into Sentry. Any state transition (login, refresh,
   // logout, token clear by 401 interceptor) flows through setUser and so
   // gets tagged or cleared here.
   useEffect(() => { tagSentry(user); }, [user]);
+
+  // P5 fix 2026-05-27: react to the api.ts 'matheo:auth-rejected' event
+  // (dispatched when /auth/refresh fails with a genuine auth rejection — 401,
+  // 403, device_displaced, etc.). Replaces the prior hard window.location
+  // redirect: we clear the React Query cache, drop the in-memory user, then
+  // navigate via React Router. Single-page transition + no white flash.
+  useEffect(() => {
+    const onAuthRejected = () => {
+      (window as any).__matheoAuthHandled = true;
+      try { queryClient.clear(); } catch { /* ignore */ }
+      setUser(null);
+      if (!window.location.pathname.startsWith('/login')) {
+        navigate('/login', { replace: true });
+      }
+      // Reset the handled flag on next tick so future events fire normally.
+      setTimeout(() => { (window as any).__matheoAuthHandled = false; }, 500);
+    };
+    window.addEventListener('matheo:auth-rejected', onAuthRejected);
+    return () => window.removeEventListener('matheo:auth-rejected', onAuthRejected);
+  }, [navigate, queryClient]);
 
   useEffect(() => {
     const init = async () => {
