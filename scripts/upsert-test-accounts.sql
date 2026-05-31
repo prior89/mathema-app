@@ -1,12 +1,10 @@
 \set ON_ERROR_STOP on
 
-\if :{?password}
+\if :{?password_hash}
 \else
-\echo 'Missing password variable. Usage: psql "$DATABASE_URL" -v password="$TEST_ACCOUNT_PASSWORD" -f scripts/upsert-test-accounts.sql'
+\echo 'Missing password_hash variable. Usage: psql "$DATABASE_URL" -v password_hash="$BCRYPT_HASH" -f scripts/upsert-test-accounts.sql'
 \quit 1
 \endif
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 WITH input(email, name, country) AS (
   VALUES
@@ -32,7 +30,7 @@ upserted AS (
   SELECT
     gen_random_uuid()::text,
     input.email,
-    crypt(:'password', gen_salt('bf', 12)),
+    :'password_hash',
     input.name,
     TIMESTAMP '2027-02-14',
     3,
