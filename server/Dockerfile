@@ -42,8 +42,18 @@ RUN npm prune --omit=dev --workspace=mathema-backend --include-workspace-root=fa
 
 # ----- stage 3: runtime -----
 FROM node:20-alpine
+# Release inventory build args — backend-deploy.yml passes these so the
+# /api/v1/health/version endpoint can report exactly which commit + build is
+# live. All three are optional at the Dockerfile layer (default 'unknown')
+# so local `docker build` without --build-arg still produces a runnable image.
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+ARG RELEASE_ID=unknown
 LABEL org.opencontainers.image.title="mathema-backend" \
-      org.opencontainers.image.source="https://github.com/prior89/mathema-app"
+      org.opencontainers.image.source="https://github.com/prior89/mathema-app" \
+      org.opencontainers.image.revision="${GIT_SHA}" \
+      org.opencontainers.image.created="${BUILD_TIME}" \
+      org.opencontainers.image.version="${RELEASE_ID}"
 
 # Prisma's prebuilt engines link against OpenSSL at runtime. Alpine 3.17+ ships
 # OpenSSL 3.x, and we tell schema.prisma to use the matching engine target —
@@ -54,7 +64,10 @@ RUN apk add --no-cache curl tini openssl libssl3 \
 WORKDIR /app
 ENV NODE_ENV=production \
     PORT=4000 \
-    NODE_OPTIONS="--enable-source-maps"
+    NODE_OPTIONS="--enable-source-maps" \
+    GIT_SHA=${GIT_SHA} \
+    BUILD_TIME=${BUILD_TIME} \
+    RELEASE_ID=${RELEASE_ID}
 
 # Flatten the workspace layout into /app — runtime doesn't need the monorepo shape.
 # Workspaces hoist deps to the repo-root node_modules, so we ship that one.

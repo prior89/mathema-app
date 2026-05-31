@@ -43,12 +43,27 @@ jobs:
         id: tag
         run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
+      # Capture build metadata for /api/v1/health/version (release inventory).
+      # ISO-8601 UTC matches org.opencontainers.image.created convention.
+      - name: Compute build metadata
+        id: meta
+        run: |
+          {
+            echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "release_id=${{ github.run_id }}-${GITHUB_SHA::7}"
+          } >> "$GITHUB_OUTPUT"
+
       # Dockerfile is monorepo-aware — build context is the repo root so it can
       # see the workspace package-lock.json and copy both root + server/package.json.
+      # --build-arg trio threads release inventory into the image so the
+      # /health/version endpoint can report the live SHA without guesswork.
       - name: Docker build & push
         run: |
           docker build \
             -f server/Dockerfile \
+            --build-arg GIT_SHA=${{ github.sha }} \
+            --build-arg BUILD_TIME=${{ steps.meta.outputs.build_time }} \
+            --build-arg RELEASE_ID=${{ steps.meta.outputs.release_id }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest \
             .
