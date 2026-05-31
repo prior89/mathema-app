@@ -177,15 +177,9 @@ export class DiagnosticService {
     };
 
     // 1차: grade 와 매핑되는 conceptLesson 의 매핑 문제 풀.
-    const lessons = await this.prisma.conceptLesson.findMany({
-      where: { unit: { gradeLevels: { has: grade } } },
-      select: { id: true },
-    });
-    const lessonIds = lessons.map((l) => l.id);
-
     const pool: Sel[] = await this.prisma.problem.findMany({
       where: {
-        conceptLessonId: { in: lessonIds.length ? lessonIds : ['__none__'] },
+        conceptLesson: { ncertClass: grade },
         steps: { some: { stepIndex: 1 } },
         // Sprint 4: diagnostic must not surface EXCLUDED or chapter-mismatched.
         conceptMismatch: { not: true },
@@ -206,38 +200,18 @@ export class DiagnosticService {
     }) as any;
 
     // fallback: 학년 매핑 풀이 0개면 전체에서.
-    const fallback: Sel[] = pool.length
-      ? pool
-      : ((await this.prisma.problem.findMany({
-          where: {
-            conceptLessonId: { not: null },
-            steps: { some: { stepIndex: 1 } },
-            OR: [
-              { qualityStatus: null },
-              { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
-            ],
-          },
-          orderBy: { source: 'asc' },
-          select: {
-            id: true, body: true, difficulty: true, unitId: true, conceptLessonId: true,
-            steps: {
-              where: { stepIndex: 1 },
-              take: 1,
-              include: { choices: { orderBy: { choiceIndex: 'asc' }, select: { id: true, choiceIndex: true, text: true } } },
-            },
-          },
-        })) as any);
+    const candidates: Sel[] = pool;
 
     // 서로 다른 conceptLesson 우선 선택, 부족하면 중복 허용.
     const seen = new Set<string>();
     const picks: Sel[] = [];
-    for (const p of fallback) {
+    for (const p of candidates) {
       if (picks.length === 4) break;
       if (!p.conceptLessonId || seen.has(p.conceptLessonId)) continue;
       picks.push(p);
       seen.add(p.conceptLessonId);
     }
-    for (const p of fallback) {
+    for (const p of candidates) {
       if (picks.length === 4) break;
       if (!picks.find((x) => x.id === p.id)) picks.push(p);
     }
@@ -264,16 +238,15 @@ export class DiagnosticService {
     const krGrade = NCERT_TO_KR_GRADE[grade] ?? 'HIGH_2';
 
     // 1차: krGrade 매핑된 KoreanConceptLesson 의 매핑 problem
-    const lessons = await this.prisma.koreanConceptLesson.findMany({
-      where: { koreanGrade: krGrade },
-      select: { id: true },
-    });
-    const lessonIds = lessons.map((l) => l.id);
-
     const pool: Sel[] = await this.prisma.problem.findMany({
       where: {
-        koreanConceptLessonId: { in: lessonIds.length ? lessonIds : ['__none__'] },
+        koreanConceptLesson: { koreanGrade: krGrade },
         steps: { some: { stepIndex: 1 } },
+        conceptMismatch: { not: true },
+        OR: [
+          { qualityStatus: null },
+          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+        ],
       },
       orderBy: { source: 'asc' },
       select: {
@@ -288,32 +261,18 @@ export class DiagnosticService {
     }) as any;
 
     // fallback: 학년 풀이 0개면 KR 전체 풀 (다른 학년이라도 진단 가능하게)
-    const fallback: Sel[] = pool.length
-      ? pool
-      : ((await this.prisma.problem.findMany({
-          where: { koreanConceptLessonId: { not: null }, steps: { some: { stepIndex: 1 } } },
-          orderBy: { source: 'asc' },
-          select: {
-            id: true, body: true, difficulty: true, unitId: true, conceptLessonId: true,
-            koreanConceptLessonId: true,
-            steps: {
-              where: { stepIndex: 1 },
-              take: 1,
-              include: { choices: { orderBy: { choiceIndex: 'asc' }, select: { id: true, choiceIndex: true, text: true } } },
-            },
-          },
-        })) as any);
+    const candidates: Sel[] = pool;
 
     // 서로 다른 koreanConceptLesson 우선, 부족하면 중복 허용. NCERT 측과 동일.
     const seen = new Set<string>();
     const picks: Sel[] = [];
-    for (const p of fallback as Array<Sel & { koreanConceptLessonId: string | null }>) {
+    for (const p of candidates as Array<Sel & { koreanConceptLessonId: string | null }>) {
       if (picks.length === 4) break;
       if (!p.koreanConceptLessonId || seen.has(p.koreanConceptLessonId)) continue;
       picks.push(p);
       seen.add(p.koreanConceptLessonId);
     }
-    for (const p of fallback) {
+    for (const p of candidates) {
       if (picks.length === 4) break;
       if (!picks.find((x) => x.id === p.id)) picks.push(p);
     }
