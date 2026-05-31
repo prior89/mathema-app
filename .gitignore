@@ -28,6 +28,8 @@ release/
 # App — Vite / Playwright / Capacitor build
 app/dist/
 app/test-results/
+# Repo-root playwright/e2e output (responsive snapshot runs etc.) — never source-controlled
+test-results/
 app/playwright-report/
 app/curr.json
 app/android/.gradle/
