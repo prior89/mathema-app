@@ -69,11 +69,13 @@ export function KoreanStudyPracticeScreen() {
         qc.invalidateQueries({ queryKey: ['wn-stats'] });
       }
       qc.invalidateQueries({ queryKey: ['dashboard'] });
-      // 2026-05-29: studyProblems is now user-aware (solved-correct moves to
-      // the back of the queue). Invalidating the chapter's ko-study query
-      // ensures the next page surface reflects the updated order without a
-      // full reload.
-      qc.invalidateQueries({ queryKey: ['ko-study', chapterCode] });
+      // NOTE: the ['ko-study', chapterCode] invalidation was previously here
+      // to reflect the backend's user-aware re-queueing of correctly-solved
+      // problems. But invalidating mid-result swaps current = list[idx] under
+      // the user's cursor — they saw the screen auto-advance before tapping
+      // "next", and on a wrong answer the result card flashed away. We move
+      // the refetch into advance() so the page is steady until the student
+      // actively moves on.
     },
   });
 
@@ -89,6 +91,10 @@ export function KoreanStudyPracticeScreen() {
     setResult(null);
     setStartedAt(Date.now());
     canvasRef.current?.clear();
+    // Backend re-queues solved-correct problems behind the user. We refresh
+    // the chapter pool here (not in submit.onSuccess) so the list array
+    // stays stable while the student reads the result card.
+    qc.invalidateQueries({ queryKey: ['ko-study', chapterCode] });
   };
 
   if (problems.isLoading) {
