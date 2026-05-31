@@ -45,8 +45,28 @@ function classify(tk: string): { tex: string; display: boolean } | null {
   return null;
 }
 
+// IN-side problems often store body / option text as bare LaTeX without
+// any of the four delimiters (`$..$`, `$$..$$`, `\(..\)`, `\[..\]`). Sample
+// from prod C11-CH04-COMPLEX: `\left(\frac{1}{3}+3 i\right)^{3}`. Without a
+// delimiter MathText escapes it and the student sees raw `\left(\frac{...}`.
+//
+// Heuristic: if the string contains a LaTeX command (`\letters`, `^{`, `_{`)
+// AND none of the four delimiters fire on a global scan, wrap the whole
+// thing in `\[..\]` so KaTeX renders it as display math. Mixed bodies (prose
+// + `$...$` + `\[...\]`) keep working because MATH_RE.test() returns true
+// and we fall through to the existing split-based path.
+const LATEX_COMMAND_RE = /\\[a-zA-Z]+|\^{|_{|\\\\/;
+function maybeWrapBareLatex(src: string): string {
+  if (!src) return src;
+  // Reset lastIndex — the global flag on MATH_RE remembers state across calls.
+  MATH_RE.lastIndex = 0;
+  if (MATH_RE.test(src)) return src;
+  if (LATEX_COMMAND_RE.test(src)) return `\\[${src}\\]`;
+  return src;
+}
+
 function renderInline(src: string): string {
-  const tokens = src.split(MATH_RE);
+  const tokens = maybeWrapBareLatex(src).split(MATH_RE);
   const parts: string[] = [];
   for (const tk of tokens) {
     if (!tk) continue;
