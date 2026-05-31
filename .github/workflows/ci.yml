@@ -48,6 +48,12 @@ jobs:
           # Disable the live pwnedpasswords call in CI -- the spec mocks fetch,
           # but defensive in case any new spec forgets.
           PWNED_PASSWORDS_DISABLED: 'true'
+          # ts-jest + the full NestJS DI graph push v8's heap past the default
+          # ~2 GB on ubuntu-latest (7 GB available) and the job OOMs without
+          # any test actually failing. Cap to 4 GB so the kill happens with
+          # a real signal, and so headroom is left for the runner's other
+          # processes.
+          NODE_OPTIONS: '--max-old-space-size=4096'
         run: npx jest --coverage --runInBand
 
       - name: Upload coverage artefact
