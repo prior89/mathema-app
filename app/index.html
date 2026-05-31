@@ -42,7 +42,13 @@
       /* Paint the brand sage tint behind the React root so the user never
          sees a flash of white between document load and React mount. */
       html, body { margin: 0; padding: 0; background: oklch(0.95 0.022 175); }
-      #root { min-height: 100vh; background: oklch(0.95 0.022 175); }
+      /* 100vh on mobile browsers is fixed to the largest viewport (URL bar
+         hidden); when the URL bar is visible the rendered viewport is
+         shorter and our sticky TabBar leaves the body sage tint exposed on
+         overscroll. 100dvh tracks the dynamic viewport so the app shell
+         always fills the actual visible area. 100vh stays as a fallback
+         for browsers that don't support dvh (iOS < 15.4, Chrome < 108). */
+      #root { min-height: 100vh; min-height: 100dvh; background: oklch(0.95 0.022 175); }
       /* Onboarding scope — 회원가입/로그인 페이지에서만 sage 토큰 사용. */
       .sage-scope {
         background: var(--sage-bg);
