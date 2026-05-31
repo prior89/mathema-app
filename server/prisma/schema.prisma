@@ -1025,6 +1025,10 @@ model ConceptLesson {
   progress ConceptProgress[]
   problems Problem[]
   drafts   ContentDraft[]
+  /// Shadow inventory of curated problem sets (Mastery / Study / Diagnostic)
+  /// per ConceptLesson. Phase 1 — backfilled from masterySetProblemIds;
+  /// runtime still reads the array. See LessonProblemSet model below.
+  lessonProblemSets LessonProblemSet[] @relation("ConceptLessonProblemSets")
 
   @@index([ncertClass, chapterNumber])
   @@index([unitId])
@@ -1196,10 +1200,78 @@ model KoreanConceptLesson {
   steps    KoreanConceptStep[]
   problems Problem[]            @relation("KoreanLessonProblems")
   progress KoreanConceptProgress[]
+  /// Shadow inventory of curated problem sets per KoreanConceptLesson —
+  /// parallel to the IN side. See LessonProblemSet model below.
+  lessonProblemSets LessonProblemSet[] @relation("KoreanConceptLessonProblemSets")
 
   @@unique([koreanGrade, koreanSubject, chapterNumber])
   @@index([koreanGrade, koreanSubject])
   @@index([curriculumId])
+}
+
+/// Kind of curated set hanging off a lesson. Phase 1 ships MASTERY_3STEP
+/// (the canonical 20-problem mastery sequence). STUDY_1STEP (Practice tab
+/// single-step pool) and DIAGNOSTIC (onboarding warm-up) are reserved for
+/// later phases — backfill skips them, the schema is forward-compatible.
+enum SetType {
+  MASTERY_3STEP
+  STUDY_1STEP
+  DIAGNOSTIC
+}
+
+/// Lifecycle of a curated set. Backfill maps existing masterySetProblemIds
+/// to READY when the array length is 20 and every Problem passes quality
+/// filters (not EXCLUDED / not mismatched). Anything else lands in
+/// NEEDS_REVIEW so admin readiness dashboards surface the gap explicitly.
+enum SetStatus {
+  DRAFT
+  READY
+  NEEDS_REVIEW
+  RETIRED
+}
+
+/// Shadow inventory of curated problem sets — Phase 1 of the LessonProblemSet
+/// expand-contract migration. Runtime still reads
+/// ConceptLesson.masterySetProblemIds / KoreanConceptLesson.masterySetProblemIds;
+/// this table is populated by backfill so admin readiness endpoints can
+/// surface IN/KR set completeness on the same contract. Dual-write and
+/// dual-read are explicitly deferred (post-launch) to keep the student path
+/// untouched. Polymorphism modelled by two nullable FKs + a CHECK constraint
+/// (added via raw SQL in the migration: exactly one of the two must be set)
+/// — Prisma cannot express CHECK in schema.prisma directly.
+model LessonProblemSet {
+  id                      String      @id @default(cuid())
+  country                 CountryCode
+  setType                 SetType
+  /// IN side — exactly one of (conceptLessonId, koreanConceptLessonId) is set.
+  conceptLessonId         String?
+  conceptLesson           ConceptLesson?       @relation("ConceptLessonProblemSets", fields: [conceptLessonId], references: [id], onDelete: Cascade)
+  /// KR side — mirror of above.
+  koreanConceptLessonId   String?
+  koreanConceptLesson     KoreanConceptLesson? @relation("KoreanConceptLessonProblemSets", fields: [koreanConceptLessonId], references: [id], onDelete: Cascade)
+  /// Denormalised chapter identifier — admin tools join on this without
+  /// having to resolve the polymorphic side first.
+  chapterCode             String
+  /// Ordered list of Problem.id. Length is part of the readiness contract
+  /// (Phase 1 expects exactly 20 for MASTERY_3STEP).
+  problemIds              String[]    @default([])
+  status                  SetStatus   @default(DRAFT)
+  /// Bumped every time admin freezes/swaps the set. v1 = backfill output.
+  version                 Int         @default(1)
+  curatedAt               DateTime?
+  retiredAt               DateTime?
+  /// Admin user who froze this version (nullable so backfill rows have no
+  /// owner — they were not curated by a person).
+  curatedByUserId         String?
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  /// One active version per (country, chapter, type). Retired versions keep
+  /// their distinct version number, so this composite tolerates them.
+  @@unique([country, chapterCode, setType, version])
+  @@index([country, status, setType])
+  @@index([conceptLessonId])
+  @@index([koreanConceptLessonId])
 }
 
 /// KR-side per-user chapter progress. Parallel to ConceptProgress (NCERT).
