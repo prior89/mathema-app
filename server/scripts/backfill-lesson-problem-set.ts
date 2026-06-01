@@ -42,18 +42,49 @@ async function backfillSide(args: {
       skipped++;
       continue;
     }
-    // Re-check quality status of every problem in the set. A lesson whose
-    // canonical 20 contains an EXCLUDED row should not advertise as READY.
+    // Phase 1.5 readiness contract — every check that the student runtime
+    // depends on, not just the quality flags. A canonical 20-set must:
+    //   (1) contain exactly 20 distinct Problem rows
+    //   (2) each Problem passes the active-pool filter
+    //       (qualityStatus IN NULL/APPROVED/USABLE, conceptMismatch != true)
+    //   (3) each Problem has exactly 3 ProblemStep rows (CONCEPT/PROCESS/ANSWER)
+    //   (4) each step has exactly 5 ProblemChoice rows
+    //   (5) each step has exactly one isCorrect=true choice
+    //   (6) each Problem's lesson FK points back to this lesson — guards
+    //       against orphaned IDs that survived a chapter reclassify
     const problems = await prisma.problem.findMany({
       where: { id: { in: lesson.masterySetProblemIds } },
-      select: { id: true, qualityStatus: true, conceptMismatch: true },
+      select: {
+        id: true,
+        qualityStatus: true,
+        conceptMismatch: true,
+        conceptLessonId: true,
+        koreanConceptLessonId: true,
+        steps: {
+          select: {
+            stepIndex: true,
+            choices: { select: { isCorrect: true } },
+          },
+        },
+      },
     });
-    const allGood = problems.length === 20 && problems.every((p) => {
+    const expectedFk = fkColumn === 'conceptLessonId' ? 'conceptLessonId' : 'koreanConceptLessonId';
+    const failures: string[] = [];
+    if (problems.length !== 20) failures.push(`pool=${problems.length}/20`);
+    for (const p of problems) {
       const qsOk = p.qualityStatus === null || p.qualityStatus === 'APPROVED' || p.qualityStatus === 'USABLE';
-      const mismatchOk = p.conceptMismatch !== true;
-      return qsOk && mismatchOk;
-    });
-    const status: SetStatus = allGood ? 'READY' : 'NEEDS_REVIEW';
+      if (!qsOk) failures.push(`${p.id.slice(0, 8)}:quality`);
+      if (p.conceptMismatch === true) failures.push(`${p.id.slice(0, 8)}:mismatch`);
+      if ((p as any)[expectedFk] !== lesson.id) failures.push(`${p.id.slice(0, 8)}:fk`);
+      if (p.steps.length !== 3) failures.push(`${p.id.slice(0, 8)}:steps=${p.steps.length}`);
+      for (const s of p.steps) {
+        if (s.choices.length !== 5) failures.push(`${p.id.slice(0, 8)}:s${s.stepIndex}.choices=${s.choices.length}`);
+        const correctCount = s.choices.filter((c) => c.isCorrect).length;
+        if (correctCount !== 1) failures.push(`${p.id.slice(0, 8)}:s${s.stepIndex}.correct=${correctCount}`);
+      }
+    }
+    const status: SetStatus = failures.length === 0 ? 'READY' : 'NEEDS_REVIEW';
+    const note = failures.length ? `  ⚠ ${failures.slice(0, 3).join(', ')}${failures.length > 3 ? `, +${failures.length - 3} more` : ''}` : '';
 
     await prisma.lessonProblemSet.upsert({
       where: {
@@ -84,7 +115,7 @@ async function backfillSide(args: {
 
     if (status === 'READY') ready++;
     else needsReview++;
-    console.log(`[${country}] ${status.padEnd(13)} ${lesson.chapterCode}`);
+    console.log(`[${country}] ${status.padEnd(13)} ${lesson.chapterCode}${note}`);
   }
 
   return { ready, needsReview, skipped, total: lessons.length };
