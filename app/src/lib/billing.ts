@@ -64,6 +64,29 @@ export async function fetchProducts(): Promise<BillingProductDetails[]> {
   return products;
 }
 
+export function isFreeTrialOffer(offer: BillingProductDetails['offers'][number]): boolean {
+  return offer.pricingPhases.some((phase) => phase.priceAmountMicros === '0');
+}
+
+/** Default launch policy: paid base-plan first, Play free-trial offers later.
+ *
+ * Google Play can return trial offers before base-plan offers. If we blindly
+ * use offers[0], a Play Console trial switch can turn the primary CTA into
+ * "0 today, auto-renew later" without a frontend review. Prefer the paid
+ * base plan (`offerId === null`) and fall back to the first non-free offer.
+ */
+export function selectPaidOffer(product: BillingProductDetails) {
+  return product.offers.find((offer) => !offer.offerId && !isFreeTrialOffer(offer))
+    ?? product.offers.find((offer) => !isFreeTrialOffer(offer))
+    ?? product.offers[0];
+}
+
+export function displayRecurringPhase(offer: BillingProductDetails['offers'][number]) {
+  return offer.pricingPhases.find((phase) => phase.recurrenceMode === 1)
+    ?? offer.pricingPhases.find((phase) => phase.priceAmountMicros !== '0')
+    ?? offer.pricingPhases[0];
+}
+
 export async function buy(productId: string, offerToken: string): Promise<{ launched: boolean }> {
   await initBilling();
   return Billing.launchBillingFlow({ productId, offerToken });
@@ -97,6 +120,21 @@ async function verifyOnServer(p: BillingPurchase): Promise<void> {
 
 export interface BillingServerStatus {
   premium: boolean;
+  entitlement?: {
+    premium: boolean;
+    tier: 'FREE' | 'PREMIUM';
+    source: 'PLAY' | 'PREVIEW' | null;
+    preview: {
+      active: boolean;
+      startedAt: string | null;
+      expiresAt: string | null;
+      days: number;
+    } | null;
+    previewEligibility: {
+      eligible: boolean;
+      reason: string | null;
+    };
+  };
   subscription: {
     productId: string;
     status: string;
@@ -114,8 +152,30 @@ export interface BillingServerStatus {
       resetAt: string;
     };
   };
+  monetization?: {
+    mode: string;
+    free: { solverDailyLimit: number };
+    premiumPreview: {
+      productId: string;
+      days: number;
+      paymentMethodRequired: boolean;
+      eligibility: string;
+    };
+    playTrialPolicy: {
+      defaultSurface: string;
+      note: string;
+    };
+  };
 }
 
 export async function getServerStatus(): Promise<BillingServerStatus> {
   return get<BillingServerStatus>('/billing/status');
+}
+
+export async function startPremiumPreview(): Promise<{
+  premium: true;
+  productId: string;
+  expiryTime: string;
+}> {
+  return post('/billing/preview/start', {});
 }

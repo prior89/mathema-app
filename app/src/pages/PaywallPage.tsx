@@ -19,6 +19,9 @@ import {
   getServerStatus,
   isBillingAvailable,
   initBilling,
+  selectPaidOffer,
+  displayRecurringPhase,
+  startPremiumPreview,
 } from '../lib/billing';
 import { useT } from '../lib/i18n';
 
@@ -55,22 +58,21 @@ export default function PaywallPage() {
   });
 
   const quotaLimit = status.data?.quota?.solver?.limit ?? 8;
-
-  if (!isBillingAvailable()) {
-    return (
-      <div style={{ padding: 32, textAlign: 'center' }}>
-        {t('paywall.androidOnly')}
-      </div>
-    );
-  }
+  const previewEligible = !!status.data?.entitlement?.previewEligibility?.eligible;
+  const previewDays = status.data?.monetization?.premiumPreview?.days ?? 3;
+  const isAndroidBilling = isBillingAvailable();
 
   if (status.data?.premium) {
+    const isPreview = status.data.entitlement?.source === 'PREVIEW';
+    const expiryTime = status.data.subscription?.expiryTime;
     return (
       <div style={{ padding: 32, textAlign: 'center' }}>
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>{t('paywall.already')}</h2>
-        {status.data.subscription?.expiryTime && (
+        {expiryTime && (
           <p style={{ color: '#6B7280', marginTop: 8 }}>
-            {t('paywall.renewAt', { date: new Date(status.data.subscription.expiryTime).toLocaleDateString() })}
+            {isPreview
+              ? t('paywall.previewEndsAt', { date: new Date(expiryTime).toLocaleDateString() })
+              : t('paywall.renewAt', { date: new Date(expiryTime).toLocaleDateString() })}
           </p>
         )}
       </div>
@@ -79,8 +81,8 @@ export default function PaywallPage() {
 
   const renderProduct = (productId: string, label: string, periodLabel: string) => {
     const prod = products.data?.find((p) => p.productId === productId);
-    const offer = prod?.offers[0];
-    const phase = offer?.pricingPhases[0];
+    const offer = prod ? selectPaidOffer(prod) : undefined;
+    const phase = offer ? displayRecurringPhase(offer) : undefined;
     if (!prod || !offer || !phase) return null;
     return (
       <div
@@ -160,39 +162,104 @@ export default function PaywallPage() {
         {t('paywall.tagline')}
       </p>
 
-      {products.isLoading && <div style={{ padding: 24 }}>{t('paywall.loading')}</div>}
-      {products.isError && (
+      <div
+        style={{
+          border: '1px solid #D1FAE5',
+          background: '#ECFDF5',
+          borderRadius: 16,
+          padding: 18,
+          marginBottom: 16,
+        }}
+      >
+        <h2 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>
+          {t('paywall.preview.title')}
+        </h2>
+        <p style={{ fontSize: 13, color: '#065F46', lineHeight: 1.5, margin: '0 0 12px' }}>
+          {t('paywall.preview.desc', { days: previewDays })}
+        </p>
+        {previewEligible ? (
+          <button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await startPremiumPreview();
+                await qc.invalidateQueries({ queryKey: ['billing-status'] });
+              } finally {
+                setBusy(false);
+              }
+            }}
+            style={{
+              background: '#065F46',
+              color: '#fff',
+              border: 0,
+              borderRadius: 12,
+              padding: '11px 16px',
+              fontWeight: 800,
+              cursor: busy ? 'not-allowed' : 'pointer',
+              opacity: busy ? 0.6 : 1,
+            }}
+          >
+            {t('paywall.preview.cta')}
+          </button>
+        ) : (
+          <div style={{ fontSize: 12.5, color: '#047857', fontWeight: 700 }}>
+            {t('paywall.preview.used')}
+          </div>
+        )}
+      </div>
+
+      {!isAndroidBilling && (
+        <div
+          style={{
+            border: '1px solid #E5E7EB',
+            borderRadius: 12,
+            padding: 14,
+            marginBottom: 16,
+            color: '#4B5563',
+            fontSize: 13,
+            lineHeight: 1.5,
+          }}
+        >
+          {t('paywall.androidOnly')}
+        </div>
+      )}
+
+      {isAndroidBilling && products.isLoading && <div style={{ padding: 24 }}>{t('paywall.loading')}</div>}
+      {isAndroidBilling && products.isError && (
         <div style={{ padding: 16, color: '#B91C1C' }}>
           {t('paywall.loadFailed')}
         </div>
       )}
 
-      {renderProduct('premium_monthly', t('paywall.monthly'), t('paywall.monthly.per'))}
-      {renderProduct('premium_yearly', t('paywall.yearly'), t('paywall.yearly.per'))}
+      {isAndroidBilling && renderProduct('premium_monthly', t('paywall.monthly'), t('paywall.monthly.per'))}
+      {isAndroidBilling && renderProduct('premium_yearly', t('paywall.yearly'), t('paywall.yearly.per'))}
 
-      <button
-        onClick={async () => {
-          setBusy(true);
-          try {
-            await restore();
-            await qc.invalidateQueries({ queryKey: ['billing-status'] });
-          } finally {
-            setBusy(false);
-          }
-        }}
-        disabled={busy}
-        style={{
-          marginTop: 14,
-          background: 'transparent',
-          border: 0,
-          color: '#2563EB',
-          textDecoration: 'underline',
-          fontSize: 13,
-          cursor: busy ? 'not-allowed' : 'pointer',
-        }}
-      >
-        {t('paywall.restore')}
-      </button>
+      {isAndroidBilling && (
+        <button
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await restore();
+              await qc.invalidateQueries({ queryKey: ['billing-status'] });
+            } finally {
+              setBusy(false);
+            }
+          }}
+          disabled={busy}
+          style={{
+            marginTop: 14,
+            background: 'transparent',
+            border: 0,
+            color: '#2563EB',
+            textDecoration: 'underline',
+            fontSize: 13,
+            cursor: busy ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {t('paywall.restore')}
+        </button>
+      )}
     </div>
   );
 }

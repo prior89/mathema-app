@@ -1,7 +1,12 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, ConflictException } from '@nestjs/common';
 import { SubscriptionStatus } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { FREE_TIER_SOLVER_LIMIT } from './billing.constants';
+import {
+  FREE_TIER_SOLVER_LIMIT,
+  MONETIZATION_STRATEGY,
+  PREMIUM_PREVIEW_DAYS,
+  PREMIUM_PREVIEW_PRODUCT_ID,
+} from './billing.constants';
 import { PlayApiClient } from './play-api-client.service';
 import { QuotaService } from './quota.service';
 
@@ -39,6 +44,25 @@ export class BillingService {
     private readonly quota: QuotaService,
   ) {}
 
+  getMonetizationStrategy() {
+    return MONETIZATION_STRATEGY;
+  }
+
+  private isEntitled(sub: {
+    status: SubscriptionStatus;
+    expiryTime: Date;
+  } | null): boolean {
+    if (!sub) return false;
+    if (sub.status !== 'ACTIVE' && sub.status !== 'GRACE' && sub.status !== 'CANCELED') {
+      return false;
+    }
+    return sub.expiryTime.getTime() > Date.now();
+  }
+
+  private isPreviewProduct(productId: string | null | undefined): boolean {
+    return productId === PREMIUM_PREVIEW_PRODUCT_ID;
+  }
+
   /** Returns true iff the user is currently entitled.
    *
    * Google Play subscription states that grant entitlement until `expiryTime`:
@@ -55,16 +79,39 @@ export class BillingService {
    */
   async isPremium(userId: string): Promise<boolean> {
     const sub = await this.prisma.subscription.findUnique({ where: { userId } });
-    if (!sub) return false;
-    if (sub.status !== 'ACTIVE' && sub.status !== 'GRACE' && sub.status !== 'CANCELED') {
-      return false;
-    }
-    return sub.expiryTime.getTime() > Date.now();
+    return this.isEntitled(sub);
   }
 
   /** Returns the full subscription row (or null) for the user. Used by /billing/status. */
   async getSubscription(userId: string) {
     return this.prisma.subscription.findUnique({ where: { userId } });
+  }
+
+  async getEntitlement(userId: string) {
+    const sub = await this.getSubscription(userId);
+    const premium = this.isEntitled(sub);
+    const preview = this.isPreviewProduct(sub?.productId);
+    return {
+      premium,
+      tier: premium ? 'PREMIUM' : 'FREE',
+      source: premium ? (preview ? 'PREVIEW' : 'PLAY') : null,
+      preview: preview
+        ? {
+            active: premium,
+            startedAt: sub?.startTime.toISOString() ?? null,
+            expiresAt: sub?.expiryTime.toISOString() ?? null,
+            days: PREMIUM_PREVIEW_DAYS,
+          }
+        : null,
+      previewEligibility: {
+        eligible: !sub,
+        reason: !sub
+          ? null
+          : preview
+            ? 'preview_already_used'
+            : 'subscription_history_exists',
+      },
+    };
   }
 
   /** Daily AI Solver quota snapshot for /billing/status. Premium users get
@@ -81,6 +128,60 @@ export class BillingService {
       limit: premium ? null : FREE_TIER_SOLVER_LIMIT,
       resetAt: this.quota.resetAt().toISOString(),
     };
+  }
+
+  /** Cardless Premium Preview.
+   *
+   * One-time launch preview: no Play Billing purchase token and no payment
+   * method. It uses the existing Subscription row as an entitlement ledger so
+   * all existing `isPremium()` gates work without a schema change.
+   */
+  async startPremiumPreview(userId: string): Promise<{
+    premium: true;
+    productId: string;
+    expiryTime: Date;
+  }> {
+    const existing = await this.getSubscription(userId);
+    if (existing) {
+      throw new ConflictException({
+        code: this.isPreviewProduct(existing.productId)
+          ? 'premium_preview_already_used'
+          : 'premium_preview_not_available',
+        message: 'Premium Preview is available once per account before any subscription.',
+      });
+    }
+
+    const now = new Date();
+    const expiryTime = new Date(now.getTime() + PREMIUM_PREVIEW_DAYS * 24 * 60 * 60 * 1000);
+    const sub = await this.prisma.subscription.create({
+      data: {
+        userId,
+        productId: PREMIUM_PREVIEW_PRODUCT_ID,
+        purchaseToken: `preview:${userId}`,
+        orderId: null,
+        status: 'ACTIVE',
+        startTime: now,
+        expiryTime,
+        autoRenewing: false,
+        isInIntroOfferPeriod: false,
+        countryCode: null,
+      },
+    });
+
+    await this.prisma.subscriptionEvent.create({
+      data: {
+        subscriptionId: sub.id,
+        eventType: 'preview.start',
+        payload: {
+          productId: PREMIUM_PREVIEW_PRODUCT_ID,
+          days: PREMIUM_PREVIEW_DAYS,
+          expiryTime: expiryTime.toISOString(),
+          paymentMethodRequired: false,
+        } as any,
+      },
+    });
+
+    return { premium: true, productId: PREMIUM_PREVIEW_PRODUCT_ID, expiryTime };
   }
 
   /** Maps a raw Play subscriptionsv2 payload to our SubscriptionStatus +

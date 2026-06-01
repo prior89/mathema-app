@@ -14,13 +14,14 @@ export class BillingController {
    * render `5/8 used today` style indicators without a second round-trip. */
   @Get('status')
   async status(@CurrentUser('id') userId: string) {
-    const [premium, sub, solverQuota] = await Promise.all([
-      this.billing.isPremium(userId),
+    const [entitlement, sub, solverQuota] = await Promise.all([
+      this.billing.getEntitlement(userId),
       this.billing.getSubscription(userId),
       this.billing.getSolverQuota(userId),
     ]);
     return {
-      premium,
+      premium: entitlement.premium,
+      entitlement,
       subscription: sub
         ? {
             productId: sub.productId,
@@ -31,7 +32,20 @@ export class BillingController {
           }
         : null,
       quota: { solver: solverQuota },
+      monetization: this.billing.getMonetizationStrategy(),
     };
+  }
+
+  /** One-time cardless Premium Preview.
+   *
+   * Launch strategy: let learners feel the full loop first, then ask for Play
+   * Billing only at a value moment. This is separate from Google Play free
+   * trials, which remain available later as an A/B-testable offer.
+   */
+  @Post('preview/start')
+  @HttpCode(200)
+  async startPreview(@CurrentUser('id') userId: string) {
+    return this.billing.startPremiumPreview(userId);
   }
 
   /** Client posts the Play purchaseToken after a successful purchase.
