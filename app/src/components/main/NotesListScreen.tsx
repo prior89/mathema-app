@@ -37,9 +37,14 @@ export function NotesListScreen() {
 
   return (
     <div className="screen" style={{ position: 'relative' }}>
-      {/* Sticky top -- header + 4 stats + pattern banner + filter chips all
-          stay frozen above the scroll. The grid below is the only thing that
-          scrolls, so the user can swap filters without re-finding the stats. */}
+      {/* Mixed scroll model — header + 4-stat row stay pinned at top (those
+          are quick orientation signals: total/analyzed/mastered/retry). AI
+          pattern banner + filter chips + cards grid share one scroll surface
+          so on mobile the grid grabs the full remaining viewport. TabBar
+          stays pinned at the bottom.
+          History (2026-06-01): first pass pinned NOTHING, header + stats
+          scrolled away which lost orientation. This pass keeps the title +
+          stats fixed and lets the banner + chips ride with the cards. */}
       <div className="app-head" style={{ paddingBottom: 0, flexShrink: 0 }}>
         <div>
           <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('notes.tab.label')}</div>
@@ -47,14 +52,18 @@ export function NotesListScreen() {
         </div>
       </div>
       <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
-        {/* 4 stats compact */}
+        {/* 4 stats compact — stays pinned alongside the header. */}
         <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
           <StatMini k={t('notes.stat.total')} v={stats.data?.total ?? 0} />
           <StatMini k={t('notes.stat.analyzed')} v={stats.data?.analyzed ?? 0} />
           <StatMini k={t('notes.stat.mastered')} v={stats.data?.mastered ?? 0} />
           <StatMini k={t('notes.stat.retry')} v={Math.round(stats.data?.retryAccuracy ?? 0)} />
         </div>
+      </div>
 
+      {/* Scroll surface — banner + chips + grid all ride here together. */}
+      <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div style={{ padding: '12px 22px 0' }}>
         {/* AI pattern banner */}
         {patterns.data && patterns.data.length > 0 && (
           <div className="card" style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent', padding: 12, display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, marginTop: 8 }}>
@@ -85,8 +94,8 @@ export function NotesListScreen() {
         </div>
       </div>
 
-      {/* Scrollable grid only */}
-      <div style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '8px 22px' }}>
+      {/* Cards grid — rides inside the same scroll surface as the top strip. */}
+      <div style={{ padding: '8px 22px' }}>
         {notes.isLoading && <Empty msg={t('notes.loading')} />}
         {notes.data && notes.data.length === 0 && <Empty msg={t('notes.empty.none')} />}
         {notes.data && notes.data.length > 0 && visibleNotes.length === 0 && (
@@ -138,6 +147,7 @@ export function NotesListScreen() {
             ))}
         </div>
         <div style={{ height: 90 }} />
+      </div>
       </div>
 
       <TabBar />
