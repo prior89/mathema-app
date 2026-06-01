@@ -25,6 +25,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
+    "seed:india-mastery": "ts-node scripts/seed-india-mastery-problems.ts",
     "import:ncert": "ts-node scripts/import-ncert.ts",
     "publish:bulk": "ts-node scripts/bulk-publish.ts",
     "setup:ncert": "npm run import:ncert && npm run publish:bulk"
