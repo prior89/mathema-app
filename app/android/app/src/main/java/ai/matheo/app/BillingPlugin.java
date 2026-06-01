@@ -131,13 +131,16 @@ public class BillingPlugin extends Plugin {
             QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
                     .setProductList(productList)
                     .build();
-            billingClient.queryProductDetailsAsync(params, (billingResult, list) -> {
+            // PBL 8: ProductDetailsResponseListener returns QueryProductDetailsResult
+            // instead of List<ProductDetails>. .getProductDetailsList() pulls out the
+            // matched products; .getUnfetchedProductList() (not used) carries the rest.
+            billingClient.queryProductDetailsAsync(params, (billingResult, result) -> {
                 if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
                     call.reject("queryProductDetails failed: " + billingResult.getDebugMessage());
                     return;
                 }
                 JSArray prodArr = new JSArray();
-                for (ProductDetails pd : list) {
+                for (ProductDetails pd : result.getProductDetailsList()) {
                     JSObject prod = new JSObject();
                     prod.put("productId", pd.getProductId());
                     prod.put("title", pd.getTitle());
@@ -197,12 +200,13 @@ public class BillingPlugin extends Plugin {
                                     .setProductType(BillingClient.ProductType.SUBS)
                                     .build()))
                     .build();
-            billingClient.queryProductDetailsAsync(qp, (br, list) -> {
-                if (br.getResponseCode() != BillingClient.BillingResponseCode.OK || list.isEmpty()) {
+            billingClient.queryProductDetailsAsync(qp, (br, result) -> {
+                List<ProductDetails> details = result.getProductDetailsList();
+                if (br.getResponseCode() != BillingClient.BillingResponseCode.OK || details.isEmpty()) {
                     call.reject("queryProductDetails for buy failed: " + br.getDebugMessage());
                     return;
                 }
-                ProductDetails pd = list.get(0);
+                ProductDetails pd = details.get(0);
                 BillingFlowParams.ProductDetailsParams pdp = BillingFlowParams.ProductDetailsParams.newBuilder()
                         .setProductDetails(pd)
                         .setOfferToken(offerToken)
