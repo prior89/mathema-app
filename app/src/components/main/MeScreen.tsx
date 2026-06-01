@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import { fetchMe } from '../../lib/queries';
 import { tokens } from '../../lib/api';
+import { getServerStatus } from '../../lib/billing';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
@@ -16,8 +17,47 @@ export function MeScreen() {
   const nav = useNavigate();
   const { t } = useT();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
+  const billing = useQuery({
+    queryKey: ['billing-status'],
+    queryFn: getServerStatus,
+    staleTime: 60 * 1000,
+  });
   const userName = me.data?.name ?? 'Aarav';
   const initial = userName.charAt(0).toUpperCase();
+
+  const planSource = billing.data?.entitlement?.source;
+  const expiryTime = billing.data?.subscription?.expiryTime;
+  const expiryDate = expiryTime ? new Date(expiryTime).toLocaleDateString() : '';
+  const solverQuota = billing.data?.quota?.solver;
+  const planTitle = (() => {
+    if (billing.isLoading) return t('me.billing.loading.title');
+    if (billing.isError) return t('me.billing.error.title');
+    if (billing.data?.premium && planSource === 'PREVIEW') return t('me.billing.preview.title');
+    if (billing.data?.premium) return t('me.billing.premium.title');
+    return t('me.billing.free.title');
+  })();
+  const planSub = (() => {
+    if (billing.isLoading) return t('me.billing.loading.sub');
+    if (billing.isError) return t('me.billing.error.sub');
+    if (billing.data?.premium && planSource === 'PREVIEW') {
+      return expiryDate
+        ? t('me.billing.preview.sub', { date: expiryDate })
+        : t('me.billing.preview.subNoDate');
+    }
+    if (billing.data?.premium) {
+      return expiryDate
+        ? t('me.billing.premium.sub', { date: expiryDate })
+        : t('me.billing.premium.subNoDate');
+    }
+    if (solverQuota?.limit != null) {
+      return t('me.billing.free.sub', {
+        used: solverQuota.used,
+        limit: solverQuota.limit,
+      });
+    }
+    return t('me.billing.free.subUnknown');
+  })();
+  const planBadge = billing.data?.premium ? 'P' : 'F';
 
   function logout() {
     tokens.clear();
@@ -49,6 +89,37 @@ export function MeScreen() {
                   </span>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Billing / plan status */}
+          <div className="section-h">
+            <span className="label">{t('me.billing.section')}</span>
+          </div>
+          <div onClick={() => nav('/app/paywall')} className="plan-card" style={{ cursor: 'pointer' }}>
+            <div
+              className="badge"
+              style={{
+                background: billing.data?.premium ? '#ECFDF5' : 'var(--p-primary-tint)',
+                color: billing.data?.premium ? '#047857' : 'var(--p-primary)',
+                fontStyle: 'normal',
+                fontSize: 15,
+                fontWeight: 800,
+              }}
+            >
+              {planBadge}
+            </div>
+            <div className="info">
+              <div className="ttl">{planTitle}</div>
+              <div className="sub">{planSub}</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {!billing.data?.premium && !billing.isLoading && !billing.isError && (
+                <span className="chip primary" style={{ fontSize: 10.5 }}>
+                  {t('me.billing.upgrade')}
+                </span>
+              )}
+              <Glyph.ChevronR accent="var(--p-muted)" size={16} />
             </div>
           </div>
 
