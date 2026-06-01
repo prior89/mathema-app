@@ -58,7 +58,9 @@ export default function PaywallPage() {
   });
 
   const quotaLimit = status.data?.quota?.solver?.limit ?? 8;
-  const previewEligible = !!status.data?.entitlement?.previewEligibility?.eligible;
+  const previewEligibility = status.data?.entitlement?.previewEligibility;
+  const previewEligible = !!previewEligibility?.eligible;
+  const previewLoading = status.isLoading && !status.data;
   const previewDays = status.data?.monetization?.premiumPreview?.days ?? 3;
   const isAndroidBilling = isBillingAvailable();
 
@@ -67,7 +69,9 @@ export default function PaywallPage() {
     const expiryTime = status.data.subscription?.expiryTime;
     return (
       <div style={{ padding: 32, textAlign: 'center' }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>{t('paywall.already')}</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
+          {isPreview ? t('paywall.preview.activeTitle') : t('paywall.already')}
+        </h2>
         {expiryTime && (
           <p style={{ color: '#6B7280', marginTop: 8 }}>
             {isPreview
@@ -177,7 +181,11 @@ export default function PaywallPage() {
         <p style={{ fontSize: 13, color: '#065F46', lineHeight: 1.5, margin: '0 0 12px' }}>
           {t('paywall.preview.desc', { days: previewDays })}
         </p>
-        {previewEligible ? (
+        {previewLoading ? (
+          <div style={{ fontSize: 12.5, color: '#047857', fontWeight: 700 }}>
+            {t('paywall.preview.loading')}
+          </div>
+        ) : previewEligible ? (
           <button
             disabled={busy}
             onClick={async () => {
@@ -204,7 +212,9 @@ export default function PaywallPage() {
           </button>
         ) : (
           <div style={{ fontSize: 12.5, color: '#047857', fontWeight: 700 }}>
-            {t('paywall.preview.used')}
+            {previewEligibility?.reason === 'subscription_history_exists'
+              ? t('paywall.preview.notAvailable')
+              : t('paywall.preview.used')}
           </div>
         )}
       </div>
