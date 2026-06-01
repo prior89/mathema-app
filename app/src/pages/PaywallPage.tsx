@@ -11,7 +11,7 @@
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   fetchProducts,
   buy,
@@ -24,10 +24,12 @@ import {
   startPremiumPreview,
 } from '../lib/billing';
 import { useT } from '../lib/i18n';
+import { TabBar } from '../components/main/TabBar';
 
 export default function PaywallPage() {
   const qc = useQueryClient();
   const { t } = useT();
+  const nav = useNavigate();
   const [busy, setBusy] = useState(false);
   const [searchParams] = useSearchParams();
   // `?reason=quota` is set by the api.ts 403/QuotaExceeded interceptor.
@@ -64,21 +66,59 @@ export default function PaywallPage() {
   const previewDays = status.data?.monetization?.premiumPreview?.days ?? 3;
   const isAndroidBilling = isBillingAvailable();
 
+  // Header strip: a back button so paywall always has an explicit exit.
+  // Without it the "already Premium / Preview active" branch is a dead-end —
+  // the user has no way back to the rest of the app from inside Capacitor.
+  const header = (
+    <div style={{ padding: '14px 18px 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <button
+        type="button"
+        onClick={() => nav(-1)}
+        aria-label={t('paywall.back')}
+        style={{
+          background: 'transparent',
+          border: 0,
+          padding: 8,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path
+            d="M 15 6 L 9 12 L 15 18"
+            fill="none"
+            stroke="var(--p-ink)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+
   if (status.data?.premium) {
     const isPreview = status.data.entitlement?.source === 'PREVIEW';
     const expiryTime = status.data.subscription?.expiryTime;
     return (
-      <div style={{ padding: 32, textAlign: 'center' }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>
-          {isPreview ? t('paywall.preview.activeTitle') : t('paywall.already')}
-        </h2>
-        {expiryTime && (
-          <p style={{ color: '#6B7280', marginTop: 8 }}>
-            {isPreview
-              ? t('paywall.previewEndsAt', { date: new Date(expiryTime).toLocaleDateString() })
-              : t('paywall.renewAt', { date: new Date(expiryTime).toLocaleDateString() })}
-          </p>
-        )}
+      <div className="screen">
+        <div style={{ flex: 1, overflow: 'auto' }}>
+          {header}
+          <div style={{ padding: 32, textAlign: 'center' }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700 }}>
+              {isPreview ? t('paywall.preview.activeTitle') : t('paywall.already')}
+            </h2>
+            {expiryTime && (
+              <p style={{ color: '#6B7280', marginTop: 8 }}>
+                {isPreview
+                  ? t('paywall.previewEndsAt', { date: new Date(expiryTime).toLocaleDateString() })
+                  : t('paywall.renewAt', { date: new Date(expiryTime).toLocaleDateString() })}
+              </p>
+            )}
+          </div>
+        </div>
+        <TabBar />
       </div>
     );
   }
@@ -141,8 +181,11 @@ export default function PaywallPage() {
   };
 
   return (
-    <div style={{ maxWidth: 420, margin: '0 auto', padding: 24 }}>
-      {reason === 'quota' && (
+    <div className="screen">
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {header}
+        <div style={{ maxWidth: 420, margin: '0 auto', padding: '0 24px 24px' }}>
+          {reason === 'quota' && (
         <div
           style={{
             background: 'var(--p-danger-tint, #FEF2F2)',
@@ -270,6 +313,9 @@ export default function PaywallPage() {
           {t('paywall.restore')}
         </button>
       )}
+        </div>
+      </div>
+      <TabBar />
     </div>
   );
 }
