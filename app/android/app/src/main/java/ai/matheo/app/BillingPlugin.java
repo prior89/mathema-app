@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * BillingPlugin — Capacitor 8 native wrapper around Play Billing Library 7.x.
+ * BillingPlugin — Capacitor 8 native wrapper around Play Billing Library 8.x.
  *
  *  - Subscriptions only (no one-time products on Matheo roadmap).
  *  - Acknowledge is client-side AFTER server /billing/verify returns 200.
@@ -32,6 +32,9 @@ import java.util.List;
  *  - Purchase results are pushed via the 'purchaseUpdate' event (or
  *    'purchaseError'). launchBillingFlow() resolves as soon as the billing
  *    UI is shown — actual completion is async via the listener.
+ *  - PBL 8 adds enableAutoServiceReconnection() on Builder — the BillingClient
+ *    transparently re-runs startConnection() after Play services drop the
+ *    socket, so ensureConnected() rarely has to retry by hand.
  */
 @CapacitorPlugin(name = "Billing")
 public class BillingPlugin extends Plugin {
@@ -61,6 +64,7 @@ public class BillingPlugin extends Plugin {
         if (billingClient == null) {
             billingClient = BillingClient.newBuilder(getContext())
                     .setListener(purchaseListener)
+                    .enableAutoServiceReconnection()
                     .enablePendingPurchases(PendingPurchasesParams.newBuilder()
                             .enableOneTimeProducts()
                             .build())
