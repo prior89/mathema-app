@@ -10,15 +10,12 @@
  * /mock-exams/chapter/:code/start checks ConceptProgress.masteredAt and
  * rejects unmastered chapters regardless of grade.
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { ReactNode, useRef, useState } from 'react';
 import {
   fetchConceptLessons, fetchKoreanConceptLessons, fetchMe,
-  startAdaptiveSession,
-  type AdaptiveStartResponse,
 } from '../../lib/queries';
-import { track } from '../../lib/analytics';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
@@ -34,7 +31,6 @@ export function StudyScreen() {
   const nav = useNavigate();
   const { t } = useT();
   const [chapter, setChapter] = useState('');
-  const [msg, setMsg] = useState<string | null>(null);
   // AI Solver -- each button owns its own native <input type="file"> so the
   // taps go DIRECTLY to the camera or to the gallery (no intermediate modal
   // picker). The modal opens only AFTER a file is chosen, with that file
@@ -112,40 +108,12 @@ export function StudyScreen() {
   // pool, body + canvas + 5지선다).
   function startPractice() {
     if (!chapter) return;
-    setMsg(null);
     if (isKR) {
       nav(`/app/ko-practice-set/${chapter}`);
     } else {
       nav(`/app/practice-set/${chapter}`);
     }
   }
-
-  // 2026-05-29: adaptive entry moved here from Home (user feedback: the
-  // home card overlapped with this chapter picker). Same backend
-  // (POST /study-sessions/adaptive/start) — picks 20 problems by mastery
-  // score + errorPattern + prerequisite + grade match. Result lands on
-  // the first picked problem via SoloProblemScreen sequence (Sprint 3 A12).
-  const adaptive = useMutation({
-    mutationFn: () => startAdaptiveSession('daily'),
-    onSuccess: (r: AdaptiveStartResponse) => {
-      track('adaptive.start', {
-        sessionId: r.sessionId, count: r.problems.length, surface: 'study',
-      });
-      if (r.sessionId && r.problems.length > 0) {
-        try {
-          sessionStorage.setItem('adaptive:queue', JSON.stringify({
-            sessionId: r.sessionId, problems: r.problems, cursor: 0,
-          }));
-        } catch { /* private mode etc. — non-critical */ }
-        nav(`/app/practice/${r.problems[0].id}`);
-      } else {
-        setMsg('지금은 추천할 문제가 없어요. 챕터를 직접 선택해 풀어보세요.');
-      }
-    },
-    onError: () => {
-      setMsg('추천 시작에 실패했어요. 잠시 후 다시 시도해 주세요.');
-    },
-  });
 
   return (
     <div className="screen">
@@ -158,38 +126,6 @@ export function StudyScreen() {
         </div>
 
         <div style={{ padding: '12px 22px 0' }}>
-          {/* Adaptive entry — system-driven counterpart to the user-driven
-              chapter picker below. Backed by AdaptiveNextProblemService
-              (mastery·errorPattern·prerequisite, grade-filtered). */}
-          <button
-            type="button"
-            onClick={() => adaptive.mutate()}
-            disabled={adaptive.isPending}
-            className="card"
-            style={{
-              width: '100%', textAlign: 'left', padding: 14,
-              background: 'var(--p-primary-tint)', border: 'none', borderRadius: 12,
-              display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
-              marginBottom: 14,
-            }}
-          >
-            <div style={{
-              width: 40, height: 40, borderRadius: 10,
-              background: 'var(--p-primary)', color: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16, fontWeight: 700, flexShrink: 0,
-            }}>20</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>
-                {adaptive.isPending ? '준비 중…' : '약점 기반 추천 20문제'}
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--p-primary)', marginTop: 3, lineHeight: 1.4 }}>
-                숙련도·오답 패턴·진도를 종합해 자동으로 골라줘요
-              </div>
-            </div>
-            <span style={{ fontSize: 18, color: 'var(--p-primary)', fontWeight: 700 }}>›</span>
-          </button>
-
           <div className="section-h">
             <span className="label">{t('study.pick.section')}</span>
             <span className="more">{t('study.pick.more')}</span>
@@ -254,12 +190,6 @@ export function StudyScreen() {
               <Glyph.ChevronR />
             </button>
           </div>
-
-          {msg && (
-            <div className="card" style={{ marginTop: 10, padding: 12, fontSize: 12.5, color: 'var(--p-ink-2)' }}>
-              {msg}
-            </div>
-          )}
 
           {/* AI Solver -- snap a problem from a textbook or photo and the
               math-helper pipeline (Mathpix OCR -> LangGraph solver) returns a
