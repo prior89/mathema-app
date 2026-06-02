@@ -55,9 +55,10 @@ async function main() {
       await prisma.problem.deleteMany({ where: { id: { in: singleIds } } });
     }
 
+    const ids: string[] = [];
     for (const p of chapter.problems) {
       const answerText = p.options.find((o) => o.isCorrect)?.text ?? '';
-      await prisma.problem.create({
+      const createdProblem = await prisma.problem.create({
         data: {
           source: 'Matheo KR (2022 개정) · Study · 자체 제작',
           unitId: fallbackUnit.id,
@@ -86,9 +87,39 @@ async function main() {
             }],
           },
         },
+        select: { id: true },
       });
+      ids.push(createdProblem.id);
       created += 1;
     }
+    await prisma.lessonProblemSet.upsert({
+      where: {
+        country_chapterCode_setType_version: {
+          country: 'KR',
+          chapterCode: code,
+          setType: 'STUDY_1STEP',
+          version: 1,
+        },
+      },
+      update: {
+        koreanConceptLessonId: lesson.id,
+        conceptLessonId: null,
+        problemIds: ids.slice(0, 20),
+        status: ids.length >= 20 ? 'READY' : 'NEEDS_REVIEW',
+        curatedAt: ids.length > 0 ? new Date() : null,
+        retiredAt: null,
+      },
+      create: {
+        country: 'KR',
+        chapterCode: code,
+        setType: 'STUDY_1STEP',
+        version: 1,
+        koreanConceptLessonId: lesson.id,
+        problemIds: ids.slice(0, 20),
+        status: ids.length >= 20 ? 'READY' : 'NEEDS_REVIEW',
+        curatedAt: ids.length > 0 ? new Date() : null,
+      },
+    });
     console.log(`[ok]   ${code}  ${chapter.problems.length} STUDY problems seeded`);
   }
   console.log(`\nDone. STUDY problems=${created}`);

@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Difficulty, DistractorType, MockExamType } from '@prisma/client';
+import { CountryCode, Difficulty, DistractorType, ErrorCode, MockExamType } from '@prisma/client';
 import { MockExamsRepository } from './mock-exams.repository';
 import { GradingService } from './services/grading.service';
 import { AiRecommendExamService } from './services/ai-recommend-exam.service';
@@ -361,6 +361,17 @@ export class MockExamsService {
    * sanitize (no answer leakage, choices shuffled).
    */
   async nextChapterProblem(userId: string, chapterCode: string, lang: Lang = 'en'): Promise<any | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { country: true },
+    });
+    const country = chapterCode.startsWith('K-') || user?.country === 'KR' ? 'KR' : 'IN';
+    return country === 'KR'
+      ? this.nextKoreanStudyProblem(userId, chapterCode, lang)
+      : this.nextNcertStudyProblem(userId, chapterCode, lang);
+  }
+
+  private async nextNcertStudyProblem(userId: string, chapterCode: string, lang: Lang = 'en'): Promise<any | null> {
     const lesson = await this.prisma.conceptLesson.findUnique({
       where: { chapterCode },
       select: { id: true, ncertClass: true, chapterNumber: true, titleEn: true, unitId: true, subUnitId: true },
@@ -378,6 +389,18 @@ export class MockExamsService {
       );
     }
 
+    let chosenId = await this.pickStudyProblemId({
+      userId,
+      country: 'IN',
+      chapterCode,
+      lessonId: lesson.id,
+      lessonFk: 'conceptLessonId',
+    });
+
+    // Legacy fallback: keep the old direct-pool query during the
+    // LessonProblemSet expand phase so chapters without STUDY_1STEP rows
+    // still work until the backfill has run everywhere.
+    if (!chosenId) {
     // Skip every problem this user has already touched in a learning context.
     const attemptedRows = await this.prisma.attempt.findMany({
       where: { userId, context: { in: [SessionContext.STUDY, SessionContext.PRACTICE] } },
@@ -402,7 +425,8 @@ export class MockExamsService {
       ...(attemptedIds.length > 0 ? [attemptedIds] : []),
     );
 
-    let chosenId: string | null = pooled[0]?.id ?? null;
+    chosenId = pooled[0]?.id ?? null;
+    }
     if (!chosenId && process.env.LLM_POOL_TOPUP === 'on') {
       // Pool dry — opt-in LLM top-up. Off by default (2026-05-22 user
       // decision: chapters with empty single-step pools should signal that
@@ -417,6 +441,134 @@ export class MockExamsService {
     // without a second round-trip.
     const [full] = await this.fetchFullProblems([chosenId], lang);
     return full ?? null;
+  }
+
+  private async nextKoreanStudyProblem(userId: string, chapterCode: string, lang: Lang = 'ko'): Promise<any | null> {
+    const lesson = await this.prisma.koreanConceptLesson.findUnique({
+      where: { chapterCode },
+      select: { id: true },
+    });
+    if (!lesson) throw new NotFoundException(`Korean chapter not found: ${chapterCode}`);
+
+    const progress = await this.prisma.koreanConceptProgress.findUnique({
+      where: { userId_lessonId: { userId, lessonId: lesson.id } },
+      select: { masteredAt: true },
+    });
+    if (!progress?.masteredAt) {
+      throw new ForbiddenException(
+        `Finish the concept lesson for ${chapterCode} in Mastery before practising.`,
+      );
+    }
+
+    const chosenId = await this.pickStudyProblemId({
+      userId,
+      country: 'KR',
+      chapterCode,
+      lessonId: lesson.id,
+      lessonFk: 'koreanConceptLessonId',
+    });
+    if (!chosenId) return null;
+
+    const [full] = await this.fetchFullProblems([chosenId], lang);
+    return full ?? null;
+  }
+
+  private async pickStudyProblemId(args: {
+    userId: string;
+    country: CountryCode;
+    chapterCode: string;
+    lessonId: string;
+    lessonFk: 'conceptLessonId' | 'koreanConceptLessonId';
+  }): Promise<string | null> {
+    const attemptedRows = await this.prisma.attempt.findMany({
+      where: { userId: args.userId, context: { in: [SessionContext.STUDY, SessionContext.PRACTICE] } },
+      orderBy: { createdAt: 'desc' },
+      select: { problemId: true },
+      distinct: ['problemId'],
+      take: 500,
+    });
+    const attemptedIds = attemptedRows.map((a) => a.problemId);
+
+    const weaknessRows = await this.prisma.errorPatternProfile.findMany({
+      where: { userId: args.userId, status: 'ACTIVE' },
+      orderBy: [{ recentFrequency: 'desc' }, { frequency: 'desc' }, { lastDetectedAt: 'desc' }],
+      take: 5,
+      select: { errorCode: true },
+    });
+    const weaknessCodes = new Set<ErrorCode>(weaknessRows.map((r) => r.errorCode));
+
+    const activeSet = await this.prisma.lessonProblemSet.findFirst({
+      where: {
+        country: args.country,
+        chapterCode: args.chapterCode,
+        setType: 'STUDY_1STEP',
+        status: 'READY',
+        retiredAt: null,
+      },
+      orderBy: { version: 'desc' },
+      select: { problemIds: true },
+    });
+    const setOrder = new Map<string, number>(
+      (activeSet?.problemIds ?? []).map((id, idx) => [id, idx]),
+    );
+
+    const candidates = await this.prisma.problem.findMany({
+      where: {
+        [args.lessonFk]: args.lessonId,
+        ...(activeSet?.problemIds.length ? { id: { in: activeSet.problemIds } } : {}),
+        ...(attemptedIds.length ? { id: { notIn: attemptedIds } } : {}),
+        conceptMismatch: { not: true },
+        OR: [
+          { qualityStatus: null },
+          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+        ],
+        AND: [
+          { steps: { some: { stepIndex: 1 } } },
+          { steps: { none: { stepIndex: { gte: 2 } } } },
+        ],
+      },
+      orderBy: activeSet?.problemIds.length
+        ? undefined
+        : [{ difficultyLevel: 'asc' }, { createdAt: 'asc' }],
+      take: 50,
+      select: {
+        id: true,
+        difficultyLevel: true,
+        createdAt: true,
+        commonErrorCodes: true,
+        steps: {
+          select: {
+            choices: { select: { isCorrect: true, distractorErrorCode: true } },
+          },
+        },
+      },
+    });
+
+    const valid = candidates.filter((p) => {
+      const step = p.steps[0];
+      if (p.steps.length !== 1 || !step || step.choices.length !== 5) return false;
+      return step.choices.filter((c) => c.isCorrect).length === 1;
+    });
+    if (valid.length === 0) return null;
+
+    const weaknessScore = (p: typeof valid[number]) => {
+      if (p.commonErrorCodes.some((c) => weaknessCodes.has(c))) return 2;
+      if (p.steps.some((s) => s.choices.some((c) => c.distractorErrorCode && weaknessCodes.has(c.distractorErrorCode as ErrorCode)))) {
+        return 1;
+      }
+      return 0;
+    };
+
+    valid.sort((a, b) => {
+      const weakDiff = weaknessScore(b) - weaknessScore(a);
+      if (weakDiff !== 0) return weakDiff;
+      if (setOrder.size > 0) {
+        return (setOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (setOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER);
+      }
+      if (a.difficultyLevel !== b.difficultyLevel) return a.difficultyLevel - b.difficultyLevel;
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
+    return valid[0]?.id ?? null;
   }
 
   /**

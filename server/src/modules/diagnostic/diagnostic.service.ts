@@ -177,6 +177,9 @@ export class DiagnosticService {
     };
 
     // 1차: grade 와 매핑되는 conceptLesson 의 매핑 문제 풀.
+    const lpsPool = await this.selectFourFromDiagnosticSets('IN', grade);
+    if (lpsPool.length >= 4) return lpsPool as Sel[];
+
     const pool: Sel[] = await this.prisma.problem.findMany({
       where: {
         conceptLesson: { ncertClass: grade },
@@ -236,6 +239,8 @@ export class DiagnosticService {
       steps: Array<ProblemStep & { choices: Array<{ id: string; choiceIndex: number; text: string }> }>;
     };
     const krGrade = NCERT_TO_KR_GRADE[grade] ?? 'HIGH_2';
+    const lpsPool = await this.selectFourFromDiagnosticSets('KR', grade);
+    if (lpsPool.length >= 4) return lpsPool as Sel[];
 
     // 1차: krGrade 매핑된 KoreanConceptLesson 의 매핑 problem
     const pool: Sel[] = await this.prisma.problem.findMany({
@@ -277,5 +282,53 @@ export class DiagnosticService {
       if (!picks.find((x) => x.id === p.id)) picks.push(p);
     }
     return picks;
+  }
+
+  private async selectFourFromDiagnosticSets(country: 'IN' | 'KR', grade: GradeLevel) {
+    const krGrade = NCERT_TO_KR_GRADE[grade] ?? 'HIGH_2';
+    const sets = await this.prisma.lessonProblemSet.findMany({
+      where: {
+        country,
+        setType: 'DIAGNOSTIC',
+        status: 'READY',
+        retiredAt: null,
+        ...(country === 'IN'
+          ? { conceptLesson: { ncertClass: grade } }
+          : { koreanConceptLesson: { koreanGrade: krGrade } }),
+      },
+      orderBy: { chapterCode: 'asc' },
+      select: { problemIds: true },
+    });
+    const ids = sets.flatMap((s) => s.problemIds.slice(0, 1)).slice(0, 12);
+    if (ids.length < 4) return [];
+
+    const rows = await this.prisma.problem.findMany({
+      where: {
+        id: { in: ids },
+        conceptMismatch: { not: true },
+        OR: [
+          { qualityStatus: null },
+          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+        ],
+      },
+      select: {
+        id: true, body: true, difficulty: true, unitId: true, conceptLessonId: true,
+        steps: {
+          where: { stepIndex: 1 },
+          take: 1,
+          include: { choices: { orderBy: { choiceIndex: 'asc' }, select: { id: true, choiceIndex: true, text: true } } },
+        },
+      },
+    });
+    const byId = new Map(rows.map((p) => [p.id, p]));
+    const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
+
+    const picks: typeof ordered = [];
+    for (const p of ordered) {
+      if (!p || picks.length === 4) break;
+      if (!p.steps[0] || p.steps[0].choices.length !== 5) continue;
+      picks.push(p);
+    }
+    return picks.slice(0, 4);
   }
 }

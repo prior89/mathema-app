@@ -671,7 +671,69 @@ export class AdminService {
       },
       select: { id: true },
     });
+    await this.refreshKoreanStudyProblemSet(dto.chapterCode, lesson.id);
     return { id: problem.id, chapterCode: dto.chapterCode };
+  }
+
+  private async refreshKoreanStudyProblemSet(chapterCode: string, lessonId: string) {
+    const rows = await this.prisma.problem.findMany({
+      where: {
+        koreanConceptLessonId: lessonId,
+        conceptMismatch: { not: true },
+        OR: [
+          { qualityStatus: null },
+          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+        ],
+        AND: [
+          { steps: { some: { stepIndex: 1 } } },
+          { steps: { none: { stepIndex: { gte: 2 } } } },
+        ],
+      },
+      orderBy: [{ difficultyLevel: 'asc' }, { createdAt: 'asc' }],
+      take: 20,
+      select: {
+        id: true,
+        steps: {
+          select: {
+            choices: { select: { isCorrect: true } },
+          },
+        },
+      },
+    });
+    const ids = rows
+      .filter((p) => p.steps.length === 1
+        && p.steps[0]?.choices.length === 5
+        && p.steps[0].choices.filter((c) => c.isCorrect).length === 1)
+      .map((p) => p.id);
+
+    await this.prisma.lessonProblemSet.upsert({
+      where: {
+        country_chapterCode_setType_version: {
+          country: 'KR',
+          chapterCode,
+          setType: 'STUDY_1STEP',
+          version: 1,
+        },
+      },
+      update: {
+        koreanConceptLessonId: lessonId,
+        conceptLessonId: null,
+        problemIds: ids,
+        status: ids.length >= 20 ? 'READY' : 'NEEDS_REVIEW',
+        curatedAt: ids.length > 0 ? new Date() : null,
+        retiredAt: null,
+      },
+      create: {
+        country: 'KR',
+        chapterCode,
+        setType: 'STUDY_1STEP',
+        version: 1,
+        koreanConceptLessonId: lessonId,
+        problemIds: ids,
+        status: ids.length >= 20 ? 'READY' : 'NEEDS_REVIEW',
+        curatedAt: ids.length > 0 ? new Date() : null,
+      },
+    });
   }
 
   /** Chapter picker source for the admin form. Returns lessons (all KR

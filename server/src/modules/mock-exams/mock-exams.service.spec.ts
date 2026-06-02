@@ -12,6 +12,10 @@ import { MockExamsService } from './mock-exams.service';
 
 function mockPrisma(over: any = {}) {
   return {
+    user: {
+      findUnique: jest.fn().mockResolvedValue({ country: 'IN' }),
+      ...over.user,
+    },
     conceptLesson: {
       findUnique: jest.fn().mockResolvedValue(null),
       ...over.conceptLesson,
@@ -23,6 +27,14 @@ function mockPrisma(over: any = {}) {
     attempt: {
       findMany: jest.fn().mockResolvedValue([]),
       ...over.attempt,
+    },
+    errorPatternProfile: {
+      findMany: jest.fn().mockResolvedValue([]),
+      ...over.errorPatternProfile,
+    },
+    lessonProblemSet: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      ...over.lessonProblemSet,
     },
     problem: { findMany: jest.fn().mockResolvedValue([]), ...over.problem },
     $queryRawUnsafe: jest.fn().mockResolvedValue([]),
