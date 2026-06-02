@@ -1,8 +1,8 @@
 # Terms of Service
 
-**Effective date:** 2026-05-21
-**Last updated:** 2026-05-21
-**Version:** 1.0
+**Effective date:** 2026-06-03
+**Last updated:** 2026-06-03
+**Version:** 1.1
 
 These Terms of Service ("Terms") form a legal agreement between you and the
 operators of the **matheo** application and service ("Service", "we",
@@ -133,10 +133,67 @@ third-party AI models unless you have granted `AI_TRAINING` consent.
 
 ## 7. Subscriptions and payments
 
-The Service is currently provided **free of charge** for the v1.0 release.
-If we later introduce paid subscriptions or in-app purchases, those will be
-governed by separate terms that you will be asked to accept before any
-charge.
+### 7.1 Pricing tiers
+
+The Service is offered in two tiers:
+
+- **Free**: All core features (concept lessons, wrong notes, mock exams,
+  mastery dashboard) are available at no charge. AI Solver usage is capped
+  at **8 problems per day** per account.
+- **Premium**: Unlimited AI Solver, full mastery problem sets, adaptive
+  practice, wrong-note analysis, and weekly reports. Available as a monthly
+  or yearly subscription via **Google Play Billing**.
+
+The exact subscription price in your local currency is shown on the in-app
+Premium screen before purchase. Prices are set by us in line with Google
+Play's regional pricing tiers.
+
+### 7.2 Premium Preview (cardless 3-day trial)
+
+New accounts may activate a one-time **3-day Premium Preview** that unlocks
+the Premium tier **without entering a payment method**. The Preview ends
+automatically after 3 days — there is no charge and no auto-renewal. Each
+account is eligible for the Preview only once, and only before any paid
+subscription has been associated with the account.
+
+### 7.3 Launch promotional pricing
+
+During the launch period, Google Play may apply **introductory pricing** to
+first-time subscribers (typically a discount for the first 60 days). The
+promotional price and the price after the promotional period both appear
+on the purchase screen, and Google Play notifies you of any price change
+before it takes effect.
+
+### 7.4 Auto-renewal and cancellation
+
+Premium subscriptions **auto-renew** at the price shown at purchase until
+you cancel. To cancel:
+
+- Open the **Google Play Store app → Menu → Payments and subscriptions →
+  Subscriptions → matheo → Cancel subscription**.
+- The cancellation takes effect at the end of your current billing period;
+  you retain Premium access until then.
+- We do not provide pro-rated refunds for unused time except as required by
+  Google Play's refund policy or applicable consumer-protection law.
+
+### 7.5 Billing, refunds, and payment data
+
+All charges are processed by **Google Play Billing**. We do not collect or
+store your credit card, UPI, or other payment instrument data; our servers
+only retain the Google Play purchase token and subscription state metadata
+(see the Privacy Policy and `PLAY_DATA_SAFETY.md` for the exact fields).
+
+For refund requests, contact **Google Play customer support** directly. If
+the refund relates to a Service defect (for example, an extended outage on
+our side), email us at `VeraStudy01@gmail.com` and we will coordinate with
+Google Play on your behalf.
+
+### 7.6 Price changes
+
+If we change the standard subscription price, **Google Play will notify you
+before the next renewal** and you may cancel without penalty. Continued
+subscription after a notified price change constitutes acceptance of the
+new price.
 
 ---
 

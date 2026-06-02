@@ -5,7 +5,7 @@ this document before every store submission — when a new field is added to
 `server/prisma/schema.prisma` or a new 3rd-party SDK lands, the corresponding
 row here MUST be updated, otherwise the listing falls out of compliance.
 
-Last updated: 2026-05-21 (HEAD `23c8bcd`)
+Last updated: 2026-06-03 (Premium / Play Billing reflected)
 Backend reference: `server/prisma/schema.prisma`
 Frontend reference: `app/src/lib/{api,analytics,queries,mutations}.ts`
 
@@ -30,9 +30,22 @@ still works (degraded for the relevant feature).
 | IP address + user agent | `Consent.ipAddress`, `Consent.userAgent`, `PasswordResetToken.requestIp` | Legal — DPDP 2023 evidence of consent | Required (for users granting consent) | — |
 
 ### 1.2 Financial info
-**None.** The v1.0 PoC is free; no payment, credit card, or purchase history is
-collected. When a subscription model is added later, this section must be
-extended.
+
+The app offers a **Premium subscription** via **Google Play Billing**. We do
+**not** collect any payment instrument data (credit card, UPI, bank account)
+directly — Google Play handles all payment processing. Our servers only
+store purchase-history metadata needed for entitlement gating.
+
+| Field | Where | Purpose | Req / Opt | Shared with 3P |
+|---|---|---|---|---|
+| Purchase history (productId, status, startTime, expiryTime, autoRenewing, isInIntroOfferPeriod, countryCode) | `Subscription` model | App functionality — entitlement gating, renewal handling, launch-promo tracking | Required (for Premium subscribers only) | — |
+| Google Play purchase token (server-side reference, not a payment instrument) | `Subscription.purchaseToken` | App functionality — Play Developer API v3 (`subscriptionsv2`) verification + acknowledgement | Required (for Premium subscribers only) | Google Play Developer API |
+| Subscription audit trail (eventType, redacted payload) | `SubscriptionEvent` model | App functionality — RTDN (Real-time Developer Notifications) processing audit | Required (for Premium subscribers only) | — |
+
+**Not collected**: credit card number, UPI ID, bank account, billing
+address, or any other payment instrument. All payment authentication is
+performed by Google Play; we receive only the opaque purchase token plus
+non-PII subscription state.
 
 ### 1.3 Location
 **None precise / approximate.** `User.country` is set by the user at signup —
@@ -92,6 +105,7 @@ its own data-processing addendum (DPA) and listed in the Privacy Policy.
 | **Firebase Cloud Messaging** | Push notification delivery | `DeviceToken.token`, message payload | `MARKETING` consent + OS-level permission |
 | **Sentry** | Crash + error capture | Stack trace, user id, breadcrumb, environment | `ANALYTICS` recommended; engineering-only viewers |
 | **Microsoft Azure Application Insights** | Backend performance telemetry | Request path, latency, response size, anonymised user id | Required (operational) |
+| **Google Play Developer API (subscriptionsv2)** | Subscription purchase verification + acknowledgement, RTDN re-verification | Product id + purchase token (no PII, no payment instrument) | User-initiated purchase via Google Play Billing |
 
 ---
 
@@ -130,6 +144,9 @@ Use these exact answers when filling the Data Safety wizard:
 3. *Do you provide a way for users to request that their data be deleted?* — **Yes** (`DELETE /users/me` is exposed from Settings → Privacy).
 4. *Will users be able to request that their data be deleted, but not through your app?* — **Also yes** (any user can email the developer; the in-app path is canonical).
 5. *Has your app committed to the Google Play Families Policy?* — **Yes** (the target audience is Class 7-12, i.e. 13-18 year-olds; parental consent flow exists for under-18s as a PARENT role).
+6. *Does your app contain in-app purchases?* — **Yes** (Premium subscription via Google Play Billing v8 — `premium_monthly`, `premium_yearly`, plus cardless `premium_preview_3d` trial).
+7. *Does your app contain ads?* — **No**.
+8. *Does your app target children?* — **Mixed audience** (primary audience 13-18; some learners in Class 7-8 are under 13 and require verified parental consent — see Families Policy commitment in answer 5).
 
 ---
 
