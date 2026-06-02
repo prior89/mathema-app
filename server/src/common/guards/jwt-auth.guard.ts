@@ -57,6 +57,17 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       || (method === 'POST' && normalized === '/auth/resend-verification')
       || (method === 'POST' && normalized === '/auth/logout')
       || (method === 'DELETE' && normalized === '/users/me')
+      // Onboarding diagnostic (4-problem warm-up) must finish before the
+      // user can verify in their inbox in a different tab — otherwise the
+      // Step 5 screen renders an "email_not_verified" panel with no way
+      // forward and the user is stuck. The diagnostic only records 4
+      // answers + a per-concept ability snapshot, no Premium gating, so
+      // the verify-email guard can safely exempt this trio. Mastery /
+      // Study / problem fetch endpoints remain verify-gated, so any post-
+      // onboarding learning surface still requires the verified email.
+      || (method === 'POST' && normalized === '/diagnostic/start')
+      || (method === 'POST' && normalized === '/diagnostic/answer')
+      || (method === 'POST' && /^\/diagnostic\/[^/]+\/finish$/.test(normalized))
     );
   }
 }
