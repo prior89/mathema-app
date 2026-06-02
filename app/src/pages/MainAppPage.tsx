@@ -17,7 +17,6 @@ import { SoloProblemScreen } from '../components/main/SoloProblemScreen';
 import { MockExamPlayScreen } from '../components/main/MockExamPlayScreen';
 import { MockResultDetailScreen } from '../components/main/MockResultDetailScreen';
 import { StudyPracticeScreen } from '../components/main/StudyPracticeScreen';
-import { KoreanStudyPracticeScreen } from '../components/main/KoreanStudyPracticeScreen';
 import { MeScreen } from '../components/main/MeScreen';
 import { ReportScreen } from '../components/main/ReportScreen';
 import { SettingsScreen } from '../components/main/SettingsScreen';
@@ -55,7 +54,7 @@ export default function MainAppPage() {
                 Stateless — chapterCode in the URL drives the one-at-a-time
                 fetch loop; no resultId / MockExamResult row is needed. */}
             <Route path="practice-set/:chapterCode" element={<StudyPracticeScreen />} />
-            <Route path="ko-practice-set/:chapterCode" element={<KoreanStudyPracticeScreen />} />
+            <Route path="ko-practice-set/:chapterCode" element={<StudyPracticeScreen />} />
             {/* Internal session routes — shared by Study + Test. Keep mocks/* path
                 stable so existing localStorage session keys keep working. */}
             <Route path="mocks/play/:resultId" element={<MockExamPlayScreen />} />

@@ -102,17 +102,11 @@ export function StudyScreen() {
     ? (krChapters.data ?? []).length > 0
     : (ncertChapters.data ?? []).length > 0;
 
-  // Route picker — NCERT goes through /app/practice-set (StudyPracticeScreen
-  // single-MC pool, server pull-next). KR goes to /app/ko-practice-set
-  // (KoreanStudyPracticeScreen — fetchKoreanStudyProblems 20-batch single-step
-  // pool, body + canvas + 5지선다).
+  // Both countries use the same StudyPracticeScreen. The backend resolves the
+  // country-specific LessonProblemSet and weak-area selector.
   function startPractice() {
     if (!chapter) return;
-    if (isKR) {
-      nav(`/app/ko-practice-set/${chapter}`);
-    } else {
-      nav(`/app/practice-set/${chapter}`);
-    }
+    nav(`/app/practice-set/${chapter}`);
   }
 
   return (
