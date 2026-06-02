@@ -393,7 +393,17 @@ function ScreenAuth({
       // Best-effort: if /users/me fails (rare — same token just succeeded),
       // we proceed anyway; ScreenReady will retry.
       await refreshUser().catch(() => {});
-      window.location.assign('/verify-required');
+      // P5 fix 2026-06-03: hand off to the next onboarding step instead of
+      // doing a full-page navigation to /verify-required. The previous
+      // location.assign() wiped this component's React state, so after the
+      // user verified their email in their inbox they returned to a blank
+      // /onboarding (Welcome again) — Role/Profile/Goal/Diagnostic/Results/
+      // Ready were never reachable. We stay in this SPA mount, advance the
+      // step state, and let the verify-email guard kick in only when a
+      // verified-only endpoint is hit later (the Diagnostic step's problem
+      // fetch is the first such call). The user's inbox link continues to
+      // work in parallel and updates emailVerifiedAt via /auth/verify-email.
+      onNext();
     } catch (e: any) {
       // Map backend error codes → Korean-friendly messages. User-report
       // 2026-05-27: PASSWORD_BREACHED came through as the raw English string

@@ -47,6 +47,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const normalized = path.replace(/^\/api\/v1/, '');
     return (
       (method === 'GET' && normalized === '/users/me')
+      // PATCH /users/me lets a freshly-registered user finish onboarding
+      // (Role/Profile/Goal saves the picked gradeLevel + examDate +
+      // targetGrade) before they have clicked the verify-email link in
+      // their inbox. Without this, the Profile step would 403 and the
+      // entire post-Auth onboarding flow would be unreachable. Learning /
+      // billing endpoints stay verify-gated.
+      || (method === 'PATCH' && normalized === '/users/me')
       || (method === 'POST' && normalized === '/auth/resend-verification')
       || (method === 'POST' && normalized === '/auth/logout')
       || (method === 'DELETE' && normalized === '/users/me')
