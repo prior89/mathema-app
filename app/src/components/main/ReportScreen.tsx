@@ -98,13 +98,13 @@ export function ReportScreen() {
                 : <>{t('reportScreen.mentor.welcome', { name: userName })}</>
               }
             </div>
-            {mentor.data?.strength && (
+            {hasData && mentor.data?.strength && (
               <div style={{ marginTop: 10, fontSize: 12, opacity: 0.85, lineHeight: 1.5 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.65, letterSpacing: '0.06em' }}>{t('reportScreen.mentor.strength')}</span>{' '}
                 {mentor.data.strength}
               </div>
             )}
-            {mentor.data?.nextGoal && (
+            {hasData && mentor.data?.nextGoal && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, fontSize: 11, opacity: 0.7, fontFamily: 'var(--font-mono)' }}>
                 <span>{t('reportScreen.mentor.next')} {String(mentor.data.nextGoal).toUpperCase()}</span>
                 {mentor.data.week && <span>{t('reportScreen.mentor.week')} {String(mentor.data.week).toUpperCase()}</span>}
@@ -155,8 +155,10 @@ export function ReportScreen() {
             </div>
           </div>
 
-          {/* Next focus */}
-          {nfx.data && nfx.data.length > 0 && (
+          {/* Next focus — hidden when this week has no attempts so cross-week
+              mastery data doesn't surface inside a weekly-report frame and
+              look like "this week's" recommendation. */}
+          {hasData && nfx.data && nfx.data.length > 0 && (
             <div className="card" style={{ padding: 14, marginTop: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{t('reportScreen.nextFocus.title')}</span>
@@ -174,8 +176,10 @@ export function ReportScreen() {
             </div>
           )}
 
-          {/* Achievements */}
-          {ach.data && ach.data.length > 0 && (
+          {/* Achievements — same rule as Next focus: cross-week streak /
+              wrong-note achievements are real, but they belong on the
+              persistent profile, not inside a zero-attempt weekly report. */}
+          {hasData && ach.data && ach.data.length > 0 && (
             <div className="card" style={{ padding: 14, marginTop: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{t('reportScreen.achievements.title')}</span>

@@ -101,4 +101,25 @@ describe('WeeklyStatsService', () => {
     const out = await svc.computeCurrent('user-1');
     expect(out.timezone).toBe('Asia/Seoul');
   });
+
+  it('keeps one decimal of precision for totalHours so short sessions are visible', async () => {
+    // 20 minutes = 1200 seconds. Without one-decimal rounding this would
+    // surface as 0h and the user would think their study session was lost.
+    const { svc, prisma } = build();
+    prisma.studySession.findMany.mockResolvedValue([
+      { id: 's1', durationSec: 1200 },
+    ]);
+    const out = await svc.computeCurrent('user-1');
+    expect(out.totalMinutes).toBe(20);
+    expect(out.totalHours).toBe(0.3);
+  });
+
+  it('rounds totalHours to one decimal place (1h 10min → 1.2h)', async () => {
+    const { svc, prisma } = build();
+    prisma.studySession.findMany.mockResolvedValue([
+      { id: 's1', durationSec: 4200 }, // 70 minutes
+    ]);
+    const out = await svc.computeCurrent('user-1');
+    expect(out.totalHours).toBe(1.2);
+  });
 });

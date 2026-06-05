@@ -90,7 +90,10 @@ export class WeeklyStatsService {
     const attemptSec = attempts.reduce((s, x) => s + (x.durationSec ?? 0), 0);
     const totalSec = sessionSec > 0 ? sessionSec : attemptSec;
     const totalMinutes = Math.round(totalSec / 60);
-    const totalHours = Math.round(totalSec / 3600);
+    // One decimal place so a 20-min study session shows as 0.3h instead of
+    // disappearing into a rounded-to-zero "0h" and making the user think the
+    // app didn't count their work.
+    const totalHours = Math.round(totalSec / 360) / 10;
 
     const avgMasteryScore = masterySnapshots.length > 0
       ? Math.round(
