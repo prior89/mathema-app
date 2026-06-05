@@ -39,6 +39,7 @@ function build() {
     studySession: { create: jest.fn().mockResolvedValue({ id: 'session-1' }) },
     conceptLesson: { findMany: jest.fn() },
     koreanConceptLesson: { findMany: jest.fn() },
+    lessonProblemSet: { findMany: jest.fn().mockResolvedValue([]) },
   };
   const attempts = { create: jest.fn() };
   return {
