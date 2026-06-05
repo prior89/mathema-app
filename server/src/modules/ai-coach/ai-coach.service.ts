@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { WeeklyStatsService } from '../reports/weekly-stats.service';
 import { ERROR_TYPE_LABEL_KO } from '../../common/enums/error-type.enum';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { AI_COACH_EN, ERROR_TYPE_EN, UNIT_NAME_EN, SUB_UNIT_NAME_EN } from '../../common/i18n/content-en';
@@ -30,7 +31,10 @@ function pickErrorType(key: string, lang: Lang): string {
  */
 @Injectable()
 export class AiCoachService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly weeklyStats: WeeklyStatsService,
+  ) {}
 
   async diagnosis(userId: string, lang: Lang = 'en') {
     const weakest = await this.prisma.masterySnapshot.findFirst({
@@ -307,62 +311,69 @@ export class AiCoachService {
     return `${unit} 단원에서 ${b.count}회 누적 — ${ETYPE_DESC[b.errorType] ?? ETYPE_DESC.OTHER}`;
   }
 
-  async mentorMessage(userId: string, week: string, lang: Lang = 'en') {
-    const r = await this.prisma.weeklyReport.findFirst({
-      where: { userId }, orderBy: { weekStart: 'desc' },
-    });
+  async mentorMessage(userId: string, _week: string, lang: Lang = 'en') {
+    // Pull stats from the same helper /reports/current uses. This is the
+    // contract that fixes the "stats grid says 0% but mentor card says 50%"
+    // bug: both endpoints look at the exact same ISO week.
+    const stats = await this.weeklyStats.computeCurrent(userId);
 
-    // 이전에는 DB의 mentor 메시지가 있으면 그대로 반환했지만, strength/nextGoal 이
-    // 하드코딩이라 환각이었음. 이제 항상 실 사용자 데이터로 동적 생성한다.
-    // (DB에 mentor 메시지가 있어도 message 본문만 사용, strength/nextGoal 은 재계산)
-    const since = new Date(); since.setDate(since.getDate() - 7);
-    const [attempts, masteries, weakest, strongest] = await Promise.all([
-      this.prisma.attempt.findMany({ where: { userId, createdAt: { gte: since } } }),
-      this.prisma.masterySnapshot.findMany({ where: { userId }, include: { unit: true } }),
-      this.prisma.masterySnapshot.findFirst({ where: { userId }, orderBy: { score: 'asc' }, include: { unit: true } }),
-      this.prisma.masterySnapshot.findFirst({ where: { userId }, orderBy: { score: 'desc' }, include: { unit: true } }),
-    ]);
+    const hasMastery = stats.masterySampleCount > 0;
+    const weakUnit = stats.weakestUnit
+      ? this.localUnit(stats.weakestUnit.name, lang)
+      : (lang !== 'ko' ? 'your weak unit' : '약점 단원');
+    const strongUnit = stats.strongestUnit
+      ? this.localUnit(stats.strongestUnit.name, lang)
+      : (lang !== 'ko' ? 'your strong unit' : '강점 단원');
 
-    const correctCount = attempts.filter((a) => a.isCorrect).length;
-    const acc = attempts.length > 0 ? Math.round((correctCount / attempts.length) * 100) : 0;
-    const avgMastery = masteries.length > 0
-      ? Math.round(masteries.reduce((s, m) => s + m.score, 0) / masteries.length)
-      : 0;
-    const weakUnit = weakest ? this.localUnit(weakest.unit.name, lang) : (lang !== 'ko' ? 'your weak unit' : '약점 단원');
-    const strongUnit = strongest ? this.localUnit(strongest.unit.name, lang) : (lang !== 'ko' ? 'your strong unit' : '강점 단원');
+    const dict = pickCoach(lang);
+    const acc = stats.accuracyPct;
+    const attempts = stats.attemptCount;
 
     let message: string;
     if (lang !== 'ko') {
-      const dict = pickCoach(lang);
-      if (attempts.length === 0) message = dict.mentor.nothingThisWeek;
-      else if (acc >= 80) message = dict.mentor.high(attempts.length, acc, weakUnit);
-      else if (acc >= 60) message = dict.mentor.mid(attempts.length, acc, strongUnit, weakUnit);
+      if (attempts === 0) message = dict.mentor.nothingThisWeek;
+      else if (acc >= 80) message = dict.mentor.high(attempts, acc, weakUnit);
+      else if (acc >= 60) message = dict.mentor.mid(attempts, acc, strongUnit, weakUnit);
       else message = dict.mentor.low(acc, weakUnit);
+    } else if (attempts === 0) {
+      message = '아직 이번 주 푼 문제가 없어요. 한 문제부터 천천히 시작해 봐요';
+    } else if (acc >= 80) {
+      message = `이번 주 ${attempts}문제를 풀고 정답률 ${acc}%를 지켰어요. 정확도가 좋으니 ${weakUnit}에 시간을 더 써 보면 점수가 더 오를 거예요`;
+    } else if (acc >= 60) {
+      message = `이번 주 ${attempts}문제, 정답률 ${acc}%예요. ${strongUnit}을 유지하면서 ${weakUnit} 풀이 흐름을 잡으면 다음 주에 +5%p 가능해요`;
     } else {
-      if (attempts.length === 0) message = '이번 주 학습 데이터가 비어있어요. 작은 한 걸음부터 다시 시작해봐요.';
-      else if (acc >= 80) message = `이번 주 ${attempts.length}문제를 풀고 정답률 ${acc}%를 유지했어요. 정확도가 안정 구간에 들어섰으니, ${weakUnit} 보강에 시간을 더 투자하면 등급 상승 폭이 커집니다.`;
-      else if (acc >= 60) message = `이번 주 ${attempts.length}문제 풀이, 정답률 ${acc}%. ${strongUnit}의 안정성을 유지하면서 ${weakUnit}의 풀이 패턴을 정착시키면 다음 주 정답률이 +5%p 가능합니다.`;
-      else message = `이번 주 정답률 ${acc}% — 양보다 질이 필요한 시점이에요. ${weakUnit} 한 단원에 집중하고, 풀이 직후 즉시 복기하는 습관을 만들면 다음 주에 의미 있는 변화를 만들 수 있어요.`;
+      message = `이번 주 정답률 ${acc}%예요. 한 단원에 집중하고 풀자마자 한 번 더 확인하는 습관이 가장 빠른 길이에요`;
     }
 
-    const mentorDict = pickCoach(lang);
-    const strength = strongest
+    // strength / nextGoal are mastery-derived. If we have no mastery samples
+    // we return null instead of inventing "데이터 누적 중" — the frontend
+    // hides those sections entirely when null, matching the spec rule that
+    // mastery is supporting data only and must not surface when the week
+    // has no attempts.
+    const showSupporting = hasMastery && attempts > 0;
+    const strength = showSupporting && stats.strongestUnit
       ? (lang !== 'ko'
-          ? mentorDict.mentor.strengthTpl(strongUnit, Math.round(strongest.score))
-          : `${strongest.unit.name} 안정 (숙련도 ${Math.round(strongest.score)}%)`)
-      : (lang !== 'ko' ? mentorDict.mentor.dataAccumulating : '데이터 누적 중');
-    const nextGoal = weakest
+          ? dict.mentor.strengthTpl(strongUnit, Math.round(stats.strongestUnit.score))
+          : `${stats.strongestUnit.name} 안정 (이해도 ${Math.round(stats.strongestUnit.score)}%)`)
+      : null;
+    const nextGoal = showSupporting && stats.weakestUnit
       ? (lang !== 'ko'
-          ? mentorDict.mentor.nextGoalTpl(weakUnit, Math.round(weakest.score), Math.min(95, Math.round(weakest.score) + 10))
-          : `${weakest.unit.name} 숙련도 ${Math.round(weakest.score)}% → ${Math.min(95, Math.round(weakest.score) + 10)}% 도달`)
-      : (lang !== 'ko' ? mentorDict.mentor.nextGoalNoMastery(avgMastery) : `평균 숙련도 ${avgMastery}% 유지`);
+          ? dict.mentor.nextGoalTpl(
+              weakUnit,
+              Math.round(stats.weakestUnit.score),
+              Math.min(95, Math.round(stats.weakestUnit.score) + 10),
+            )
+          : `${stats.weakestUnit.name} 이해도 ${Math.round(stats.weakestUnit.score)}% → ${Math.min(95, Math.round(stats.weakestUnit.score) + 10)}% 도달`)
+      : null;
 
-    // DB mentor 메시지가 있고 KO 모드면 그 본문을 사용; 그 외에는 동적 생성.
-    const useDbMessage = !!(r?.mentorMessage && lang === 'ko');
     return {
-      week: r?.isoWeek ?? week,
-      generatedAt: r?.generatedAt ?? new Date(),
-      message: useDbMessage ? r!.mentorMessage : message,
+      week: stats.isoWeek,
+      weekStart: stats.weekStart,
+      weekEnd: stats.weekEnd,
+      hasData: stats.hasData,
+      attemptCount: stats.attemptCount,
+      generatedAt: new Date(),
+      message,
       strength,
       nextGoal,
     };

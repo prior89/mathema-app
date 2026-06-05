@@ -22,7 +22,7 @@ export function MeScreen() {
     queryFn: getServerStatus,
     staleTime: 60 * 1000,
   });
-  const userName = me.data?.name ?? 'Aarav';
+  const userName = me.data?.name ?? '';
   const initial = userName.charAt(0).toUpperCase();
 
   const planSource = billing.data?.entitlement?.source;

@@ -19,11 +19,21 @@ export function ReportScreen() {
   const ach = useQuery({ queryKey: ['achievements'], queryFn: fetchAchievements });
   const mentor = useQuery({ queryKey: ['mentor'], queryFn: fetchMentorMessage });
 
-  const userName = (me.data?.name ?? 'Aarav').split(' ')[0];
-  const today = new Date();
-  const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay() + 1);
-  const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
-  const weekLabel = `${weekStart.getDate()} – ${weekEnd.getDate()} ${weekEnd.toLocaleDateString('en-US', { month: 'short' })}`;
+  const userName = (me.data?.name ?? '').split(' ')[0];
+  // Week boundaries come from the backend — KR Asia/Seoul vs IN Asia/Kolkata
+  // can land on different Mondays around midnight, and the API's isoWeek is
+  // the single source of truth that the mentor card also keys off.
+  const hasData = cur.data?.hasData ?? false;
+  const weekLabel = (() => {
+    if (cur.data?.weekStart && cur.data?.weekEnd) {
+      const ws = new Date(cur.data.weekStart);
+      const we = new Date(cur.data.weekEnd);
+      // weekEnd is exclusive (next Monday 00:00), so show the inclusive last day.
+      const weDisplay = new Date(we.getTime() - 86400000);
+      return `${ws.getDate()} – ${weDisplay.getDate()} ${weDisplay.toLocaleDateString('en-US', { month: 'short' })}`;
+    }
+    return '';
+  })();
 
   // Time vs Accuracy chart geometry
   const W = 320, H = 110, P = 20;

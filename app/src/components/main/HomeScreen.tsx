@@ -86,7 +86,7 @@ export function HomeScreen() {
   // chapter picker. Backend endpoint stays, SoloProblemScreen sequence
   // (Sprint 3 A12) still consumes sessionStorage 'adaptive:queue'.
 
-  const userName = me.data?.name ?? 'Aarav';
+  const userName = me.data?.name ?? '';
   // Locale follows user lang (set by I18nCountrySync from User.country).
   // 'ko' → 'ko-KR' shows "5월 24일 일요일", everything else → 'en-IN' keeps
   // the India PoC default "Sunday, 24 May".

@@ -70,10 +70,10 @@ function Flow({ onFinish }: { onFinish: () => void }) {
   const { refreshUser } = useAuth();
   const [step, setStep] = useState<StepKey>('welcome');
   const [role, setRole] = useState<Role | ''>('STUDENT');
-  // Default placeholder name — India onboarding gets 'Aarav'. KR users
-  // type over it (and the language switches to KO post-login via country
-  // sync). No t() because this is an initial form value, not a UI label.
-  const [name, setName] = useState('Aarav');
+  // Empty initial — placeholder/label comes from the input's placeholder
+  // attribute. Pre-filling a fake Indian name leaked into KR signups and
+  // confused users who didn't immediately overwrite it.
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [grade, setGrade] = useState<GradeId | ''>('CLASS_11');

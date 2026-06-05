@@ -83,9 +83,20 @@ export type MockSummary = {
   scoreDelta: number | null;
 };
 export type ReportCurrent = {
+  /** ISO 8601 label (YYYY-Www) of the active week, decided server-side. */
+  isoWeek: string;
+  /** Week boundaries in UTC. weekEnd is exclusive (next Monday 00:00 local). */
+  weekStart: string;
+  weekEnd: string;
+  timezone: string;
+  /** True iff the user solved at least one problem this ISO week. */
+  hasData: boolean;
+  attemptCount: number;
+  masterySampleCount: number;
   totalHours: number; hoursDelta: number;
   problemsSolved: number; problemsPerDay: number;
   accuracyPct: number; accuracyDelta: number;
+  /** Live average mastery (0..100). 0 when masterySampleCount === 0. */
   aiScore: number;
   /** 모의고사 응시 없으면 null — UI 가 '—' 로 표시. */
   topPercentile: number | null;
