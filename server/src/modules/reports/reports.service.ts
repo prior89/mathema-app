@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ReportsRepository } from './reports.repository';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { WeeklyStatsService } from './weekly-stats.service';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN } from '../../common/i18n/content-en';
 
@@ -9,39 +10,51 @@ export class ReportsService {
   constructor(
     private readonly repo: ReportsRepository,
     private readonly prisma: PrismaService,
+    private readonly weeklyStats: WeeklyStatsService,
   ) {}
 
+  /**
+   * Live aggregation for the current ISO week. The previously-stored
+   * WeeklyReport row is only consulted for last-week delta values, never as
+   * the source of truth for "this week" — that way the mentor card can't
+   * claim 50% on a screen that shows 0% in the stats grid.
+   */
   async current(userId: string) {
-    const recent = await this.repo.recentWeeks(userId, 2);
-    const r = recent[0];
-    const prev = recent[1];
-    if (!r) return {
-      totalHours: 0, hoursDelta: 0, problemsSolved: 0, problemsPerDay: 0,
-      accuracyPct: 0, accuracyDelta: 0, aiScore: 0,
-      topPercentile: null,   // 모의고사 응시 없으면 가짜 50 대신 null
-    };
+    const stats = await this.weeklyStats.computeCurrent(userId);
 
-    // hours/accuracy delta — 지난주가 없으면 0
-    const hoursDelta = prev?.totalHours
-      ? Math.round(((r.totalHours - prev.totalHours) / prev.totalHours) * 100)
-      : 0;
-    const accuracyDelta = prev ? Math.round(r.accuracyPct - prev.accuracyPct) : 0;
-
-    // topPercentile — 가장 최근 모의고사 백분위 기반 (상위 %). 응시 X 면 null.
-    const lastMock = await this.prisma.mockExamResult.findFirst({
-      where: { userId }, orderBy: { takenAt: 'desc' },
+    // Last week's snapshot is used purely for delta context. It's safe to be
+    // missing — we just report 0 delta.
+    const prev = await this.prisma.weeklyReport.findFirst({
+      where: { userId, weekStart: { lt: stats.weekStart } },
+      orderBy: { weekStart: 'desc' },
+      select: { totalHours: true, accuracyPct: true },
     });
-    const topPercentile: number | null = lastMock ? Math.max(1, 100 - lastMock.percentile) : null;
+    const hoursDelta = prev?.totalHours
+      ? Math.round(((stats.totalHours - prev.totalHours) / prev.totalHours) * 100)
+      : 0;
+    const accuracyDelta = prev ? Math.round(stats.accuracyPct - prev.accuracyPct) : 0;
 
     return {
-      totalHours: r.totalHours,
+      weekStart: stats.weekStart,
+      weekEnd: stats.weekEnd,
+      isoWeek: stats.isoWeek,
+      timezone: stats.timezone,
+      hasData: stats.hasData,
+      attemptCount: stats.attemptCount,
+      masterySampleCount: stats.masterySampleCount,
+      totalHours: stats.totalHours,
       hoursDelta,
-      problemsSolved: r.problemsSolved,
-      problemsPerDay: Math.round(r.problemsSolved / 7),
-      accuracyPct: Math.round(r.accuracyPct),
+      problemsSolved: stats.problemsSolved,
+      problemsPerDay: stats.problemsPerDay,
+      accuracyPct: stats.accuracyPct,
       accuracyDelta,
-      aiScore: Math.round(r.aiScore * 10) / 10,
-      topPercentile,
+      // aiScore previously came from a stored snapshot. With live mode we
+      // surface the average mastery score (3+ samples) — the same number the
+      // mentor card uses for its "next goal" line, keeping the two views in
+      // lockstep. When no mastery samples exist yet, this is 0 and the
+      // frontend hides the AI score chip via `hasData` / sampling fields.
+      aiScore: stats.avgMasteryScore,
+      topPercentile: stats.topPercentile,
     };
   }
 
