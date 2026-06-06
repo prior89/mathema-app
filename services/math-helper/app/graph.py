@@ -1,3 +1,4 @@
+import logging
 from typing import TypedDict, Optional, Dict, Any
 from langgraph.graph import StateGraph, START, END
 from schemas import SolveRequest
@@ -15,6 +16,8 @@ from nodes import (
     format_response,
     record_learning,
 )
+
+_logger = logging.getLogger(__name__)
 
 
 class MathState(TypedDict, total=False):
@@ -82,6 +85,7 @@ async def solve_math_problem(req: SolveRequest):
         result = await graph.ainvoke(req.model_dump())
         return result["finalResponse"]
     except Exception as exc:  # noqa: BLE001 — catch broad to keep API available
+        _logger.exception("math-helper graph failed")
         return _fallback_response(req, exc)
 
 

@@ -21,6 +21,8 @@ type Props = {
   initialFile?: File | null;
 };
 
+type Translate = ReturnType<typeof useT>['t'];
+
 type Phase = 'pick' | 'analyzing' | 'result' | 'error';
 
 export function UploadProblemModal({ open, onClose, initialFile }: Props) {
@@ -108,7 +110,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       setResult(r);
       setPhase('result');
     } catch (e) {
-      const msg = extractErrorMessage(e) ?? t('upload.error.failed');
+      const msg = extractErrorMessage(e, t) ?? t('upload.error.failed');
       setError(msg);
       setPhase('error');
     }
@@ -190,9 +192,13 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   );
 }
 
-function extractErrorMessage(e: unknown): string | null {
+function extractErrorMessage(e: unknown, t: Translate): string | null {
   const data = (e as { response?: { data?: any } })?.response?.data;
+  const code = data?.error?.code ?? data?.code;
   const message = data?.error?.message ?? data?.message ?? (e as Error)?.message;
+  if (code === 'SolverUnavailable' || message === 'SolverUnavailable') {
+    return t('upload.error.solverUnavailable');
+  }
   if (Array.isArray(message)) return message.join('; ');
   return typeof message === 'string' ? message : null;
 }

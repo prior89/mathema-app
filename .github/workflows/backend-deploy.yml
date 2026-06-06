@@ -77,19 +77,33 @@ jobs:
       - name: Install containerapp extension
         run: az extension add --name containerapp --upgrade -y
 
-      # Mathpix secret-sync steps removed 2026-05-22: OCR stack was migrated
-      # to Gemini in 0b49186 (single-vendor Gemini for OCR + solve + answer),
-      # so these az keyvault secret set / az containerapp secret set calls
-      # against mathpix-app-{id,key} are dead operations that only served to
-      # break deploys when the deploy SP lacks Key Vault Secrets Officer.
-      # If Mathpix is ever reintroduced, restore via git log of this file.
+      # Legacy OCR secret-sync steps removed 2026-05-22: OCR stack was migrated
+      # OCR now uses the shared Gemini Key Vault secret. Legacy OCR vendor
+      # secret-sync steps were removed so deploys do not depend on unused
+      # Key Vault writes.
+
+      - name: Ensure Gemini secret reference
+        run: |
+          KV_NAME=$(az keyvault list \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "[?starts_with(name, 'mathema-kv')].name | [0]" -o tsv)
+          test -n "$KV_NAME"
+          KV_URI=$(az keyvault show \
+            --name "$KV_NAME" \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query properties.vaultUri -o tsv)
+          az containerapp secret set \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --secrets "gemini-api-key=keyvaultref:${KV_URI}secrets/gemini-api-key,identityref:system"
 
       - name: Container App revision update
         run: |
           az containerapp update \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
+            --set-env-vars GEMINI_API_KEY=secretref:gemini-api-key
 
       # Bounded smoke test: poll every 10s, give up after 2min, then dump the
       # last 100 log lines of the new revision so we can see the real cause

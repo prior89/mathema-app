@@ -44,12 +44,21 @@ export class MathHelperController {
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body('classLevel') classLevel?: string,
     @Body('studentAnswer') studentAnswer?: string,
+    @Body('durationSec') durationSec?: string,
   ) {
     if (!file) throw new BadRequestException('file is required (multipart field "file")');
     const parsedClassLevel = classLevel ? Number(classLevel) : undefined;
     if (parsedClassLevel !== undefined && (!Number.isInteger(parsedClassLevel) || parsedClassLevel < 7 || parsedClassLevel > 12)) {
       throw new BadRequestException('classLevel must be an integer between 7 and 12');
     }
-    return this.service.ocrSolve(userId, file, { classLevel: parsedClassLevel, studentAnswer });
+    const parsedDurationSec = durationSec ? Number(durationSec) : undefined;
+    if (parsedDurationSec !== undefined && (!Number.isInteger(parsedDurationSec) || parsedDurationSec < 0 || parsedDurationSec > 7200)) {
+      throw new BadRequestException('durationSec must be an integer between 0 and 7200');
+    }
+    return this.service.ocrSolve(userId, file, {
+      classLevel: parsedClassLevel,
+      studentAnswer,
+      durationSec: parsedDurationSec,
+    });
   }
 }

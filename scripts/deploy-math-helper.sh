@@ -9,8 +9,8 @@
 # What it does:
 #   0. Reads current DB / JWT / OpenAI secrets from Key Vault so the Bicep
 #      redeploy doesn't overwrite them with placeholder values.
-#   1. Redeploys Bicep to add: math-helper Container App (internal ingress),
-#      Mathpix KV secrets, backend env vars for MATH_HELPER_URL / MATHPIX_*.
+#   1. Redeploys Bicep to add: math-helper Container App (internal ingress)
+#      and backend env vars for MATH_HELPER_URL.
 #   2. Builds the Python image in ACR (Azure-side docker build, no local docker
 #      needed).
 #   3. Swaps the math-helper Container App from the bootstrap hello-world
@@ -41,7 +41,7 @@ printf "  secret lengths: db=%d access=%d refresh=%d openai=%d\n" \
 [ -n "$DB_PASSWORD" ] && [ -n "$JWT_ACCESS" ] && [ -n "$JWT_REFRESH" ] && [ -n "$OPENAI_KEY" ] \
   || fail "one or more KV secrets were empty — refusing to redeploy"
 
-step "1. Bicep redeploy (math-helper Container App + Mathpix KV secrets)"
+step "1. Bicep redeploy (math-helper Container App)"
 az deployment group create \
   -g "$RG" \
   --template-file infra/bicep/main.bicep \
@@ -51,8 +51,6 @@ az deployment group create \
     jwtAccessSecret="$JWT_ACCESS" \
     jwtRefreshSecret="$JWT_REFRESH" \
     openaiApiKey="$OPENAI_KEY" \
-    mathpixAppId='veraedu_b19b18_622132' \
-    mathpixAppKey='9052d4f7180dbd8bcadf6cf497a2254e3d877852df5d2cab1a371f770ec077e9' \
   --query "properties.provisioningState" -o tsv \
   || fail "Bicep deployment failed"
 

@@ -8,8 +8,8 @@ import 'katex/dist/katex.min.css';
  * 지원 문법:
  *   - $...$        인라인 수식 (TeX legacy)
  *   - $$...$$      디스플레이 수식 (TeX legacy)
- *   - \(...\)      인라인 수식 (MathPix / NCERT — Mathpix Markdown 표준)
- *   - \[...\]      디스플레이 수식 (MathPix / NCERT)
+ *   - \(...\)      인라인 수식 (MMD / NCERT 표준)
+ *   - \[...\]      디스플레이 수식 (MMD / NCERT)
  *   - 그 외 일반 텍스트는 그대로 (개행은 <br/>)
  *
  * KaTeX 는 SSR-safe, throwOnError=false 로 잘못된 LaTeX 도 빨갛게 표시만 하고 중단 안함.
@@ -28,8 +28,8 @@ export default function MathText({ text, className }: { text: string; className?
 // Matches all four delimiter forms in one regex:
 //   $$ ... $$   (display, TeX legacy)
 //   $ ... $     (inline,  TeX legacy)
-//   \[ ... \]   (display, Mathpix / NCERT)
-//   \( ... \)   (inline,  Mathpix / NCERT)
+//   \[ ... \]   (display, MMD / NCERT)
+//   \( ... \)   (inline,  MMD / NCERT)
 // We capture the delimited chunks so split() keeps them as separate tokens.
 const MATH_RE = /(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\))/g;
 

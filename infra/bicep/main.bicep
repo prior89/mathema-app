@@ -76,6 +76,10 @@ param provisionAzureOpenAi bool = false
 @secure()
 param openaiApiKey string
 
+@description('Gemini API key used by backend OCR and math-helper Gemini fallback. Leave empty on redeploy if already seeded in Key Vault.')
+@secure()
+param geminiApiKey string = ''
+
 @description('Anthropic API key (optional — fallback LLM provider).')
 @secure()
 param anthropicApiKey string = ''
@@ -87,14 +91,6 @@ param jwtAccessSecret string
 @description('JWT refresh token secret (32+ chars, random — different from access).')
 @secure()
 param jwtRefreshSecret string
-
-@description('Mathpix OCR app_id — used by NestJS mathpix.service for PDF/이미지 → LaTeX.')
-@secure()
-param mathpixAppId string = ''
-
-@description('Mathpix OCR app_key (64-char hex from mathpix.com console).')
-@secure()
-param mathpixAppKey string = ''
 
 @description('Google Play Developer API service-account JSON (entire file content). Used by BillingService to verify purchaseTokens. Leave empty on redeploy if already seeded out-of-band — the secret will not be overwritten.')
 @secure()
@@ -286,6 +282,12 @@ resource kvOpenai 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   properties: { value: openaiApiKey }
 }
 
+resource kvGemini 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(geminiApiKey)) {
+  parent: keyVault
+  name: 'gemini-api-key'
+  properties: { value: geminiApiKey }
+}
+
 resource kvAnthropic 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(anthropicApiKey)) {
   parent: keyVault
   name: 'anthropic-api-key'
@@ -298,22 +300,7 @@ resource kvAoaiKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (provisio
   properties: { value: aoai.listKeys().key1 }
 }
 
-// Mathpix 시크릿은 항상 생성 — 미설정 시 빈 문자열로 KV 에 저장.
-// 빈 문자열이 secretRef 로 주입되면 NestJS mathpix.service 가 헤더로 보내고
-// Mathpix API 가 401 을 반환 → OCR 기능만 자연스럽게 비활성화 (다른 기능에 영향 X).
-resource kvMathpixId 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'mathpix-app-id'
-  properties: { value: mathpixAppId }
-}
-
-resource kvMathpixKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'mathpix-app-key'
-  properties: { value: mathpixAppKey }
-}
-
-// Admin email allowlist — comma-separated. Default seeded here; rotate via
+// Admin email allowlist – comma-separated. Default seeded here; rotate via
 // `az keyvault secret set --vault-name <kv> --name admin-emails --value ...`
 // in the Azure portal/CLI without redeploying the template. Container App
 // reads the latest revision on next restart.
@@ -388,8 +375,8 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
         { name: 'jwt-access-secret',    keyVaultUrl: kvJwtAccess.properties.secretUri,     identity: 'system' }
         { name: 'jwt-refresh-secret',   keyVaultUrl: kvJwtRefresh.properties.secretUri,    identity: 'system' }
         { name: 'openai-api-key',       keyVaultUrl: kvOpenai.properties.secretUri,        identity: 'system' }
-        { name: 'mathpix-app-id',       keyVaultUrl: kvMathpixId.properties.secretUri,     identity: 'system' }
-        { name: 'mathpix-app-key',      keyVaultUrl: kvMathpixKey.properties.secretUri,    identity: 'system' }
+        // Versionless URI so Container Apps reads the latest Key Vault secret version.
+        { name: 'gemini-api-key',       keyVaultUrl: '${keyVault.properties.vaultUri}secrets/gemini-api-key', identity: 'system' }
         { name: 'admin-emails',         keyVaultUrl: kvAdminEmails.properties.secretUri,   identity: 'system' }
         // Play Developer API service-account JSON (seeded out-of-band)
         { name: 'play-service-account-json', keyVaultUrl: '${keyVault.properties.vaultUri}secrets/play-service-account-json', identity: 'system' }
@@ -416,6 +403,7 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AI_LLM_PROVIDER',     value: 'openai' }
             { name: 'AI_LLM_MODEL',        value: 'gpt-4o-mini' }
             { name: 'AI_LLM_API_KEY',      secretRef: 'openai-api-key' }
+            { name: 'GEMINI_API_KEY',      secretRef: 'gemini-api-key' }
             { name: 'AI_VISION_PROVIDER',  value: 'openai' }
             { name: 'AI_VISION_MODEL',     value: 'gpt-4o-mini' }
             { name: 'AI_VISION_API_KEY',   secretRef: 'openai-api-key' }
@@ -452,11 +440,6 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             // 호출도 TLS 자동 인증서 발급되므로 https 가 정상 경로.
             { name: 'MATH_HELPER_URL',         value: 'https://${mathHelperApp.properties.configuration.ingress.fqdn}' }
             { name: 'MATH_HELPER_TIMEOUT_MS',  value: '120000' }
-            // Mathpix OCR — KV 시크릿 ref. 시크릿 값이 비어 있으면 mathpix.service 의 호출이
-            // 401 로 실패 → OCR 만 자연스럽게 비활성화, 다른 기능에 영향 X.
-            { name: 'MATHPIX_APP_ID',          secretRef: 'mathpix-app-id' }
-            { name: 'MATHPIX_APP_KEY',         secretRef: 'mathpix-app-key' }
-            { name: 'MATHPIX_TIMEOUT_MS',      value: '180000' }
           ]
           probes: [
             {
@@ -539,6 +522,7 @@ resource mathHelperApp 'Microsoft.App/containerApps@2024-03-01' = {
       ]
       secrets: [
         { name: 'openai-api-key', keyVaultUrl: kvOpenai.properties.secretUri, identity: 'system' }
+        { name: 'gemini-api-key', keyVaultUrl: '${keyVault.properties.vaultUri}secrets/gemini-api-key', identity: 'system' }
       ]
     }
     template: {
@@ -551,6 +535,7 @@ resource mathHelperApp 'Microsoft.App/containerApps@2024-03-01' = {
           resources: { cpu: json('0.5'), memory: '1.0Gi' }
           env: [
             { name: 'OPENAI_API_KEY',   secretRef: 'openai-api-key' }
+            { name: 'GEMINI_API_KEY',   secretRef: 'gemini-api-key' }
             { name: 'PYTHONUNBUFFERED', value: '1' }
           ]
           probes: [

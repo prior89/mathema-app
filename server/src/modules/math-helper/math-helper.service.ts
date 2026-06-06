@@ -1,8 +1,8 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Difficulty } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { MathpixService } from '../../infrastructure/mathpix/mathpix.service';
+import { OcrService } from '../../infrastructure/ocr/ocr.service';
 import { AttemptsService } from '../attempts/attempts.service';
 import { LlmDraftService } from '../content-ingest/llm-draft.service';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
@@ -39,6 +39,15 @@ type SolveHelperResponse = {
   /// a numbered list with LaTeX rendered inline; persisted into
   /// Problem.expectedSolutionSteps for the practice replay.
   steps?: string[];
+  verification?: {
+    isVerified?: boolean;
+    method?: string;
+    issues?: string[];
+    confidence?: number;
+    verifiedAnswer?: string | null;
+    attempts?: number;
+    caution?: string | null;
+  };
 };
 
 const GRADE_TO_CLASS: Record<string, number> = {
@@ -58,7 +67,7 @@ export class MathHelperService {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly attempts: AttemptsService,
-    private readonly mathpix: MathpixService,
+    private readonly ocr: OcrService,
     private readonly llmDraft: LlmDraftService,
   ) {}
 
@@ -80,6 +89,7 @@ export class MathHelperService {
       studentProfile: profile,
     })) as SolveHelperResponse;
     const durationMs = Date.now() - t0;
+    this.assertUsableSolveResponse(response);
 
     // recordSolveAttempt creates the persistent Problem row (when math-helper
     // returned an answer) and an Attempt; we expose its id so the UploadModal
@@ -107,11 +117,12 @@ export class MathHelperService {
   }
 
   async ocrSolve(userId: string, file: Express.Multer.File, dto: Omit<SolveMathHelperDto, 'question'>) {
-    const ocr = await this.mathpix.extract(file);
+    const ocr = await this.ocr.extract(file);
     const result = await this.solve(userId, {
       classLevel: dto.classLevel,
       question: ocr.text,
       studentAnswer: dto.studentAnswer,
+      durationSec: dto.durationSec,
     });
 
     return {
@@ -155,6 +166,21 @@ export class MathHelperService {
       );
     } finally {
       clearTimeout(timeout);
+    }
+  }
+
+  private assertUsableSolveResponse(response: SolveHelperResponse) {
+    const method = response.verification?.method;
+    const issues = response.verification?.issues ?? [];
+    const upstreamFallback = method === 'fallback' || issues.some((issue) => issue.startsWith('upstream_unavailable'));
+    if (upstreamFallback || !response.answer?.trim()) {
+      this.logger.warn(
+        `Math helper returned unusable solve response: method=${method ?? 'unknown'} issues=${issues.join('; ') || 'none'} answer=${response.answer ? 'present' : 'empty'}`,
+      );
+      throw new ServiceUnavailableException({
+        code: 'SolverUnavailable',
+        message: 'SolverUnavailable',
+      });
     }
   }
 

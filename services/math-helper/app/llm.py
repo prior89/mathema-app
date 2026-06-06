@@ -26,7 +26,7 @@ _logger = logging.getLogger(__name__)
 #
 # Flash matches Pro's accuracy on this hard test while being ~3x faster
 # and ~10-15x cheaper ($0.075/$0.30 per 1M tokens vs $1.25/$5). Same model
-# already powers the OCR path in mathpix.service.ts → one Gemini key, one
+# already powers the OCR path in ocr.service.ts: one Gemini key, one
 # model id, one DPDP residency story (Vertex AI Mumbai migration is a
 # single config change).
 #

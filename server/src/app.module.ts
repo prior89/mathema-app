@@ -14,7 +14,7 @@ import jwtConfig from './config/jwt.config';
 import aiApiConfig from './config/ai-api.config';
 import storageConfig from './config/storage.config';
 import mathHelperConfig from './config/math-helper.config';
-import mathpixConfig from './config/mathpix.config';
+import ocrConfig from './config/ocr.config';
 import playBillingConfig from './config/play-billing.config';
 import rtdnConfig from './config/rtdn.config';
 
@@ -63,7 +63,7 @@ import { BillingModule } from './modules/billing/billing.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, dbConfig, redisConfig, jwtConfig, aiApiConfig, storageConfig, mathHelperConfig, mathpixConfig, playBillingConfig, rtdnConfig],
+      load: [appConfig, dbConfig, redisConfig, jwtConfig, aiApiConfig, storageConfig, mathHelperConfig, ocrConfig, playBillingConfig, rtdnConfig],
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),

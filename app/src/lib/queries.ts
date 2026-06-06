@@ -693,7 +693,7 @@ export type UploadAnalysisResult = {
   extractedText: string;
   latex?: string | null;
   confidence?: number | null;
-  source: 'mathpix';
+  source: 'gemini';
   result: import('./mathHelper').MathHelperSolveResponse & { problemId?: string | null };
 };
 export const uploadProblemImage = (

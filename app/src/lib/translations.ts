@@ -753,6 +753,7 @@ const ko = {
   'upload.result.wrong': '답이 다른 것 같아요 — 오답노트에 저장해 두었어요.',
   'upload.error.unknown': '알 수 없는 오류',
   'upload.error.failed': '업로드 실패',
+  'upload.error.solverUnavailable': 'AI 풀이를 완료하지 못했어요. 잠시 후 다시 시도해 주세요.',
   'upload.error.close': '닫기',
   'upload.error.retry': '다시 시도',
 
@@ -1807,6 +1808,7 @@ const en: typeof ko = {
   'upload.result.wrong': 'Your answer looks wrong — filed to your Notes for review.',
   'upload.error.unknown': 'Unknown error',
   'upload.error.failed': 'Upload failed',
+  'upload.error.solverUnavailable': 'Could not finish the AI solution. Please try again in a moment.',
   'upload.error.close': 'Close',
   'upload.error.retry': 'Try again',
 

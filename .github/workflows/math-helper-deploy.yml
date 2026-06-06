@@ -62,12 +62,20 @@ jobs:
       # fallback chain (llm.py) can read GEMINI_API_KEY from env. Stored on
       # the Container App rather than in the image so rotation is one CLI
       # call. Idempotent — overwrites the existing secret if any.
-      - name: Sync Gemini secret to Container App
+      - name: Sync Gemini secret reference to Container App
         run: |
+          KV_NAME=$(az keyvault list \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "[?starts_with(name, 'mathema-kv')].name | [0]" -o tsv)
+          test -n "$KV_NAME"
+          KV_URI=$(az keyvault show \
+            --name "$KV_NAME" \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query properties.vaultUri -o tsv)
           az containerapp secret set \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --secrets gemini-api-key=${{ secrets.GEMINI_API_KEY }}
+            --secrets "gemini-api-key=keyvaultref:${KV_URI}secrets/gemini-api-key,identityref:system"
 
       - name: Container App revision update
         run: |

@@ -35,7 +35,7 @@ export interface LlmResponse {
  *
  * 도메인 코드(ai-coach, study-sessions, wrong-notes)는 이 클래스만 의존한다.
  *
- * gemini 분기는 직접 fetch (langchain-google-genai 의존 안 함) — mathpix.service.ts
+ * gemini 분기는 직접 fetch (langchain-google-genai 의존 안 함) — ocr.service.ts
  * 의 Gemini OCR 호출 패턴과 일관. 키는 GEMINI_API_KEY (별도 env) 사용.
  */
 @Injectable()
@@ -52,7 +52,7 @@ export class LlmProvider {
     this.apiKey = this.config.get<string>('ai.llm.apiKey') ?? '';
     this.provider = (this.config.get<string>('ai.llm.provider') ?? 'anthropic').toLowerCase();
     this.model = this.config.get<string>('ai.llm.model') ?? '';
-    // GEMINI_API_KEY env is shared with the OCR path (mathpix.service.ts:41).
+    // GEMINI_API_KEY env is shared with the OCR path (ocr.service.ts).
     this.geminiApiKey = process.env.GEMINI_API_KEY ?? '';
 
     if (this.isConfigured()) {
@@ -147,7 +147,7 @@ export class LlmProvider {
           // distractor + content drafting workloads don't need extended
           // reasoning, so we cap thinking at 0 to keep per-call cost at the
           // published flat rate (~$0.003/call vs ~$0.025 with thinking).
-          thinkingConfig: { thinkingBudget: 0 },
+          thinkingConfig: this.geminiThinkingConfig(model),
         },
       };
       if (req.jsonObject) {
@@ -177,5 +177,12 @@ export class LlmProvider {
     }
 
     throw new Error(`LlmProvider: provider=${this.provider} not wired (configured? ${this.isConfigured()}).`);
+  }
+
+  private geminiThinkingConfig(model: string): Record<string, unknown> {
+    if (model.startsWith('gemini-3')) {
+      return { thinkingLevel: model.includes('flash') ? 'minimal' : 'low' };
+    }
+    return { thinkingBudget: 0 };
   }
 }

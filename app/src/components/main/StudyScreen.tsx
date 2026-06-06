@@ -186,7 +186,7 @@ export function StudyScreen() {
           </div>
 
           {/* AI Solver -- snap a problem from a textbook or photo and the
-              math-helper pipeline (Mathpix OCR -> LangGraph solver) returns a
+              math-helper pipeline (Gemini OCR -> LangGraph solver) returns a
               step-by-step solution + lifts the problem into the user's pool. */}
           <div className="section-h">
             <span className="label">{t('study.solver.section')}</span>
