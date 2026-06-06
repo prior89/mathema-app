@@ -126,8 +126,8 @@ maintained in `PLAY_DATA_SAFETY.md §2`.
   step-by-step working when you have granted `AI_TRAINING` consent. The
   math-helper "solve" feature also routes the photo's OCR'd text and your
   attempted answer through OpenAI to produce the worked solution.
-- **Mathpix** — receives the image or PDF you upload, only at the moment
-  you upload it, to extract math text via OCR.
+- **Google Gemini API** — receives the image or PDF you upload, only at the
+  moment you upload it, to extract math text via OCR.
 - **Google (Cloud Identity)** — only when you choose **Sign in with
   Google**. We receive your email address, name, and Google `sub` id.
 - **Firebase Cloud Messaging (Google)** — receives your push token to
@@ -148,7 +148,8 @@ Our backend is hosted in **Microsoft Azure, Central India**. Some third-party
 processors operate outside India:
 
 - **OpenAI** — United States.
-- **Mathpix** — United States.
+- **Google Gemini API** — Google processing region may vary unless regional
+  routing is enabled.
 - **Sentry** — United States and EU.
 - **Google services** — United States, EU, and India.
 

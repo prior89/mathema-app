@@ -6,7 +6,7 @@ Monorepo:
 
 - **`server/`** — NestJS + Prisma + PostgreSQL + Redis + BullMQ backend (REST `/api/v1/*`)
 - **`app/`** — React + Vite + Capacitor (Android `ai.matheo.app`) — student / parent / teacher / admin UI
-- **`services/math-helper/`** — Python LangGraph microservice (NCERT problem solver, OpenAI + Mathpix) — partner-maintained ([Karvy-Singh](https://github.com/Karvy-Singh))
+- **`services/math-helper/`** — Python LangGraph microservice (NCERT problem solver, OpenAI + Gemini) — partner-maintained ([Karvy-Singh](https://github.com/Karvy-Singh))
 
 > **Status: v0.1.0 release candidate — Internal Testing track upload in progress.**
 >
@@ -159,9 +159,9 @@ for the LLM draft step.
 ```
 NCERT PDF (6 files, ~2,099 pages)
       │
-      │  scripts/ncert-pdf-extract/mathpix_pdf.py
+      │  scripts/ncert-pdf-extract/*.py
       ▼   (MathPix OCR · LaTeX-preserving · ~$0.005/page after free quota)
-*.mmd  (Mathpix Markdown — \( … \) inline, \[ … \] display)
+*.mmd  (MMD — \( … \) inline, \[ … \] display)
       │
       │  scripts/ncert-pdf-extract/extract_from_mmd.py
       ▼   (regex section/exercise detection — no LLM)
@@ -354,7 +354,7 @@ Live topology (RG `mathema-prod-cin`):
 | Math-helper | Container App `mathema-math-helper` | Python LangGraph, internal ingress |
 | DB | Postgres Flexible Server `mathema-pg-*` | B1ms, 32GB, `publicNetworkAccess: Enabled` (see Status note) |
 | Cache | Azure Cache for Redis Basic C0 | `rediss://` (BullMQ + idempotency + quota counters) |
-| Secrets | Key Vault `mathema-kv-7ehvzq` | All env vars (DB URL / JWT / OpenAI / Mathpix / Play SA JSON / admin emails) injected via `secretRef` |
+| Secrets | Key Vault `mathema-kv-7ehvzq` | All env vars (DB URL / JWT / OpenAI / Gemini / Play SA JSON / admin emails) injected via `secretRef` |
 | Registry | ACR `mathemaacr*` | `adminUserEnabled: false`, MI-based AcrPull |
 | Observability | Log Analytics + Application Insights | Sentry on frontend |
 

@@ -50,7 +50,7 @@ _Nothing yet._
 
 ## [0.1.0-rc1] — 2026-05-22
 
-> India-first NCERT math tutor proof-of-concept. NestJS server plus React/Vite/Capacitor Android client, deployed end-to-end on Azure Central India (Container Apps, Postgres Flexible Server, Key Vault, Static Web Apps) with a Python math-helper sidecar wrapping OpenAI and Mathpix. This release candidate covers the full student loop — Study, Test, Review, Solo, AI Solver, wrong-note queue, and pool-first problem generation — over a real backend with Postgres + Redis + BullMQ, plus a hardened auth stack (bcrypt-12, breached-password rejection, IP/email lockout, TOTP MFA backend, one-device-per-account, SecurityEvent audit log) and DPDP-leaning privacy gates. Pre-beta: Play Store assets are queued, Play Billing is not yet wired, and the Android AAB has gone green on the signed release workflow.
+> India-first NCERT math tutor proof-of-concept. NestJS server plus React/Vite/Capacitor Android client, deployed end-to-end on Azure Central India (Container Apps, Postgres Flexible Server, Key Vault, Static Web Apps) with a Python math-helper sidecar wrapping OpenAI and Gemini. This release candidate covers the full student loop — Study, Test, Review, Solo, AI Solver, wrong-note queue, and pool-first problem generation — over a real backend with Postgres + Redis + BullMQ, plus a hardened auth stack (bcrypt-12, breached-password rejection, IP/email lockout, TOTP MFA backend, one-device-per-account, SecurityEvent audit log) and DPDP-leaning privacy gates. Pre-beta: Play Store assets are queued, Play Billing is not yet wired, and the Android AAB has gone green on the signed release workflow.
 
 ### Added
 - Student problem-image upload pipeline: image → AI analyze → `ContentDraft` (`feat(uploads)`).
@@ -117,7 +117,7 @@ _Nothing yet._
 
 ### Infrastructure
 - Initial Azure Central India Bicep stack ported into the main repo: Container Apps backend, Static Web Apps frontend, Postgres Flexible Server, Key Vault, ACR, Azure OpenAI; OIDC service principal wiring.
-- Math-helper Python Container App provisioned with Mathpix secrets; one-shot bootstrap and `verify-math-helper.sh` scripts.
+- Math-helper Python Container App provisioned with Gemini secret references; one-shot bootstrap and `verify-math-helper.sh` scripts.
 - `MATH_HELPER_URL` forced to `https://` (HTTP triggered POST→GET on redirect).
 - GitHub Actions: backend and frontend Azure deploy workflows; signed Android AAB release workflow with artifact upload; cross-platform math-helper job; coverage thresholds (TEST-6).
 - Monorepo-aware Dockerfile; SWA Oryx build; hoisted `node_modules`; SWA token sourced from Azure.
