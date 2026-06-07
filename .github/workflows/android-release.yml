@@ -39,6 +39,15 @@ jobs:
         run: npm ci
 
       - name: Build Vite SPA
+        env:
+          # Capacitor Android bundles the SPA into the AAB. Without this
+          # the built app falls back to '/api/v1' (relative) and the
+          # WebView resolves it as https://localhost/api/v1 — which is
+          # the WebView itself, so every API call dies with "서버 연결
+          # 불가". app/.env.production is gitignored and only affects
+          # local Capacitor builds; CI has to inject the value here the
+          # same way the frontend SWA workflow does.
+          VITE_API_BASE_URL: https://mathema-backend.redcoast-6e6508a7.centralindia.azurecontainerapps.io/api/v1
         run: npm -w app run build
 
       - name: Capacitor sync (android)
