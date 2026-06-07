@@ -64,13 +64,9 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
-    // Google Play Billing Library 8.x — drives BillingPlugin.java.
-    // Bumped from 7.1.1 to 8.0.0 ahead of Google's 2026-08-31 PBL 7 deprecation.
-    // API surface used by BillingPlugin (BillingClient.Builder, PendingPurchasesParams,
-    // QueryProductDetailsParams + ProductDetails, launchBillingFlow, acknowledgePurchase,
-    // queryPurchasesAsync) is source-compatible across 7.x → 8.x. The Builder
-    // additionally gains enableAutoServiceReconnection(), wired below.
-    implementation "com.android.billingclient:billing:8.0.0"
+    // Google Play Billing Library is omitted in v1.0 — BillingPlugin.java and
+    // the paywall surface are deferred to Phase 2. Re-add the billing:8.x
+    // implementation here when the paywall lands (PBL 7 deprecates 2026-08-31).
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
@@ -79,11 +75,6 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
-}
+// google-services plugin intentionally omitted in v1.0 — push is deferred to
+// Phase 2 along with the Firebase project. Re-introduce the apply block when
+// google-services.json is committed under app/android/app/.

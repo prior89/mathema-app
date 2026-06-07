@@ -1,22 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
 import { post, tokens, get } from '../lib/api';
 import type { Me, GradeLevel } from '../lib/queries';
 import { track } from '../lib/analytics';
 
-// Tag every Sentry event with the current user id so crash reports group
-// per-user. Cleared on logout / token clear so the next anonymous session
-// doesn't inherit the previous user's identity. Hashed-id only — no email,
-// per PRIVACY_POLICY.md §9.
-function tagSentry(user: Me | null) {
-  if (user) {
-    Sentry.setUser({ id: user.id });
-  } else {
-    Sentry.setUser(null);
-  }
-}
+// Sentry user tagging was removed alongside @sentry/react (v1.0). When the
+// Sentry project lands in Phase 2, restore tagSentry + the useEffect that
+// wires it to the user state.
 
 export type { GradeLevel };
 
@@ -77,11 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  // Mirror auth state into Sentry. Any state transition (login, refresh,
-  // logout, token clear by 401 interceptor) flows through setUser and so
-  // gets tagged or cleared here.
-  useEffect(() => { tagSentry(user); }, [user]);
 
   // P5 fix 2026-05-27: react to the api.ts 'matheo:auth-rejected' event
   // (dispatched when /auth/refresh fails with a genuine auth rejection — 401,

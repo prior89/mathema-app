@@ -4,7 +4,6 @@
  * retained as internal session keys for Study's chapter test only — the Test
  * tab routes to /app/review (ReviewQueueScreen), not /app/mocks/*.
  */
-import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomeScreen } from '../components/main/HomeScreen';
 import { LearnScreen } from '../components/main/LearnScreen';
@@ -27,9 +26,6 @@ import { AdminKoreanStudyProblemNewScreen } from '../components/admin/AdminKorea
 import { AdminMasterySetScreen } from '../components/admin/AdminMasterySetScreen';
 import { AdminReportsScreen } from '../components/admin/AdminReportsScreen';
 import '../styles/onboarding.css';
-
-// Paywall is code-split — only loads when the user navigates to /app/paywall.
-const PaywallPage = lazy(() => import('./PaywallPage'));
 
 export default function MainAppPage() {
   // 2026-05-27 fix: the unconditional `localStorage.lang = 'ko'` block was
@@ -65,17 +61,9 @@ export default function MainAppPage() {
             <Route path="mocks" element={<Navigate to="/app/test" replace />} />
             <Route path="me" element={<MeScreen />} />
             <Route path="me/settings" element={<SettingsScreen />} />
-            {/* Play Billing paywall — Android only at runtime; web build shows
-                an "Android only" notice. Lazy + Suspense so the billing bundle
-                doesn't ship with the main shell. */}
-            <Route
-              path="paywall"
-              element={
-                <Suspense fallback={<div style={{ padding: 32 }}>Loading...</div>}>
-                  <PaywallPage />
-                </Suspense>
-              }
-            />
+            {/* /paywall route intentionally absent in v1.0 — see Phase 2 plan
+                for Play Billing re-introduction. Stray links route to /app. */}
+            <Route path="paywall" element={<Navigate to="/app" replace />} />
             <Route path="report" element={<ReportScreen />} />
             <Route path="admin/ingest" element={<AdminIngestScreen />} />
             <Route path="admin/drafts" element={<AdminDraftListScreen />} />

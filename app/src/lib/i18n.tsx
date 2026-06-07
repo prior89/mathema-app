@@ -15,11 +15,12 @@ const Ctx = createContext<I18nContext | null>(null);
 const STORAGE_KEY = 'mathema.lang';
 
 /**
- * 다국어 컨텍스트 — UI 라벨 번역 (ko/en).
+ * 다국어 컨텍스트 — UI 라벨 번역 (ko/en/hi).
  *
  * 백엔드 생성 텍스트(문제 본문·AI 코치 메시지·distractor rationale 등)는
  * KO/EN 양방향 사전(content-en.ts) 으로 동시 지원.
- * 1차 launch 인도 시장: EN 디폴트, 명시적 한국어 사용자만 KO.
+ * Matheo는 IN/KR 양국 co-primary 마켓 (project_mathema_kr_merged) 이라
+ * 기기 언어가 ko-KR이면 한국어로, hi-IN이면 힌디어로, 그 외엔 영어로 시작.
  *
  * 사용:
  *   const { t, lang, setLang } = useT();
@@ -30,9 +31,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return 'en';
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'ko' || saved === 'en' || saved === 'hi') return saved;
-    // Default = EN. Browser language pick: hi / ko then EN fallback.
-    // KO requires explicit user toggle (KO market not primary; only dev convenience).
+    // Browser language pick: ko / hi / en. KR users land on Korean from the
+    // login screen instead of being forced through English (previous default
+    // dropped ko-KR onto English and broke parity with the in-app country
+    // gate).
     const nav = navigator.language.toLowerCase();
+    if (nav.startsWith('ko')) return 'ko';
     if (nav.startsWith('hi')) return 'hi';
     return 'en';
   });

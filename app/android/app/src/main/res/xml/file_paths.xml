@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  FileProvider paths kept deliberately narrow. The previous
+  <external-path path="."> exposed the entire external storage root to any
+  app that received a content:// URI, which Guardsquare / Google Play security
+  guidance flags as an FileProvider over-exposure risk. v1.0 only needs the
+  Captures subdirectory (Camera plugin photo intent) and the matching cache
+  scratch space — anything else stays sandboxed.
+-->
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="my_images" path="." />
-    <cache-path name="my_cache_images" path="." />
+    <external-files-path name="captures" path="Captures/" />
+    <cache-path name="cache_captures" path="Captures/" />
 </paths>

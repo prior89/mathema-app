@@ -3,29 +3,25 @@
  *
  *  - 뒤로가기 버튼: ProtectedRoute / Modal stack 위에서 자연스러운 종료/뒤로 동작
  *  - StatusBar: 색상·아이콘 톤 일치
- *  - PushNotifications: 첫 진입 시 권한 요청 + FCM 토큰 백엔드 등록
+ *
+ * Push notifications are intentionally absent from v1.0. The Firebase
+ * project, google-services.json, and DPDP MARKETING consent flow are
+ * Phase 2 work; until then the bridge stays push-free so Android 13+
+ * doesn't show a permission dialog the user can't act on. Re-add the
+ * @capacitor/push-notifications block here when FCM credentials land.
  *
  * 플러그인은 동적 import — Capacitor.isNativePlatform() 일 때만 로드.
  * `@vite-ignore` + 변수 우회 — 패키지가 설치되어 있지 않은 web-only dev 환경에서도
  * Vite 가 모듈을 정적 분석하지 않도록 한다 (실제로 native 빌드에서만 로드됨).
  */
-import { post } from '../lib/api';
 
 // Vite 가 string literal 이 아니라 변수만 보고 resolve 를 건너뛰게 한다.
 const PKG_CORE = '@capacitor/core';
 const PKG_STATUS = '@capacitor/status-bar';
 const PKG_APP = '@capacitor/app';
-const PKG_PUSH = '@capacitor/push-notifications';
 
 const dynImport = (name: string): Promise<any> =>
   import(/* @vite-ignore */ name).catch(() => null);
-
-// Push listener registration is idempotent — calling initCapacitorBridge()
-// twice (StrictMode dev double-mount, HMR reload, manual re-init) used to
-// stack duplicate 'registration' / 'registrationError' handlers, sending the
-// same FCM token to /push/register N times. Guard at module scope so the
-// listeners attach exactly once per page lifetime.
-let pushListenersAttached = false;
 
 export async function initCapacitorBridge() {
   const core: any = await dynImport(PKG_CORE);
@@ -63,38 +59,4 @@ export async function initCapacitorBridge() {
     } catch { /* plugin not installed */ }
   }
 
-  // ----- 푸시 알림 (FCM) -----
-  const pushMod: any = await dynImport(PKG_PUSH);
-  if (pushMod?.PushNotifications) {
-    try {
-      const PN = pushMod.PushNotifications;
-      const perm = await PN.checkPermissions();
-      let granted = perm.receive === 'granted';
-      if (!granted) {
-        const r = await PN.requestPermissions();
-        granted = r.receive === 'granted';
-      }
-      if (granted) {
-        await PN.register();
-        if (!pushListenersAttached) {
-          PN.addListener('registration', async (token: { value: string }) => {
-            try {
-              await post('/push/register', {
-                token: token.value,
-                platform: 'android',
-                appVersion: '0.1.0',
-              });
-            } catch { /* network/backend down */ }
-          });
-          PN.addListener('registrationError', (err: any) => {
-            if (import.meta.env.DEV) {
-              // eslint-disable-next-line no-console
-              console.warn('FCM registration error', err);
-            }
-          });
-          pushListenersAttached = true;
-        }
-      }
-    } catch { /* plugin not installed */ }
-  }
 }

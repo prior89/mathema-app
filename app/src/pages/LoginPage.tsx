@@ -170,9 +170,11 @@ export default function LoginPage() {
 
               <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="field">
-                  <label>{t('login.field.emailOrId')}</label>
+                  <label>{t('login.field.email')}</label>
                   <input
-                    type="text"
+                    type="email"
+                    inputMode="email"
+                    autoFocus
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="username"
