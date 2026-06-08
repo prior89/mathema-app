@@ -84,7 +84,12 @@ describe('AttemptsRepository.create', () => {
     expect(r.isCorrect).toBe(false);
     expect(prisma.wrongNote.upsert).toHaveBeenCalledWith(expect.objectContaining({
       where: { userId_problemId: { userId: 'u1', problemId: 'p1' } },
-      create: expect.objectContaining({ status: 'PENDING', errorType: 'CALCULATION_MISTAKE' }),
+      create: expect.objectContaining({
+        status: 'PENDING',
+        errorType: 'CALCULATION_MISTAKE',
+        intervalDays: 3,
+        nextReviewAt: expect.any(Date),
+      }),
     }));
   });
 

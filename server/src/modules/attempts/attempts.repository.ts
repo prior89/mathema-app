@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { GradingService } from './grading.service';
+import { initialWrongNoteNextReviewAt } from '../wrong-notes/wrong-note-schedule.constants';
 
 /**
  * AttemptsRepository — Attempt 1 row 저장 + WrongNote upsert + 이벤트 페이로드 구성.
@@ -171,6 +172,8 @@ export class AttemptsRepository {
           errorType: legacyErrorType,
           insight: '',
           status: 'PENDING',
+          intervalDays: 3,
+          nextReviewAt: initialWrongNoteNextReviewAt(),
         },
       });
     }
