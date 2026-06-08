@@ -120,6 +120,54 @@ export type Me = {
   country?: CountryCode;
 };
 
+/** Onboarding diagnostic — shared problem shape (fixed + adaptive). */
+export type DiagnosticProblem = {
+  id: string;
+  body: string;
+  difficulty: string;
+  step: {
+    id: string;
+    stepIndex: number;
+    prompt: string;
+    choices: Array<{ id: string; choiceIndex: number; text: string }>;
+  } | null;
+  conceptLessonId: string | null;
+};
+
+export type DiagnosticMastery = {
+  conceptId: string;
+  conceptName: string;
+  conceptCode: string;
+  score: number;
+};
+
+export type DiagnosticResult = {
+  sessionId: string;
+  attempted: number;
+  correct: number;
+  masteries: DiagnosticMastery[];
+  placement?: {
+    estimatedGradeBand: string;
+    weakConceptIds: string[];
+    recommendedChapterCodes: string[];
+  };
+};
+
+export type AdaptiveDiagnosticStart = {
+  sessionId: string;
+  maxItems: number;
+  problem: DiagnosticProblem;
+};
+
+export type AdaptiveDiagnosticAnswer = {
+  attemptId: string;
+  isCorrect: boolean;
+  itemsAnswered: number;
+  meanSE: number;
+  shouldFinish: boolean;
+  nextProblem: DiagnosticProblem | null;
+};
+
 // fetchers
 export const fetchMe = () => get<Me>('/users/me');
 export const fetchDashboardSummary = () => get<DashboardSummary>('/dashboard/summary');

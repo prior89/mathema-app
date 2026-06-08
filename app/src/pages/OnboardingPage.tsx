@@ -8,8 +8,15 @@ import { post, patch, tokens, get } from '../lib/api';
 import { Glyph } from '../components/onboarding/Glyph';
 import MathText from '../components/MathText';
 import { BrandLogo } from '../components/Brand';
-import type { Me } from '../lib/queries';
+import type {
+  AdaptiveDiagnosticAnswer,
+  AdaptiveDiagnosticStart,
+  DiagnosticProblem,
+  DiagnosticResult,
+  Me,
+} from '../lib/queries';
 import { useAuth } from '../context/AuthContext';
+import { useFeatureFlag, useFeatureFlags } from '../hooks/useFeatureFlags';
 import { useT } from '../lib/i18n';
 import { isLikelyEmail } from '../lib/email';
 import '../styles/onboarding.css';
@@ -62,9 +69,6 @@ export default function OnboardingPage() {
     </div>
   );
 }
-
-type DiagnosticMastery = { conceptId: string; conceptName: string; conceptCode: string; score: number };
-type DiagnosticResult = { sessionId: string; attempted: number; correct: number; masteries: DiagnosticMastery[] };
 
 function Flow({ onFinish }: { onFinish: () => void }) {
   const { refreshUser } = useAuth();
@@ -808,107 +812,175 @@ function ScreenGoal({
   );
 }
 
-// ─────────── 06 Diagnostic — 실 백엔드 4문항 ───────────
-type DiagProblem = {
-  id: string; body: string; difficulty: string;
-  step: { id: string; stepIndex: number; prompt: string; choices: Array<{ id: string; choiceIndex: number; text: string }> } | null;
-  conceptLessonId: string | null;
-};
+// ─────────── 06 Diagnostic — fixed 4문항 or adaptive CAT-lite (PR-06) ───────────
+type DiagnosticMode = 'fixed' | 'adaptive';
+
 function ScreenDiagnostic({
   step, onBack, onNext, onComplete,
 }: { step: number; onBack: () => void; onNext: () => void; onComplete: (r: DiagnosticResult) => void }) {
   const { t } = useT();
+  const flagsQuery = useFeatureFlags();
+  const adaptiveFlag = useFeatureFlag('adaptive_diagnostic');
+  const [mode, setMode] = useState<DiagnosticMode>('fixed');
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [problems, setProblems] = useState<DiagProblem[]>([]);
+  const [problems, setProblems] = useState<DiagnosticProblem[]>([]);
+  const [cur, setCur] = useState<DiagnosticProblem | null>(null);
   const [qIdx, setQIdx] = useState(0);
+  const [maxItems, setMaxItems] = useState(4);
+  const [itemsAnswered, setItemsAnswered] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
   const [confidence, setConfidence] = useState(2);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  // submitted state removed 2026-05-24 — onboarding diagnostic now submits +
-  // advances in one click (no in-line correct/incorrect display per user spec).
-  // The previous two-step ('submit' then 'next') used a `submitted` boolean
-  // to gate; the new flow doesn't need it.
+  const questionStartedAt = useRef<number>(Date.now());
+
+  const resetQuestionUi = (problem: DiagnosticProblem | null) => {
+    setCur(problem);
+    setChoice(null);
+    setConfidence(2);
+    questionStartedAt.current = Date.now();
+  };
+
+  const startFixed = async () => {
+    const r = await post<{ sessionId: string; problems: DiagnosticProblem[] }>('/diagnostic/start', {});
+    setMode('fixed');
+    setSessionId(r.sessionId);
+    setProblems(r.problems);
+    setMaxItems(r.problems.length || 4);
+    setQIdx(0);
+    setItemsAnswered(0);
+    resetQuestionUi(r.problems[0] ?? null);
+  };
+
+  const startAdaptive = async () => {
+    const r = await post<AdaptiveDiagnosticStart>('/diagnostic/adaptive/start', {});
+    setMode('adaptive');
+    setSessionId(r.sessionId);
+    setProblems([]);
+    setMaxItems(r.maxItems);
+    setQIdx(0);
+    setItemsAnswered(0);
+    resetQuestionUi(r.problem);
+  };
 
   useEffect(() => {
+    if (flagsQuery.isLoading) return;
+    let cancelled = false;
     (async () => {
       try {
-        const r = await post<{ sessionId: string; problems: DiagProblem[] }>('/diagnostic/start', {});
-        setSessionId(r.sessionId);
-        setProblems(r.problems);
+        if (adaptiveFlag) {
+          try {
+            await startAdaptive();
+            return;
+          } catch {
+            // Pool/flag edge case — fall back to legacy 4-question flow.
+          }
+        }
+        if (!cancelled) await startFixed();
       } catch (e: any) {
-        setErr(e?.response?.data?.error?.message ?? t('onboarding.diag.startFailed'));
+        if (!cancelled) {
+          setErr(e?.response?.data?.error?.message ?? e?.response?.data?.message ?? t('onboarding.diag.startFailed'));
+        }
       }
     })();
-  }, []);
+    return () => { cancelled = true; };
+  }, [flagsQuery.isLoading, adaptiveFlag, t]);
 
-  const cur = problems[qIdx];
-  const total = problems.length || 4;
+  const activeProblem = mode === 'fixed' ? (problems[qIdx] ?? cur) : cur;
+  const progressN = mode === 'adaptive' ? itemsAnswered + 1 : qIdx + 1;
+  const progressTotal = mode === 'adaptive' ? maxItems : (problems.length || 4);
+  const isLastFixedQuestion = mode === 'fixed' && qIdx + 1 >= problems.length;
+
+  async function finishSession(id: string) {
+    const path = mode === 'adaptive'
+      ? `/diagnostic/adaptive/${id}/finish`
+      : `/diagnostic/${id}/finish`;
+    const r = await post<DiagnosticResult>(path, {});
+    onComplete(r);
+    onNext();
+  }
 
   async function submitOrAdvance() {
     if (busy) return;
-    if (!cur || !choice || !sessionId) return;
-    // User-spec 2026-05-24: onboarding diagnostic shouldn't grade in-line.
-    // Submit + advance in a single click. The previous "submit → show correct/
-    // incorrect → click Next" two-step was felt as friction during onboarding
-    // (the result screen already summarises mastery per concept).
+    if (!activeProblem || !choice || !sessionId) return;
     setBusy(true);
     try {
-      await post('/diagnostic/answer', { sessionId, problemId: cur.id, choiceId: choice, confidence });
-      if (qIdx + 1 < problems.length) {
-        setQIdx(qIdx + 1);
-        setChoice(null);
-        setConfidence(2);
+      const durationSec = Math.max(1, Math.min(600, Math.round((Date.now() - questionStartedAt.current) / 1000)));
+
+      if (mode === 'adaptive') {
+        const answer = await post<AdaptiveDiagnosticAnswer>('/diagnostic/adaptive/answer', {
+          sessionId,
+          problemId: activeProblem.id,
+          choiceId: choice,
+          confidence,
+          durationSec,
+        });
+        setItemsAnswered(answer.itemsAnswered);
+        if (answer.shouldFinish || !answer.nextProblem) {
+          await finishSession(sessionId);
+          return;
+        }
+        resetQuestionUi(answer.nextProblem);
         return;
       }
-      const r = await post<DiagnosticResult>(`/diagnostic/${sessionId}/finish`, {});
-      onComplete(r);
-      onNext();
+
+      await post('/diagnostic/answer', { sessionId, problemId: activeProblem.id, choiceId: choice, confidence });
+      if (qIdx + 1 < problems.length) {
+        const nextIdx = qIdx + 1;
+        setQIdx(nextIdx);
+        resetQuestionUi(problems[nextIdx] ?? null);
+        return;
+      }
+      await finishSession(sessionId);
     } catch (e: any) {
-      setErr(e?.response?.data?.error?.message ?? t('onboarding.diag.answerFailed'));
+      setErr(e?.response?.data?.error?.message ?? e?.response?.data?.message ?? t('onboarding.diag.answerFailed'));
     } finally {
       setBusy(false);
     }
   }
 
+  const progressKey = mode === 'adaptive' ? 'onboarding.diag.adaptive.qProgress' : 'onboarding.diag.qProgress';
+  const titleKey = mode === 'adaptive' ? 'onboarding.diag.adaptive.title' : 'onboarding.diag.title';
+  const taglineKey = mode === 'adaptive' ? 'onboarding.diag.adaptive.tagline' : 'onboarding.diag.tagline';
+
   return (
     <div className="screen">
       <TopScaffold step={step} onBack={onBack} right={
-        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{t('onboarding.diag.qProgress', { n: qIdx + 1, total })}</span>
+        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{t(progressKey, { n: progressN, total: progressTotal })}</span>
       } />
       <div className="screen-body" style={{ gap: 18 }}>
         <div>
           <span className="eyebrow">{t('onboarding.diag.eyebrow')}</span>
-          <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.diag.title')}</h2>
-          <p className="subtitle">{t('onboarding.diag.tagline')}</p>
+          <h2 className="title" style={{ marginTop: 10 }}>{t(titleKey)}</h2>
+          <p className="subtitle">{t(taglineKey)}</p>
         </div>
 
         {err && (
           <div style={{ padding: 12, borderRadius: 10, background: 'var(--p-danger-tint)', color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>
         )}
 
-        {!cur && !err && (
+        {!activeProblem && !err && (
           <div className="card" style={{ padding: 16, textAlign: 'center', color: 'var(--p-muted)' }}>{t('onboarding.diag.loadingQ')}</div>
         )}
 
-        {cur && (
+        {activeProblem && (
           <>
             <div className="card" style={{ padding: 18, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                 <span className="chip" style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.08em' }}>{t('onboarding.diag.concept')}</span>
-                <span className="caption" style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{cur.difficulty}</span>
+                <span className="caption" style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}>{activeProblem.difficulty}</span>
               </div>
               <div className="math-big" style={{ fontSize: 16, lineHeight: 1.5, whiteSpace: 'pre-wrap', color: 'var(--p-ink)' }}>
-                <MathText text={cur.body} />
+                <MathText text={activeProblem.body} />
               </div>
-              {cur.step?.prompt && (
+              {activeProblem.step?.prompt && (
                 <div style={{ marginTop: 8, fontSize: 13, color: 'var(--p-ink-2)' }}>
-                  <MathText text={cur.step.prompt} />
+                  <MathText text={activeProblem.step.prompt} />
                 </div>
               )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {(cur.step?.choices ?? []).map((c, i) => {
+              {(activeProblem.step?.choices ?? []).map((c, i) => {
                 const sel = choice === c.id;
                 const cls = sel ? 'choice selected' : 'choice';
                 return (
@@ -942,10 +1014,10 @@ function ScreenDiagnostic({
         <button
           className="btn"
           onClick={submitOrAdvance}
-          disabled={!cur || !choice || busy}
-          style={{ opacity: !cur || !choice ? 0.45 : 1 }}
+          disabled={!activeProblem || !choice || busy}
+          style={{ opacity: !activeProblem || !choice ? 0.45 : 1 }}
         >
-          {busy ? t('onboarding.diag.saving') : qIdx + 1 < total ? t('onboarding.diag.submit') : t('onboarding.diag.viewResult')}
+          {busy ? t('onboarding.diag.saving') : isLastFixedQuestion ? t('onboarding.diag.viewResult') : t('onboarding.diag.submit')}
           <Glyph.ChevronR />
         </button>
       </div>
