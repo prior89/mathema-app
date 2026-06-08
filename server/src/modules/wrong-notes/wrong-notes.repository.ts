@@ -102,6 +102,7 @@ const toCardShape = (n: any, lang: Lang = 'en') => {
     errorType: pickErrorType(n.errorType, lang),
     errorTypeRaw: n.errorType,
     insight: lang !== 'ko' ? (INSIGHT_EN[insightKo] ?? insightKo) : insightKo,
+    insightJson: n.insightJson ?? null,
     diff: pickDifficulty(n.problem.difficulty, lang),
     date: formatDate(n.createdAt, lang),
     similarCount: n.similarCount,
