@@ -172,7 +172,23 @@ export type AdaptiveDiagnosticAnswer = {
 };
 
 // fetchers
+export type FirstSessionAchievementKind =
+  | 'FIRST_CONCEPT_STEP'
+  | 'FIRST_PRACTICE_CORRECT'
+  | 'FIRST_WRONGNOTE_MASTERED';
+
+export type FirstSessionAchievement = {
+  kind: FirstSessionAchievementKind;
+  earnedAt: string;
+  celebratedAt: string | null;
+  metadata: Record<string, unknown> | null;
+};
+
 export const fetchMe = () => get<Me>('/users/me');
+export const fetchFirstSessionAchievements = () =>
+  get<FirstSessionAchievement[]>('/achievements');
+export const celebrateFirstSessionAchievement = (kind: FirstSessionAchievementKind) =>
+  post<FirstSessionAchievement>(`/achievements/${kind}/celebrate`, {});
 export const fetchDashboardSummary = () => get<DashboardSummary>('/dashboard/summary');
 export const fetchMastery = () => get<Mastery[]>('/mastery');
 export const fetchToday = () => get<RecommendCard[]>('/recommendations/today');

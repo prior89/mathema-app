@@ -509,6 +509,15 @@ const ko = {
   'home.coldStart.desc': '연습할 챕터를 고르거나 개념 학습을 열어보세요. 학습을 진행하면서 약점과 진행률이 차곡차곡 쌓입니다.',
   'home.coldStart.cta.study': '연습 시작',
   'home.coldStart.cta.learn': '개념 학습',
+  'home.coldStart.cta.placement': '진단 결과로 시작하기',
+  'achievement.modal.eyebrow': '첫 성취',
+  'achievement.modal.cta': '좋아요!',
+  'achievement.firstConcept.title': '첫 개념 학습을 시작했어요',
+  'achievement.firstConcept.body': '개념을 한 걸음 내딛었어요. 오늘의 추천 카드로 이어가면 15분 안에 첫 성취를 쌓을 수 있어요.',
+  'achievement.firstCorrect.title': '첫 연습 정답!',
+  'achievement.firstCorrect.body': '연습 문제를 맞혔어요. 이 리듬을 유지하면 실력 지도가 빠르게 채워집니다.',
+  'achievement.firstMastered.title': '오답노트 첫 정복',
+  'achievement.firstMastered.body': '복습 큐에서 첫 오답을 정리했어요. 반복 학습이 실력을 굳혀줍니다.',
 
   // ===== Study Screen =====
   'study.tab.label': 'Practice',
@@ -1579,6 +1588,15 @@ const en: typeof ko = {
   'home.coldStart.desc': 'Pick a chapter to practice, or open a concept lesson. Your weak spots and progress will accumulate as you go.',
   'home.coldStart.cta.study': 'Start practice',
   'home.coldStart.cta.learn': 'Concept lesson',
+  'home.coldStart.cta.placement': 'Start from your diagnostic',
+  'achievement.modal.eyebrow': 'First achievement',
+  'achievement.modal.cta': 'Nice!',
+  'achievement.firstConcept.title': 'You started your first concept',
+  'achievement.firstConcept.body': 'You took the first step. Follow today\'s plan to stack your first win within 15 minutes.',
+  'achievement.firstCorrect.title': 'First correct practice!',
+  'achievement.firstCorrect.body': 'You got a practice problem right. Keep this rhythm and your skill map fills in fast.',
+  'achievement.firstMastered.title': 'First wrong note cleared',
+  'achievement.firstMastered.body': 'You mastered a review item. Spaced repetition will make it stick.',
 
   // Study Screen
   'study.tab.label': 'Practice',
