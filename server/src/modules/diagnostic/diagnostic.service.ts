@@ -299,7 +299,7 @@ export class DiagnosticService {
       orderBy: { chapterCode: 'asc' },
       select: { problemIds: true },
     });
-    const ids = sets.flatMap((s) => s.problemIds.slice(0, 1)).slice(0, 12);
+    const ids = sets.flatMap((s) => s.problemIds.slice(0, 2)).slice(0, 24);
     if (ids.length < 4) return [];
 
     const rows = await this.prisma.problem.findMany({
