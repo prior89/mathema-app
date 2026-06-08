@@ -65,6 +65,13 @@ function mockRepo(): AnyMock {
 function mockEvents(): AnyMock {
   return { emit: jest.fn() };
 }
+function mockScheduler(): AnyMock {
+  return {
+    getDueWrongNotes: jest.fn().mockResolvedValue([]),
+    getNextEligibleAt: jest.fn().mockResolvedValue(null),
+    countDueWrongNotes: jest.fn().mockResolvedValue(0),
+  };
+}
 
 function build(over: any = {}) {
   const repo = over.repo ?? mockRepo();
@@ -75,48 +82,47 @@ function build(over: any = {}) {
   const attempts = over.attempts ?? mockAttempts();
   const prisma = over.prisma ?? mockPrisma();
   const events = over.events ?? mockEvents();
+  const scheduler = over.scheduler ?? mockScheduler();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const svc = new WrongNotesService(repo as any, ocr as any, pdf as any, similar as any, sr as any, attempts as any, prisma as any, events as any);
-  return { svc, repo, similar, sr, attempts, prisma, events };
+  const svc = new WrongNotesService(repo as any, ocr as any, pdf as any, similar as any, sr as any, attempts as any, prisma as any, events as any, scheduler as any);
+  return { svc, repo, similar, sr, attempts, prisma, events, scheduler };
 }
 
 const FOUR_DAYS_AGO = new Date(Date.now() - 4 * 24 * 3600 * 1000);
 const ONE_DAY_AGO = new Date(Date.now() - 1 * 24 * 3600 * 1000);
 
 describe('WrongNotesService.getQueueNext', () => {
-  it('returns the oldest eligible (older than 3-day cooldown) wrong note', async () => {
+  it('returns the oldest scheduler-due wrong note', async () => {
+    const scheduler = mockScheduler();
+    scheduler.getDueWrongNotes.mockResolvedValue([
+      { wrongNoteId: 'wn-1', effectiveDueAt: FOUR_DAYS_AGO, priorityScore: 0, reason: 'COOLDOWN_ELIGIBLE' },
+    ]);
     const prisma = mockPrisma({
       wrongNote: {
-        findFirst: jest.fn()
-          .mockResolvedValueOnce({
-            id: 'wn-1', problemId: 'p1', occurrences: 2,
-            createdAt: FOUR_DAYS_AGO,
-            problem: { id: 'p1', body: 'Solve X+1', source: 'matheo', answer: 'SECRET', conceptLessonId: 'cl-1', hint: 'try addition' },
-          }),
-        count: jest.fn().mockResolvedValue(1),
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'wn-1', problemId: 'p1', occurrences: 2,
+          createdAt: FOUR_DAYS_AGO,
+          problem: { id: 'p1', body: 'Solve X+1', source: 'matheo', answer: 'SECRET', conceptLessonId: 'cl-1', hint: 'try addition' },
+        }),
       },
     });
-    const { svc } = build({ prisma });
+    const { svc, scheduler: sched } = build({ prisma, scheduler });
     const r = await svc.getQueueNext('u1');
+    expect(sched.getDueWrongNotes).toHaveBeenCalledWith('u1', expect.any(Date));
     expect(r.wrongNote?.wrongNoteId).toBe('wn-1');
     expect(r.totalEligible).toBe(1);
     // Invariant: answer must NEVER appear in the queue payload.
     expect(JSON.stringify(r.wrongNote)).not.toContain('SECRET');
   });
 
-  it('returns wrongNote=null when nothing is past cooldown', async () => {
-    const prisma = mockPrisma({
-      wrongNote: {
-        findFirst: jest.fn()
-          .mockResolvedValueOnce(null) // eligible query
-          .mockResolvedValueOnce({ createdAt: ONE_DAY_AGO }), // next-up query
-        count: jest.fn().mockResolvedValue(0),
-      },
-    });
-    const { svc } = build({ prisma });
+  it('returns wrongNote=null when scheduler has no due notes', async () => {
+    const scheduler = mockScheduler();
+    const nextUnlock = new Date(ONE_DAY_AGO.getTime() + 3 * 24 * 3600 * 1000);
+    scheduler.getNextEligibleAt.mockResolvedValue(nextUnlock);
+    const { svc } = build({ scheduler });
     const r = await svc.getQueueNext('u1');
     expect(r.wrongNote).toBeNull();
-    expect(r.nextEligibleAt).toEqual(expect.any(String));
+    expect(r.nextEligibleAt).toBe(nextUnlock.toISOString());
   });
 });
 
@@ -131,12 +137,13 @@ describe('WrongNotesService.checkAnswer', () => {
     const prisma = mockPrisma({
       wrongNote: {
         findFirst: jest.fn().mockResolvedValue({ id: 'wn-1', problem: { id: 'p1' } }),
-        count: jest.fn().mockResolvedValue(0),
       },
     });
+    const scheduler = mockScheduler();
+    scheduler.countDueWrongNotes.mockResolvedValue(0);
     const attempts = mockAttempts();
     attempts.create.mockResolvedValue({ id: 'att-7', isCorrect: false });
-    const { svc } = build({ prisma, attempts });
+    const { svc } = build({ prisma, attempts, scheduler });
     const r = await svc.checkAnswer('u1', 'wn-1', { answer: '42', durationSec: 25 });
     expect(attempts.create).toHaveBeenCalledWith('u1', expect.objectContaining({
       problemId: 'p1', answer: '42', context: 'PRACTICE', durationSec: 25,
@@ -148,7 +155,6 @@ describe('WrongNotesService.checkAnswer', () => {
     const prisma = mockPrisma({
       wrongNote: {
         findFirst: jest.fn().mockResolvedValue({ id: 'wn-1', problem: { id: 'p1' } }),
-        count: jest.fn().mockResolvedValue(0),
       },
     });
     const attempts = mockAttempts();

@@ -192,6 +192,31 @@ describe('ReviewSchedulerService.getDueWrongNotes', () => {
     expect(await svc.getDueWrongNoteIds('u1', NOW)).toEqual([]);
   });
 
+  it('getNextEligibleAt returns earliest future effectiveDueAt', async () => {
+    const future = daysFromNow(2);
+    const rows: WrongNoteScheduleRow[] = [
+      {
+        id: 'wn-future',
+        createdAt: daysAgo(1),
+        nextReviewAt: future,
+        occurrences: 1,
+        status: 'PENDING',
+        problem: { conceptLessonId: 'cl-1', koreanConceptLessonId: null },
+      },
+      {
+        id: 'wn-due',
+        createdAt: daysAgo(5),
+        nextReviewAt: null,
+        occurrences: 1,
+        status: 'PENDING',
+        problem: { conceptLessonId: 'cl-2', koreanConceptLessonId: null },
+      },
+    ];
+    const { svc } = buildScheduler(rows, 'IN');
+    const next = await svc.getNextEligibleAt('u1', NOW);
+    expect(next?.toISOString()).toBe(computeEffectiveDueAt(daysAgo(1), future).toISOString());
+  });
+
   it('KR user sees only koreanConceptLesson problems', async () => {
     const rows: WrongNoteScheduleRow[] = [
       {
@@ -250,6 +275,46 @@ describe('WN due 3-consumer snapshot equality (100 synthetic)', () => {
     expect(unifiedDueIds(notes, isKR, NOW)).toEqual(unified);
     expect(filterDueWrongNotes(notes, { isKR, now: NOW }).map((c) => c.wrongNoteId).sort())
       .toEqual(unified);
+  });
+
+  it('getDueCountsByUser groups due notes per user with curriculum gate', async () => {
+    const prisma = {
+      user: { findUnique: jest.fn() },
+      wrongNote: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            userId: 'u1',
+            createdAt: daysAgo(5),
+            nextReviewAt: null,
+            status: 'PENDING',
+            problem: { conceptLessonId: 'cl-1', koreanConceptLessonId: null },
+            user: { country: 'IN' },
+          },
+          {
+            userId: 'u1',
+            createdAt: daysAgo(1),
+            nextReviewAt: daysAgo(1),
+            status: 'PENDING',
+            problem: { conceptLessonId: 'cl-2', koreanConceptLessonId: null },
+            user: { country: 'IN' },
+          },
+          {
+            userId: 'u2',
+            createdAt: daysAgo(5),
+            nextReviewAt: null,
+            status: 'PENDING',
+            problem: { conceptLessonId: null, koreanConceptLessonId: 'kcl-1' },
+            user: { country: 'KR' },
+          },
+        ]),
+      },
+    };
+    const svc = new ReviewSchedulerService(prisma as never);
+    const counts = await svc.getDueCountsByUser(NOW);
+    expect(counts).toEqual([
+      { userId: 'u1', count: 1 },
+      { userId: 'u2', count: 1 },
+    ]);
   });
 
   it('every due note has effectiveDueAt ≤ now', async () => {

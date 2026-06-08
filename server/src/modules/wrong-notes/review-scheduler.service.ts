@@ -117,11 +117,7 @@ export function filterDueWrongNotes(
 export class ReviewSchedulerService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * WrongNote due — unified set for queue, FCM cron, and GET /wrong-notes/due.
-   * effectiveDueAt = max(createdAt + 3d, nextReviewAt ?? epoch); due when ≤ now.
-   */
-  async getDueWrongNotes(userId: string, now = new Date()): Promise<WrongNoteDueCandidate[]> {
+  private async fetchScheduleRows(userId: string) {
     const me = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { country: true },
@@ -149,7 +145,31 @@ export class ReviewSchedulerService {
       },
     });
 
+    return { rows, isKR };
+  }
+
+  /**
+   * WrongNote due — unified set for queue, FCM cron, and GET /wrong-notes/due.
+   * effectiveDueAt = max(createdAt + 3d, nextReviewAt ?? epoch); due when ≤ now.
+   */
+  async getDueWrongNotes(userId: string, now = new Date()): Promise<WrongNoteDueCandidate[]> {
+    const { rows, isKR } = await this.fetchScheduleRows(userId);
     return filterDueWrongNotes(rows, { isKR, now });
+  }
+
+  /** Earliest effectiveDueAt among curriculum-eligible notes not yet due (queue empty UI). */
+  async getNextEligibleAt(userId: string, now = new Date()): Promise<Date | null> {
+    const { rows, isKR } = await this.fetchScheduleRows(userId);
+    let min: Date | null = null;
+    for (const row of rows) {
+      if (row.status === 'MASTERED') continue;
+      if (!passesCurriculumGate(row.problem, isKR)) continue;
+
+      const effectiveDueAt = computeEffectiveDueAt(row.createdAt, row.nextReviewAt);
+      if (effectiveDueAt.getTime() <= now.getTime()) continue;
+      if (!min || effectiveDueAt.getTime() < min.getTime()) min = effectiveDueAt;
+    }
+    return min;
   }
 
   async getDueWrongNoteIds(userId: string, now = new Date()): Promise<string[]> {
@@ -160,5 +180,36 @@ export class ReviewSchedulerService {
   async countDueWrongNotes(userId: string, now = new Date()): Promise<number> {
     const due = await this.getDueWrongNotes(userId, now);
     return due.length;
+  }
+
+  /** FCM cron — per-user due counts with per-user curriculum gate. */
+  async getDueCountsByUser(now = new Date()): Promise<Array<{ userId: string; count: number }>> {
+    const rows = await this.prisma.wrongNote.findMany({
+      where: { status: { not: 'MASTERED' } },
+      select: {
+        userId: true,
+        createdAt: true,
+        nextReviewAt: true,
+        status: true,
+        problem: {
+          select: { conceptLessonId: true, koreanConceptLessonId: true },
+        },
+        user: { select: { country: true } },
+      },
+    });
+
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      if (row.status === 'MASTERED') continue;
+      const isKR = row.user.country === 'KR';
+      if (!passesCurriculumGate(row.problem, isKR)) continue;
+
+      const effectiveDueAt = computeEffectiveDueAt(row.createdAt, row.nextReviewAt);
+      if (effectiveDueAt.getTime() > now.getTime()) continue;
+
+      counts.set(row.userId, (counts.get(row.userId) ?? 0) + 1);
+    }
+
+    return [...counts.entries()].map(([userId, count]) => ({ userId, count }));
   }
 }

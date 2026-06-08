@@ -11,6 +11,7 @@ import { CreateWrongNoteDto } from './dto/create-wrong-note.dto';
 import { QueryWrongNotesDto } from './dto/query-wrong-notes.dto';
 import { ReviewWrongNoteDto } from './dto/review-wrong-note.dto';
 import { Lang } from '../../common/i18n/current-lang.decorator';
+import { ReviewSchedulerService } from './review-scheduler.service';
 
 @Injectable()
 export class WrongNotesService {
@@ -23,6 +24,7 @@ export class WrongNotesService {
     private readonly attempts: AttemptsService,
     private readonly prisma: PrismaService,
     private readonly events: EventEmitter2,
+    private readonly scheduler: ReviewSchedulerService,
   ) {}
 
   getStats(userId: string) { return this.repo.aggregateStats(userId); }
@@ -31,12 +33,11 @@ export class WrongNotesService {
   getDue(userId: string, limit?: number, lang: Lang = 'en') { return this.repo.findDue(userId, limit, lang); }
 
   /**
-   * Review queue — FIFO with 3-day cooldown + sequential gate + 3-wrong hint.
+   * Review queue — FIFO via ReviewScheduler + sequential gate + 3-wrong hint.
    *
-   * Returns the SINGLE oldest wrong note ready for review:
+   * Returns the SINGLE oldest wrong note ready for review (effectiveDueAt ≤ now):
    *  - status != MASTERED
-   *  - createdAt < now − 3 days   (so the user has time to absorb the lesson
-   *    before re-encountering the problem; deliberate spaced-practice gap)
+   *  - effectiveDueAt = max(createdAt + 3d, nextReviewAt ?? epoch)
    *
    * Sequential lock: the returned note is the user's "current" review problem
    * until they MASTER it. Wrong attempts via POST /:id/check do NOT bump
@@ -54,45 +55,22 @@ export class WrongNotesService {
    * Returns wrongNote=null when nothing is ready (queue empty or cooldown).
    */
   async getQueueNext(userId: string) {
-    const COOLDOWN_DAYS = 3;
     const HINT_WRONG_THRESHOLD = 3;
-    const threshold = new Date(Date.now() - COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const dueCandidates = await this.scheduler.getDueWrongNotes(userId, now);
+    const totalEligible = dueCandidates.length;
+    const head = dueCandidates[0];
 
-    // Country gate: cross-curriculum cleanup. KR 사용자의 review queue 는
-    // KR problem (koreanConceptLessonId IS NOT NULL) 만, IN/그외는 NCERT
-    // problem (conceptLessonId IS NOT NULL) 만. 현재 사용자 흐름상 IN 은
-    // NCERT 만, KR 은 KR 만 푸는 게 정상이라 결함 발생 가능성 낮지만
-    // history 적 cross-attempt (수동 import, 옛 시드 등) 가 큐에 새는 걸 차단.
-    const me = await this.prisma.user.findUnique({
-      where: { id: userId }, select: { country: true },
-    });
-    const isKR = me?.country === 'KR';
-    const problemCurriculumWhere = isKR
-      ? { koreanConceptLessonId: { not: null } }
-      : { conceptLessonId: { not: null } };
-
-    const note = await this.prisma.wrongNote.findFirst({
-      where: {
-        userId,
-        status: { not: 'MASTERED' },
-        createdAt: { lte: threshold },
-        problem: problemCurriculumWhere,
-      },
-      orderBy: { createdAt: 'asc' },
-      include: {
-        problem: {
-          select: { id: true, body: true, source: true, answer: true, conceptLessonId: true, hint: true },
-        },
-      },
-    });
-    const totalEligible = await this.prisma.wrongNote.count({
-      where: {
-        userId,
-        status: { not: 'MASTERED' },
-        createdAt: { lte: threshold },
-        problem: problemCurriculumWhere,
-      },
-    });
+    const note = head
+      ? await this.prisma.wrongNote.findFirst({
+          where: { id: head.wrongNoteId, userId },
+          include: {
+            problem: {
+              select: { id: true, body: true, source: true, answer: true, conceptLessonId: true, hint: true },
+            },
+          },
+        })
+      : null;
     // 3-wrong hint unlock — only when a note is in flight. Counts every
     // wrong PRACTICE attempt on this problem ever; reaching the threshold
     // is sticky for the rest of the note's lifetime (until MASTERED), so
@@ -113,16 +91,9 @@ export class WrongNotesService {
         hintLine = note.problem.hint ?? null;
       }
     }
-    // Next-up timestamp (when the OLDEST non-eligible note becomes eligible) —
-    // useful for UI copy like "Next problem unlocks Wed 5pm" when the queue is
-    // empty but some notes are still in cooldown.
     const nextEligibleAt = note
       ? null
-      : await this.prisma.wrongNote.findFirst({
-          where: { userId, status: { not: 'MASTERED' }, createdAt: { gt: threshold } },
-          orderBy: { createdAt: 'asc' },
-          select: { createdAt: true },
-        });
+      : await this.scheduler.getNextEligibleAt(userId, now);
     return {
       wrongNote: note
         ? {
@@ -143,9 +114,7 @@ export class WrongNotesService {
           }
         : null,
       totalEligible,
-      nextEligibleAt: nextEligibleAt
-        ? new Date(nextEligibleAt.createdAt.getTime() + COOLDOWN_DAYS * 24 * 60 * 60 * 1000).toISOString()
-        : null,
+      nextEligibleAt: nextEligibleAt?.toISOString() ?? null,
     };
   }
 
@@ -188,11 +157,7 @@ export class WrongNotesService {
       context: 'PRACTICE',
     });
 
-    const COOLDOWN_DAYS = 3;
-    const threshold = new Date(Date.now() - COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
-    const totalEligible = await this.prisma.wrongNote.count({
-      where: { userId, status: { not: 'MASTERED' }, createdAt: { lte: threshold } },
-    });
+    const totalEligible = await this.scheduler.countDueWrongNotes(userId);
 
     return {
       isCorrect: attempt.isCorrect,

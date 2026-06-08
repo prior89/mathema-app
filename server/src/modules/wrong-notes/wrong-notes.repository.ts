@@ -4,6 +4,7 @@ import { NoteStatus } from '../../common/enums/note-status.enum';
 import { ERROR_TYPE_LABEL_KO } from '../../common/enums/error-type.enum';
 import { DIFFICULTY_LABEL_KO } from '../../common/enums/difficulty.enum';
 import { Lang } from '../../common/i18n/current-lang.decorator';
+import { computeEffectiveDueAt, ReviewSchedulerService } from './review-scheduler.service';
 import { UNIT_NAME_EN, SUB_UNIT_NAME_EN, DIFFICULTY_EN, ERROR_TYPE_EN, SOURCE_EN, INSIGHT_EN, PROBLEM_EN, CONCEPT_EN, FORMULA_EN } from '../../common/i18n/content-en';
 import { UNIT_NAME_HI, SUB_UNIT_NAME_HI, DIFFICULTY_HI, ERROR_TYPE_HI } from '../../common/i18n/content-hi';
 
@@ -109,15 +110,18 @@ const toCardShape = (n: any, lang: Lang = 'en') => {
     repetitionCount: n.repetitionCount ?? 0,
     intervalDays: n.intervalDays ?? 0,
     nextReviewAt: n.nextReviewAt ? n.nextReviewAt.toISOString() : null,
-    dueIn: formatDueIn(n.nextReviewAt, lang),
-    isDue: n.nextReviewAt ? n.nextReviewAt.getTime() <= Date.now() : true,
+    dueIn: formatDueIn(computeEffectiveDueAt(n.createdAt, n.nextReviewAt), lang),
+    isDue: computeEffectiveDueAt(n.createdAt, n.nextReviewAt).getTime() <= Date.now(),
     lapseCount: n.lapseCount ?? 0,
   };
 };
 
 @Injectable()
 export class WrongNotesRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly scheduler: ReviewSchedulerService,
+  ) {}
 
   async aggregateStats(userId: string) {
     const all = await this.prisma.wrongNote.findMany({ where: { userId } });
@@ -158,24 +162,19 @@ export class WrongNotesRepository {
   }
 
   async findDue(userId: string, limit?: number, lang: Lang = 'en') {
-    const now = new Date();
+    const candidates = await this.scheduler.getDueWrongNotes(userId);
+    const dueIds = (limit ? candidates.slice(0, limit) : candidates).map((c) => c.wrongNoteId);
+    if (dueIds.length === 0) return [];
+
     const rows = await this.prisma.wrongNote.findMany({
-      where: {
-        userId,
-        status: { not: 'MASTERED' },
-        OR: [
-          { nextReviewAt: null },                // 미복습
-          { nextReviewAt: { lte: now } },         // 만기
-        ],
-      },
-      orderBy: [
-        { nextReviewAt: { sort: 'asc', nulls: 'first' } },
-        { occurrences: 'desc' },
-      ],
-      ...(limit ? { take: limit } : {}),
+      where: { userId, id: { in: dueIds } },
       include: { problem: { include: { unit: true, subUnit: true, conceptLesson: { select: { chapterCode: true } } } } },
     });
-    return rows.map((r) => toCardShape(r, lang));
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    return dueIds
+      .map((id) => byId.get(id))
+      .filter((r): r is NonNullable<typeof r> => r != null)
+      .map((r) => toCardShape(r, lang));
   }
 
   async applyReview(userId: string, id: string, sm2: { easinessFactor: number; repetitionCount: number; intervalDays: number; nextReviewAt: Date; lapsed: boolean }) {
