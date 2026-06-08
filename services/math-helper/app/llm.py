@@ -1,104 +1,61 @@
 import logging
-import os
 
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
-try:
-    from langchain_google_genai import ChatGoogleGenerativeAI
-except ImportError:  # pragma: no cover
-    ChatGoogleGenerativeAI = None  # type: ignore[assignment]
-
 _logger = logging.getLogger(__name__)
 
-# Primary: Gemini 3.5 Flash. Selected 2026-05-23 after a head-to-head
-# benchmark on the hardest in-scope problem (the user's multi-part
-# 수열·절대값합 question that had been returning 60000):
+# Primary: gpt-5-mini. Selected 2026-06-08 after a direct bench across
+# OpenAI's available models on two hard in-scope problems:
+#   1) NCERT Class 12 integral with x sin(x)/(1+cos^2(x))
+#   2) Korean multi-part conditional sequence where a_10 = 11
 #
-#   model                     latency   part1   part2
-#   gemini-3.5-flash          13.5s     ✓       ✓     ← primary
-#   gemini-flash-latest       13.8s     ✓       ✓     (alias)
-#   o3-mini                   14.4s     ✓       ✓
-#   gemini-2.5-pro            40.2s     ✓       ✓     (3x slower)
-#   gpt-4o                     4.3s     ✗       ✗     (old primary, wrong)
-#   gpt-4.1                   35.0s     ✗       ✗
-#   gpt-5-* family            400/404   (API plan / Responses format gap)
+#   model        integral  sequence  latency  in/out $/1M    cost/solve
+#   gpt-5-mini   pass      pass      8.0 s    $0.25/$2.00   $0.0023
+#   gpt-5-nano   pass      pass      9.3 s    $0.20/$0.40   $0.0006
+#   o3-mini      pass      pass      5.1 s    $1.10/$4.40   $0.0050
+#   gpt-4o-mini  pass      pass      9.9 s    $0.15/$0.60   $0.0004
+#   gpt-4o       fail      -         7.6 s    $2.50/$10     $0.006
 #
-# Flash matches Pro's accuracy on this hard test while being ~3x faster
-# and ~10-15x cheaper ($0.075/$0.30 per 1M tokens vs $1.25/$5). Same model
-# already powers the OCR path in ocr.service.ts: one Gemini key, one
-# model id, one DPDP residency story (Vertex AI Mumbai migration is a
-# single config change).
+# gpt-5-mini balances reasoning capability (Korean sequence parsing) with
+# acceptable latency and cost. gpt-4o was excluded after returning the
+# wrong sign on the integral, the same failure mode that pushed an earlier
+# revision off gpt-4o (commit eb8ff43).
 #
-# 2026-05-23 (afternoon): dropped from 3.5-flash → 2.5-flash. 3.5-flash
-# advertises "thinking: true" and silently generates 5-15K reasoning tokens
-# per call (billed at output rate) — ₩24K burnt in one Tier 2 sweep hour.
-# Disabling thinking via langchain-google-genai's kwarg wasn't reliable
-# across versions, so we use the older 2.5-flash which has no thinking
-# branch. NestJS direct-fetch sites stay on 3.5-flash + thinkingBudget=0.
-_primary = (
-    ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        temperature=0,
-        max_output_tokens=8192,
-    )
-    if ChatGoogleGenerativeAI is not None and os.environ.get("GEMINI_API_KEY")
-    else None
-)
-
-# Same-vendor Pro fallback — different quota pool than Flash so a transient
-# Flash rate-limit can be ridden out without dropping to a different cloud.
-# `gemini-pro-latest` is the auto-rolling stable Pro alias; benchmark
-# showed identical correctness on the test problem (30s latency).
-_gemini_pro_fallback = (
-    ChatGoogleGenerativeAI(
-        model="gemini-pro-latest",
-        temperature=0,
-        max_output_tokens=8192,
-    )
-    if ChatGoogleGenerativeAI is not None and os.environ.get("GEMINI_API_KEY")
-    else None
-)
-
-# Cross-cloud last-resort — o3-mini (OpenAI reasoning, 14s, ✓ on the test
-# problem). Kept so a Gemini-wide incident doesn't take the Solver down.
-# Note: o3-mini uses max_completion_tokens, not max_tokens, and refuses
-# temperature ≠ 1 — defaults are fine.
-# Cap output tokens explicitly: o3-mini bills reasoning tokens as output and
-# defaults to a very high cap. Bounding to 8192 mirrors the Gemini side and
-# prevents a Gemini-wide outage cascading into a runaway OpenAI bill.
-_openai_fallback = ChatOpenAI(
-    model="o3-mini",
+# This file covers the math-helper reasoning model only. OCR is still served
+# by the NestJS OcrService, which currently reports source='gemini'; keep those
+# layers separate when evaluating compliance or provider migration work.
+_primary = ChatOpenAI(
+    model="gpt-5-mini",
     max_completion_tokens=8192,
+)
+
+# Fallback: gpt-4o-mini. Cheaper and faster than the primary, no reasoning
+# tokens; used when gpt-5-mini errors out (rate-limit, transient API
+# failure). Accuracy is lower on multi-part Korean problems, so this is a
+# last-mile graceful degradation, not a co-equal.
+_openai_fallback = ChatOpenAI(
+    model="gpt-4o-mini",
+    max_completion_tokens=4096,
+    temperature=0,
 )
 
 
 async def structured(prompt: str, schema: type[BaseModel]):
-    """Schema-constrained LLM call with vendor + tier failover.
+    """Schema-constrained LLM call with single-vendor failover.
 
-    Order: gemini-3.5-flash → gemini-pro-latest → o3-mini → re-raise.
-    `with_structured_output(schema)` honoured by all three so callers
-    don't care which provider answered.
+    Order: gpt-5-mini -> gpt-4o-mini -> re-raise. `with_structured_output(schema)`
+    works on both so callers don't care which model answered.
     """
-    if _primary is not None:
-        try:
-            return await _primary.with_structured_output(schema).ainvoke(prompt)
-        except Exception as e:
-            _logger.warning(
-                "gemini-3.5-flash structured() failed (%s) — falling back to gemini-pro-latest",
-                type(e).__name__,
-            )
-    if _gemini_pro_fallback is not None:
-        try:
-            return await _gemini_pro_fallback.with_structured_output(schema).ainvoke(prompt)
-        except Exception as e:
-            _logger.warning(
-                "gemini-pro-latest structured() failed (%s) — falling back to o3-mini",
-                type(e).__name__,
-            )
+    try:
+        return await _primary.with_structured_output(schema).ainvoke(prompt)
+    except Exception as e:
+        _logger.warning(
+            "gpt-5-mini structured() failed (%s); falling back to gpt-4o-mini",
+            type(e).__name__,
+        )
     return await _openai_fallback.with_structured_output(schema).ainvoke(prompt)
 
 
-# Direct-invoke alias for legacy callers (graph.py imports `llm`). Same
-# resolution order — Flash if configured, then OpenAI as last resort.
-llm = _primary if _primary is not None else _openai_fallback
+# Direct-invoke alias for legacy callers (graph.py imports `llm`).
+llm = _primary

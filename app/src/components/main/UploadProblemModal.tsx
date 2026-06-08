@@ -7,7 +7,12 @@
  * Notes is always immediate. */
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { uploadProblemImage, UploadAnalysisResult } from '../../lib/queries';
+import {
+  extractProblemText,
+  solveExtractedText,
+  OcrResult,
+  UploadAnalysisResult,
+} from '../../lib/queries';
 import { useT } from '../../lib/i18n';
 import MathText from '../MathText';
 import { Glyph } from '../onboarding/Glyph';
@@ -23,7 +28,14 @@ type Props = {
 
 type Translate = ReturnType<typeof useT>['t'];
 
-type Phase = 'pick' | 'analyzing' | 'result' | 'error';
+// 2-step Photomath-style flow:
+//   pick        → user picks/takes a file
+//   ocr-running → 1-3 s OCR call (cheap, no quota)
+//   ocr-done    → recognised text shown to the user; solveExtractedText runs in
+//                 the background. User can retake here if the OCR is wrong.
+//   result      → solve completed, full response rendered
+//   error       → OCR or solve failed (which one is in the error string)
+type Phase = 'pick' | 'ocr-running' | 'ocr-done' | 'result' | 'error';
 
 export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   const nav = useNavigate();
@@ -31,6 +43,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   const [phase, setPhase] = useState<Phase>('pick');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const [result, setResult] = useState<UploadAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [studentAnswer, setStudentAnswer] = useState('');
@@ -38,11 +51,14 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   // Wall-clock time the user spent in the modal before tapping Analyze,
   // forwarded to math-helper so DailyActivity reflects real engagement.
   const startedAtRef = useRef<number>(Date.now());
+  const requestSeqRef = useRef(0);
 
   useEffect(() => {
     if (!open) {
+      requestSeqRef.current += 1;
       setPhase('pick');
       setFile(null);
+      setOcrResult(null);
       setResult(null);
       setError(null);
       setStudentAnswer('');
@@ -84,14 +100,21 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   if (!open) return null;
 
   const onPick = (f: File | null) => {
+    requestSeqRef.current += 1;
     if (!f) {
       setFile(null);
+      setPhase('pick');
+      setOcrResult(null);
+      setResult(null);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
       return;
     }
     setFile(f);
+    setPhase('pick');
     setError(null);
+    setOcrResult(null);
+    setResult(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     if (f.type.startsWith('image/')) {
       setPreviewUrl(URL.createObjectURL(f));
@@ -102,14 +125,37 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
 
   const analyze = async () => {
     if (!file) return;
-    setPhase('analyzing');
+    const requestSeq = requestSeqRef.current + 1;
+    requestSeqRef.current = requestSeq;
+    setPhase('ocr-running');
     setError(null);
+    setOcrResult(null);
     try {
+      // Step 1 — OCR only (Photomath-style instant recognition feedback).
+      // Resolves in 1-3 s and unblocks the user's "is my photo readable?"
+      // question before the much longer solve call starts.
+      const ocr = await extractProblemText(file);
+      if (requestSeq !== requestSeqRef.current) return;
+      setOcrResult(ocr);
+      setPhase('ocr-done');
+
+      // Step 2 — solve runs while the OCR card is on screen. The user reads
+      // the recognised text and (optionally) retakes the photo during this
+      // 5-15 s window, which is otherwise the spinner-only stretch that
+      // made the old single-shot flow feel broken.
       const durationSec = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
-      const r = await uploadProblemImage(file, studentAnswer, durationSec);
-      setResult(r);
+      const solveResponse = await solveExtractedText(ocr.text, studentAnswer, durationSec);
+      if (requestSeq !== requestSeqRef.current) return;
+      setResult({
+        extractedText: ocr.text,
+        latex: ocr.latex ?? null,
+        confidence: ocr.confidence ?? null,
+        source: ocr.source,
+        result: solveResponse,
+      });
       setPhase('result');
     } catch (e) {
+      if (requestSeq !== requestSeqRef.current) return;
       const msg = extractErrorMessage(e, t) ?? t('upload.error.failed');
       setError(msg);
       setPhase('error');
@@ -124,7 +170,19 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   };
 
   const retry = () => {
+    requestSeqRef.current += 1;
     setPhase('pick');
+    setError(null);
+    setOcrResult(null);
+    setResult(null);
+  };
+
+  /** From ocr-done: user spots a misread, taps "다시 찍기", returns to picker. */
+  const retakePhoto = () => {
+    requestSeqRef.current += 1;
+    setPhase('pick');
+    setOcrResult(null);
+    setResult(null);
     setError(null);
   };
 
@@ -173,7 +231,17 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
           />
         )}
 
-        {phase === 'analyzing' && <AnalyzingPhase fileName={file?.name ?? ''} />}
+        {phase === 'ocr-running' && (
+          <OcrRunningPhase
+            fileName={file?.name ?? ''}
+            previewUrl={previewUrl}
+            onRetake={retakePhoto}
+          />
+        )}
+
+        {phase === 'ocr-done' && ocrResult && (
+          <OcrDonePhase ocrResult={ocrResult} onRetake={retakePhoto} />
+        )}
 
         {phase === 'result' && result && (
           <ResultPhase
@@ -347,22 +415,199 @@ function PickPhase({
   );
 }
 
-function AnalyzingPhase({ fileName }: { fileName: string }) {
+/**
+ * OCR-only phase (1-3 s typical). Two-stage status text swaps at 1.5 s so the
+ * user always sees movement even when the network is on its slowest path.
+ * Empirically the OCR API itself returns in 1-3 s; the second message is a
+ * Doherty-Threshold cushion ("still working") rather than a true progress step.
+ */
+function OcrRunningPhase({
+  fileName, previewUrl, onRetake,
+}: {
+  fileName: string;
+  previewUrl: string | null;
+  onRetake: () => void;
+}) {
   const { t } = useT();
+  const [elapsedMs, setElapsedMs] = useState(0);
+  useEffect(() => {
+    const started = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsedMs(Date.now() - started);
+    }, 500);
+    return () => window.clearInterval(timer);
+  }, []);
+  const activeStage = elapsedMs < 2500 ? 0 : elapsedMs < 6500 ? 1 : 2;
+  const stageLabel = [
+    t('upload.stage.preparing'),
+    t('upload.stage.reading'),
+    t('upload.stage.checking'),
+  ][activeStage];
   return (
-    <div style={{ padding: '34px 8px', textAlign: 'center' }}>
-      <div style={{
-        width: 38, height: 38, borderRadius: '50%',
-        border: '3px solid var(--p-border)', borderTopColor: 'var(--p-primary)',
-        margin: '0 auto 14px', animation: 'mathema-spin 0.9s linear infinite',
-      }} />
+    <div style={{ padding: '8px 0 4px' }}>
       <style>{`@keyframes mathema-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
-      <div style={{ fontSize: 14, fontWeight: 600 }}>{t('upload.analyzing.title')}</div>
-      <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 4 }}>
-        {fileName}
+      <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: 12, overflow: 'hidden',
+            background: 'var(--p-bg)', border: '1px solid var(--p-border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            {previewUrl ? (
+              <img src={previewUrl} alt={fileName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span className="caption" style={{ fontSize: 11 }}>PDF</span>
+            )}
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 18, height: 18, borderRadius: '50%',
+                border: '2px solid var(--p-border)', borderTopColor: 'var(--p-primary)',
+                animation: 'mathema-spin 0.9s linear infinite', flexShrink: 0,
+              }} />
+              <div style={{ fontSize: 14, fontWeight: 650, color: 'var(--p-ink)' }}>{stageLabel}</div>
+            </div>
+            <div style={{
+              marginTop: 6, fontSize: 12, color: 'var(--p-muted)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {fileName}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginTop: 14 }}>
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              style={{
+                height: 4,
+                borderRadius: 4,
+                background: i <= activeStage ? 'var(--p-primary)' : 'var(--p-border)',
+                transition: 'background .18s ease-out',
+              }}
+            />
+          ))}
+        </div>
       </div>
-      <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 10 }}>
-        {t('upload.analyzing.desc')}
+
+      {elapsedMs >= 8000 && (
+        <div style={{
+          marginTop: 12,
+          padding: '10px 12px',
+          borderRadius: 10,
+          background: 'var(--p-primary-tint)',
+          color: 'var(--p-ink-2)',
+          fontSize: 12.5,
+          lineHeight: 1.45,
+        }}>
+          {t('upload.stage.slow')}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14 }}>
+        <button
+          type="button"
+          onClick={onRetake}
+          style={{
+            background: 'transparent',
+            border: '1px solid var(--p-border)',
+            color: 'var(--p-ink-2)',
+            padding: '8px 14px',
+            borderRadius: 10,
+            cursor: 'pointer',
+            fontSize: 12.5,
+          }}
+        >
+          {t('upload.stage.retake')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * OCR-done phase — recognised problem text shown to the user while solve runs
+ * in the background. Matches the Photomath "instant text" pattern: the user
+ * sees that the photo was read correctly within seconds, even though the full
+ * solution arrives later. "다시 찍기" gives a clean escape when OCR misread
+ * the equation, before the longer solve call starts charging real LLM cost.
+ *
+ * Sub-loader text rotates on a 4 s / 12 s schedule to mirror gpt-5-mini's
+ * empirical 5-15 s solve window from the model bench.
+ */
+function OcrDonePhase({
+  ocrResult, onRetake,
+}: {
+  ocrResult: OcrResult;
+  onRetake: () => void;
+}) {
+  const { t } = useT();
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 4000);
+    const t2 = setTimeout(() => setStage(2), 12000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+  const solvingLabel = [
+    t('upload.solving.thinking'),
+    t('upload.solving.writing'),
+    t('upload.solving.almost'),
+  ][stage];
+  return (
+    <div>
+      {/* Recognised problem card — same visual language as ResultPhase's
+          problem card so the transition to the final state feels continuous
+          (Gestalt similarity / Norman conceptual model). */}
+      <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
+        <div className="eyebrow" style={{ fontSize: 10 }}>{t('upload.ocrDone.title')}</div>
+        <div className="math-big" style={{ fontSize: 15, marginTop: 6, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+          <MathText text={ocrResult.text} />
+        </div>
+      </div>
+
+      {/* Retake CTA — only OCR cost spent so far, no quota consumed. Keeping
+          this button visible during the solve window is intentional: it tells
+          the user the photo isn't locked in, which lowers the "did I just
+          waste a credit?" anxiety the old single-shot flow surfaced. */}
+      <button
+        type="button"
+        onClick={onRetake}
+        style={{
+          marginTop: 10,
+          background: 'transparent',
+          border: '1px solid var(--p-border)',
+          color: 'var(--p-ink-2)',
+          padding: '8px 14px',
+          borderRadius: 10,
+          cursor: 'pointer',
+          fontSize: 12.5,
+        }}
+      >
+        {t('upload.ocrDone.retake')}
+      </button>
+
+      {/* Sub-loader for the in-progress solve. Uses the same spinner geometry
+          as OcrRunningPhase but smaller, so it reads as "next step still
+          happening" rather than "we're back at the start". */}
+      <div style={{
+        marginTop: 18,
+        padding: '14px 16px',
+        background: 'var(--p-primary-tint)',
+        borderRadius: 12,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}>
+        <div style={{
+          width: 22, height: 22, borderRadius: '50%',
+          border: '2.5px solid var(--p-border)', borderTopColor: 'var(--p-primary)',
+          animation: 'mathema-spin 0.9s linear infinite', flexShrink: 0,
+        }} />
+        <div style={{ fontSize: 13, color: 'var(--p-ink)', fontWeight: 500 }}>
+          {solvingLabel}
+        </div>
       </div>
     </div>
   );

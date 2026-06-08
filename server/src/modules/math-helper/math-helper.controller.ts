@@ -1,15 +1,30 @@
-import { BadRequestException, Body, Controller, Get, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Logger, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FreeTierSolverQuotaGuard } from '../billing/free-tier-solver-quota.guard';
+import { OcrService } from '../../infrastructure/ocr/ocr.service';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
 import { MathHelperService } from './math-helper.service';
+
+const FILE_INTERCEPTOR_OPTIONS: MulterOptions = {
+  limits: { fileSize: 12 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok = file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf');
+    cb(ok ? null : new BadRequestException('Only image/* or PDF files are supported'), ok);
+  },
+};
 
 @UseGuards(JwtAuthGuard)
 @Controller('math-helper')
 export class MathHelperController {
-  constructor(private readonly service: MathHelperService) {}
+  private readonly logger = new Logger(MathHelperController.name);
+
+  constructor(
+    private readonly service: MathHelperService,
+    private readonly ocr: OcrService,
+  ) {}
 
   // CI smoke test target — proxies through to the math-helper container's
   // /health so deploy scripts can verify the revision is up.
@@ -30,15 +45,33 @@ export class MathHelperController {
     return this.service.solve(userId, dto);
   }
 
+  // OCR-only endpoint — UploadProblemModal's 2-step flow (Photomath-style
+  // pattern, validated against ChatGPT progressive disclosure). Returns the
+  // extracted text in 1-3 seconds so the user sees their photo was recognised
+  // before the 5-15 second solve LLM call begins.
+  //
+  // Quota guard intentionally absent: OCR alone is cheap and offers no
+  // graded value. Only /solve counts against the Free-tier daily limit, so
+  // a misfired upload doesn't burn quota; the user can retake the photo
+  // immediately from the ocr-done phase without losing a credit.
+  @Post('ocr')
+  @UseInterceptors(FileInterceptor('file', FILE_INTERCEPTOR_OPTIONS))
+  async ocrOnly(@UploadedFile() file: Express.Multer.File | undefined) {
+    if (!file) throw new BadRequestException('file is required (multipart field "file")');
+    const started = Date.now();
+    try {
+      const result = await this.ocr.extract(file);
+      this.logger.log(`OCR extracted ${file.originalname} (${file.mimetype}, ${file.size} bytes) in ${Date.now() - started}ms`);
+      return result;
+    } catch (e) {
+      this.logger.warn(`OCR failed for ${file.originalname} (${file.mimetype}, ${file.size} bytes) after ${Date.now() - started}ms: ${(e as Error)?.message ?? e}`);
+      throw e;
+    }
+  }
+
   @Post('ocr-solve')
   @UseGuards(JwtAuthGuard, FreeTierSolverQuotaGuard)
-  @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: 12 * 1024 * 1024 },
-    fileFilter: (_req, file, cb) => {
-      const ok = file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf');
-      cb(ok ? null : new BadRequestException('Only image/* or PDF files are supported'), ok);
-    },
-  }))
+  @UseInterceptors(FileInterceptor('file', FILE_INTERCEPTOR_OPTIONS))
   ocrSolve(
     @CurrentUser('id') userId: string,
     @UploadedFile() file: Express.Multer.File | undefined,

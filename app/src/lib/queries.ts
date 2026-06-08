@@ -689,13 +689,50 @@ export type NextStudyProblem = {
  *  recording the attempt — UploadProblemModal uses it to deep-link into
  *  SoloProblemScreen for an immediate "Practice now" flow (the 3-day cooldown
  *  applies only to the Test review queue, not direct practice). */
+export type OcrResult = {
+  text: string;
+  latex?: string | null;
+  confidence?: number | null;
+  source: 'gemini';
+};
+export type SolveResult = import('./mathHelper').MathHelperSolveResponse & {
+  problemId?: string | null;
+};
 export type UploadAnalysisResult = {
   extractedText: string;
   latex?: string | null;
   confidence?: number | null;
-  source: 'gemini';
-  result: import('./mathHelper').MathHelperSolveResponse & { problemId?: string | null };
+  source: OcrResult['source'];
+  result: SolveResult;
 };
+
+/**
+ * 2-step Solver path — UploadProblemModal calls extractProblemText first so
+ * the recognised problem text reaches the user in 1-3 s (Photomath-style
+ * "instant recognition" feedback), then solveExtractedText drives the longer
+ * 5-15 s LLM solve while the user reads the OCR card. Backed by
+ * /math-helper/ocr (no quota) + /math-helper/solve (quota-guarded). The
+ * single-shot uploadProblemImage path below is kept for back-compat callers.
+ */
+export const extractProblemText = (file: File): Promise<OcrResult> => {
+  const fd = new FormData();
+  fd.append('file', file);
+  return post<OcrResult>('/math-helper/ocr', fd, { isMultipart: true });
+};
+
+export const solveExtractedText = (
+  question: string,
+  studentAnswer?: string,
+  durationSec?: number,
+  classLevel?: number,
+): Promise<SolveResult> => {
+  const payload: Record<string, unknown> = { question };
+  if (studentAnswer?.trim()) payload.studentAnswer = studentAnswer.trim();
+  if (durationSec && durationSec > 0) payload.durationSec = Math.floor(durationSec);
+  if (classLevel) payload.classLevel = classLevel;
+  return post<SolveResult>('/math-helper/solve', payload);
+};
+
 export const uploadProblemImage = (
   file: File,
   studentAnswer?: string,

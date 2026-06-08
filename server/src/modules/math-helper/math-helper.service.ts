@@ -76,6 +76,7 @@ export class MathHelperService {
   }
 
   async solve(userId: string, dto: SolveMathHelperDto) {
+    const studentAnswer = this.normalizeStudentAnswer(dto.studentAnswer);
     const [profile, classLevel] = await Promise.all([
       this.buildStudentProfile(userId),
       dto.classLevel ? Promise.resolve(dto.classLevel) : this.defaultClassLevel(userId),
@@ -85,16 +86,16 @@ export class MathHelperService {
     const response = await this.request('POST', '/solve', this.withoutUndefined({
       classLevel: classLevel ?? 12,
       question: dto.question,
-      studentAnswer: dto.studentAnswer,
+      studentAnswer,
       studentProfile: profile,
     })) as SolveHelperResponse;
     const durationMs = Date.now() - t0;
     this.assertUsableSolveResponse(response);
 
     // recordSolveAttempt creates the persistent Problem row (when math-helper
-    // returned an answer) and an Attempt; we expose its id so the UploadModal
-    // can route the user straight into SoloProblemScreen for an immediate
-    // "Practice now" path that bypasses the 3-day wrong-note cooldown.
+    // returned an answer). It creates an Attempt only when the student actually
+    // submitted an answer, so "AI 풀이 보기" does not pollute accuracy stats or
+    // auto-file a WrongNote. We still expose problemId for "Practice now".
     const problemId = await this.recordSolveAttempt(userId, dto, response, classLevel).catch((err) => {
       this.logger.warn(`Could not record solve attempt: ${(err as Error).message}`);
       return null;
@@ -107,7 +108,7 @@ export class MathHelperService {
       problemId,
       question: dto.question,
       classLevel: classLevel ?? null,
-      studentAnswer: dto.studentAnswer ?? null,
+      studentAnswer: studentAnswer ?? null,
       response,
       durationMs,
       fewShotCount: profile.fewShotExamples.length,
@@ -353,6 +354,11 @@ export class MathHelperService {
     return Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) as T;
   }
 
+  private normalizeStudentAnswer(answer?: string | null): string | undefined {
+    const trimmed = answer?.trim();
+    return trimmed ? trimmed : undefined;
+  }
+
   private parseJson(text: string): any {
     if (!text) return null;
     try {
@@ -384,20 +390,19 @@ export class MathHelperService {
   }
 
   /**
-   * Record every /solve as a practice Attempt so Home stats (todayMinutes,
-   * streakDays, accuracy) reflect real usage, and so AttemptsRepository's
-   * built-in WrongNote upsert files unknown problems into the user's review
-   * queue automatically when they get the answer wrong (or don't submit one).
+   * Persist every usable /solve as an AI-created practice Problem so the user
+   * can jump into "Practice now" immediately. Only create an Attempt when the
+   * student submitted their own answer; otherwise a solver view would look like
+   * a wrong student attempt and damage WrongNotes, accuracy, streaks, and
+   * weekly reports.
    *
    * Behaviour by branch:
-   *   - studentAnswer absent       → Attempt with empty answer → isCorrect=false
-   *                                  → WrongNote auto-created (problem went into
-   *                                    review pile because the user couldn't solve it)
-   *   - studentAnswer && correct   → Attempt with isCorrect=true, no WrongNote
-   *   - studentAnswer && incorrect → Attempt with isCorrect=false → WrongNote
+   *   - studentAnswer absent       -> Problem only; no Attempt, no WrongNote
+   *   - studentAnswer && correct   -> Attempt with isCorrect=true, no WrongNote
+   *   - studentAnswer && incorrect -> Attempt with isCorrect=false -> WrongNote
    *
    * If the solver itself failed to return an answer we have nothing to grade
-   * against, so we skip silently — math-helper already returned the user a
+   * against, so we skip silently; math-helper already returned the user a
    * polite fallback response.
    */
   private async recordSolveAttempt(
@@ -411,9 +416,12 @@ export class MathHelperService {
     const problemId = await this.createPracticeProblem(userId, dto.question, response, classLevel);
     if (!problemId) return null;
 
+    const studentAnswer = this.normalizeStudentAnswer(dto.studentAnswer);
+    if (!studentAnswer) return problemId;
+
     await this.attempts.create(userId, {
       problemId,
-      answer: dto.studentAnswer ?? '',
+      answer: studentAnswer,
       // durationSec is best-effort wall time from the client; fall back to a
       // small placeholder (15s) when missing so streak-farming a photo upload
       // doesn't credit a full minute for a single tap.
