@@ -7,6 +7,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
+  fetchActivePatterns,
   fetchBalance,
   fetchConceptMastery,
   fetchReviewSchedule,
@@ -16,6 +17,7 @@ import {
 import { useT } from '../../lib/i18n';
 import { TabBar } from './TabBar';
 import { MasteryHeatmap } from '../mastery/MasteryHeatmap';
+import { ActiveErrorPatternList } from '../mastery/ActiveErrorPatterns';
 
 const LABELS = {
   title: { ko: '숙련도', en: 'Mastery', hi: 'दक्षता' },
@@ -26,6 +28,7 @@ const LABELS = {
   },
   heatmap: { ko: '단원별 숙련도 맵', en: 'Mastery heatmap', hi: 'दक्षता हीटमैप' },
   review: { ko: '복습이 필요한 개념', en: 'Concepts to review', hi: 'पुनरावलोकन अवधारणाएँ' },
+  errorPatterns: { ko: '반복 실수 패턴', en: 'Repeated error patterns', hi: 'दोहराई गई गलतियाँ' },
   concepts: { ko: '개념별 상태', en: 'Concept status', hi: 'अवधारणा स्थिति' },
   loading: { ko: '불러오는 중…', en: 'Loading…', hi: 'लोड हो रहा है…' },
   noData: {
@@ -58,6 +61,7 @@ export function MasteryScreen() {
   const balance = useQuery({ queryKey: ['recommendations', 'balance'], queryFn: fetchBalance });
   const review = useQuery({ queryKey: ['review-schedule'], queryFn: fetchReviewSchedule });
   const concepts = useQuery({ queryKey: ['mastery', 'trajectory'], queryFn: fetchConceptMastery });
+  const errorPatterns = useQuery({ queryKey: ['error-patterns', 'active'], queryFn: fetchActivePatterns });
 
   const hasHeatmap = (balance.data?.perUnit.length ?? 0) > 0;
 
@@ -96,6 +100,16 @@ export function MasteryScreen() {
               <span className="label">{L('heatmap', uiLang)}</span>
             </div>
             <MasteryHeatmap perUnit={balance.data!.perUnit} lang={uiLang} embeddedInCard={false} />
+          </>
+        )}
+
+        {(errorPatterns.data?.length ?? 0) > 0 && (
+          <>
+            <div className="section-h" style={{ marginTop: 20 }}>
+              <span className="label">{L('errorPatterns', uiLang)}</span>
+              <span className="more">{errorPatterns.data!.length}</span>
+            </div>
+            <ActiveErrorPatternList patterns={errorPatterns.data!} lang={uiLang} />
           </>
         )}
 
