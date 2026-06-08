@@ -363,6 +363,8 @@ model User {
   /// totpEnabledAt is also stamped (the /auth/mfa/verify step).
   totpSecret      String?
   totpEnabledAt   DateTime?
+  /// Streak + review reminder pushes (distinct from DeviceToken.marketingEnabled).
+  pushRemindersEnabled Boolean @default(true)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -392,10 +394,65 @@ model User {
   reviewedDrafts          ContentDraft[]        @relation("ReviewedDrafts")
   authDevices             AuthDevice[]
   subscription            Subscription?
+  placementProfile        UserPlacementProfile?
+  firstSessionPlan        FirstSessionPlan?
+  achievements            UserAchievement[]
 
   @@index([examDate])
   @@index([deletedAt])
   @@index([tenantId])
+}
+
+/// Adaptive placement snapshot — separate from MasteryTrajectory (KD1/KD2).
+model UserPlacementProfile {
+  id                      String   @id @default(uuid())
+  userId                  String   @unique
+  /// Diagnostic / adaptive session that produced this profile.
+  sessionId               String?
+  /// GradeLevel or KoreanGrade string at placement time.
+  estimatedGradeBand      String?
+  /// PlacementConceptScore[] — placementScore, standardError per concept.
+  conceptScores           Json     @default("[]")
+  weakConceptIds          String[] @default([])
+  recommendedChapterCodes String[] @default([])
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+/// Today-plan seed from placement — decoupled from recommendations runtime (PR-07).
+model FirstSessionPlan {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  /// FirstSessionCard[] — chapterCode, label, route, priority.
+  cards       Json      @default("[]")
+  seededAt    DateTime  @default(now())
+  completedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum AchievementKind {
+  FIRST_CONCEPT_STEP
+  FIRST_PRACTICE_CORRECT
+  FIRST_WRONGNOTE_MASTERED
+}
+
+/// First-session achievements for D0 engagement (PR-21).
+model UserAchievement {
+  id       String          @id @default(uuid())
+  userId   String
+  kind     AchievementKind
+  earnedAt DateTime        @default(now())
+  metadata Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind])
+  @@index([userId, earnedAt])
 }
 
 /// DPDP/GDPR consent record — append-only.
