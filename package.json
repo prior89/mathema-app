@@ -10,10 +10,13 @@
   ],
   "scripts": {
     "dev": "concurrently -k -n server,app,solve -c green,cyan,magenta \"npm -w server run start:dev\" \"npm -w app run dev\" \"npm run dev:math-helper\"",
+    "dev:local": "npm run db:up && npm run dev",
     "dev:web": "concurrently -k -n server,app -c green,cyan \"npm -w server run start:dev\" \"npm -w app run dev\"",
     "dev:server": "npm -w server run start:dev",
     "dev:app": "npm -w app run dev",
     "dev:math-helper": "node scripts/math-helper.cjs dev",
+    "android:dev": "node scripts/android-live-reload.mjs",
+    "android:list": "npm -w app exec cap run android -- --list",
     "math-helper:install": "node scripts/math-helper.cjs install",
     "build": "npm -w server run build && npm -w app run build",
     "typecheck": "npm -w server run typecheck && npm -w app exec tsc -- --noEmit",

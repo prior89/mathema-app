@@ -9,6 +9,10 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Capacitor live reload and Playwright both target this exact port.
+    // Fail loudly if another process owns it instead of silently moving to
+    // 5174 and leaving the Android WebView connected to a stale server.
+    strictPort: true,
     host: true,
     allowedHosts: ['.trycloudflare.com', '.ngrok-free.app', '.ngrok.io'],
     proxy: {
@@ -25,7 +29,6 @@ export default defineConfig({
           'vendor-query': ['@tanstack/react-query'],
           'vendor-charts': ['recharts'],
           'vendor-icons': ['lucide-react'],
-          'vendor-sentry': ['@sentry/react'],
           // KaTeX (~260KB) is only needed where MathText renders math —
           // ConceptLesson, Notes, Review queue, Mock play. Splitting it
           // explicitly keeps it out of the cold-start payload for Home

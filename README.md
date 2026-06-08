@@ -47,6 +47,36 @@ Open <http://localhost:5173>. The demo auto-login (`VITE_ENABLE_DEMO_AUTO_LOGIN=
 signs in with the seeded `polopot123@gmail.com` account (still the seed user; the
 production admin allowlist is `VeraStudy01@gmail.com,polopot123@gmail.com`).
 
+### Local development without rebuilding the AAB
+
+Use the AAB only for Play Console release candidates. Normal development runs
+from Vite, so React/CSS changes update immediately through HMR.
+
+```bash
+# Terminal 1: start Postgres, Redis, Nest, Vite, and math-helper
+npm run dev:local
+
+# Terminal 2: optional Android emulator or USB-device live reload
+npm run android:dev
+```
+
+`android:dev` lists available Android targets, installs one debug build, and
+uses `adb reverse` to connect the WebView to `http://127.0.0.1:5173`. After
+that initial native install, ordinary web-code changes do not require
+`cap sync`, an APK, or an AAB. Rebuild the native app only after changing a
+Capacitor plugin, Android manifest/resource, Gradle configuration, or other
+native code.
+
+Use `npm run android:list` to check emulator/device target names. A specific
+target can be selected non-interactively:
+
+```bash
+npm run android:dev -- --target-name Pixel_7a
+```
+
+The release Android network policy still blocks cleartext traffic. Only the
+Gradle `debug` source set permits HTTP for local live reload.
+
 ---
 
 ## What you get

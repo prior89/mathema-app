@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-only overlay for Capacitor live reload.
+
+  The release resource with the same name continues to reject cleartext
+  traffic. Android's debug source set replaces it only in debug builds, which
+  lets the WebView load the local Vite server over adb reverse.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
