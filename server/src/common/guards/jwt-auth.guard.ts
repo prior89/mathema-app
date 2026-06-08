@@ -56,6 +56,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       || (method === 'PATCH' && normalized === '/users/me')
       || (method === 'POST' && normalized === '/auth/resend-verification')
       || (method === 'POST' && normalized === '/auth/logout')
+      // Analytics is fire-and-forget and still privacy-gated by ConsentKind.
+      // Blocking it at the email-verification wall creates noisy 403 loops
+      // while the user is trying to verify, without protecting any learning or
+      // billing surface.
+      || (method === 'POST' && normalized === '/analytics/events')
       || (method === 'DELETE' && normalized === '/users/me')
       // Onboarding diagnostic (4-problem warm-up) must finish before the
       // user can verify in their inbox in a different tab — otherwise the

@@ -157,7 +157,7 @@ function Flow({ onFinish }: { onFinish: () => void }) {
 
 // ─────────── Shared scaffolding ───────────
 function TopScaffold({
-  step, total = 7, onBack, showBack = true, right,
+  step, total = STEP_FLOW.length - 1, onBack, showBack = true, right,
 }: { step: number; total?: number; onBack?: () => void; showBack?: boolean; right?: React.ReactNode }) {
   const { t } = useT();
   return (

@@ -63,6 +63,17 @@ const DEMO_AUTO_LOGIN =
   DEMO_EMAIL.length > 0 &&
   DEMO_PASSWORD.length > 0;
 
+function isAuthRejection(e: any): boolean {
+  const status = e?.response?.status;
+  const code = e?.response?.data?.error?.code ?? e?.response?.data?.code;
+  return status === 401
+    || status === 403
+    || code === 'device_displaced'
+    || code === 'device_mismatch'
+    || code === 'token_revoked'
+    || code === 'invalid_refresh_token';
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Me | null>(null);
   const [ready, setReady] = useState(false);
@@ -115,8 +126,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const me = await get<Me>('/users/me');
         setUser(me);
-      } catch {
-        tokens.clear();
+      } catch (e) {
+        // Do not erase a valid-looking local session just because the backend
+        // or network had a transient startup hiccup. api.ts already clears
+        // tokens when /auth/refresh fails with a real auth rejection; this
+        // boot path should only clear on that same class of errors.
+        if (isAuthRejection(e)) tokens.clear();
       } finally {
         setReady(true);
       }

@@ -189,15 +189,25 @@ export class AuthService {
         country: 'IN' as any,
         gradeLevel: 'CLASS_11' as any,
         role: 'STUDENT' as any,
+        emailVerifiedAt: new Date(),
       });
+    } else if (!(user as any).emailVerifiedAt) {
+      // Dev-login is a local/internal shortcut. If it lands on the email
+      // verification wall, developers and internal testers cannot reach the
+      // app to validate flows. Production cannot call this branch because
+      // devLogin is gated by NODE_ENV=development + ENABLE_DEV_LOGIN=true.
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date() },
+      }) as any;
     }
     // DPDP 컴플라이언스 — DATA_PROCESSING 이 아직 활성 아니면 부여 (idempotent).
     // 선택 동의(ANALYTICS/AI_TRAINING/MARKETING)는 온보딩 08 화면에서 별도 grant.
-    const hasDP = await this.privacy.isActive(user.id, 'DATA_PROCESSING' as any);
-    if (!hasDP) {
-      await this.privacy.grant(user.id, 'DATA_PROCESSING' as any, { ip: ctx.ip, ua: ctx.ua });
-    }
     const verifiedUser = user!;
+    const hasDP = await this.privacy.isActive(verifiedUser.id, 'DATA_PROCESSING' as any);
+    if (!hasDP) {
+      await this.privacy.grant(verifiedUser.id, 'DATA_PROCESSING' as any, { ip: ctx.ip, ua: ctx.ua });
+    }
     await this.bindAndDisplace({
       userId: verifiedUser.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
     });

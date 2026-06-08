@@ -107,7 +107,7 @@ async function bootstrap() {
   // auth/CORS. Production stays strict — this only triggers under NODE_ENV
   // !== 'production', and only for the localhost loopback.
   const isDev = process.env.NODE_ENV !== 'production';
-  const devLocalhostRange = /^https?:\/\/localhost:(517[0-9]|3000|4173)$/;
+  const devLocalhostRange = /^https?:\/\/(localhost|127\.0\.0\.1):(517[0-9]|3000|4173)$/;
   app.enableCors({
     origin: (origin, cb) => {
       // Allow requests with no Origin header (curl, mobile WebView same-origin

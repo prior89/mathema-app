@@ -23,6 +23,7 @@ export default function LoginPage() {
   // /auth/dev-login → "dev-login disabled in production" 에러를 받지 않도록).
   const [email, setEmail] = useState(import.meta.env.DEV ? 'admin' : '');
   const [password, setPassword] = useState(import.meta.env.DEV ? 'admin' : '');
+  const emailInputType = import.meta.env.DEV ? 'text' : 'email';
   const [err, setErr] = useState<string | null>(null);
   // DEV-7 -- displaced-session notice: when api.ts redirects from /auth/refresh
   // with code=device_displaced it sets sessionStorage.matheo.loginNotice; show
@@ -172,9 +173,11 @@ export default function LoginPage() {
                 <div className="field">
                   <label>{t('login.field.email')}</label>
                   <input
-                    type="email"
+                    type={emailInputType}
                     inputMode="email"
                     autoFocus
+                    autoCapitalize="none"
+                    spellCheck={false}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     autoComplete="username"

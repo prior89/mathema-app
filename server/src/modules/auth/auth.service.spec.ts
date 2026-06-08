@@ -248,6 +248,55 @@ describe('AuthService', () => {
       const { svc } = build();
       await expect(svc.devLogin()).rejects.toBeInstanceOf(UnauthorizedException);
     });
+
+    it('creates a verified local user for the dev shortcut', async () => {
+      process.env.NODE_ENV = 'development';
+      process.env.ENABLE_DEV_LOGIN = 'true';
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue(null);
+      users.create.mockResolvedValue({
+        id: 'dev-user',
+        email: 'admin@mathema.app',
+        emailVerifiedAt: new Date(),
+      });
+      const jwt = mockJwt();
+      jwt.sign.mockImplementation((p) => `t-${(p as any).sub}`);
+      const { svc } = build({ users, jwt });
+
+      await svc.devLogin();
+
+      expect(users.create).toHaveBeenCalledWith(expect.objectContaining({
+        email: 'admin@mathema.app',
+        emailVerifiedAt: expect.any(Date),
+      }));
+    });
+
+    it('marks an existing dev shortcut user as verified', async () => {
+      process.env.NODE_ENV = 'development';
+      process.env.ENABLE_DEV_LOGIN = 'true';
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue({
+        id: 'dev-user',
+        email: 'admin@mathema.app',
+        emailVerifiedAt: null,
+      });
+      const prisma = mockPrisma();
+      prisma.user.update.mockResolvedValue({
+        id: 'dev-user',
+        email: 'admin@mathema.app',
+        emailVerifiedAt: new Date(),
+      });
+      const jwt = mockJwt();
+      jwt.sign.mockImplementation((p) => `t-${(p as any).sub}`);
+      const { svc } = build({ users, prisma, jwt });
+
+      await svc.devLogin();
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'dev-user' },
+        data: { emailVerifiedAt: expect.any(Date) },
+      });
+    });
   });
 
   // ─────── refresh ───────
