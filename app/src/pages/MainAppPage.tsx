@@ -6,6 +6,7 @@
  */
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomeScreen } from '../components/main/HomeScreen';
+import { MasteryScreen } from '../components/main/MasteryScreen';
 import { LearnScreen } from '../components/main/LearnScreen';
 import { ConceptLessonScreen } from '../components/main/ConceptLessonScreen';
 import { NotesListScreen } from '../components/main/NotesListScreen';
@@ -39,6 +40,7 @@ export default function MainAppPage() {
         <div className="mathema-phone">
           <Routes>
             <Route index element={<HomeScreen />} />
+            <Route path="mastery" element={<MasteryScreen />} />
             <Route path="learn" element={<LearnScreen />} />
             <Route path="learn/:code" element={<ConceptLessonScreen />} />
             <Route path="study" element={<StudyScreen />} />

@@ -270,9 +270,27 @@ export function HomeScreen() {
             );
           })()}
 
-          {/* 12-week heatmap removed per user request — was always-zero on
-              cold starts and the month labels read as dead chrome. Streak +
-              activity surface in the per-chapter progress cards instead. */}
+          {/* Mastery map entry — unit heatmap + review schedule (PR-12). */}
+          <div className="section-h" style={{ marginTop: 8 }}>
+            <span className="label">{t('home.mastery.section')}</span>
+            <button
+              type="button"
+              className="more"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+              onClick={() => nav('/app/mastery')}
+            >
+              {t('home.mastery.viewAll')} →
+            </button>
+          </div>
+          <div
+            className="card"
+            style={{ padding: 14, cursor: 'pointer' }}
+            onClick={() => nav('/app/mastery')}
+          >
+            <div style={{ fontSize: 13, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
+              {t('home.mastery.desc')}
+            </div>
+          </div>
 
           <div style={{ height: 16 }} />
         </div>
