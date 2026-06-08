@@ -28,7 +28,8 @@
     "seed:india-mastery": "ts-node scripts/seed-india-mastery-problems.ts",
     "import:ncert": "ts-node scripts/import-ncert.ts",
     "publish:bulk": "ts-node scripts/bulk-publish.ts",
-    "setup:ncert": "npm run import:ncert && npm run publish:bulk"
+    "setup:ncert": "npm run import:ncert && npm run publish:bulk",
+    "verify:diagnostic-pools": "ts-node scripts/verify-diagnostic-pools.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",
