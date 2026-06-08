@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as admin from 'firebase-admin';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { ReviewSchedulerService } from '../wrong-notes/review-scheduler.service';
 
 /**
  * Firebase Cloud Messaging — Android push notifications.
@@ -23,6 +24,7 @@ export class FcmService {
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly scheduler: ReviewSchedulerService,
   ) {
     const projectId = this.config.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = this.config.get<string>('FIREBASE_CLIENT_EMAIL');
@@ -72,23 +74,18 @@ export class FcmService {
   }
 
   /**
-   * SM-2 due reminder — 복습 만기 오답이 있는 사용자에게 푸시.
+   * WrongNote due reminder — ReviewScheduler unified due set per user.
    * 매일 IST 08:00 자동 실행.
    */
   @Cron('0 8 * * *', { name: 'due-wrong-notes', timeZone: 'Asia/Kolkata' })
   async triggerDueWrongNotes() {
-    const now = new Date();
-    const due = await this.prisma.wrongNote.groupBy({
-      by: ['userId'],
-      where: { status: { not: 'MASTERED' }, nextReviewAt: { lte: now } },
-      _count: true,
-    });
+    const due = await this.scheduler.getDueCountsByUser();
     let total = 0;
     for (const d of due) {
       const r = await this.sendToUser(d.userId, {
         title: 'Time to revise',
-        body: `${d._count} wrong note${d._count > 1 ? 's are' : ' is'} due for review.`,
-        data: { type: 'wrongnote.due', count: String(d._count) },
+        body: `${d.count} wrong note${d.count > 1 ? 's are' : ' is'} due for review.`,
+        data: { type: 'wrongnote.due', count: String(d.count) },
       });
       total += r.sent;
     }
