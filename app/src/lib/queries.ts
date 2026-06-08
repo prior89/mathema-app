@@ -15,6 +15,16 @@ export type RecommendCard = {
   chapterCode?: string | null;
   route?: string | null;
 };
+export type WrongNoteInsightJson = {
+  rootCause: string;
+  correctConcept: string;
+  drillSteps: string[];
+  similarPatterns: string[];
+  confidenceCalibration: 'over' | 'under' | 'aligned';
+  reviewIntervalDays: number;
+  lang: 'ko' | 'en';
+};
+
 export type WrongNoteCard = {
   id: string; problemId: string;
   /** ConceptLesson chapter code — populated for NCERT-derived problems; null for legacy seed. */
@@ -30,6 +40,7 @@ export type WrongNoteCard = {
   problemFormula?: string | null;
   unit: string; subUnit: string;
   errorType: string; errorTypeRaw: string; insight: string;
+  insightJson?: WrongNoteInsightJson | null;
   diff: string; date: string; similarCount: number; status: string;
   // SM-2
   easinessFactor: number; repetitionCount: number; intervalDays: number;

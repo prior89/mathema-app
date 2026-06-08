@@ -112,7 +112,7 @@ export function NotesListScreen() {
             <div
               key={n.id}
               className="note-card"
-              onClick={() => nav(`/app/practice/${n.problemId}`)}
+              onClick={() => nav(`/app/notes/${n.id}`)}
             >
                 {/* Attribution (e.g. "NCERT Class 11 Mathematics, Ch.8 Ex.8.2
                     Q.11 (derived for matheo, Reprint 2024-25)") lives on
