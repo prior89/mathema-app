@@ -29,6 +29,18 @@ export const masterWrongNoteByProblem = (problemId: string) =>
     `/wrong-notes/by-problem/${problemId}/master`,
   );
 
+/** Student rates an AI artifact (solver explanation, insight, etc.). */
+export const submitAiFeedback = (body: {
+  targetType: 'EXPLANATION' | 'AI_INSIGHT' | 'WEEKLY_REPORT' | 'NEXT_PROBLEM';
+  targetId: string;
+  aiInsightRating: number;
+  comment?: string;
+}) =>
+  post<{ id: string }>('/feedback', {
+    raterType: 'STUDENT',
+    ...body,
+  });
+
 async function uploadFormFile<T>(url: string, field: 'image' | 'pdf', file: File): Promise<T> {
   const fd = new FormData();
   fd.append(field, file);

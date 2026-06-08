@@ -16,6 +16,8 @@ import {
 import { useT } from '../../lib/i18n';
 import MathText from '../MathText';
 import { Glyph } from '../onboarding/Glyph';
+import { LearningEvents } from '../../lib/learning-events';
+import { AiFeedbackBar } from '../AiFeedbackBar';
 
 type Props = {
   open: boolean;
@@ -130,6 +132,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     setPhase('ocr-running');
     setError(null);
     setOcrResult(null);
+    LearningEvents.solverOcrStart();
     try {
       // Step 1 — OCR only (Photomath-style instant recognition feedback).
       // Resolves in 1-3 s and unblocks the user's "is my photo readable?"
@@ -138,6 +141,11 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       if (requestSeq !== requestSeqRef.current) return;
       setOcrResult(ocr);
       setPhase('ocr-done');
+      LearningEvents.solverOcrDone({
+        confidence: ocr.confidence ?? null,
+        source: ocr.source,
+        textLen: ocr.text.length,
+      });
 
       // Step 2 — solve runs while the OCR card is on screen. The user reads
       // the recognised text and (optionally) retakes the photo during this
@@ -154,6 +162,10 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
         result: solveResponse,
       });
       setPhase('result');
+      LearningEvents.solverResultShown({
+        problemId: solveResponse.problemId ?? null,
+        hasSteps: (solveResponse.steps?.length ?? 0) > 0,
+      });
     } catch (e) {
       if (requestSeq !== requestSeqRef.current) return;
       const msg = extractErrorMessage(e, t) ?? t('upload.error.failed');
@@ -165,6 +177,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   const practiceNow = () => {
     const problemId = result?.result.problemId;
     if (!problemId) return;
+    LearningEvents.solverPracticeNow(problemId);
     onClose();
     nav(`/app/practice/${problemId}`);
   };
@@ -179,6 +192,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
 
   /** From ocr-done: user spots a misread, taps "다시 찍기", returns to picker. */
   const retakePhoto = () => {
+    LearningEvents.solverOcrRetake();
     requestSeqRef.current += 1;
     setPhase('pick');
     setOcrResult(null);
@@ -715,6 +729,10 @@ function ResultPhase({
           <Glyph.Check accent="currentColor" size={14} />
           <span>{solve.isStudentCorrect ? t('upload.result.correct') : t('upload.result.wrong')}</span>
         </div>
+      )}
+
+      {solve.problemId && (
+        <AiFeedbackBar targetId={solve.problemId} targetType="EXPLANATION" />
       )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>

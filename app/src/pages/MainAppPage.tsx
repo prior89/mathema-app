@@ -25,6 +25,7 @@ import { AdminDraftEditorScreen } from '../components/admin/AdminDraftEditorScre
 import { AdminKoreanStudyProblemNewScreen } from '../components/admin/AdminKoreanStudyProblemNewScreen';
 import { AdminMasterySetScreen } from '../components/admin/AdminMasterySetScreen';
 import { AdminReportsScreen } from '../components/admin/AdminReportsScreen';
+import { AdminLearningMetricsScreen } from '../components/admin/AdminLearningMetricsScreen';
 import '../styles/onboarding.css';
 
 export default function MainAppPage() {
@@ -71,6 +72,7 @@ export default function MainAppPage() {
             <Route path="admin/ko-study-problems/new" element={<AdminKoreanStudyProblemNewScreen />} />
             <Route path="admin/mastery-set" element={<AdminMasterySetScreen />} />
             <Route path="admin/reports" element={<AdminReportsScreen />} />
+            <Route path="admin/learning-metrics" element={<AdminLearningMetricsScreen />} />
             <Route path="*" element={<Navigate to="." replace />} />
           </Routes>
         </div>

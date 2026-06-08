@@ -1,5 +1,5 @@
 /* Wrong notes list — features-b.jsx ScreenNotesList ported with real backend data. */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchWrongNotes, fetchWrongNotesStats, fetchPatterns } from '../../lib/queries';
@@ -8,6 +8,7 @@ import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { LearningEvents } from '../../lib/learning-events';
 
 type StatusFilter = 'active' | 'mastered' | 'all';
 
@@ -27,6 +28,16 @@ export function NotesListScreen() {
   const stats = useQuery({ queryKey: ['wn-stats'], queryFn: fetchWrongNotesStats });
   const notes = useQuery({ queryKey: ['wn-list'], queryFn: () => fetchWrongNotes() });
   const patterns = useQuery({ queryKey: ['patterns'], queryFn: fetchPatterns });
+
+  useEffect(() => {
+    if (stats.data) {
+      LearningEvents.notesTabOpen({
+        total: stats.data.total,
+        active: stats.data.total - stats.data.mastered,
+        mastered: stats.data.mastered,
+      });
+    }
+  }, [stats.data?.total, stats.data?.mastered]);
 
   const visibleNotes = (notes.data ?? []).filter((n) => {
     const s = (n.status ?? '').toLowerCase();

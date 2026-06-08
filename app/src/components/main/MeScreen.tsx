@@ -75,6 +75,14 @@ export function MeScreen() {
               <div className="section-h">
                 <span className="label">{t('me.admin.section')}</span>
               </div>
+              <div onClick={() => nav('/app/admin/learning-metrics')} className="plan-card" style={{ cursor: 'pointer' }}>
+                <div className="badge" style={{ background: 'var(--p-accent-tint)', color: 'var(--p-ink)', fontStyle: 'normal', fontSize: 16 }}>📊</div>
+                <div className="info">
+                  <div className="ttl">학습 효과 KPI</div>
+                  <div className="sub">North Star · Retention · Mastery · AI 품질</div>
+                </div>
+                <Glyph.ChevronR accent="var(--p-muted)" size={16} />
+              </div>
               <div onClick={() => nav('/app/admin/ingest')} className="plan-card" style={{ cursor: 'pointer' }}>
                 <div className="badge" style={{ background: 'var(--p-primary-tint)', color: 'var(--p-primary)', fontStyle: 'normal', fontSize: 16 }}>↑</div>
                 <div className="info">
