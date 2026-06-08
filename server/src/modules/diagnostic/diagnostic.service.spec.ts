@@ -42,9 +42,11 @@ function build() {
     lessonProblemSet: { findMany: jest.fn().mockResolvedValue([]) },
   };
   const attempts = { create: jest.fn() };
+  const firstSessionPlan = { seedFirstSession: jest.fn().mockResolvedValue([]) };
   return {
     prisma,
-    service: new DiagnosticService(prisma as any, attempts as any),
+    firstSessionPlan,
+    service: new DiagnosticService(prisma as any, attempts as any, firstSessionPlan as any),
   };
 }
 

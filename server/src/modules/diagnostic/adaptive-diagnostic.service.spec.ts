@@ -47,12 +47,14 @@ function build() {
   };
   const config = { get: jest.fn().mockReturnValue('100') };
   const flags = new FeatureFlagsService(config as unknown as ConfigService);
+  const firstSessionPlan = { seedFirstSession: jest.fn().mockResolvedValue([]) };
   const svc = new AdaptiveDiagnosticService(
     prisma as never,
     attempts as never,
     flags,
+    firstSessionPlan as never,
   );
-  return { svc, prisma, attempts, flags };
+  return { svc, prisma, attempts, flags, firstSessionPlan };
 }
 
 describe('AdaptiveDiagnosticService', () => {

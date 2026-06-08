@@ -148,7 +148,12 @@ export function HomeScreen() {
                 // KPI 추적 — 추천 클릭. 추후 acceptRate 산출에 사용.
                 track('today.card.click', {
                   unitId: c.unitId, tag: c.tag, title: c.title, type: c.type,
+                  chapterCode: c.chapterCode,
                 });
+                if (c.chapterCode) {
+                  track('today.card.opened-lesson', { chapterCode: c.chapterCode });
+                  return nav(`/app/learn/${c.chapterCode}`);
+                }
                 if (!c.unitId) return nav('/app/learn');
                 try {
                   const lessons = await fetchConceptLessonsForUnit(c.unitId);

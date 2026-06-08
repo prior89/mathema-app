@@ -9,10 +9,12 @@ import { AdaptiveNextProblemService } from './services/adaptive-next-problem.ser
 import { SimilarProblemService } from './services/similar-problem.service';
 import { ReviewScheduleService } from './services/review-schedule.service';
 import { RecommendationMetricsService } from './services/recommendation-metrics.service';
+import { FirstSessionPlanService } from './first-session-plan.service';
 
 @Module({
   controllers: [RecommendationsController],
   providers: [
+    FirstSessionPlanService,
     RecommendationsService,
     FocusOnMistakesStrategy,
     ReinforceWeaknessStrategy,
@@ -24,6 +26,7 @@ import { RecommendationMetricsService } from './services/recommendation-metrics.
     RecommendationMetricsService,
   ],
   exports: [
+    FirstSessionPlanService,
     RecommendationsService,
     StudyBalanceService,
     AdaptiveNextProblemService,

@@ -11,6 +11,9 @@ export type RecommendCard = {
   tag: string; tagColor: string; unit: string; title: string;
   reason: string; time: string; type: string; icon: string;
   unitId: string | null;
+  /** First-session plan direct route (PR-07). */
+  chapterCode?: string | null;
+  route?: string | null;
 };
 export type WrongNoteCard = {
   id: string; problemId: string;

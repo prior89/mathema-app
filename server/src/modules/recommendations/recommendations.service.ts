@@ -6,6 +6,7 @@ import { Lang } from '../../common/i18n/current-lang.decorator';
 import { StudyBalanceService } from './services/study-balance.service';
 import { generateAdaptivePlan, AdaptivePlan } from '../../infrastructure/ai/langchain/chains/adaptive-recommendation.chain';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { FirstSessionPlanService } from './first-session-plan.service';
 
 /**
  * 대시보드 "오늘의 맞춤 학습" 카드 — 데이터가 있을 때만 실제 카드 반환.
@@ -28,6 +29,7 @@ export class RecommendationsService {
     private readonly maintain: MaintainStrengthStrategy,
     private readonly balance: StudyBalanceService,
     private readonly prisma: PrismaService,
+    private readonly firstSessionPlan: FirstSessionPlanService,
   ) {}
 
   /** 단원별 공부 시간 균형 분석 — Weakness Dashboard 의 데이터 원천. */
@@ -86,6 +88,11 @@ export class RecommendationsService {
    * 둘 다 blast radius 크므로 service self-contained가 가장 surgical.
    */
   async today(userId: string, lang: Lang = 'en') {
+    const planCards = await this.firstSessionPlan.getActiveCards(userId);
+    if (planCards.length > 0) {
+      return this.firstSessionPlan.toRecommendCards(planCards, lang);
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { country: true },

@@ -8,6 +8,7 @@ import { GradeLevel, KoreanGrade } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AttemptsService } from '../attempts/attempts.service';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
+import { FirstSessionPlanService } from '../recommendations/first-session-plan.service';
 import {
   ADAPTIVE_DIAGNOSTIC_CONFIG,
   AdaptiveProblemPayload,
@@ -40,6 +41,7 @@ export class AdaptiveDiagnosticService {
     private readonly prisma: PrismaService,
     private readonly attempts: AttemptsService,
     private readonly flags: FeatureFlagsService,
+    private readonly firstSessionPlan: FirstSessionPlanService,
   ) {}
 
   async start(userId: string) {
@@ -234,6 +236,8 @@ export class AdaptiveDiagnosticService {
 
     const placementPayload: PlacementConceptScore[] = conceptScores;
 
+    const recommendedChapterCodes = [...new Set(weakChapters)].slice(0, 5);
+
     await this.prisma.userPlacementProfile.upsert({
       where: { userId },
       create: {
@@ -242,15 +246,21 @@ export class AdaptiveDiagnosticService {
         estimatedGradeBand,
         conceptScores: placementPayload,
         weakConceptIds,
-        recommendedChapterCodes: [...new Set(weakChapters)].slice(0, 5),
+        recommendedChapterCodes,
       },
       update: {
         sessionId,
         estimatedGradeBand,
         conceptScores: placementPayload,
         weakConceptIds,
-        recommendedChapterCodes: [...new Set(weakChapters)].slice(0, 5),
+        recommendedChapterCodes,
       },
+    });
+
+    const firstSessionPlan = await this.firstSessionPlan.seedFirstSession(userId, {
+      recommendedChapterCodes,
+      weakConceptIds,
+      estimatedGradeBand,
     });
 
     const conceptIds = [...new Set(snapshots.flatMap((s) => s.conceptIds))];
@@ -275,8 +285,9 @@ export class AdaptiveDiagnosticService {
         estimatedGradeBand,
         conceptScores: placementPayload,
         weakConceptIds,
-        recommendedChapterCodes: [...new Set(weakChapters)].slice(0, 5),
+        recommendedChapterCodes,
       },
+      firstSessionPlan,
     };
   }
 
