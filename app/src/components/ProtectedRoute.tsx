@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import type { UserRole } from '../lib/queries';
 import { LoadingSplash } from './Brand';
 
 // Has the user reached the end of /onboarding (= ScreenReady.finalize ran
@@ -24,7 +25,13 @@ function onboardingCompletedLocally(): boolean {
   }
 }
 
-export default function ProtectedRoute({ children }: { children: JSX.Element }) {
+type ProtectedRouteProps = {
+  children: JSX.Element;
+  /** When set, only these roles may access the route (PR-04b). */
+  roles?: UserRole[];
+};
+
+export default function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   const { user, ready } = useAuth();
   const location = useLocation();
   if (!ready) return <LoadingSplash />;
@@ -44,6 +51,12 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
   // missed a beat; we don't want to loop them).
   if (!user.gradeLevel && !onboardingCompletedLocally()) {
     return <Navigate to="/onboarding" replace />;
+  }
+  if (roles && roles.length > 0) {
+    const userRole = user.role ?? 'STUDENT';
+    if (!roles.includes(userRole)) {
+      return <Navigate to="/app" replace />;
+    }
   }
   return children;
 }

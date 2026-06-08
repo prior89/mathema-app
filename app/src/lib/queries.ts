@@ -115,6 +115,7 @@ export type Me = {
   gradeLevel?: GradeLevel | null;
   studyGoal?: StudyGoal | null;
   role?: UserRole;
+  pushRemindersEnabled?: boolean;
   tenantId?: string | null;
   country?: CountryCode;
 };

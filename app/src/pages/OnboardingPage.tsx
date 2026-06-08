@@ -1151,7 +1151,13 @@ function ScreenReady({
       // onboardingCompleted localStorage flag (set further down) is the
       // safety net that lets ProtectedRoute let them through if they later
       // hit the bouncing case anyway.
-      await patch<Me>('/users/me', { name, gradeLevel: GRADE_MAP[grade], studyGoal: goal });
+      await patch<Me>('/users/me', {
+        name,
+        gradeLevel: GRADE_MAP[grade],
+        studyGoal: goal,
+        role: role || 'STUDENT',
+        pushRemindersEnabled: notif,
+      });
 
       // 선택 동의 3종을 백엔드 Consent 테이블에 저장 (DPDP 이력). 이건 여전히
       // best-effort — consent 저장 실패는 사용자가 onboarding 진입을 막을 만큼
