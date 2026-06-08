@@ -769,6 +769,12 @@ const ko = {
   'upload.error.close': '닫기',
   'upload.error.retry': '다시 시도',
 
+  'ai.feedback.prompt': '이 설명이 도움이 됐나요?',
+  'ai.feedback.great': '도움 됐어요',
+  'ai.feedback.ok': '보통이에요',
+  'ai.feedback.bad': '별로예요',
+  'ai.feedback.thanks': '피드백 감사합니다',
+
   // ===== Review Queue Screen =====
   'review.back': '뒤로',
   'review.eyebrow': '복습 대기열',
@@ -1835,6 +1841,12 @@ const en: typeof ko = {
   'upload.error.solverUnavailable': 'Could not finish the AI solution. Please try again in a moment.',
   'upload.error.close': 'Close',
   'upload.error.retry': 'Try again',
+
+  'ai.feedback.prompt': 'Was this explanation helpful?',
+  'ai.feedback.great': 'Helpful',
+  'ai.feedback.ok': 'Okay',
+  'ai.feedback.bad': 'Not helpful',
+  'ai.feedback.thanks': 'Thanks for your feedback',
 
   // Review Queue Screen
   'review.back': 'Back',

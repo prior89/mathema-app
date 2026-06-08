@@ -10,7 +10,7 @@
  * no full solution reveal. This is the deliberate forced-sequential design
  * the user spec'd.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchProblemHint, fetchReviewQueueNext } from '../../lib/queries';
@@ -20,6 +20,7 @@ import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
+import { LearningEvents } from '../../lib/learning-events';
 
 const HINT_UNLOCK_AFTER = 3; // wrong submits before Hint button activates
 
@@ -29,6 +30,12 @@ export function ReviewQueueScreen() {
   const { t } = useT();
 
   const queue = useQuery({ queryKey: ['queue-next'], queryFn: fetchReviewQueueNext });
+
+  useEffect(() => {
+    if (queue.data) {
+      LearningEvents.reviewQueueOpen(queue.data.totalEligible ?? 0);
+    }
+  }, [queue.data?.totalEligible]);
 
   // Per-problem local state. Cleared whenever the queue advances to a new
   // wrong note (key change in JSX resets the sub-component).
@@ -170,7 +177,18 @@ function ActiveProblem({
       durationSec: Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)),
     }),
     onSuccess: async (r) => {
+      LearningEvents.reviewProblemSubmit({
+        wrongNoteId: note.wrongNoteId,
+        problemId: note.problemId,
+        isCorrect: r.isCorrect,
+        durationSec: Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)),
+        wrongAttempts: wrongCount + (r.isCorrect ? 0 : 1),
+      });
       if (r.isCorrect) {
+        LearningEvents.reviewProblemMastered({
+          wrongNoteId: note.wrongNoteId,
+          problemId: note.problemId,
+        });
         setFeedback({ kind: 'correct', msg: t('review.correct') });
         setTimeout(async () => { await onMastered(); }, 700);
       } else {

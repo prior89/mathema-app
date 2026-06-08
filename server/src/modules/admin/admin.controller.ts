@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AdminService } from './admin.service';
+import { LearningMetricsService } from './learning-metrics.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { AdminAuditInterceptor } from './admin-audit.interceptor';
@@ -15,9 +16,17 @@ export class AdminController {
   constructor(
     private readonly service: AdminService,
     private readonly lessons: ConceptLessonsService,
+    private readonly learningMetrics: LearningMetricsService,
   ) {}
 
   @Get('overview')        overview() { return this.service.overview(); }
+
+  /** Production learning-effectiveness KPIs — North Star, retention, mastery,
+   *  error-pattern resolution, wrong-note completion, AI solver quality. */
+  @Get('learning-effectiveness')
+  learningEffectiveness() {
+    return this.learningMetrics.overview();
+  }
   @Get('users')           users(@Query('limit') limit = 100) { return this.service.listUsers(+limit); }
   @Get('users/:id')       user(@CurrentLang() lang: Lang, @Param('id') id: string) {
     return this.service.userDetail(id, lang);

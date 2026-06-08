@@ -25,6 +25,7 @@ import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
+import { LearningEvents } from '../../lib/learning-events';
 
 type Choice = { id: string; choiceIndex: number; text: string };
 type ProblemStep = {
@@ -110,7 +111,10 @@ export function StudyPracticeScreen() {
 
   // First-load — fetch the first problem when the chapter code is in the URL.
   useEffect(() => {
-    if (chapterCode) fetchNext.mutate();
+    if (chapterCode) {
+      LearningEvents.studySessionStart(chapterCode);
+      fetchNext.mutate();
+    }
     // fetchNext is stable for our mutation pattern; depending on it would
     // cause a refetch loop on every state update.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,6 +140,15 @@ export function StudyPracticeScreen() {
       setResult(r);
       if (r.isCorrect) setCorrectCount((n) => n + 1);
       else setWrongCount((n) => n + 1);
+      if (current && chapterCode) {
+        LearningEvents.studyProblemSubmit({
+          chapterCode,
+          problemId: current.id,
+          isCorrect: r.isCorrect,
+          durationSec: Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)),
+          questionNum,
+        });
+      }
       qc.invalidateQueries({ queryKey: ['wn-list'] });
       qc.invalidateQueries({ queryKey: ['wn-stats'] });
       qc.invalidateQueries({ queryKey: ['wn-recent'] });
@@ -155,6 +168,14 @@ export function StudyPracticeScreen() {
   }
 
   function onStop() {
+    if (chapterCode) {
+      LearningEvents.studySessionEnd({
+        chapterCode,
+        correct: correctCount,
+        wrong: wrongCount,
+        total: correctCount + wrongCount,
+      });
+    }
     setDone(true);
   }
 
