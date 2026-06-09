@@ -10,12 +10,16 @@ import { SimilarProblemService } from './services/similar-problem.service';
 import { ReviewScheduleService } from './services/review-schedule.service';
 import { RecommendationMetricsService } from './services/recommendation-metrics.service';
 import { FirstSessionPlanService } from './first-session-plan.service';
+import { KrColdStartStrategy } from './strategies/kr-cold-start.strategy';
+import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
 
 @Module({
+  imports: [FeatureFlagsModule],
   controllers: [RecommendationsController],
   providers: [
     FirstSessionPlanService,
     RecommendationsService,
+    KrColdStartStrategy,
     FocusOnMistakesStrategy,
     ReinforceWeaknessStrategy,
     MaintainStrengthStrategy,

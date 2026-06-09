@@ -7,6 +7,8 @@ import { StudyBalanceService } from './services/study-balance.service';
 import { generateAdaptivePlan, AdaptivePlan } from '../../infrastructure/ai/langchain/chains/adaptive-recommendation.chain';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { FirstSessionPlanService } from './first-session-plan.service';
+import { KrColdStartStrategy } from './strategies/kr-cold-start.strategy';
+import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 
 /**
  * 대시보드 "오늘의 맞춤 학습" 카드 — 데이터가 있을 때만 실제 카드 반환.
@@ -30,6 +32,8 @@ export class RecommendationsService {
     private readonly balance: StudyBalanceService,
     private readonly prisma: PrismaService,
     private readonly firstSessionPlan: FirstSessionPlanService,
+    private readonly krColdStart: KrColdStartStrategy,
+    private readonly flags: FeatureFlagsService,
   ) {}
 
   /** 단원별 공부 시간 균형 분석 — Weakness Dashboard 의 데이터 원천. */
@@ -77,10 +81,10 @@ export class RecommendationsService {
    * 오늘의 추천 카드 — 데이터 있는 만큼만 반환 (최대 3, 최소 0).
    * frontend 는 length 로 empty state 분기.
    *
-   * country='KR' 사용자: 빈 배열 반환. 3 strategy 모두 NCERT Unit/ConceptLesson
-   * 기반이라 KR 사용자에게 NCERT 챕터를 추천하면 cross-curriculum 노출.
-   * KR recommendation strategies (KoreanConceptLesson 기반) 는 Phase 4 작업.
-   * 그 전까지 KR 사용자는 빈 응답 → HomeScreen EmptyCta ("No tasks yet").
+   * country='KR' 사용자: `kr_cold_start` 플래그 ON 이면 cold-start(attempt 0건)
+   * 정적 KoreanConceptLesson 카드 (PR-26a). 플래그 OFF 또는 학습 기록 있으면 [].
+   * IN 3-strategy 는 NCERT Unit 기반이라 KR 에 그대로 쓰면 cross-curriculum.
+   * 데이터 기반 KR 전략은 PR-26 (kr-*.strategy.ts) 에서 후속 구현.
    *
    * Country는 controller에서 안 보내고 service가 직접 fetch — JwtStrategy.validate
    * 가 country를 req.user에 포함시키지 않아서 (현재 {id}만 반환). controller에서
@@ -97,7 +101,12 @@ export class RecommendationsService {
       where: { id: userId },
       select: { country: true },
     });
-    if (user?.country === 'KR') return [];
+    if (user?.country === 'KR') {
+      if (this.flags.isEnabled('kr_cold_start', userId)) {
+        return this.krColdStart.recommend(userId, lang);
+      }
+      return [];
+    }
 
     const exclude: string[] = [];
     const cards: any[] = [];
