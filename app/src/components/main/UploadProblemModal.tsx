@@ -625,6 +625,14 @@ function ResultPhase({
   const solve = result.result;
   const checked = solve.isStudentCorrect !== undefined && solve.isStudentCorrect !== null;
   const conceptText = [solve.detected.chapter, solve.detected.topic].filter(Boolean).join(' · ');
+  const hints = (solve.hints ?? []).filter(Boolean);
+  const [revealedHintCount, setRevealedHintCount] = useState(0);
+  const [solutionRevealed, setSolutionRevealed] = useState(false);
+  const verification = solve.verification;
+  const confidencePct = verification
+    ? Math.round(Math.max(0, Math.min(1, verification.confidence)) * 100)
+    : null;
+
   return (
     <div>
       {/* PROBLEM card -- matches the Mastery / Study problem card style */}
@@ -645,64 +653,140 @@ function ResultPhase({
         </div>
       )}
 
-      {/* Solution steps -- numbered list when the solver emitted structured
-          step text. Falls back to a single explanation paragraph if the
-          solver only returned the legacy `explanation` field (older clients
-          or deterministic-check path). The `explanation` summary, when both
-          exist, renders BELOW the steps as a brief takeaway. */}
-      {(solve.steps && solve.steps.length > 0) || solve.explanation ? (
-        <div className="card" style={{ padding: 14, marginTop: 12, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
-          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>{t('upload.result.solution.eyebrow')}</div>
-          {solve.steps && solve.steps.length > 0 ? (
-            <ol style={{
-              margin: 0,
-              paddingLeft: 0,
-              listStyle: 'none',
-              display: 'grid',
-              gap: 10,
-              fontSize: 13.5,
-              lineHeight: 1.6,
-              color: 'var(--p-ink-2)',
-            }}>
-              {solve.steps.map((step, idx) => (
-                <li key={idx} style={{ whiteSpace: 'pre-wrap' }}>
-                  <MathText text={step} />
-                </li>
+      {verification && (
+        <div className="card" style={{
+          marginTop: 12, padding: 12,
+          background: verification.isVerified ? 'var(--p-success-tint)' : 'var(--p-warning-tint)',
+          borderColor: 'transparent',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <Glyph.Check accent={verification.isVerified ? 'var(--p-success)' : 'var(--p-warning)'} size={14} />
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--p-ink)' }}>
+              {verification.isVerified
+                ? t('upload.result.verification.verified')
+                : t('upload.result.verification.unverified')}
+            </span>
+            {confidencePct != null && (
+              <span className="chip" style={{ fontSize: 10.5 }}>
+                {t('upload.result.verification.confidence', { pct: confidencePct })}
+              </span>
+            )}
+          </div>
+          {verification.caution && (
+            <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.5, color: 'var(--p-ink-2)' }}>
+              <span style={{ fontWeight: 600 }}>{t('upload.result.verification.caution')}: </span>
+              <MathText text={verification.caution} />
+            </div>
+          )}
+          {verification.issues.length > 0 && (
+            <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontSize: 12, lineHeight: 1.5, color: 'var(--p-ink-2)' }}>
+              {verification.issues.map((issue, idx) => (
+                <li key={idx}><MathText text={issue} /></li>
               ))}
-            </ol>
-          ) : null}
-          {solve.explanation && solve.steps && solve.steps.length > 0 ? (
-            <div style={{
-              marginTop: 12,
-              paddingTop: 10,
-              borderTop: '1px solid var(--p-border)',
-              fontSize: 12.5,
-              lineHeight: 1.55,
-              color: 'var(--p-ink-3)',
-              fontStyle: 'italic',
-              whiteSpace: 'pre-wrap',
-            }}>
-              <MathText text={solve.explanation} />
-            </div>
-          ) : null}
-          {solve.explanation && (!solve.steps || solve.steps.length === 0) ? (
-            <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap' }}>
-              <MathText text={solve.explanation} />
-            </div>
-          ) : null}
+            </ul>
+          )}
         </div>
-      ) : null}
+      )}
 
-      {/* Answer card -- primary accent so it reads as the headline result */}
-      <div className="card" style={{
-        marginTop: 12, padding: '14px 16px',
-        background: 'var(--p-primary-tint)', borderColor: 'var(--p-primary)',
-      }}>
-        <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>{t('upload.result.answer.eyebrow')}</div>
-        <div style={{ marginTop: 6, fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
-          <MathText text={solve.answer || '—'} />
+      {hints.length > 0 && (
+        <div className="card" style={{ padding: 14, marginTop: 12, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
+          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>{t('upload.result.hints.eyebrow')}</div>
+          <div style={{ display: 'grid', gap: 8 }}>
+            {hints.slice(0, revealedHintCount).map((hint, idx) => (
+              <div
+                key={idx}
+                style={{
+                  padding: '10px 12px', borderRadius: 10,
+                  background: 'var(--p-accent-tint)', fontSize: 13.5, lineHeight: 1.55,
+                  color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap',
+                }}
+              >
+                <MathText text={hint} />
+              </div>
+            ))}
+          </div>
+          {revealedHintCount < hints.length ? (
+            <button
+              type="button"
+              className="btn outline"
+              style={{ marginTop: 10, width: '100%' }}
+              onClick={() => setRevealedHintCount((n) => Math.min(n + 1, hints.length))}
+            >
+              {t('upload.result.hints.next', { n: revealedHintCount + 1, total: hints.length })}
+            </button>
+          ) : (
+            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--p-muted)' }}>
+              {t('upload.result.hints.allShown')}
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {!solutionRevealed ? (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--p-muted)', marginBottom: 8 }}>
+            {t('upload.result.reveal.hint')}
+          </div>
+          <button type="button" className="btn" style={{ width: '100%' }} onClick={() => setSolutionRevealed(true)}>
+            {t('upload.result.reveal')}
+          </button>
+        </div>
+      ) : (
+        <>
+          {(solve.steps && solve.steps.length > 0) || solve.explanation ? (
+            <div className="card" style={{ padding: 14, marginTop: 12, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
+              <div className="eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>{t('upload.result.solution.eyebrow')}</div>
+              {solve.steps && solve.steps.length > 0 ? (
+                <ol style={{
+                  margin: 0,
+                  paddingLeft: 0,
+                  listStyle: 'none',
+                  display: 'grid',
+                  gap: 10,
+                  fontSize: 13.5,
+                  lineHeight: 1.6,
+                  color: 'var(--p-ink-2)',
+                }}>
+                  {solve.steps.map((step, idx) => (
+                    <li key={idx} style={{ whiteSpace: 'pre-wrap' }}>
+                      <MathText text={step} />
+                    </li>
+                  ))}
+                </ol>
+              ) : null}
+              {solve.explanation && solve.steps && solve.steps.length > 0 ? (
+                <div style={{
+                  marginTop: 12,
+                  paddingTop: 10,
+                  borderTop: '1px solid var(--p-border)',
+                  fontSize: 12.5,
+                  lineHeight: 1.55,
+                  color: 'var(--p-ink-3)',
+                  fontStyle: 'italic',
+                  whiteSpace: 'pre-wrap',
+                }}>
+                  <MathText text={solve.explanation} />
+                </div>
+              ) : null}
+              {solve.explanation && (!solve.steps || solve.steps.length === 0) ? (
+                <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap' }}>
+                  <MathText text={solve.explanation} />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="card" style={{
+            marginTop: 12, padding: '14px 16px',
+            background: 'var(--p-primary-tint)', borderColor: 'var(--p-primary)',
+          }}>
+            <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>{t('upload.result.answer.eyebrow')}</div>
+            <div style={{ marginTop: 6, fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
+              <MathText text={solve.answer || '—'} />
+            </div>
+          </div>
+        </>
+      )}
 
       {checked && (
         <div className="card" style={{
