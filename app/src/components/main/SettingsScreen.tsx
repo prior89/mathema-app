@@ -4,10 +4,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { get, post, del, downloadExport, tokens } from '../../lib/api';
-import { fetchMe } from '../../lib/queries';
+import { get, post, patch, del, downloadExport, tokens } from '../../lib/api';
+import { fetchMe, type Me } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
 import { useTheme, type ThemeMode } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 
@@ -24,6 +25,7 @@ export function SettingsScreen() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const { t } = useT();
+  const { refreshUser } = useAuth();
   const { mode: themeMode, setMode: setThemeMode } = useTheme();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const consents = useQuery({
@@ -37,6 +39,15 @@ export function SettingsScreen() {
       else await post(`/privacy/consents/${c.kind.toLowerCase()}`, {});
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['consents'] }),
+  });
+
+  const pushReminders = me.data?.pushRemindersEnabled !== false;
+  const togglePush = useMutation({
+    mutationFn: (enabled: boolean) => patch<Me>('/users/me', { pushRemindersEnabled: enabled }),
+    onSuccess: async () => {
+      await refreshUser();
+      qc.invalidateQueries({ queryKey: ['me'] });
+    },
   });
 
   const [deletingConfirm, setDeletingConfirm] = useState(false);
@@ -93,6 +104,35 @@ export function SettingsScreen() {
         <div className="card" style={{ padding: 12 }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t('settingsScreen.theme.label')}</div>
           <ThemeModePicker mode={themeMode} onChange={setThemeMode} />
+        </div>
+
+        {/* Notifications */}
+        <div className="section-h">
+          <span className="label">{t('settingsScreen.notifications.section')}</span>
+        </div>
+        <div
+          className="card"
+          style={{
+            padding: 16, display: 'flex', gap: 14, alignItems: 'center',
+            cursor: togglePush.isPending ? 'wait' : 'pointer',
+            opacity: togglePush.isPending ? 0.7 : 1,
+          }}
+          onClick={() => !togglePush.isPending && togglePush.mutate(!pushReminders)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (!togglePush.isPending && (e.key === 'Enter' || e.key === ' ')) {
+              togglePush.mutate(!pushReminders);
+            }
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 600 }}>{t('settingsScreen.notifications.push.title')}</div>
+            <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 2, lineHeight: 1.45 }}>
+              {t('settingsScreen.notifications.push.desc')}
+            </div>
+          </div>
+          <div className={`toggle ${pushReminders ? 'on' : ''}`} aria-pressed={pushReminders} />
         </div>
 
         {/* Privacy */}

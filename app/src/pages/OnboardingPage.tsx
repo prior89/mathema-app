@@ -65,14 +65,14 @@ export default function OnboardingPage() {
     <div className="mathema-app">
       <div className="mathema-viewport">
         <div className="mathema-phone">
-          <Flow onFinish={() => navigate(homePathForRole(user?.role))} />
+          <Flow onFinish={(r) => navigate(homePathForRole(r ?? user?.role))} />
         </div>
       </div>
     </div>
   );
 }
 
-function Flow({ onFinish }: { onFinish: () => void }) {
+function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
   const { refreshUser } = useAuth();
   const [step, setStep] = useState<StepKey>('welcome');
   const [role, setRole] = useState<Role | ''>('STUDENT');
@@ -124,7 +124,18 @@ function Flow({ onFinish }: { onFinish: () => void }) {
         />
       );
     case 'role':
-      return <ScreenRole step={stepIndex} onBack={back} onNext={next} role={role} setRole={setRole} />;
+      return (
+        <ScreenRole
+          step={stepIndex}
+          onBack={back}
+          onNext={() => {
+            if (role === 'PARENT' || role === 'TEACHER') go('consents');
+            else next();
+          }}
+          role={role}
+          setRole={setRole}
+        />
+      );
     case 'profile':
       return <ScreenProfile step={stepIndex} onBack={back} onNext={next} name={name} setName={setName} grade={grade} setGrade={setGrade} country={country} />;
     case 'goal':
@@ -594,13 +605,10 @@ function ScreenRole({
   step, onBack, onNext, role, setRole,
 }: { step: number; onBack: () => void; onNext: () => void; role: Role | ''; setRole: (r: Role) => void }) {
   const { t } = useT();
-  // PARENT/TEACHER are visible-but-disabled until the per-role dashboards ship.
-  // We keep them rendered (vs. removed) so future Student users instantly see
-  // the product roadmap and we don't need to redesign the card stack later.
-  const roles: Array<{ id: Role; icon: typeof Glyph.Person; label: string; sub: string; comingSoon?: boolean }> = [
+  const roles: Array<{ id: Role; icon: typeof Glyph.Person; label: string; sub: string }> = [
     { id: 'STUDENT', icon: Glyph.Person, label: t('onboarding.role.student.label'), sub: t('onboarding.role.student.sub') },
-    { id: 'PARENT', icon: Glyph.Parent, label: t('onboarding.role.parent.label'), sub: t('onboarding.role.parent.sub'), comingSoon: true },
-    { id: 'TEACHER', icon: Glyph.Teacher, label: t('onboarding.role.teacher.label'), sub: t('onboarding.role.teacher.sub'), comingSoon: true },
+    { id: 'PARENT', icon: Glyph.Parent, label: t('onboarding.role.parent.label'), sub: t('onboarding.role.parent.sub') },
+    { id: 'TEACHER', icon: Glyph.Teacher, label: t('onboarding.role.teacher.label'), sub: t('onboarding.role.teacher.sub') },
   ];
   return (
     <div className="screen">
@@ -619,9 +627,7 @@ function ScreenRole({
               <div
                 key={r.id}
                 className={`option-card ${selected ? 'selected' : ''}`}
-                onClick={() => !r.comingSoon && setRole(r.id)}
-                style={r.comingSoon ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
-                aria-disabled={r.comingSoon || undefined}
+                onClick={() => setRole(r.id)}
               >
                 <div style={{
                   width: 44, height: 44, borderRadius: 12,
@@ -637,7 +643,6 @@ function ScreenRole({
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 16, fontWeight: 600 }}>{r.label}</span>
                     {r.id === 'STUDENT' && <span className="chip primary" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('onboarding.role.popular')}</span>}
-                    {r.comingSoon && <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('onboarding.role.comingSoon')}</span>}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
                 </div>
@@ -1187,7 +1192,7 @@ function ScreenReady({
   step, name, role, grade, goal, consents, notif, onFinish,
 }: {
   step: number; name: string; role: Role; grade: GradeId; goal: GoalId;
-  consents: ConsentMap; notif: boolean; onFinish: () => void;
+  consents: ConsentMap; notif: boolean; onFinish: (role?: Role) => void;
 }) {
   const { t } = useT();
   const [busy, setBusy] = useState(false);
@@ -1225,12 +1230,14 @@ function ScreenReady({
       // onboardingCompleted localStorage flag (set further down) is the
       // safety net that lets ProtectedRoute let them through if they later
       // hit the bouncing case anyway.
+      const resolvedRole = role || 'STUDENT';
       await patch<Me>('/users/me', {
         name,
-        gradeLevel: GRADE_MAP[grade],
-        studyGoal: goal,
-        role: role || 'STUDENT',
+        role: resolvedRole,
         pushRemindersEnabled: notif,
+        ...(resolvedRole === 'STUDENT'
+          ? { gradeLevel: GRADE_MAP[grade], studyGoal: goal }
+          : {}),
       });
 
       // 선택 동의 3종을 백엔드 Consent 테이블에 저장 (DPDP 이력). 이건 여전히
@@ -1248,7 +1255,7 @@ function ScreenReady({
       }));
       // Refresh AuthContext.user so ProtectedRoute sees gradeLevel filled.
       await refreshUser();
-      onFinish();
+      onFinish(resolvedRole);
     } catch (e: any) {
       const status = e?.response?.status;
       const rawMsg = e?.response?.data?.error?.message;
