@@ -654,6 +654,17 @@ const ko = {
   'me.account.logout.sub': '다음 접속 시 다시 로그인할 수 있어요',
   'me.version': 'Matheo · v2026.05.13',
 
+  // ===== Efficacy Card =====
+  'efficacy.title': '학습 효과',
+  'efficacy.loading': '학습 효과 불러오는 중…',
+  'efficacy.cohort': '코호트 {n}명',
+  'efficacy.chapters': '마스터 챕터',
+  'efficacy.streak': '연속 학습',
+  'efficacy.streakDays': '{n}일',
+  'efficacy.wrongNotes': '오답노트 마스터',
+  'efficacy.patterns': '개선 중 패턴',
+  'efficacy.northStar': '14일 내 챕터 마스터 {pct}%',
+
   // ===== Test Screen =====
   'test.tab.label': 'Review',
   'test.tab.title': '테스트',
@@ -1744,6 +1755,17 @@ const en: typeof ko = {
   'me.account.logout.title': 'Log out',
   'me.account.logout.sub': "You'll be signed back in next time",
   'me.version': 'Matheo · v2026.05.13',
+
+  // Efficacy Card
+  'efficacy.title': 'Learning impact',
+  'efficacy.loading': 'Loading learning impact…',
+  'efficacy.cohort': 'Cohort of {n}',
+  'efficacy.chapters': 'Chapters mastered',
+  'efficacy.streak': 'Streak',
+  'efficacy.streakDays': '{n} days',
+  'efficacy.wrongNotes': 'Wrong notes mastered',
+  'efficacy.patterns': 'Patterns improving',
+  'efficacy.northStar': '{pct}% master a chapter within 14 days',
 
   // Test Screen
   'test.tab.label': 'Review',

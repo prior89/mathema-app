@@ -8,6 +8,7 @@ import {
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { EfficacyCard } from './EfficacyCard';
 
 export function ReportScreen() {
   const nav = useNavigate();
@@ -66,6 +67,9 @@ export function ReportScreen() {
             <div style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('reportScreen.summary')}</div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.01em' }}>{t('reportScreen.hello')}<em style={{ color: 'var(--p-primary)' }}>{userName}</em></div>
           </div>
+
+          <EfficacyCard compact />
+
           {/* 4 stats */}
           <div className="stat-grid">
             <Stat k={t('reportScreen.stat.studyTime')} v={`${(cur.data?.totalHours ?? 0).toFixed(1)}`} u="h"

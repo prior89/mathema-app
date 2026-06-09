@@ -196,6 +196,18 @@ export type FirstSessionAchievement = {
 };
 
 export const fetchMe = () => get<Me>('/users/me');
+
+export type StudentEfficacyCard = {
+  northStarPct: number | null;
+  cohortSize: number;
+  chaptersMastered: number;
+  wrongNotesMasteredPct: number;
+  errorPatternsImproving: number;
+  streakDays: number;
+  message: string;
+};
+
+export const fetchEfficacy = () => get<StudentEfficacyCard>('/users/me/efficacy');
 export const fetchFirstSessionAchievements = () =>
   get<FirstSessionAchievement[]>('/achievements');
 export const celebrateFirstSessionAchievement = (kind: FirstSessionAchievementKind) =>
