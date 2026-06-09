@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { mathAnswersEqual } from '../../common/utils/normalize-math-answer';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { GradingService } from './grading.service';
 import { initialWrongNoteNextReviewAt } from '../wrong-notes/wrong-note-schedule.constants';
@@ -86,17 +87,11 @@ export class AttemptsRepository {
       // NULL when the choice was correct or the seed didn't tag an errorCode.
       distractorErrorCode = !choice.isCorrect ? (choice.distractorErrorCode ?? null) : null;
     } else {
-      // Math-answer normalization — case-insensitive + all whitespace stripped.
-      // Single source of truth for text grading; wrong-note review queue
-      // (POST /wrong-notes/:id/check) routes through here so the same answer
-      // can't be MASTERED in one flow and isCorrect=false in another.
-      // Guard against null problem.answer (MC-only problems) — never auto-mark
-      // an empty answer correct.
-      const normalize = (s: string | null | undefined) =>
-        (s ?? '').trim().toLowerCase().replace(/\s+/g, '');
-      const expected = normalize(problem.answer);
-      const given = normalize(dto.answer);
-      isCorrect = expected.length > 0 && expected === given;
+      // Math-answer normalization — LaTeX strip + \frac expansion + numeric
+      // equivalence (PR-19a). Single source of truth for text grading;
+      // wrong-note review queue (POST /wrong-notes/:id/check) routes through
+      // here so MathKeyboard answers grade the same everywhere.
+      isCorrect = mathAnswersEqual(problem.answer, dto.answer);
       answerText = String(dto.answer ?? '');
     }
 

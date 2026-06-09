@@ -125,7 +125,7 @@ export class WrongNotesService {
    * to the browser, (b) bypassed Attempt creation, and (c) never ran SM-2.
    *
    * Grading + auto-MASTERED live in attempts.repository.create (single source
-   * of truth — same normalization rules every flow). This method:
+   * of truth — `normalize-math-answer` LaTeX rules, PR-19a). This method:
    *   - 404s if the wrong note isn't this user's
    *   - delegates to attempts.create (Attempt insert + wrongNote.upsert on
    *     wrong / wrongNote.updateMany→MASTERED on correct)
