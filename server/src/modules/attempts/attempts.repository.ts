@@ -186,7 +186,13 @@ export class AttemptsRepository {
     // ReviewQueue's /wrong-notes/:id/check, math-helper's recordSolveAttempt)
     // still graduate immediately on a correct attempt: there are no
     // intermediate steps to "perfect", so the answer itself is the cycle.
-    if (isCorrect && typeof dto.stepIndex !== 'number') {
+    // Review queue (/wrong-notes/:id/check) records the attempt but defers
+    // graduation to the SM-2 self-rating step (POST /:id/review).
+    if (
+      isCorrect
+      && typeof dto.stepIndex !== 'number'
+      && !dto.suppressWrongNoteAutoMaster
+    ) {
       await this.prisma.wrongNote.updateMany({
         where: { userId, problemId: dto.problemId, status: { not: 'MASTERED' } },
         data: { status: 'MASTERED', masteredAt: new Date() },

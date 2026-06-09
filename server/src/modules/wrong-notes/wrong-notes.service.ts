@@ -155,6 +155,7 @@ export class WrongNotesService {
       answer: dto.answer ?? '',
       durationSec,
       context: 'PRACTICE',
+      suppressWrongNoteAutoMaster: true,
     });
 
     const totalEligible = await this.scheduler.countDueWrongNotes(userId);
@@ -163,6 +164,7 @@ export class WrongNotesService {
       isCorrect: attempt.isCorrect,
       totalEligible,
       attemptId: attempt.id,
+      needsSm2Rating: attempt.isCorrect,
     };
   }
   async getOne(userId: string, id: string, lang: Lang = 'en') {

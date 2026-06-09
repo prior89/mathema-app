@@ -22,6 +22,7 @@ on:
           - backfill-diagnostic-gap
           - backfill-lesson-problem-set
           - verify-diagnostic-pools
+          - backfill-insight-json
 
 env:
   RESOURCE_GROUP: mathema-prod-cin
@@ -90,17 +91,20 @@ jobs:
           run_diagnostic_gap() { npm run backfill:diagnostic-gap; }
           run_lesson_set() { npx ts-node scripts/backfill-lesson-problem-set.ts; }
           run_verify() { npm run verify:diagnostic-pools; }
+          run_insight_json() { npm run backfill:insight-json; }
 
           case "$task" in
             all)
               run_wrong_note
               run_diagnostic_gap
               run_lesson_set
+              run_insight_json
               run_verify
               ;;
             backfill-wrong-note)       run_wrong_note ;;
             backfill-diagnostic-gap)    run_diagnostic_gap ;;
             backfill-lesson-problem-set) run_lesson_set ;;
+            backfill-insight-json)      run_insight_json ;;
             verify-diagnostic-pools)    run_verify ;;
             *) echo "Unknown task: $task"; exit 1 ;;
           esac

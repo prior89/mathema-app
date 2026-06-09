@@ -147,8 +147,9 @@ describe('WrongNotesService.checkAnswer', () => {
     const r = await svc.checkAnswer('u1', 'wn-1', { answer: '42', durationSec: 25 });
     expect(attempts.create).toHaveBeenCalledWith('u1', expect.objectContaining({
       problemId: 'p1', answer: '42', context: 'PRACTICE', durationSec: 25,
+      suppressWrongNoteAutoMaster: true,
     }));
-    expect(r).toEqual({ isCorrect: false, totalEligible: 0, attemptId: 'att-7' });
+    expect(r).toEqual({ isCorrect: false, totalEligible: 0, attemptId: 'att-7', needsSm2Rating: false });
   });
 
   it('clamps durationSec to [1, 600]', async () => {

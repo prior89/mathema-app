@@ -31,7 +31,8 @@
     "setup:ncert": "npm run import:ncert && npm run publish:bulk",
     "verify:diagnostic-pools": "ts-node scripts/verify-diagnostic-pools.ts",
     "backfill:diagnostic-gap": "ts-node scripts/backfill-diagnostic-grade-gap.ts",
-    "backfill:wrong-note-review": "ts-node scripts/backfill-wrong-note-next-review.ts"
+    "backfill:wrong-note-review": "ts-node scripts/backfill-wrong-note-next-review.ts",
+    "backfill:insight-json": "ts-node scripts/backfill-insight-json.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.1",

@@ -13,18 +13,12 @@ import {
   type WrongNoteInsightJson,
 } from '../../lib/queries';
 import { reviewWrongNote, updateWrongNoteStatus, type ReviewQuality } from '../../lib/mutations';
+import { Sm2ReviewButtons } from './Sm2ReviewButtons';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { toast } from '../Toast';
-
-const QUALITY_COLORS: Record<ReviewQuality, string> = {
-  AGAIN: 'var(--p-danger)',
-  HARD: 'var(--p-accent)',
-  GOOD: 'var(--p-primary)',
-  EASY: 'var(--p-success)',
-};
 
 export function WrongNoteDetailScreen() {
   const { id } = useParams<{ id: string }>();
@@ -82,13 +76,6 @@ export function WrongNoteDetailScreen() {
     },
     onError: () => toast(t('toast.review.failed'), 'error'),
   });
-
-  const QUALITY_BUTTONS: Array<{ key: ReviewQuality; label: string; sub: string }> = [
-    { key: 'AGAIN', label: t('wn.detail.review.again'), sub: '~1d' },
-    { key: 'HARD', label: t('wn.detail.review.hard'), sub: '~1d' },
-    { key: 'GOOD', label: t('wn.detail.review.good'), sub: '~6d' },
-    { key: 'EASY', label: t('wn.detail.review.easy'), sub: '~6d×EF' },
-  ];
 
   const note = detail.data;
   const isMastered = (note?.status ?? '').toLowerCase() === 'mastered';
@@ -243,28 +230,10 @@ export function WrongNoteDetailScreen() {
                     rep {note.repetitionCount} · EF {note.easinessFactor}
                   </span>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-                  {QUALITY_BUTTONS.map((b) => (
-                    <button
-                      key={b.key}
-                      type="button"
-                      disabled={reviewMut.isPending}
-                      onClick={() => reviewMut.mutate(b.key)}
-                      className="card"
-                      style={{
-                        padding: '10px 6px', cursor: 'pointer',
-                        borderColor: `${QUALITY_COLORS[b.key]}40`,
-                        opacity: reviewMut.isPending ? 0.5 : 1,
-                      }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: 600, color: QUALITY_COLORS[b.key] }}>{b.label}</div>
-                      <div style={{ fontSize: 10, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>{b.sub}</div>
-                    </button>
-                  ))}
-                </div>
-                <p style={{ marginTop: 8, fontSize: 11, color: 'var(--p-muted)', lineHeight: 1.5 }}>
-                  {t('wn.detail.review.note')}
-                </p>
+                <Sm2ReviewButtons
+                  disabled={reviewMut.isPending}
+                  onSelect={(q) => reviewMut.mutate(q)}
+                />
               </Section>
             )}
 

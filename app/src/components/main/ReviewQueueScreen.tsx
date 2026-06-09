@@ -14,7 +14,9 @@ import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchProblemHint, fetchReviewQueueNext } from '../../lib/queries';
-import { checkReviewAnswer } from '../../lib/mutations';
+import { checkReviewAnswer, reviewWrongNote, type ReviewQuality } from '../../lib/mutations';
+import { Sm2ReviewButtons } from './Sm2ReviewButtons';
+import { toast } from '../Toast';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
@@ -152,6 +154,7 @@ function ActiveProblem({
   const canvasRef = useRef<HandwritingCanvasHandle>(null);
   const [studentAnswer, setStudentAnswer] = useState('');
   const [feedback, setFeedback] = useState<{ kind: 'correct' | 'wrong'; msg: string } | null>(null);
+  const [showSm2, setShowSm2] = useState(false);
   const [wrongCount, setWrongCount] = useState(0);
   const [hintRevealed, setHintRevealed] = useState(false);
   // Wall-clock time spent on this problem — passed to the server so
@@ -173,7 +176,7 @@ function ActiveProblem({
     onSuccess: async (r) => {
       if (r.isCorrect) {
         setFeedback({ kind: 'correct', msg: t('review.correct') });
-        setTimeout(async () => { await onMastered(); }, 700);
+        setShowSm2(true);
       } else {
         const next = wrongCount + 1;
         setWrongCount(next);
@@ -194,8 +197,23 @@ function ActiveProblem({
   // Prefer DB hint when present, else fall back to the on-demand /problems/:id/hint endpoint.
   const hintText = note.hint ?? hintQuery.data?.hint ?? null;
 
+  const sm2 = useMutation({
+    mutationFn: (q: ReviewQuality) => reviewWrongNote(note.wrongNoteId, q),
+    onSuccess: async (r) => {
+      const days = r.nextReviewAt
+        ? Math.max(1, Math.ceil((new Date(r.nextReviewAt).getTime() - Date.now()) / 86400000))
+        : 0;
+      const next = days > 0 ? t('wn.due.inDays', { days }) : '—';
+      if (r.autoMastered) toast(t('toast.review.autoMastered'), 'success');
+      else if (r.lapsed) toast(t('toast.review.tryAgain', { date: next }), 'info');
+      else toast(t('toast.review.done', { date: next }), 'success');
+      await onMastered();
+    },
+    onError: () => toast(t('toast.review.failed'), 'error'),
+  });
+
   function onCheck() {
-    if (!studentAnswer.trim() || check.isPending) return;
+    if (!studentAnswer.trim() || check.isPending || showSm2) return;
     check.mutate();
   }
 
@@ -270,49 +288,62 @@ function ActiveProblem({
           </div>
         )}
 
+        {showSm2 && (
+          <div>
+            <div className="eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>{t('review.sm2.eyebrow')}</div>
+            <Sm2ReviewButtons
+              compact
+              disabled={sm2.isPending}
+              onSelect={(q) => sm2.mutate(q)}
+            />
+          </div>
+        )}
+
         <div style={{ height: 8 }} />
       </div>
 
       {/* Sticky bottom — hint + answer input + check */}
-      <div className="screen-foot" style={{ paddingTop: 8 }}>
-        <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('review.answerEyebrow')}</div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-          <button
-            type="button"
-            onClick={onHintClick}
-            disabled={!hintUnlocked}
-            aria-label={t('review.hintAria')}
-            style={{
-              width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-              background: hintUnlocked ? 'var(--p-primary-tint)' : 'var(--p-surface-2)',
-              color: hintUnlocked ? 'var(--p-primary)' : 'var(--p-muted)',
-              border: '1px solid var(--p-border)',
-              cursor: hintUnlocked ? 'pointer' : 'not-allowed',
-              fontSize: 18,
-            }}
-          >
-            💡
-          </button>
-          <MathInput
-            value={studentAnswer}
-            onChange={setStudentAnswer}
-            placeholder={t('review.answer.placeholder')}
-            onKeyDown={(e) => { if (e.key === 'Enter') onCheck(); }}
-            showPreview={false}
-            disabled={check.isPending}
-            style={{ flex: 1, minWidth: 0 }}
-          />
-          <button
-            type="button"
-            className="btn"
-            onClick={onCheck}
-            disabled={!studentAnswer.trim() || check.isPending}
-            style={{ width: 'auto', height: 44, padding: '0 18px', fontSize: 14, flexShrink: 0 }}
-          >
-            {check.isPending ? t('review.checking') : t('review.check')}
-          </button>
+      {!showSm2 && (
+        <div className="screen-foot" style={{ paddingTop: 8 }}>
+          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('review.answerEyebrow')}</div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <button
+              type="button"
+              onClick={onHintClick}
+              disabled={!hintUnlocked}
+              aria-label={t('review.hintAria')}
+              style={{
+                width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                background: hintUnlocked ? 'var(--p-primary-tint)' : 'var(--p-surface-2)',
+                color: hintUnlocked ? 'var(--p-primary)' : 'var(--p-muted)',
+                border: '1px solid var(--p-border)',
+                cursor: hintUnlocked ? 'pointer' : 'not-allowed',
+                fontSize: 18,
+              }}
+            >
+              💡
+            </button>
+            <MathInput
+              value={studentAnswer}
+              onChange={setStudentAnswer}
+              placeholder={t('review.answer.placeholder')}
+              onKeyDown={(e) => { if (e.key === 'Enter') onCheck(); }}
+              showPreview={false}
+              disabled={check.isPending}
+              style={{ flex: 1, minWidth: 0 }}
+            />
+            <button
+              type="button"
+              className="btn"
+              onClick={onCheck}
+              disabled={!studentAnswer.trim() || check.isPending}
+              style={{ width: 'auto', height: 44, padding: '0 18px', fontSize: 14, flexShrink: 0 }}
+            >
+              {check.isPending ? t('review.checking') : t('review.check')}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
