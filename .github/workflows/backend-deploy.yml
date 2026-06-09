@@ -97,18 +97,42 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --secrets "gemini-api-key=keyvaultref:${KV_URI}secrets/gemini-api-key,identityref:system"
 
+      # FCM push — GitHub secrets → Container App secrets (no-op when unset).
+      - name: Ensure Firebase secret references
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+        run: |
+          if [ -z "$FIREBASE_PROJECT_ID" ] || [ -z "$FIREBASE_CLIENT_EMAIL" ] || [ -z "$FIREBASE_PRIVATE_KEY" ]; then
+            echo "Firebase secrets not configured — skipping FCM secret sync"
+            exit 0
+          fi
+          az containerapp secret set \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --secrets \
+              "firebase-project-id=${FIREBASE_PROJECT_ID}" \
+              "firebase-client-email=${FIREBASE_CLIENT_EMAIL}" \
+              "firebase-private-key=${FIREBASE_PRIVATE_KEY}"
+
       - name: Container App revision update
         run: |
+          ENV_VARS="GEMINI_API_KEY=secretref:gemini-api-key"
+          ENV_VARS="$ENV_VARS FEATURE_ADAPTIVE_DIAGNOSTIC_PCT=100"
+          ENV_VARS="$ENV_VARS FEATURE_FIRST_SESSION_ACHIEVEMENT_PCT=100"
+          ENV_VARS="$ENV_VARS FEATURE_KR_COLD_START_PCT=100"
+          ENV_VARS="$ENV_VARS FEATURE_STUDENT_EFFICACY_CARD_PCT=100"
+          if [ -n "${{ secrets.FIREBASE_PROJECT_ID }}" ]; then
+            ENV_VARS="$ENV_VARS FIREBASE_PROJECT_ID=secretref:firebase-project-id"
+            ENV_VARS="$ENV_VARS FIREBASE_CLIENT_EMAIL=secretref:firebase-client-email"
+            ENV_VARS="$ENV_VARS FIREBASE_PRIVATE_KEY=secretref:firebase-private-key"
+          fi
           az containerapp update \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
-            --set-env-vars \
-              GEMINI_API_KEY=secretref:gemini-api-key \
-              FEATURE_ADAPTIVE_DIAGNOSTIC_PCT=100 \
-              FEATURE_FIRST_SESSION_ACHIEVEMENT_PCT=100 \
-              FEATURE_KR_COLD_START_PCT=100 \
-              FEATURE_STUDENT_EFFICACY_CARD_PCT=100
+            --set-env-vars $ENV_VARS
 
       # Bounded smoke test: poll every 10s, give up after 2min, then dump the
       # last 100 log lines of the new revision so we can see the real cause
