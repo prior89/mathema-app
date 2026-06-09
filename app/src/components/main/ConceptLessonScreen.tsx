@@ -325,7 +325,7 @@ function ConceptStepBlock({ step }: { step: ConceptStep }) {
 function BulletizedMathText({ text }: { text: string }) {
   const TOKENS: { ch: string; color: string }[] = [
     { ch: '❌', color: 'var(--p-danger)' },
-    { ch: '💡', color: '#E0A800' },
+    { ch: '💡', color: 'var(--p-hint)' },
     { ch: '✅', color: 'var(--p-success)' },
   ];
   return (

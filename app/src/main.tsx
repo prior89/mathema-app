@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import { bootstrapTheme, ThemeProvider } from './context/ThemeContext';
 import { I18nProvider } from './lib/i18n';
 import { initCapacitorBridge } from './native/capacitor-bridge';
+import './styles/onboarding.css';
 
 bootstrapTheme();
 

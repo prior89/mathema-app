@@ -301,7 +301,7 @@ function SolverButton({ label, hint, icon, onClick }: {
       <div style={{
         width: 36, height: 36, borderRadius: 9,
         background: 'var(--p-primary)',
-        color: 'var(--p-primary-fg, #fff)',
+        color: 'var(--p-primary-fg)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         {icon}

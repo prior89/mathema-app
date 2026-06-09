@@ -16,14 +16,14 @@ export const STEP_TONE: Record<string, StepTone> = {
   CONCRETE: {
     eyebrow: 'CONCRETE',
     chipBg: 'var(--p-accent-tint)',
-    chipColor: 'oklch(0.40 0.11 65)',
+    chipColor: 'var(--p-accent-ink)',
     accent: 'var(--p-accent)',
   },
   PICTORIAL: {
     eyebrow: 'PICTORIAL',
-    chipBg: 'oklch(0.96 0.018 200)',
-    chipColor: 'oklch(0.36 0.06 200)',
-    accent: 'oklch(0.52 0.07 200)',
+    chipBg: 'var(--p-step-pictorial-bg)',
+    chipColor: 'var(--p-step-pictorial-fg)',
+    accent: 'var(--p-step-pictorial-accent)',
   },
   ABSTRACT: {
     eyebrow: 'ABSTRACT',
@@ -34,7 +34,7 @@ export const STEP_TONE: Record<string, StepTone> = {
   WORKED_EXAMPLE: {
     eyebrow: 'WORKED EXAMPLE',
     chipBg: 'var(--p-accent-tint)',
-    chipColor: 'oklch(0.40 0.11 65)',
+    chipColor: 'var(--p-accent-ink)',
     accent: 'var(--p-accent)',
   },
   GUIDED_PRACTICE: {

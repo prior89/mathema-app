@@ -85,58 +85,29 @@ export default function VerifyRequiredPage() {
   return (
     <AuthShell title={copy.title} subtitle={copy.subtitle}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ padding: 14, background: '#F4F7FB', border: '1px solid #D8E1EF', borderRadius: 6 }}>
-          <div style={{ fontSize: 13, color: '#5C6B85', lineHeight: 1.5 }}>{copy.body}</div>
-          <div style={{ marginTop: 10, fontSize: 13, fontWeight: 700, color: '#142850', wordBreak: 'break-all' }}>
+        <div className="card alert info">
+          <div>{copy.body}</div>
+          <div style={{ marginTop: 10, fontWeight: 700, wordBreak: 'break-all', color: 'var(--p-ink)' }}>
             {user?.email}
           </div>
         </div>
         {sent && (
-          <div role="status" style={{ fontSize: 13, color: '#5A8A45', lineHeight: 1.45 }}>
+          <div role="status" className="alert success">
             {copy.sent}
           </div>
         )}
-        <div style={{ fontSize: 12.5, color: '#5C6B85', lineHeight: 1.45 }}>
-          {copy.help}
-        </div>
-        {err && <div role="alert" style={{ fontSize: 13, color: '#C25E2E', lineHeight: 1.45 }}>{err}</div>}
-        <button type="button" onClick={resend} disabled={busy} style={primaryButton}>
+        <div className="caption">{copy.help}</div>
+        {err && <div role="alert" className="alert error">{err}</div>}
+        <button type="button" onClick={resend} disabled={busy} className="btn">
           {copy.resend}
         </button>
-        <button type="button" onClick={refresh} disabled={busy} style={secondaryButton}>
+        <button type="button" onClick={refresh} disabled={busy} className="btn outline">
           {copy.refresh}
         </button>
-        <button type="button" onClick={logout} disabled={busy} style={linkButton}>
+        <button type="button" onClick={logout} disabled={busy} className="btn text">
           {copy.logout}
         </button>
       </div>
     </AuthShell>
   );
 }
-
-const primaryButton = {
-  width: '100%',
-  padding: '12px 14px',
-  border: 'none',
-  borderRadius: 6,
-  background: '#142850',
-  color: 'white',
-  fontWeight: 700,
-  cursor: 'pointer',
-} as const;
-
-const secondaryButton = {
-  ...primaryButton,
-  background: '#EEF3FA',
-  color: '#142850',
-  border: '1px solid #D8E1EF',
-} as const;
-
-const linkButton = {
-  border: 'none',
-  background: 'transparent',
-  color: '#5C6B85',
-  fontWeight: 600,
-  cursor: 'pointer',
-  padding: 8,
-} as const;

@@ -10,6 +10,7 @@ import {
   type KoreanGrade, type KoreanConceptLessonSummary, type KoreanSubject,
 } from '../../lib/queries';
 import { track } from '../../lib/analytics';
+import { resolveBarColor } from '../../lib/palette';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
@@ -353,7 +354,7 @@ function ErrorBar({ name, value, color }: { name: string; value: number; color: 
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--p-muted)' }}>{value}%</span>
       </div>
       <div style={{ height: 8, borderRadius: 4, background: 'var(--p-surface-2)', overflow: 'hidden' }}>
-        <div style={{ width: `${widthPct}%`, height: '100%', background: color, borderRadius: 4 }} />
+        <div style={{ width: `${widthPct}%`, height: '100%', background: resolveBarColor(color), borderRadius: 4 }} />
       </div>
     </div>
   );

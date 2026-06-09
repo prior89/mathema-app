@@ -91,7 +91,7 @@ export function ReportScreen() {
           {/* Mentor message */}
           <div className="card" style={{ marginTop: 12, padding: 16, background: 'var(--p-ink)', color: 'var(--p-bg)', borderColor: 'transparent' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <div style={{ width: 26, height: 26, borderRadius: 8, background: 'var(--p-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--p-ink)' }}>
+              <div style={{ width: 26, height: 26, borderRadius: 8, background: 'var(--p-primary-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--p-primary)' }}>
                 <Glyph.Sparkle accent="currentColor" size={13} />
               </div>
               <span style={{ fontSize: 13.5, fontWeight: 700 }}>{t('reportScreen.mentor.from')}</span>

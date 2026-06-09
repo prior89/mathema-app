@@ -212,7 +212,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
-        backgroundColor: 'rgba(31,26,20,0.55)',
+        backgroundColor: 'var(--p-overlay)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 16,
       }}
@@ -223,7 +223,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
           width: 540, maxWidth: '100%', maxHeight: '90vh', overflow: 'auto',
           background: 'var(--p-surface)', border: '1px solid var(--p-border)',
           borderRadius: 16, padding: 22, color: 'var(--p-ink)',
-          boxShadow: '0 20px 60px rgba(31,26,20,0.25)',
+          boxShadow: 'var(--p-shadow-lg)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>

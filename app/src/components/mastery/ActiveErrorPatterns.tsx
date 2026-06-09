@@ -84,7 +84,7 @@ export function ActiveErrorPatternBanner({
         background: 'var(--p-primary)', color: 'var(--p-primary-fg)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
       }}>
-        <Glyph.Sparkle accent="#fff" size={14} />
+        <Glyph.Sparkle accent="var(--p-primary-fg)" size={14} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--p-ink)' }}>

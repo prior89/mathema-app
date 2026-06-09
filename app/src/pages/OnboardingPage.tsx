@@ -20,9 +20,11 @@ import { useFeatureFlag, useFeatureFlags } from '../hooks/useFeatureFlags';
 import { homePathForRole } from '../lib/role-routes';
 import { useT } from '../lib/i18n';
 import { isLikelyEmail } from '../lib/email';
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
+import { AuthDivider } from '../components/auth/AuthDivider';
+import { formatAuthError } from '../lib/auth-errors';
+import { isGoogleSignInConfigured } from '../lib/google-client-id';
 import '../styles/onboarding.css';
-
-const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
 
 type StepKey = 'welcome' | 'country' | 'auth' | 'role' | 'profile' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
 type Role = 'STUDENT' | 'PARENT' | 'TEACHER';
@@ -216,7 +218,7 @@ function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () 
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.6 }}>{t('onboarding.welcome.figureSub')}</span>
             </div>
             <div style={{ flex: 1, marginTop: -8 }}>
-              <Glyph.WelcomeHero accent="#fff" />
+              <Glyph.WelcomeHero accent="var(--p-primary-fg)" />
             </div>
           </div>
         </div>
@@ -344,10 +346,10 @@ function ScreenAuth({
   country: CountryId;
 }) {
   const { t } = useT();
-  const { refreshUser } = useAuth();
+  const { refreshUser, loginWithGoogle } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const gsiRef = useRef<HTMLDivElement | null>(null);
 
   async function continueWithEmail() {
     if (busy) return;
@@ -461,54 +463,21 @@ function ScreenAuth({
     } finally { setBusy(false); }
   }
 
-  // Google Identity Services — VITE_GOOGLE_CLIENT_ID 설정된 경우만.
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID || !gsiRef.current) return;
-    const navigate = (path: string) => { window.location.assign(path); };
-    const init = () => {
-      const g = (window as any).google;
-      if (!g?.accounts?.id) return;
-      g.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: async (resp: { credential: string }) => {
-          setErr(null); setBusy(true);
-          try {
-            const tk = await post<{ accessToken: string; refreshToken: string }>(
-              '/auth/google/id-token',
-              { idToken: resp.credential },
-            );
-            tokens.set(tk.accessToken, tk.refreshToken);
-            // Same P2 fix path — sync AuthContext.user post-Google-signup so
-            // the rest of onboarding has a non-null user.
-            await refreshUser().catch(() => {});
-            onNext();
-          } catch (e: any) {
-            const status = e?.response?.status;
-            if (status === 429) {
-              setErr(country === 'KR'
-                ? '잠시 후 다시 시도해주세요. (요청이 너무 많아 1분간 제한됐어요.)'
-                : 'Please retry in a minute — too many requests.');
-            } else if (!status) {
-              setErr(country === 'KR'
-                ? '서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'
-                : 'Cannot reach the server. Check your connection.');
-            } else {
-              setErr(e?.response?.data?.error?.message ?? t('onboarding.auth.google.failed'));
-            }
-          } finally { setBusy(false); }
-        },
-      });
-      g.accounts.id.renderButton(gsiRef.current!, { theme: 'outline', size: 'large', width: 280, text: 'signup_with' });
-      // 보너스: 사용자가 의도하면 원탭 — 방해되면 빼도 됨.
-      // g.accounts.id.prompt();
-      void navigate; // suppress unused
-    };
-    if ((window as any).google?.accounts?.id) { init(); return; }
-    const s = document.createElement('script');
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.async = true; s.defer = true; s.onload = init;
-    document.body.appendChild(s);
-  }, [onNext]);
+  const handleGoogleSignIn = async (idToken: string) => {
+    setErr(null);
+    setGoogleBusy(true);
+    try {
+      await loginWithGoogle(idToken, { skipNavigate: true });
+      onNext();
+    } catch (e: unknown) {
+      setErr(formatAuthError(e, {
+        context: 'onboarding',
+        locale: country === 'KR' ? 'ko' : 'en',
+      }));
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
 
   return (
     <div className="screen">
@@ -563,14 +532,15 @@ function ScreenAuth({
           <Glyph.ChevronR />
         </button>
 
-        {GOOGLE_CLIENT_ID && (
+        {isGoogleSignInConfigured() && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
-              <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-              <span className="caption" style={{ fontSize: 11 }}>{t('onboarding.auth.or')}</span>
-              <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-            </div>
-            <div ref={gsiRef} style={{ display: 'flex', justifyContent: 'center' }} />
+            <AuthDivider labelKey="onboarding.auth.or" />
+            <GoogleSignInButton
+              mode="signup"
+              onCredential={handleGoogleSignIn}
+              busy={googleBusy}
+              disabled={busy}
+            />
           </>
         )}
 
@@ -647,7 +617,7 @@ function ScreenRole({
                   <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
                 </div>
                 <div className="check" style={{ width: 22, height: 22 }}>
-                  {selected && <Glyph.Check accent="#fff" size={14} />}
+                  {selected && <Glyph.Check accent="var(--p-primary-fg)" size={14} />}
                 </div>
               </div>
             );
@@ -716,7 +686,7 @@ function ScreenProfile({
         </div>
         <div className="card" style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--p-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--p-primary-fg)' }}>
-            <Glyph.Sparkle accent="#fff" size={14} />
+            <Glyph.Sparkle accent="var(--p-primary-fg)" size={14} />
           </div>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>{t('onboarding.profile.callout.title')}</div>
@@ -785,7 +755,7 @@ function ScreenGoal({
                   <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{g.sub}</div>
                 </div>
                 <div className="check">
-                  {selected && <Glyph.Check accent="#fff" size={13} />}
+                  {selected && <Glyph.Check accent="var(--p-primary-fg)" size={13} />}
                 </div>
               </div>
             );
@@ -1080,7 +1050,7 @@ function ScreenResults({
         <div className="card" style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent', padding: 16 }}>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--p-primary)', color: 'var(--p-primary-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Glyph.Sparkle accent="#fff" size={16} />
+              <Glyph.Sparkle accent="var(--p-primary-fg)" size={16} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--p-ink)' }}>{t('onboarding.results.coach.title')}</div>
@@ -1160,7 +1130,7 @@ function ScreenConsents({
                 onClick={() => !it.req && toggle(it.id as ConsentKey)}
                 style={{ opacity: it.req ? 0.85 : 1, cursor: it.req ? 'default' : 'pointer' }}
               >
-                {isChecked(it.id) && <Glyph.Check accent="#fff" size={12} />}
+                {isChecked(it.id) && <Glyph.Check accent="var(--p-primary-fg)" size={12} />}
               </div>
               <div className="info">
                 <div className="name">

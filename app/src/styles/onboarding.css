@@ -27,6 +27,36 @@
   --p-warning: oklch(0.55 0.15 70);
   --p-warning-tint: oklch(0.96 0.04 70);
 
+  /* Semantic helpers — readable text on tinted surfaces (WCAG AA) */
+  --p-accent-ink: oklch(0.40 0.11 65);
+  --p-on-accent: oklch(0.22 0.04 70);
+  --p-overlay: oklch(0.18 0.012 175 / 0.55);
+  --p-shadow-lg: 0 20px 60px oklch(0 0 0 / 0.18);
+  --p-hint: oklch(0.58 0.14 85);
+
+  /* Concept step — pictorial (cool slate, not pink) */
+  --p-step-pictorial-bg: oklch(0.96 0.018 200);
+  --p-step-pictorial-fg: oklch(0.36 0.06 200);
+  --p-step-pictorial-accent: oklch(0.52 0.07 200);
+
+  /* Mastery heatmap — light tint bg + dark label text */
+  --p-heatmap-0-bg: var(--p-surface-2);
+  --p-heatmap-0-fg: var(--p-muted);
+  --p-heatmap-1-bg: var(--p-danger-tint);
+  --p-heatmap-1-fg: var(--p-danger);
+  --p-heatmap-2-bg: var(--p-warning-tint);
+  --p-heatmap-2-fg: var(--p-warning);
+  --p-heatmap-3-bg: var(--p-accent-tint);
+  --p-heatmap-3-fg: var(--p-accent-ink);
+  --p-heatmap-4-bg: var(--p-success-tint);
+  --p-heatmap-4-fg: var(--p-success);
+
+  /* Error DNA bar fills (Home "자주 틀리는 부분") */
+  --p-dna-concept: oklch(0.48 0.12 35);
+  --p-dna-calc: oklch(0.55 0.12 45);
+  --p-dna-time: oklch(0.62 0.10 55);
+  --p-dna-other: var(--p-muted);
+
   --radius-sm: 8px;
   --radius: 14px;
   --radius-lg: 20px;
@@ -70,6 +100,18 @@
   --p-primary-tint: oklch(0.28 0.04 175);
   --p-accent: oklch(0.78 0.14 65);
   --p-accent-tint: oklch(0.3 0.04 65);
+  --p-accent-ink: oklch(0.82 0.08 65);
+  --p-on-accent: oklch(0.18 0.015 175);
+  --p-success: oklch(0.72 0.12 155);
+  --p-success-tint: oklch(0.28 0.04 155);
+  --p-danger: oklch(0.72 0.14 25);
+  --p-danger-tint: oklch(0.28 0.05 25);
+  --p-warning: oklch(0.78 0.12 70);
+  --p-warning-tint: oklch(0.30 0.04 70);
+  --p-hint: oklch(0.78 0.12 85);
+  --p-step-pictorial-bg: oklch(0.28 0.03 200);
+  --p-step-pictorial-fg: oklch(0.82 0.04 200);
+  --p-step-pictorial-accent: oklch(0.62 0.06 200);
 }
 
 .mathema-app, .mathema-app * { box-sizing: border-box; }
@@ -219,7 +261,7 @@
   border-radius: 999px; background: var(--p-surface-2); color: var(--p-ink-2);
   font-size: 12px; font-weight: 500; border: 1px solid var(--p-border);
 }
-.mathema-app .chip.accent { background: var(--p-accent-tint); color: oklch(0.40 0.11 65); border-color: transparent; }
+.mathema-app .chip.accent { background: var(--p-accent-tint); color: var(--p-accent-ink); border-color: transparent; }
 .mathema-app .chip.primary { background: var(--p-primary-tint); color: var(--p-primary); border-color: transparent; }
 
 /* Concept lesson steps — white surface + accent rail (WCAG AA body text). */
@@ -259,7 +301,7 @@
 .mathema-app .choice.selected { border-color: var(--p-primary); background: var(--p-primary-tint); }
 .mathema-app .choice.selected .letter { background: var(--p-primary); border-color: var(--p-primary); color: var(--p-primary-fg); }
 .mathema-app .choice.correct { border-color: var(--p-success); background: oklch(0.96 0.04 155); }
-.mathema-app .choice.correct .letter { background: var(--p-success); border-color: var(--p-success); color: #fff; }
+.mathema-app .choice.correct .letter { background: var(--p-success); border-color: var(--p-success); color: var(--p-primary-fg); }
 
 /* Hero glyph */
 .mathema-app .hero-glyph {
@@ -282,7 +324,7 @@
 }
 .mathema-app .toggle::after {
   content: ''; position: absolute; top: 3px; left: 3px;
-  width: 20px; height: 20px; border-radius: 50%; background: #fff;
+  width: 20px; height: 20px; border-radius: 50%; background: var(--p-surface);
   transition: transform .15s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 .mathema-app .toggle.on { background: var(--p-primary); }
@@ -381,9 +423,44 @@
 .mathema-app .note-card .body { font-size: 12.5px; font-family: var(--font-mono); color: var(--p-ink); line-height: 1.4; max-height: 56px; overflow: hidden; word-break: break-word; overflow-wrap: anywhere; }
 .mathema-app .note-card .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
 .mathema-app .status-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; font-family: var(--font-mono); letter-spacing: 0.04em; }
-.mathema-app .status-chip.pending { background: oklch(0.96 0.04 70); color: oklch(0.45 0.12 70); }
+.mathema-app .status-chip.pending { background: var(--p-warning-tint); color: var(--p-warning); }
 .mathema-app .status-chip.analyzing { background: var(--p-primary-tint); color: var(--p-primary); }
-.mathema-app .status-chip.mastered { background: oklch(0.95 0.05 155); color: var(--p-success); }
+.mathema-app .status-chip.mastered { background: var(--p-success-tint); color: var(--p-success); }
+
+/* Alerts & toasts */
+.mathema-app .alert {
+  padding: 14px; border-radius: 12px; font-size: 13px; line-height: 1.5;
+  border: 1px solid var(--p-border);
+}
+.mathema-app .alert.info { background: var(--p-surface-2); color: var(--p-ink-2); }
+.mathema-app .alert.success { background: var(--p-success-tint); color: var(--p-success); border-color: transparent; }
+.mathema-app .alert.error { background: var(--p-danger-tint); color: var(--p-danger); border-color: transparent; }
+.mathema-app .alert.pending { background: var(--p-primary-tint); color: var(--p-primary); border-color: transparent; }
+
+.mathema-toast-host {
+  position: fixed; bottom: 24px; right: 24; z-index: 200;
+  display: flex; flex-direction: column; gap: 8;
+  font-family: var(--font-ui);
+  pointer-events: none;
+}
+.mathema-toast {
+  pointer-events: auto;
+  background: var(--p-surface); color: var(--p-ink);
+  padding: 12px 16px; border-radius: 12px; min-width: 280px; max-width: 420px;
+  display: flex; align-items: flex-start; gap: 10px;
+  border: 1px solid var(--p-border);
+  border-left: 3px solid var(--p-primary);
+  box-shadow: var(--p-shadow-lg);
+  font-size: 13px; line-height: 1.5;
+  animation: toastIn 0.22s ease-out;
+}
+.mathema-toast.success { border-left-color: var(--p-success); }
+.mathema-toast.error { border-left-color: var(--p-danger); }
+.mathema-toast.info { border-left-color: var(--p-primary); }
+@keyframes toastIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+.mathema-app .link-primary { color: var(--p-primary); font-weight: 600; font-size: 13px; text-decoration: none; }
+.mathema-app .link-muted { color: var(--p-muted); font-size: 12px; text-decoration: none; }
 
 .mathema-app .filter-row { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px; -webkit-overflow-scrolling: touch; }
 .mathema-app .filter-row::-webkit-scrollbar { display: none; }

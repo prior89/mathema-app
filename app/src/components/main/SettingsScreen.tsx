@@ -155,7 +155,7 @@ export function SettingsScreen() {
                   onClick={() => !it.req && !toggle.isPending && toggle.mutate({ kind: it.kind, active })}
                   style={{ opacity: it.req ? 0.85 : 1, cursor: it.req ? 'default' : 'pointer' }}
                 >
-                  {active && <Glyph.Check accent="#fff" size={12} />}
+                  {active && <Glyph.Check accent="var(--p-primary-fg)" size={12} />}
                 </div>
                 <div className="info">
                   <div className="name">

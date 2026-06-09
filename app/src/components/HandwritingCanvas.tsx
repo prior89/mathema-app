@@ -49,8 +49,16 @@ const EXTEND_STEP = 400;
 // Within this many px of the bottom counts as "reached the end".
 const EXTEND_TRIGGER_PADDING = 80;
 
+function resolveInkColor(override?: string): string {
+  if (override) return override;
+  if (typeof document === 'undefined') return 'oklch(0.18 0.015 175)';
+  const v = getComputedStyle(document.documentElement).getPropertyValue('--p-ink').trim();
+  return v || 'oklch(0.18 0.015 175)';
+}
+
 export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Props>(
-  function HandwritingCanvas({ height = 280, inkColor = '#1f1a14', extendable = false }, ref) {
+  function HandwritingCanvas({ height = 280, inkColor, extendable = false }, ref) {
+    const resolvedInk = resolveInkColor(inkColor);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -107,7 +115,7 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Props>(
       ctx.lineWidth = 2;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.strokeStyle = inkColor;
+      ctx.strokeStyle = resolvedInk;
       for (const stroke of strokes) {
         if (stroke.length < 2) continue;
         ctx.beginPath();
@@ -117,7 +125,7 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Props>(
         }
         ctx.stroke();
       }
-    }, [strokes, dpr, inkColor, innerHeight]);
+    }, [strokes, dpr, resolvedInk, innerHeight]);
 
     // When the canvas grows, auto-scroll the wrapper so the freshly added
     // blank area is immediately visible without forcing the user to swipe.
@@ -155,7 +163,7 @@ export const HandwritingCanvas = forwardRef<HandwritingCanvasHandle, Props>(
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        ctx.strokeStyle = inkColor;
+        ctx.strokeStyle = resolvedInk;
         ctx.beginPath();
         ctx.moveTo(lastPointRef.current.x, lastPointRef.current.y);
         ctx.lineTo(p.x, p.y);

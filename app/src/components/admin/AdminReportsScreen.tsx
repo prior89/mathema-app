@@ -80,7 +80,7 @@ export function AdminReportsScreen() {
               style={{
                 cursor: 'pointer',
                 background: curriculum === c ? 'var(--p-primary)' : 'var(--p-bg-2)',
-                color: curriculum === c ? '#fff' : 'var(--p-ink-2)',
+                color: curriculum === c ? 'var(--p-primary-fg)' : 'var(--p-ink-2)',
                 border: 'none',
                 fontSize: 12,
                 padding: '4px 10px',

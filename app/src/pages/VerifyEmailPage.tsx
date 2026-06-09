@@ -20,22 +20,22 @@ export default function VerifyEmailPage() {
         setStatus('success');
       })
       .catch(() => setStatus('failed'));
-  // refreshUser is intentionally omitted: AuthContext recreates it on each
-  // render, while verification should run exactly once per token.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const tone = status === 'success' ? '#5A8A45' : status === 'failed' ? '#C25E2E' : '#5C6B85';
+  const alertClass =
+    status === 'success' ? 'alert success' :
+    status === 'failed' ? 'alert error' : 'alert info';
   const msg = status === 'verifying' ? t('verify.verifying') : status === 'success' ? t('verify.success') : t('verify.failed');
 
   return (
     <AuthShell title={t('verify.title')} subtitle={t('app.brand')}>
-      <div style={{ padding: 14, fontSize: 13, color: tone, backgroundColor: `${tone}15`, borderRadius: 4, marginBottom: 14 }}>
+      <div className={alertClass} style={{ marginBottom: 14 }}>
         {msg}
       </div>
       {status !== 'verifying' && (
         <div style={{ textAlign: 'center' }}>
-          <Link to="/" style={{ color: '#142850', fontWeight: 600, fontSize: 13 }}>{t('verify.goHome')}</Link>
+          <Link to="/" className="link-primary">{t('verify.goHome')}</Link>
         </div>
       )}
     </AuthShell>

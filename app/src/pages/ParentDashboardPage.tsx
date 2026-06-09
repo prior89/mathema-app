@@ -24,8 +24,8 @@ import {
 import { useT } from '../lib/i18n';
 
 const COLORS = {
-  bg: '#EFEBDF', ink: '#142850', sub: '#5C6B85', line: '#14285020', card: '#FAF7EF',
-  good: '#4A5D3A', warn: '#B45309', bad: '#8B3A1F',
+  bg: 'var(--p-bg)', ink: 'var(--p-ink)', sub: 'var(--p-muted)', line: 'var(--p-border)', card: 'var(--p-surface)',
+  good: 'var(--p-success)', warn: 'var(--p-warning)', bad: 'var(--p-danger)',
 };
 
 export function ParentDashboardPage({ embedded = false }: { embedded?: boolean } = {}) {

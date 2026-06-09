@@ -77,7 +77,7 @@ export function NotesListScreen() {
         ) : patterns.data && patterns.data.length > 0 ? (
           <div className="card" style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent', padding: 12, display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, marginTop: 8 }}>
             <div style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--p-primary)', color: 'var(--p-primary-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Glyph.Sparkle accent="#fff" size={14} />
+              <Glyph.Sparkle accent="var(--p-primary-fg)" size={14} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--p-ink)' }}>{t('notes.pattern.detected', { title: patterns.data[0].title })}</div>

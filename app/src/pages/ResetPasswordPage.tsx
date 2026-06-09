@@ -33,11 +33,9 @@ export default function ResetPasswordPage() {
   if (!token) {
     return (
       <AuthShell title={t('reset.title')} subtitle={t('app.brand')}>
-        <div style={{ padding: 14, fontSize: 13, color: '#C25E2E', backgroundColor: '#C25E2E15', borderRadius: 4 }}>
-          {t('reset.invalidToken')}
-        </div>
+        <div className="alert error">{t('reset.invalidToken')}</div>
         <div style={{ marginTop: 12, textAlign: 'center' }}>
-          <Link to="/login" style={{ color: '#142850', fontWeight: 600, fontSize: 13 }}>{t('forgot.backToLogin')}</Link>
+          <Link to="/login" className="link-primary">{t('forgot.backToLogin')}</Link>
         </div>
       </AuthShell>
     );
@@ -46,18 +44,15 @@ export default function ResetPasswordPage() {
   return (
     <AuthShell title={t('reset.title')} subtitle={t('app.brand')}>
       {done ? (
-        <div style={{ padding: 14, fontSize: 13, color: '#142850', backgroundColor: '#5A8A4520', borderRadius: 4 }}>
-          {t('reset.success')}
-        </div>
+        <div className="alert success">{t('reset.success')}</div>
       ) : (
         <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Field label={t('reset.password')} type="password" value={pw} onChange={setPw} />
           <Field label={t('reset.confirm')} type="password" value={confirm} onChange={setConfirm} />
-          {err && <div style={{ color: '#C25E2E', fontSize: 13 }}>{err}</div>}
-          <button disabled={busy} type="submit" style={{
-            padding: '14px', backgroundColor: '#142850', color: '#EFEBDF',
-            border: 'none', borderRadius: 4, fontSize: 14, fontWeight: 600, cursor: 'pointer',
-          }}>{busy ? t('auth.login.busy') : t('reset.submit')}</button>
+          {err && <div className="alert error" role="alert">{err}</div>}
+          <button disabled={busy} type="submit" className="btn">
+            {busy ? t('auth.login.busy') : t('reset.submit')}
+          </button>
         </form>
       )}
     </AuthShell>
