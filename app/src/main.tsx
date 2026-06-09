@@ -4,8 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { bootstrapTheme, ThemeProvider } from './context/ThemeContext';
 import { I18nProvider } from './lib/i18n';
 import { initCapacitorBridge } from './native/capacitor-bridge';
+
+bootstrapTheme();
 
 // Sentry is intentionally omitted in v1.0 — DSN provisioning is Phase 2.
 // Keeping @sentry/react in the bundle for a no-op init wastes ~30KB; we'll
@@ -59,14 +62,16 @@ window.addEventListener('keydown', (e) => {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <I18nProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AuthProvider>
-            <App />
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </I18nProvider>
+    <ThemeProvider>
+      <I18nProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </I18nProvider>
+    </ThemeProvider>
   </React.StrictMode>,
 );

@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { get, post, del, downloadExport, tokens } from '../../lib/api';
 import { fetchMe } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
+import { useTheme, type ThemeMode } from '../../context/ThemeContext';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 
@@ -23,6 +24,7 @@ export function SettingsScreen() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const { t } = useT();
+  const { mode: themeMode, setMode: setThemeMode } = useTheme();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const consents = useQuery({
     queryKey: ['consents'],
@@ -82,6 +84,15 @@ export function SettingsScreen() {
             CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
             CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
           } as Record<string, string>)[me.data?.gradeLevel ?? ''] ?? me.data?.gradeLevel ?? '—'} last />
+        </div>
+
+        {/* Appearance */}
+        <div className="section-h">
+          <span className="label">{t('settingsScreen.appearance.section')}</span>
+        </div>
+        <div className="card" style={{ padding: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t('settingsScreen.theme.label')}</div>
+          <ThemeModePicker mode={themeMode} onChange={setThemeMode} />
         </div>
 
         {/* Privacy */}
@@ -195,6 +206,46 @@ export function SettingsScreen() {
         </div>
       </div>
       <TabBar />
+    </div>
+  );
+}
+
+const THEME_OPTIONS: ThemeMode[] = ['light', 'dark', 'system'];
+
+function ThemeModePicker({ mode, onChange }: { mode: ThemeMode; onChange: (m: ThemeMode) => void }) {
+  const { t } = useT();
+  const labels: Record<ThemeMode, string> = {
+    light: t('settingsScreen.theme.light'),
+    dark: t('settingsScreen.theme.dark'),
+    system: t('settingsScreen.theme.system'),
+  };
+  return (
+    <div style={{ display: 'flex', gap: 6 }}>
+      {THEME_OPTIONS.map((opt) => {
+        const active = mode === opt;
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            aria-pressed={active}
+            style={{
+              flex: 1,
+              padding: '10px 8px',
+              borderRadius: 10,
+              border: `1px solid ${active ? 'var(--p-primary)' : 'var(--p-border)'}`,
+              background: active ? 'var(--p-primary-tint)' : 'var(--p-surface)',
+              color: active ? 'var(--p-primary)' : 'var(--p-ink-2)',
+              fontSize: 12.5,
+              fontWeight: active ? 600 : 500,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            {labels[opt]}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -23,20 +23,34 @@ const PKG_APP = '@capacitor/app';
 const dynImport = (name: string): Promise<any> =>
   import(/* @vite-ignore */ name).catch(() => null);
 
+/** Match sage light/dark shells — web no-op. */
+export async function syncStatusBarTheme(isDark: boolean) {
+  const core: any = await dynImport(PKG_CORE);
+  const Capacitor = core?.Capacitor;
+  if (!Capacitor?.isNativePlatform?.()) return;
+
+  const status: any = await dynImport(PKG_STATUS);
+  if (!status?.StatusBar || !status?.Style) return;
+  try {
+    if (isDark) {
+      await status.StatusBar.setStyle({ style: status.Style.Dark });
+      await status.StatusBar.setBackgroundColor({ color: '#1e2624' });
+    } else {
+      await status.StatusBar.setStyle({ style: status.Style.Light });
+      await status.StatusBar.setBackgroundColor({ color: '#EFEBDF' });
+    }
+    await status.StatusBar.setOverlaysWebView({ overlay: false });
+  } catch { /* plugin not installed in this build */ }
+}
+
 export async function initCapacitorBridge() {
   const core: any = await dynImport(PKG_CORE);
   const Capacitor = core?.Capacitor;
   if (!Capacitor?.isNativePlatform?.()) return;
 
-  // ----- StatusBar -----
-  const status: any = await dynImport(PKG_STATUS);
-  if (status?.StatusBar && status?.Style) {
-    try {
-      await status.StatusBar.setStyle({ style: status.Style.Light });
-      await status.StatusBar.setBackgroundColor({ color: '#EFEBDF' });
-      await status.StatusBar.setOverlaysWebView({ overlay: false });
-    } catch { /* plugin not installed in this build */ }
-  }
+  // ----- StatusBar (respect bootstrapTheme / ThemeContext) -----
+  const isDark = document.documentElement.classList.contains('dark');
+  await syncStatusBarTheme(isDark);
 
   // ----- 뒤로가기 버튼 -----
   const appPlugin: any = await dynImport(PKG_APP);

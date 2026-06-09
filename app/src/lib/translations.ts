@@ -861,6 +861,11 @@ const ko = {
   // ===== Settings Screen =====
   'settingsScreen.eyebrow': '프로필',
   'settingsScreen.title': '설정',
+  'settingsScreen.appearance.section': '화면',
+  'settingsScreen.theme.label': '테마',
+  'settingsScreen.theme.light': '라이트',
+  'settingsScreen.theme.dark': '다크',
+  'settingsScreen.theme.system': '시스템',
   'settingsScreen.account.section': '계정',
   'settingsScreen.row.name': '이름',
   'settingsScreen.row.email': '이메일',
@@ -1994,6 +1999,11 @@ const en: typeof ko = {
   // Settings Screen
   'settingsScreen.eyebrow': 'PROFILE',
   'settingsScreen.title': 'Settings',
+  'settingsScreen.appearance.section': 'Appearance',
+  'settingsScreen.theme.label': 'Theme',
+  'settingsScreen.theme.light': 'Light',
+  'settingsScreen.theme.dark': 'Dark',
+  'settingsScreen.theme.system': 'System',
   'settingsScreen.account.section': 'Account',
   'settingsScreen.row.name': 'Name',
   'settingsScreen.row.email': 'Email',
