@@ -242,3 +242,5 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
 function Sub({ children }: { children: React.ReactNode }) {
   return <p style={{ margin: 0, color: COLORS.sub, fontSize: 13, fontStyle: 'italic' }}>{children}</p>;
 }
+
+export default ParentDashboardPage;

@@ -17,6 +17,7 @@ import type {
 } from '../lib/queries';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag, useFeatureFlags } from '../hooks/useFeatureFlags';
+import { homePathForRole } from '../lib/role-routes';
 import { useT } from '../lib/i18n';
 import { isLikelyEmail } from '../lib/email';
 import '../styles/onboarding.css';
@@ -54,6 +55,7 @@ function chapterCountByClass(grade: GradeId): number {
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   // Onboarding runs pre-auth, so we can't read User.country yet to pick a
   // language. We respect whatever the user already has saved (or i18n.tsx's
   // browser-default of 'en'). The country-aware flip happens after login
@@ -63,7 +65,7 @@ export default function OnboardingPage() {
     <div className="mathema-app">
       <div className="mathema-viewport">
         <div className="mathema-phone">
-          <Flow onFinish={() => navigate('/app')} />
+          <Flow onFinish={() => navigate(homePathForRole(user?.role))} />
         </div>
       </div>
     </div>
