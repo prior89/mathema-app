@@ -8,6 +8,9 @@ import { generateAdaptivePlan, AdaptivePlan } from '../../infrastructure/ai/lang
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { FirstSessionPlanService } from './first-session-plan.service';
 import { KrColdStartStrategy } from './strategies/kr-cold-start.strategy';
+import { KrFocusOnMistakesStrategy } from './strategies/kr-focus-on-mistakes.strategy';
+import { KrReinforceWeaknessStrategy } from './strategies/kr-reinforce-weakness.strategy';
+import { KrMaintainStrengthStrategy } from './strategies/kr-maintain-strength.strategy';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 
 /**
@@ -33,6 +36,9 @@ export class RecommendationsService {
     private readonly prisma: PrismaService,
     private readonly firstSessionPlan: FirstSessionPlanService,
     private readonly krColdStart: KrColdStartStrategy,
+    private readonly krFocus: KrFocusOnMistakesStrategy,
+    private readonly krReinforce: KrReinforceWeaknessStrategy,
+    private readonly krMaintain: KrMaintainStrengthStrategy,
     private readonly flags: FeatureFlagsService,
   ) {}
 
@@ -81,10 +87,10 @@ export class RecommendationsService {
    * 오늘의 추천 카드 — 데이터 있는 만큼만 반환 (최대 3, 최소 0).
    * frontend 는 length 로 empty state 분기.
    *
-   * country='KR' 사용자: `kr_cold_start` 플래그 ON 이면 cold-start(attempt 0건)
-   * 정적 KoreanConceptLesson 카드 (PR-26a). 플래그 OFF 또는 학습 기록 있으면 [].
+   * country='KR' 사용자:
+   *   - `kr_cold_start` ON + attempt 0건 → 정적 cold-start 카드 (PR-26a)
+   *   - 그 외 → KR 3-strategy (오답 집중 / 약점 보강 / 강점 유지, PR-26)
    * IN 3-strategy 는 NCERT Unit 기반이라 KR 에 그대로 쓰면 cross-curriculum.
-   * 데이터 기반 KR 전략은 PR-26 (kr-*.strategy.ts) 에서 후속 구현.
    *
    * Country는 controller에서 안 보내고 service가 직접 fetch — JwtStrategy.validate
    * 가 country를 req.user에 포함시키지 않아서 (현재 {id}만 반환). controller에서
@@ -103,9 +109,10 @@ export class RecommendationsService {
     });
     if (user?.country === 'KR') {
       if (this.flags.isEnabled('kr_cold_start', userId)) {
-        return this.krColdStart.recommend(userId, lang);
+        const coldCards = await this.krColdStart.recommend(userId, lang);
+        if (coldCards.length > 0) return coldCards;
       }
-      return [];
+      return this.krToday(userId, lang);
     }
 
     const exclude: string[] = [];
@@ -118,6 +125,23 @@ export class RecommendationsService {
     if (c2) { cards.push(c2); if (c2.unitId) exclude.push(c2.unitId); }
 
     const c3 = await this.maintain.recommend(userId, exclude, lang);
+    if (c3) cards.push(c3);
+
+    return cards;
+  }
+
+  /** KR chapter-based today cards — mirrors IN 3-strategy chain (PR-26). */
+  private async krToday(userId: string, lang: Lang = 'ko') {
+    const exclude: string[] = [];
+    const cards: any[] = [];
+
+    const c1 = await this.krFocus.recommend(userId, lang);
+    if (c1) { cards.push(c1); exclude.push(c1.chapterCode); }
+
+    const c2 = await this.krReinforce.recommend(userId, exclude, lang);
+    if (c2) { cards.push(c2); exclude.push(c2.chapterCode); }
+
+    const c3 = await this.krMaintain.recommend(userId, exclude, lang);
     if (c3) cards.push(c3);
 
     return cards;

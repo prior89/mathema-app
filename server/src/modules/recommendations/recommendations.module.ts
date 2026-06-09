@@ -11,6 +11,10 @@ import { ReviewScheduleService } from './services/review-schedule.service';
 import { RecommendationMetricsService } from './services/recommendation-metrics.service';
 import { FirstSessionPlanService } from './first-session-plan.service';
 import { KrColdStartStrategy } from './strategies/kr-cold-start.strategy';
+import { KrFocusOnMistakesStrategy } from './strategies/kr-focus-on-mistakes.strategy';
+import { KrReinforceWeaknessStrategy } from './strategies/kr-reinforce-weakness.strategy';
+import { KrMaintainStrengthStrategy } from './strategies/kr-maintain-strength.strategy';
+import { KrChapterStatsService } from './services/kr-chapter-stats.service';
 import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
 
 @Module({
@@ -20,6 +24,10 @@ import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
     FirstSessionPlanService,
     RecommendationsService,
     KrColdStartStrategy,
+    KrFocusOnMistakesStrategy,
+    KrReinforceWeaknessStrategy,
+    KrMaintainStrengthStrategy,
+    KrChapterStatsService,
     FocusOnMistakesStrategy,
     ReinforceWeaknessStrategy,
     MaintainStrengthStrategy,
