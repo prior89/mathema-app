@@ -9,6 +9,7 @@ import { trackPageView } from './lib/analytics';
 import { fetchMe } from './lib/queries';
 import { homePathForRole } from './lib/role-routes';
 import { useT } from './lib/i18n';
+import { usePushSync } from './hooks/usePushSync';
 
 /**
  * Matheo — Sage 통합 앱 라우팅 (인도 PoC).
@@ -85,11 +86,17 @@ function I18nCountrySync() {
   return null;
 }
 
+function PushSync() {
+  usePushSync();
+  return null;
+}
+
 export default function App() {
   return (
     <>
       <PageViewTracker />
       <I18nCountrySync />
+      <PushSync />
       <Suspense fallback={<LoadingSplash />}>
         <Routes>
           {/* Auth flow */}

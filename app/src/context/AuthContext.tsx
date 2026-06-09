@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { post, tokens, get } from '../lib/api';
 import type { Me, GradeLevel } from '../lib/queries';
 import { homePathForRole } from '../lib/role-routes';
+import { unregisterPushToken } from '../native/push-bridge';
 import { track } from '../lib/analytics';
 
 // Sentry user tagging was removed alongside @sentry/react (v1.0). When the
@@ -170,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     track('auth.logout');
+    await unregisterPushToken().catch(() => {});
     tokens.clear();
     sessionStorage.clear();
     setUser(null);

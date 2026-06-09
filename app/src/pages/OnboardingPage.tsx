@@ -1130,22 +1130,22 @@ function ScreenConsents({
           <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.consents.title')}</h2>
           <p className="subtitle">{t('onboarding.consents.tagline')}</p>
         </div>
-        {/* Push reminders are gated on FCM credentials, which aren't wired yet
-            (server boot logs "FCM credentials not set — push notifications
-            disabled"). We render the row so the IA stays stable for the
-            launch build, but the toggle is non-interactive until FCM lands. */}
-        <div className="card" style={{ padding: 16, display: 'flex', gap: 14, alignItems: 'center', opacity: 0.6 }}>
+        <div
+          className="card"
+          style={{ padding: 16, display: 'flex', gap: 14, alignItems: 'center', cursor: 'pointer' }}
+          onClick={() => setNotif(!notif)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setNotif(!notif); }}
+        >
           <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--p-accent-tint)', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <div style={{ width: 22, height: 22 }}><Glyph.Bell accent="currentColor" /></div>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <div style={{ fontSize: 14.5, fontWeight: 600 }}>{t('onboarding.consents.notif.title')}</div>
-              <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('onboarding.consents.notif.comingSoon')}</span>
-            </div>
+            <div style={{ fontSize: 14.5, fontWeight: 600 }}>{t('onboarding.consents.notif.title')}</div>
             <div style={{ fontSize: 12.5, color: 'var(--p-muted)', marginTop: 2 }}>{t('onboarding.consents.notif.sub')}</div>
           </div>
-          <div className="toggle" style={{ cursor: 'not-allowed', opacity: 0.5 }} aria-disabled />
+          <div className={`toggle ${notif ? 'on' : ''}`} aria-pressed={notif} />
         </div>
         <div className="card" style={{ padding: '4px 16px' }}>
           {items.map((it) => (

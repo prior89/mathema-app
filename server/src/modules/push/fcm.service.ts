@@ -101,6 +101,14 @@ export class FcmService {
       this.logger.debug(`[noop] sendToUser ${userId}: ${payload.title}`);
       return { sent: 0, failed: 0, disabled: 0 };
     }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pushRemindersEnabled: true },
+    });
+    if (user && !user.pushRemindersEnabled) {
+      this.logger.debug(`[skip] pushRemindersEnabled=false for ${userId}`);
+      return { sent: 0, failed: 0, disabled: 0 };
+    }
     const tokens = await this.prisma.deviceToken.findMany({
       where: { userId, disabledAt: null },
       select: { id: true, token: true },
