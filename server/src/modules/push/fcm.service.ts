@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as admin from 'firebase-admin';
+import { MetricsService } from '../../common/metrics/metrics.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { ReviewSchedulerService } from '../wrong-notes/review-scheduler.service';
 
@@ -25,6 +26,7 @@ export class FcmService {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly scheduler: ReviewSchedulerService,
+    private readonly metrics: MetricsService,
   ) {
     const projectId = this.config.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = this.config.get<string>('FIREBASE_CLIENT_EMAIL');
@@ -114,6 +116,7 @@ export class FcmService {
           data: payload.data,
         });
         sent++;
+        this.metrics.incPushDelivery('sent', payload.data?.type ?? 'unknown');
         await this.prisma.deviceToken.update({
           where: { id: t.id }, data: { lastSentAt: new Date() },
         });
@@ -126,6 +129,9 @@ export class FcmService {
             where: { id: t.id }, data: { disabledAt: new Date() },
           });
           disabled++;
+          this.metrics.incPushDelivery('disabled', payload.data?.type ?? 'unknown');
+        } else {
+          this.metrics.incPushDelivery('failed', payload.data?.type ?? 'unknown');
         }
         this.logger.warn(`fcm send failed ${t.token.slice(0, 12)}…: ${code}`);
       }

@@ -1,11 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { AchievementKind, Prisma } from '@prisma/client';
+import { MetricsService } from '../../common/metrics/metrics.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AchievementDto } from './achievements.types';
 
+const FIRST_SESSION_KINDS = new Set<AchievementKind>([
+  'FIRST_CONCEPT_STEP',
+  'FIRST_PRACTICE_CORRECT',
+  'FIRST_WRONGNOTE_MASTERED',
+]);
+
 @Injectable()
 export class AchievementsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly metrics: MetricsService,
+  ) {}
 
   async list(userId: string): Promise<AchievementDto[]> {
     const rows = await this.prisma.userAchievement.findMany({
@@ -30,6 +40,9 @@ export class AchievementsService {
         },
       });
       await this.markFirstSessionEngaged(userId);
+      if (FIRST_SESSION_KINDS.has(kind)) {
+        this.metrics.incFirstSessionAchievement(kind);
+      }
       return this.toDto(row);
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {

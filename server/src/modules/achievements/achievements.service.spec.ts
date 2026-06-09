@@ -13,7 +13,8 @@ function build() {
     koreanConceptProgress: { count: jest.fn().mockResolvedValue(0) },
     firstSessionPlan: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
   };
-  return { svc: new AchievementsService(prisma as never), prisma };
+  const metrics = { incFirstSessionAchievement: jest.fn() };
+  return { svc: new AchievementsService(prisma as never, metrics as never), prisma, metrics };
 }
 
 describe('AchievementsService', () => {

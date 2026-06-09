@@ -7,6 +7,7 @@ import {
 import { GradeLevel, KoreanGrade } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AttemptsService } from '../attempts/attempts.service';
+import { MetricsService } from '../../common/metrics/metrics.service';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { FirstSessionPlanService } from '../recommendations/first-session-plan.service';
 import {
@@ -42,6 +43,7 @@ export class AdaptiveDiagnosticService {
     private readonly attempts: AttemptsService,
     private readonly flags: FeatureFlagsService,
     private readonly firstSessionPlan: FirstSessionPlanService,
+    private readonly metrics: MetricsService,
   ) {}
 
   async start(userId: string) {
@@ -262,6 +264,11 @@ export class AdaptiveDiagnosticService {
       weakConceptIds,
       estimatedGradeBand,
     });
+
+    if (this.flags.isEnabled('adaptive_diagnostic', userId)) {
+      const country = user?.country === 'KR' ? 'KR' : 'IN';
+      this.metrics.observeAdaptiveItems(session.attempts.length, country);
+    }
 
     const conceptIds = [...new Set(snapshots.flatMap((s) => s.conceptIds))];
     const trajectories = conceptIds.length

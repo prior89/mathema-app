@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { MetricsService } from '../../common/metrics/metrics.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { hasLegacyConsumerMismatch } from './review-scheduler.legacy-parity';
 import { WRONG_NOTE_INITIAL_COOLDOWN_DAYS } from './wrong-note-schedule.constants';
 
 /** Epoch anchor when nextReviewAt is unset — max() then reduces to createdAt + cooldown. */
@@ -115,7 +117,10 @@ export function filterDueWrongNotes(
 
 @Injectable()
 export class ReviewSchedulerService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly metrics: MetricsService,
+  ) {}
 
   private async fetchScheduleRows(userId: string) {
     const me = await this.prisma.user.findUnique({
@@ -154,6 +159,9 @@ export class ReviewSchedulerService {
    */
   async getDueWrongNotes(userId: string, now = new Date()): Promise<WrongNoteDueCandidate[]> {
     const { rows, isKR } = await this.fetchScheduleRows(userId);
+    if (hasLegacyConsumerMismatch(rows, isKR, now)) {
+      this.metrics.incWnConflict();
+    }
     return filterDueWrongNotes(rows, { isKR, now });
   }
 

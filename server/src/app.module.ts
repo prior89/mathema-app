@@ -60,6 +60,7 @@ import { MathHelperModule } from './modules/math-helper/math-helper.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { AchievementsModule } from './modules/achievements/achievements.module';
+import { MetricsModule } from './common/metrics/metrics.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { AchievementsModule } from './modules/achievements/achievements.module';
     }]),
 
     // infra
+    MetricsModule,
     PrismaModule,
     RedisModule,
     BullSharedModule,

@@ -29,7 +29,8 @@ function buildScheduler(rows: WrongNoteScheduleRow[], country = 'IN') {
     user: { findUnique: jest.fn().mockResolvedValue({ country }) },
     wrongNote: { findMany: jest.fn().mockResolvedValue(rows) },
   };
-  return { svc: new ReviewSchedulerService(prisma as never), prisma };
+  const metrics = { incWnConflict: jest.fn() };
+  return { svc: new ReviewSchedulerService(prisma as never, metrics as never), prisma, metrics };
 }
 
 /** Legacy getQueueNext eligible pool (pre-PR-09): createdAt ≤ now−3d only. */
@@ -309,7 +310,8 @@ describe('WN due 3-consumer snapshot equality (100 synthetic)', () => {
         ]),
       },
     };
-    const svc = new ReviewSchedulerService(prisma as never);
+    const metrics = { incWnConflict: jest.fn() };
+    const svc = new ReviewSchedulerService(prisma as never, metrics as never);
     const counts = await svc.getDueCountsByUser(NOW);
     expect(counts).toEqual([
       { userId: 'u1', count: 1 },
