@@ -1,0 +1,112 @@
+name: DB ops — prod backfill & pool gate
+
+# Run one-off data scripts against production PostgreSQL.
+# Local PCs are blocked by the PG firewall (AllowAzureServices only); this
+# workflow temporarily opens the GitHub runner IP, reads DATABASE_URL from
+# Key Vault, runs the selected script(s), then removes the rule.
+#
+# Trigger:
+#   gh workflow run db-ops.yml --ref main -f task=all
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Script to run'
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - backfill-wrong-note
+          - backfill-diagnostic-gap
+          - backfill-lesson-problem-set
+          - verify-diagnostic-pools
+
+env:
+  RESOURCE_GROUP: mathema-prod-cin
+  PG_SERVER: mathema-pg-7ehvzqcd6c436
+  KEY_VAULT: mathema-kv-7ehvzq
+
+jobs:
+  run-ops:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Allow runner IP on PostgreSQL (temporary)
+        id: fw
+        run: |
+          RUNNER_IP=$(curl -sf https://api.ipify.org)
+          test -n "$RUNNER_IP"
+          RULE="gha-${{ github.run_id }}"
+          echo "rule=$RULE" >> "$GITHUB_OUTPUT"
+          echo "Runner IP: $RUNNER_IP"
+          az postgres flexible-server firewall-rule create \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.PG_SERVER }} \
+            --rule-name "$RULE" \
+            --start-ip-address "$RUNNER_IP" \
+            --end-ip-address "$RUNNER_IP"
+
+      - name: Load DATABASE_URL from Key Vault
+        run: |
+          DATABASE_URL=$(az keyvault secret show \
+            --vault-name ${{ env.KEY_VAULT }} \
+            --name database-url \
+            --query value -o tsv)
+          test -n "$DATABASE_URL"
+          echo "::add-mask::$DATABASE_URL"
+          echo "DATABASE_URL=$DATABASE_URL" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install server workspace
+        run: npm ci --workspace=mathema-backend --include-workspace-root=false
+
+      - name: Run selected task(s)
+        working-directory: server
+        run: |
+          set -euo pipefail
+          task="${{ inputs.task }}"
+          run_wrong_note() { npm run backfill:wrong-note-review; }
+          run_diagnostic_gap() { npm run backfill:diagnostic-gap; }
+          run_lesson_set() { npx ts-node scripts/backfill-lesson-problem-set.ts; }
+          run_verify() { npm run verify:diagnostic-pools; }
+
+          case "$task" in
+            all)
+              run_wrong_note
+              run_diagnostic_gap
+              run_lesson_set
+              run_verify
+              ;;
+            backfill-wrong-note)       run_wrong_note ;;
+            backfill-diagnostic-gap)    run_diagnostic_gap ;;
+            backfill-lesson-problem-set) run_lesson_set ;;
+            verify-diagnostic-pools)    run_verify ;;
+            *) echo "Unknown task: $task"; exit 1 ;;
+          esac
+
+      - name: Remove temporary firewall rule
+        if: always() && steps.fw.outputs.rule != ''
+        run: |
+          az postgres flexible-server firewall-rule delete \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.PG_SERVER }} \
+            --rule-name "${{ steps.fw.outputs.rule }}" \
+            --yes || true
