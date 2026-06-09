@@ -103,7 +103,12 @@ jobs:
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
-            --set-env-vars GEMINI_API_KEY=secretref:gemini-api-key
+            --set-env-vars \
+              GEMINI_API_KEY=secretref:gemini-api-key \
+              FEATURE_ADAPTIVE_DIAGNOSTIC_PCT=100 \
+              FEATURE_FIRST_SESSION_ACHIEVEMENT_PCT=100 \
+              FEATURE_KR_COLD_START_PCT=100 \
+              FEATURE_STUDENT_EFFICACY_CARD_PCT=100
 
       # Bounded smoke test: poll every 10s, give up after 2min, then dump the
       # last 100 log lines of the new revision so we can see the real cause
