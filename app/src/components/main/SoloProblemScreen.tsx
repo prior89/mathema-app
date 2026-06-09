@@ -16,6 +16,7 @@ import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { MathInput } from '../MathInput';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
 
 const STEP_TYPE_LABEL: Record<string, string> = {
@@ -406,6 +407,10 @@ export function SoloProblemScreen() {
 
 function NoStepsReview({ problemId, problemBody }: { problemId: string; problemBody: string }) {
   const { t } = useT();
+  const [studentAnswer, setStudentAnswer] = useState('');
+  const [feedback, setFeedback] = useState<{ kind: 'correct' | 'wrong' } | null>(null);
+  const startedAtRef = useRef(Date.now());
+
   // Pull the solution endpoint which exposes both `answer` and `explanation`
   // (the latter populated by the AI Solver pipeline via expectedSolutionSteps).
   // This screen is the Notes / review surface for AI-Solver-uploaded problems,
@@ -418,6 +423,26 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
   const explanation = solution.data?.explanation ?? null;
   const concept = solution.data?.concept ?? null;
 
+  const check = useMutation({
+    mutationFn: () => post<{ isCorrect: boolean }>('/attempts', {
+      problemId,
+      answer: studentAnswer,
+      durationSec: Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)),
+      context: 'PRACTICE',
+    }),
+    onSuccess: (r) => {
+      setFeedback({ kind: r.isCorrect ? 'correct' : 'wrong' });
+    },
+    onError: () => {
+      setFeedback({ kind: 'wrong' });
+    },
+  });
+
+  function onCheck() {
+    if (!studentAnswer.trim() || check.isPending) return;
+    check.mutate();
+  }
+
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* PROBLEM card */}
@@ -426,6 +451,43 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
         <div className="math-big" style={{ fontSize: 16, marginTop: 8, whiteSpace: 'pre-wrap' }}>
           <MathText text={problemBody} />
         </div>
+      </div>
+
+      <div>
+        <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('solo.noSteps.tryEyebrow')}</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+          <MathInput
+            value={studentAnswer}
+            onChange={(v) => {
+              setStudentAnswer(v);
+              if (feedback) setFeedback(null);
+            }}
+            placeholder={t('solo.noSteps.tryPlaceholder')}
+            onKeyDown={(e) => { if (e.key === 'Enter') onCheck(); }}
+            disabled={check.isPending}
+            style={{ flex: 1, minWidth: 0 }}
+          />
+          <button
+            type="button"
+            className="btn"
+            onClick={onCheck}
+            disabled={!studentAnswer.trim() || check.isPending}
+            style={{ width: 'auto', height: 44, padding: '0 18px', fontSize: 14, flexShrink: 0 }}
+          >
+            {check.isPending ? t('solo.checking') : t('solo.checkAnswer')}
+          </button>
+        </div>
+        {feedback && (
+          <div
+            style={{
+              marginTop: 8, padding: 10, fontSize: 13, fontWeight: 600, borderRadius: 10,
+              background: feedback.kind === 'correct' ? 'var(--p-success-tint)' : 'var(--p-danger-tint)',
+              color: feedback.kind === 'correct' ? 'var(--p-success)' : 'var(--p-danger)',
+            }}
+          >
+            {feedback.kind === 'correct' ? t('solo.feedback.correct') : t('solo.feedback.wrong')}
+          </div>
+        )}
       </div>
 
       {/* Concept chip */}
