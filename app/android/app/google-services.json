@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "780610015758",
+    "project_id": "matheo-e5c15",
+    "storage_bucket": "matheo-e5c15.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:780610015758:android:47cb03006945b121fae25f",
+        "android_client_info": {
+          "package_name": "ai.matheo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKsHqLu1q5nCJ1L_yDhilYuCAu2trPTK8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
