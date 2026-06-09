@@ -844,6 +844,14 @@ const ko = {
   'review.submit.failed': '답을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.',
   'review.answerEyebrow': '답',
   'review.answer.placeholder': '최종 답을 입력하세요…',
+
+  // Math keyboard (PR-18)
+  'mathKeyboard.aria': '수식 키보드',
+  'mathKeyboard.backspace': '지우기',
+  'mathKeyboard.insert': '{token} 입력',
+  'mathInput.aria': '수식 답 입력',
+  'mathInput.showKeyboard': '수식 키보드 열기',
+  'mathInput.hideKeyboard': '수식 키보드 닫기',
   'review.hintAria': '힌트',
   'review.checking': '…',
   'review.check': '확인',
@@ -1967,6 +1975,14 @@ const en: typeof ko = {
   'review.submit.failed': 'Could not submit — try again in a moment.',
   'review.answerEyebrow': 'ANSWER',
   'review.answer.placeholder': 'Type the final answer…',
+
+  // Math keyboard (PR-18)
+  'mathKeyboard.aria': 'Math keyboard',
+  'mathKeyboard.backspace': 'Backspace',
+  'mathKeyboard.insert': 'Insert {token}',
+  'mathInput.aria': 'Math answer input',
+  'mathInput.showKeyboard': 'Show math keyboard',
+  'mathInput.hideKeyboard': 'Hide math keyboard',
   'review.hintAria': 'Hint',
   'review.checking': '…',
   'review.check': 'Check',
