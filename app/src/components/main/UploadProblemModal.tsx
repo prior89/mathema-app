@@ -294,6 +294,88 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   );
 }
 
+/** PR-14 — per-step "why" accordion layered on PR-15 Socratic reveal. */
+function SolutionStepsList({
+  steps,
+  rationales,
+}: {
+  steps: string[];
+  rationales?: string[];
+}) {
+  const { t } = useT();
+  const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
+
+  const toggleWhy = (idx: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  return (
+    <ol style={{
+      margin: 0,
+      paddingLeft: 0,
+      listStyle: 'none',
+      display: 'grid',
+      gap: 10,
+      fontSize: 13.5,
+      lineHeight: 1.6,
+      color: 'var(--p-ink-2)',
+    }}>
+      {steps.map((step, idx) => {
+        const why = rationales?.[idx]?.trim();
+        const isOpen = expanded.has(idx);
+        return (
+          <li key={idx}>
+            <div style={{ whiteSpace: 'pre-wrap' }}>
+              <MathText text={step} />
+            </div>
+            {why ? (
+              <div style={{ marginTop: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => toggleWhy(idx)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    color: 'var(--p-primary)',
+                    fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  {isOpen ? t('upload.result.step.whyHide') : t('upload.result.step.why')}
+                </button>
+                {isOpen && (
+                  <div style={{
+                    marginTop: 6,
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    background: 'var(--p-accent-tint)',
+                    fontSize: 12.5,
+                    lineHeight: 1.55,
+                    color: 'var(--p-ink-2)',
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    <MathText text={why} />
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 function extractErrorMessage(e: unknown, t: Translate): string | null {
   const data = (e as { response?: { data?: any } })?.response?.data;
   const code = data?.error?.code ?? data?.code;
@@ -847,22 +929,10 @@ function ResultPhase({
             <div className="card" style={{ padding: 14, marginTop: 12, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
               <div className="eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>{t('upload.result.solution.eyebrow')}</div>
               {solve.steps && solve.steps.length > 0 ? (
-                <ol style={{
-                  margin: 0,
-                  paddingLeft: 0,
-                  listStyle: 'none',
-                  display: 'grid',
-                  gap: 10,
-                  fontSize: 13.5,
-                  lineHeight: 1.6,
-                  color: 'var(--p-ink-2)',
-                }}>
-                  {solve.steps.map((step, idx) => (
-                    <li key={idx} style={{ whiteSpace: 'pre-wrap' }}>
-                      <MathText text={step} />
-                    </li>
-                  ))}
-                </ol>
+                <SolutionStepsList
+                  steps={solve.steps}
+                  rationales={solve.stepRationales}
+                />
               ) : null}
               {solve.explanation && solve.steps && solve.steps.length > 0 ? (
                 <div style={{

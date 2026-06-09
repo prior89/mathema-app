@@ -39,6 +39,9 @@ type SolveHelperResponse = {
   /// a numbered list with LaTeX rendered inline; persisted into
   /// Problem.expectedSolutionSteps for the practice replay.
   steps?: string[];
+  /// Pedagogical "why" per step — same length as `steps`. Rendered as a
+  /// collapsible accordion in UploadProblemModal (PR-14 / PR-15).
+  stepRationales?: string[];
   verification?: {
     isVerified?: boolean;
     method?: string;
@@ -494,6 +497,7 @@ export class MathHelperService {
             ? {
                 explanation: response.explanation ?? '',
                 steps: response.steps ?? [],
+                stepRationales: response.stepRationales ?? [],
               }
             : undefined,
         conceptLessonId: lesson?.id ?? null,
