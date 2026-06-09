@@ -476,6 +476,7 @@ const ko = {
   // ===== Quota / Paywall (Phase 5 — AI Solver daily limit) =====
   'quota.solver.remaining': '오늘 {used}/{limit}회 사용',
   'quota.solver.exhausted': '오늘 한도를 다 썼어요 ({used}/{limit})',
+  'quota.solver.grace': '신규 혜택 {limit}/일 · {daysLeft}일 남음',
   'paywall.quotaBanner.title': 'Free 한도에 도달했어요',
   'paywall.quotaBanner.desc': 'Free 플랜은 하루 {limit}회 AI Solver 사용 — Premium은 무제한',
 
@@ -1598,6 +1599,7 @@ const en: typeof ko = {
   // Quota / Paywall (Phase 5 — AI Solver daily limit)
   'quota.solver.remaining': '{used}/{limit} today',
   'quota.solver.exhausted': 'Daily limit reached ({used}/{limit})',
+  'quota.solver.grace': 'Welcome bonus {limit}/day · {daysLeft}d left',
   'paywall.quotaBanner.title': 'You\'ve reached the Free limit',
   'paywall.quotaBanner.desc': 'Free plan: {limit} AI Solver calls per day — Premium is unlimited.',
 

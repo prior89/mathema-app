@@ -29,12 +29,13 @@ export class FreeTierSolverQuotaGuard implements CanActivate {
     // Premium short-circuit — no Redis touch, no counter increment for paid users.
     if (await this.billing.isPremium(userId)) return true;
 
+    const limit = await this.quota.getSolverDailyLimit(userId);
     const used = await this.quota.incrementSolver(userId);
-    if (used > FREE_TIER_SOLVER_LIMIT) {
+    if (used > limit) {
       throw new ForbiddenException({
         error: 'QuotaExceeded',
-        message: `Daily AI Solver limit reached (${FREE_TIER_SOLVER_LIMIT}/day). Upgrade to Premium for unlimited.`,
-        limit: FREE_TIER_SOLVER_LIMIT,
+        message: `Daily AI Solver limit reached (${limit}/day). Upgrade to Premium for unlimited.`,
+        limit,
         used,
         resetAt: this.quota.resetAt().toISOString(),
         productSuggestion: 'premium_monthly',
