@@ -2,29 +2,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import type { UserRole } from '../lib/queries';
 import { homePathForRole } from '../lib/role-routes';
+import { onboardingCompletedLocally } from '../lib/post-auth-path';
 import { LoadingSplash } from './Brand';
-
-// Has the user reached the end of /onboarding (= ScreenReady.finalize ran
-// to the localStorage write)? This is a SECONDARY signal — the backend's
-// User.gradeLevel is the source of truth, but PATCH /users/me can fail
-// transiently (offline, throttle, 5xx) and we don't want a temporary save
-// miss to ricochet the user back into /onboarding from /app forever.
-//
-// Audit 2026-05-27: the prior guard was gradeLevel-only, so finalize()'s
-// silent-catch on the PATCH meant any blip during onboarding left the
-// account permanently stuck in /onboarding ↔ /app oscillation. P3
-// separately makes finalize loud about that failure so the user can retry;
-// this flag is the safety net so the user isn't trapped in the meantime.
-function onboardingCompletedLocally(): boolean {
-  try {
-    const raw = localStorage.getItem('mathema.onboarding');
-    if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    return !!parsed?.completedAt;
-  } catch {
-    return false;
-  }
-}
 
 type ProtectedRouteProps = {
   children: JSX.Element;

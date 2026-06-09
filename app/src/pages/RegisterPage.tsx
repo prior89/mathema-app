@@ -14,7 +14,7 @@
  *   디자인: .mathema-app phone frame (LoginPage / 온보딩 / 메인 앱과 통일).
  */
 
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, RegisterRole } from '../context/AuthContext';
 import type { GradeLevel, NcertClass } from '../lib/queries';
@@ -22,9 +22,11 @@ import { useT } from '../lib/i18n';
 import { isLikelyEmail } from '../lib/email';
 import { Glyph } from '../components/onboarding/Glyph';
 import { BrandLogo } from '../components/Brand';
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
+import { AuthDivider } from '../components/auth/AuthDivider';
+import { formatAuthError } from '../lib/auth-errors';
+import { isGoogleSignInConfigured } from '../lib/google-client-id';
 import '../styles/onboarding.css';
-
-const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
 
 const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
   CLASS_7:  'CLASS_7',
@@ -71,6 +73,7 @@ export default function RegisterPage() {
 
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   // 단계별 next 조건
   const canStep1Next = isLikelyEmail(email) && password.length >= 8 && !!name.trim() && !!role;
@@ -103,46 +106,17 @@ export default function RegisterPage() {
     } finally { setBusy(false); }
   };
 
-  // Google Identity Services — Step 0 에서만 노출.
-  const gsiRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (step !== 0 || !GOOGLE_CLIENT_ID || !gsiRef.current) return;
-    const init = () => {
-      const g = (window as any).google;
-      if (!g?.accounts?.id) return;
-      g.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: async (resp: { credential: string }) => {
-          setErr(null);
-          setBusy(true);
-          try {
-            await loginWithGoogle(resp.credential);
-            navigate('/');
-          } catch (e: any) {
-            setErr(e?.response?.data?.error?.message ?? t('auth.register.failed'));
-          } finally {
-            setBusy(false);
-          }
-        },
-      });
-      g.accounts.id.renderButton(gsiRef.current, {
-        theme: 'outline',
-        size: 'large',
-        width: 280,
-        text: 'signup_with',
-      });
-    };
-    if ((window as any).google?.accounts?.id) {
-      init();
-      return;
+  const handleGoogleSignIn = async (idToken: string) => {
+    setErr(null);
+    setGoogleBusy(true);
+    try {
+      await loginWithGoogle(idToken);
+    } catch (e: unknown) {
+      setErr(formatAuthError(e, { context: 'register' }));
+    } finally {
+      setGoogleBusy(false);
     }
-    const s = document.createElement('script');
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.async = true;
-    s.defer = true;
-    s.onload = init;
-    document.body.appendChild(s);
-  }, [step, loginWithGoogle, navigate, t]);
+  };
 
   return (
     <div className="mathema-app">
@@ -172,7 +146,9 @@ export default function RegisterPage() {
                     name={name} setName={setName}
                     country={country} setCountry={setCountry}
                     setLang={setLang}
-                    gsiRef={gsiRef}
+                    googleBusy={googleBusy}
+                    onGoogleSignIn={handleGoogleSignIn}
+                    formBusy={busy}
                     t={t}
                   />
                 )}
@@ -251,7 +227,10 @@ export default function RegisterPage() {
 }
 
 // ─── Step 0 : 역할 + 기본 정보 + Google ───────────────────────
-function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setPassword, name, setName, country, setCountry, setLang, gsiRef, t }: any) {
+function StepRoleAndCredentials({
+  role, setRole, email, setEmail, password, setPassword, name, setName,
+  country, setCountry, setLang, googleBusy, onGoogleSignIn, formBusy, t,
+}: any) {
   // Country chip group — same set as OnboardingPage.ScreenCountry. KR
   // 선택 시 setLang('ko') 즉시 호출 → 이후 라벨/모든 화면 한국어.
   // v1 active = IN + KR. 4국 (US/UK/AU/SG) coming-soon disabled.
@@ -371,15 +350,16 @@ function StepRoleAndCredentials({ role, setRole, email, setEmail, password, setP
         </div>
       </div>
 
-      {GOOGLE_CLIENT_ID && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-            <span className="caption" style={{ fontSize: 11 }}>{t('reg.or')}</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-          </div>
-          <div ref={gsiRef} style={{ display: 'flex', justifyContent: 'center' }} />
-        </div>
+      {isGoogleSignInConfigured() && (
+        <>
+          <AuthDivider labelKey="reg.or" />
+          <GoogleSignInButton
+            mode="signup"
+            onCredential={onGoogleSignIn}
+            busy={googleBusy}
+            disabled={formBusy}
+          />
+        </>
       )}
     </>
   );

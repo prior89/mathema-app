@@ -3,7 +3,7 @@
  * Also re-exports AuthShell + Field for legacy ForgotPassword/ResetPassword/VerifyEmail pages.
  */
 import { ReactNode } from 'react';
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { post, tokens, get } from '../lib/api';
@@ -12,9 +12,11 @@ import { homePathForRole } from '../lib/role-routes';
 import { useT } from '../lib/i18n';
 import { Glyph } from '../components/onboarding/Glyph';
 import { BrandLogo } from '../components/Brand';
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
+import { AuthDivider } from '../components/auth/AuthDivider';
+import { formatAuthError } from '../lib/auth-errors';
+import { isGoogleSignInConfigured } from '../lib/google-client-id';
 import '../styles/onboarding.css';
-
-const GOOGLE_CLIENT_ID = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID ?? '';
 
 export default function LoginPage() {
   const { login, loginWithGoogle, refreshUser } = useAuth();
@@ -41,7 +43,7 @@ export default function LoginPage() {
     } catch { return null; }
   });
   const [busy, setBusy] = useState(false);
-  const gsiRef = useRef<HTMLDivElement | null>(null);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -62,79 +64,24 @@ export default function LoginPage() {
         return;
       }
       await login(email, password);
-    } catch (e: any) {
-      // P4 fix 2026-05-27: surface 429 / network as actionable copy instead of
-      // raw backend message. Locale picked from localStorage since LoginPage
-      // sits before any country gate.
-      const isKR = (() => { try { return localStorage.getItem('mathema.lang') === 'ko'; } catch { return false; } })();
-      const status = e?.response?.status;
-      if (status === 429) {
-        setErr(isKR
-          ? '로그인 시도가 너무 많아요. 잠시 후 다시 시도해주세요.'
-          : 'Too many login attempts. Please retry in a minute.');
-      } else if (!status) {
-        setErr(isKR
-          ? '서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'
-          : 'Cannot reach the server. Check your connection.');
-      } else {
-        setErr(e?.response?.data?.error?.message ?? t('login.failed'));
-      }
+    } catch (e: unknown) {
+      setErr(formatAuthError(e, { context: 'login' }));
     } finally {
       setBusy(false);
     }
   };
 
-  // Google Identity Services — VITE_GOOGLE_CLIENT_ID 가 설정된 경우만 활성화.
-  useEffect(() => {
-    if (!GOOGLE_CLIENT_ID || !gsiRef.current) return;
-    const init = () => {
-      const g = (window as any).google;
-      if (!g?.accounts?.id) return;
-      g.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: async (resp: { credential: string }) => {
-          setErr(null);
-          setBusy(true);
-          try {
-            await loginWithGoogle(resp.credential);
-            navigate('/app');
-          } catch (e: any) {
-            const isKR = (() => { try { return localStorage.getItem('mathema.lang') === 'ko'; } catch { return false; } })();
-            const status = e?.response?.status;
-            if (status === 429) {
-              setErr(isKR
-                ? '로그인 시도가 너무 많아요. 잠시 후 다시 시도해주세요.'
-                : 'Too many login attempts. Please retry in a minute.');
-            } else if (!status) {
-              setErr(isKR
-                ? '서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'
-                : 'Cannot reach the server. Check your connection.');
-            } else {
-              setErr(e?.response?.data?.error?.message ?? t('login.google.failed'));
-            }
-          } finally {
-            setBusy(false);
-          }
-        },
-      });
-      g.accounts.id.renderButton(gsiRef.current, {
-        theme: 'outline',
-        size: 'large',
-        width: 280,
-        text: 'continue_with',
-      });
-    };
-    if ((window as any).google?.accounts?.id) {
-      init();
-      return;
+  const handleGoogleSignIn = async (idToken: string) => {
+    setErr(null);
+    setGoogleBusy(true);
+    try {
+      await loginWithGoogle(idToken);
+    } catch (e: unknown) {
+      setErr(formatAuthError(e, { context: 'login' }));
+    } finally {
+      setGoogleBusy(false);
     }
-    const s = document.createElement('script');
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.async = true;
-    s.defer = true;
-    s.onload = init;
-    document.body.appendChild(s);
-  }, [loginWithGoogle, navigate]);
+  };
 
   return (
     <div className="mathema-app">
@@ -204,15 +151,16 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {GOOGLE_CLIENT_ID && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-                    <span className="caption" style={{ fontSize: 11 }}>{t('login.or')}</span>
-                    <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
-                  </div>
-                  <div ref={gsiRef} style={{ display: 'flex', justifyContent: 'center' }} />
-                </div>
+              {isGoogleSignInConfigured() && (
+                <>
+                  <AuthDivider labelKey="login.or" />
+                  <GoogleSignInButton
+                    mode="continue"
+                    onCredential={handleGoogleSignIn}
+                    busy={googleBusy}
+                    disabled={busy}
+                  />
+                </>
               )}
 
               {/* PoC dev-login hint card removed per user request 2026-05-27 —

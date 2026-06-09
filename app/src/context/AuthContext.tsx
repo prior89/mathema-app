@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { post, tokens, get } from '../lib/api';
 import type { Me, GradeLevel } from '../lib/queries';
 import { homePathForRole } from '../lib/role-routes';
+import { postAuthPath } from '../lib/post-auth-path';
 import { unregisterPushToken } from '../native/push-bridge';
 import { track } from '../lib/analytics';
 
@@ -17,7 +18,7 @@ type AuthState = {
   user: Me | null;
   ready: boolean;
   login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (idToken: string) => Promise<void>;
+  loginWithGoogle: (idToken: string, opts?: { skipNavigate?: boolean }) => Promise<Me>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => void;
   /** Re-fetch /users/me and replace the cached user. Onboarding calls this
@@ -147,17 +148,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const me = await get<Me>('/users/me');
     setUser(me);
     track('auth.login', { method: 'password' });
-    navigate(homePathForRole(me.role));
+    navigate(postAuthPath(me));
   };
 
   /** Google Sign-In — Web GIS or Capacitor plugin 이 발급한 idToken 으로 백엔드 인증. */
-  const loginWithGoogle = async (idToken: string) => {
+  const loginWithGoogle = async (idToken: string, opts?: { skipNavigate?: boolean }) => {
     const t = await post<{ accessToken: string; refreshToken: string }>('/auth/google/id-token', { idToken });
     tokens.set(t.accessToken, t.refreshToken);
     const me = await get<Me>('/users/me');
     setUser(me);
     track('auth.login', { method: 'google' });
-    navigate(homePathForRole(me.role));
+    if (!opts?.skipNavigate) {
+      navigate(postAuthPath(me));
+    }
+    return me;
   };
 
   const register = async (input: RegisterInput) => {
@@ -166,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const me = await get<Me>('/users/me');
     setUser(me);
     track('auth.register', { role: input.role, targetGrade: input.targetGrade });
-    navigate(homePathForRole(me.role));
+    navigate(postAuthPath(me));
   };
 
   const logout = async () => {
