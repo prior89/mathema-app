@@ -168,7 +168,6 @@ export function HomeScreen() {
               };
               return (
                 <div key={i} className="plan-card" onClick={goLesson} style={{ alignItems: 'flex-start' }}>
-                  <div className="badge" style={{ background: b.bg, color: b.fg }}>{c.icon || b.glyph}</div>
                   <div className="info">
                     <div className="ttl">{c.title}</div>
                     <div className="sub">{c.unit} · {c.time}</div>
@@ -179,7 +178,18 @@ export function HomeScreen() {
                       </div>
                     )}
                   </div>
-                  <span className="chip" style={{ fontSize: 10.5 }}>{c.tag}</span>
+                  <span
+                    className="chip"
+                    style={{
+                      fontSize: 10.5,
+                      background: b.bg,
+                      color: b.fg,
+                      borderColor: 'transparent',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {c.tag}
+                  </span>
                 </div>
               );
             })}

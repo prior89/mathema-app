@@ -19,18 +19,7 @@ import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
-
-const STEP_TONE: Record<string, { eyebrow: string; tint: string }> = {
-  HOOK: { eyebrow: 'HOOK', tint: 'var(--p-primary-tint)' },
-  CONCRETE: { eyebrow: 'CONCRETE', tint: 'var(--p-accent-tint)' },
-  PICTORIAL: { eyebrow: 'PICTORIAL', tint: 'var(--p-primary-tint)' },
-  ABSTRACT: { eyebrow: 'ABSTRACT', tint: 'var(--p-surface-2)' },
-  WORKED_EXAMPLE: { eyebrow: 'WORKED EXAMPLE', tint: 'var(--p-accent-tint)' },
-  GUIDED_PRACTICE: { eyebrow: 'GUIDED PRACTICE', tint: 'var(--p-primary-tint)' },
-  RETRIEVAL: { eyebrow: 'RETRIEVAL', tint: 'var(--p-accent-tint)' },
-  MISCONCEPTION: { eyebrow: 'COMMON MISTAKE', tint: 'var(--p-danger-tint)' },
-  REFLECT: { eyebrow: 'REFLECT', tint: 'var(--p-surface-2)' },
-};
+import { DEFAULT_STEP_TONE, STEP_TONE } from '../../lib/step-tone';
 
 export function ConceptLessonScreen() {
   const { code } = useParams<{ code: string }>();
@@ -283,7 +272,7 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
 
 function ConceptStepBlock({ step }: { step: ConceptStep }) {
   const { t } = useT();
-  const tone = STEP_TONE[step.kind] ?? STEP_TONE.ABSTRACT;
+  const tone = STEP_TONE[step.kind] ?? DEFAULT_STEP_TONE;
   const mc = step.misconception;
   const hasMisconception = !!(mc && (mc.wrong || mc.why || mc.correct));
   const hasWorked = !!(step.workedSteps && step.workedSteps.length > 0);
@@ -296,13 +285,28 @@ function ConceptStepBlock({ step }: { step: ConceptStep }) {
   if (!step.body && !hasMisconception && !hasWorked && !hasReflect) return null;
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <span className="chip" style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>{t(`step.eyebrow.${step.kind}` as any) || tone.eyebrow}</span>
-        <span style={{ fontSize: 14, fontWeight: 600 }}>{step.title}</span>
+    <div className="concept-step">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span
+          className="chip concept-step-chip"
+          style={{
+            fontSize: 10.5,
+            fontFamily: 'var(--font-mono)',
+            letterSpacing: '0.08em',
+            background: tone.chipBg,
+            color: tone.chipColor,
+            borderColor: 'transparent',
+          }}
+        >
+          {t(`step.eyebrow.${step.kind}` as any) || tone.eyebrow}
+        </span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{step.title}</span>
       </div>
       {step.body && (
-        <div className="card" style={{ padding: 14, background: tone.tint, borderColor: 'transparent', whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
+        <div
+          className="card concept-step-body"
+          style={{ padding: 14, borderLeft: `3px solid ${tone.accent}`, whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.6, color: 'var(--p-ink)' }}
+        >
           <BulletizedMathText text={step.body} />
         </div>
       )}
@@ -1011,11 +1015,24 @@ function KoreanPracticePhase({
 
 function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
   const { t } = useT();
-  const tone = STEP_TONE[step.kind] ?? STEP_TONE.ABSTRACT;
+  const tone = STEP_TONE[step.kind] ?? DEFAULT_STEP_TONE;
   return (
-    <div className="card" style={{ padding: '16px 18px', background: tone.tint, borderColor: 'transparent' }}>
-      <div className="eyebrow" style={{ fontSize: 10.5, marginBottom: 8, opacity: 0.75 }}>{t(`step.eyebrow.${step.kind}` as any) || tone.eyebrow}</div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, marginBottom: 10, lineHeight: 1.35 }}>{step.title}</div>
+    <div className="card concept-step-body" style={{ padding: '16px 18px', borderLeft: `3px solid ${tone.accent}` }}>
+      <span
+        className="chip concept-step-chip"
+        style={{
+          fontSize: 10.5,
+          marginBottom: 8,
+          fontFamily: 'var(--font-mono)',
+          letterSpacing: '0.08em',
+          background: tone.chipBg,
+          color: tone.chipColor,
+          borderColor: 'transparent',
+        }}
+      >
+        {t(`step.eyebrow.${step.kind}` as any) || tone.eyebrow}
+      </span>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, marginBottom: 10, lineHeight: 1.35, color: 'var(--p-ink)' }}>{step.title}</div>
       <div style={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--p-ink)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
         <MathText text={step.body} />
       </div>
@@ -1026,7 +1043,7 @@ function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
             <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{
                 flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
-                background: 'var(--p-primary)', color: '#fff',
+                background: tone.chipBg, color: tone.chipColor,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 11, fontWeight: 700,
               }}>{ws.step}</span>

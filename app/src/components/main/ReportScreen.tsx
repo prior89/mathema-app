@@ -191,8 +191,7 @@ export function ReportScreen() {
               </div>
               {ach.data.map((a, i) => (
                 <div key={i} className="achiev">
-                  <div className="medal">{a.icon}</div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{a.title}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--p-muted)' }}>{a.sub}</div>
                   </div>
