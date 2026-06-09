@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
+import { LearningMetricsService } from './learning-metrics.service';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { AdminAuditInterceptor } from './admin-audit.interceptor';
 import { LegacySeedCleanupBootstrap } from './legacy-seed-cleanup.bootstrap';
@@ -15,9 +16,11 @@ import { ConceptLessonsModule } from '../concept-lessons/concept-lessons.module'
   controllers: [AdminController],
   providers: [
     AdminService,
+    LearningMetricsService,
     AdminGuard,
     AdminAuditInterceptor,
     LegacySeedCleanupBootstrap,
   ],
+  exports: [LearningMetricsService],
 })
 export class AdminModule {}
