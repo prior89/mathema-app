@@ -40,6 +40,9 @@ jobs:
       - name: Build Vite SPA
         env:
           VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
+          # GitHub repo secret — OAuth Web Client ID from Cloud Console.
+          # When unset the Google button is hidden; email/password still works.
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         run: npm -w app run build
 
       # OIDC login — fetches the canonical SWA deployment token from Azure so

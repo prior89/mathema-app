@@ -128,6 +128,9 @@ jobs:
             ENV_VARS="$ENV_VARS FIREBASE_CLIENT_EMAIL=secretref:firebase-client-email"
             ENV_VARS="$ENV_VARS FIREBASE_PRIVATE_KEY=secretref:firebase-private-key"
           fi
+          if [ -n "${{ secrets.VITE_GOOGLE_CLIENT_ID }}" ]; then
+            ENV_VARS="$ENV_VARS GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}"
+          fi
           az containerapp update \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
