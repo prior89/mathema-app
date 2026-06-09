@@ -41,6 +41,8 @@ class SolveResponse(BaseModel):
     # (e.g. "Step 1. ..."). Rendered as a numbered list in the UI; LaTeX
     # inline math ($...$) is preserved by the MathText component.
     steps: List[str] = []
+    # One short "why this step" per entry in `steps` (Socratic pedagogy layer).
+    stepRationales: List[str] = []
     personalizedLearning: Optional[str] = None
     mistakeDiagnosis: Optional[str] = None
     hints: List[str]

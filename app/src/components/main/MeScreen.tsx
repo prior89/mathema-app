@@ -6,6 +6,7 @@ import { tokens } from '../../lib/api';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { EfficacyCard } from './EfficacyCard';
 
 const GRADE_LABEL: Record<string, string> = {
   CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
@@ -51,6 +52,8 @@ export function MeScreen() {
               </div>
             </div>
           </div>
+
+          <EfficacyCard />
 
           {/* Billing / paywall card removed in v1.0 — paywall is Phase 2 work.
               Profile card above + Quick links below give identity + reports;

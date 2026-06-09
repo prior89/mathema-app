@@ -6,6 +6,7 @@ import { UNIT_NAME_EN } from '../../common/i18n/content-en';
 import { UNIT_NAME_HI } from '../../common/i18n/content-hi';
 import { LlmDraftService, DraftPayload } from '../content-ingest/llm-draft.service';
 import { DeterministicCheckService } from '../../infrastructure/math/deterministic-check.service';
+import { AchievementsService } from '../achievements/achievements.service';
 
 /**
  * 수학식 답안 비교 — 학생 표기 변이를 흡수.
@@ -80,6 +81,7 @@ export class ConceptLessonsService {
     private readonly prisma: PrismaService,
     private readonly llmDraft: LlmDraftService,
     private readonly deterministicCheck: DeterministicCheckService,
+    private readonly achievements: AchievementsService,
   ) {}
 
   // ---------- LIST ----------
@@ -225,11 +227,13 @@ export class ConceptLessonsService {
       }
     }
 
-    return this.prisma.conceptProgress.upsert({
+    const progress = await this.prisma.conceptProgress.upsert({
       where: { userId_lessonId: { userId, lessonId: lesson.id } },
       update: {},
       create: { userId, lessonId: lesson.id, currentStep: 1 },
     });
+    void this.achievements.tryAwardFirstConceptStep(userId, { chapterCode }).catch(() => {});
+    return progress;
   }
 
   // ---------- STEP COMPLETE ----------
@@ -317,7 +321,7 @@ export class ConceptLessonsService {
     const merged = Array.from(new Set([...progress.completedSteps, ...conceptIndexes]))
       .sort((a, b) => a - b);
 
-    return this.prisma.conceptProgress.update({
+    const updated = await this.prisma.conceptProgress.update({
       where: { id: progress.id },
       data: {
         completedSteps: merged,
@@ -331,6 +335,8 @@ export class ConceptLessonsService {
         conceptWalkthroughAt: progress.conceptWalkthroughAt ?? new Date(),
       },
     });
+    void this.achievements.tryAwardFirstConceptStep(userId, { chapterCode }).catch(() => {});
+    return updated;
   }
 
   // ---------- RETRIEVAL CHECK ----------

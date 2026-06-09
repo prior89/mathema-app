@@ -2,7 +2,6 @@ import { Injectable, Logger, BadRequestException, ConflictException } from '@nes
 import { SubscriptionStatus } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import {
-  FREE_TIER_SOLVER_LIMIT,
   MONETIZATION_STRATEGY,
   PREMIUM_PREVIEW_DAYS,
   PREMIUM_PREVIEW_PRODUCT_ID,
@@ -116,17 +115,33 @@ export class BillingService {
 
   /** Daily AI Solver quota snapshot for /billing/status. Premium users get
    * `limit: null` (unlimited) but we still surface `used` for informational
-   * UI; for free users `limit` is the FREE_TIER_SOLVER_LIMIT constant
-   * (single source of truth lives in the guard module). */
-  async getSolverQuota(
-    userId: string,
-  ): Promise<{ used: number; limit: number | null; resetAt: string }> {
+   * UI; free users get a dynamic limit (16/day during the first 7 days after
+   * signup, then 8/day). */
+  async getSolverQuota(userId: string): Promise<{
+    used: number;
+    limit: number | null;
+    resetAt: string;
+    inGrace: boolean;
+    graceEndsAt: string | null;
+  }> {
     const premium = await this.isPremium(userId);
     const used = await this.quota.getSolverUsed(userId);
+    if (premium) {
+      return {
+        used,
+        limit: null,
+        resetAt: this.quota.resetAt().toISOString(),
+        inGrace: false,
+        graceEndsAt: null,
+      };
+    }
+    const grace = await this.quota.getSolverGraceState(userId);
     return {
       used,
-      limit: premium ? null : FREE_TIER_SOLVER_LIMIT,
+      limit: grace.limit,
       resetAt: this.quota.resetAt().toISOString(),
+      inGrace: grace.inGrace,
+      graceEndsAt: grace.inGrace ? grace.graceEndsAt.toISOString() : null,
     };
   }
 

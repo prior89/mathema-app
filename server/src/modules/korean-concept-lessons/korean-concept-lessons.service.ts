@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { KoreanGrade, KoreanSubject } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { AchievementsService } from '../achievements/achievements.service';
 
 /**
  * Korean-curriculum (2022 개정) parallel to ConceptLessonsService. Country=KR
@@ -10,7 +11,10 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
  */
 @Injectable()
 export class KoreanConceptLessonsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly achievements: AchievementsService,
+  ) {}
 
   /** List all Korean chapters, optionally filtered by grade + subject.
    *  Includes per-user mastered flag (KoreanConceptProgress.masteredAt
@@ -65,6 +69,13 @@ export class KoreanConceptLessonsService {
       include: { steps: { orderBy: { stepIndex: 'asc' } } },
     });
     if (!lesson) throw new NotFoundException(`KoreanConceptLesson ${chapterCode} not found`);
+
+    await this.prisma.koreanConceptProgress.upsert({
+      where: { userId_lessonId: { userId, lessonId: lesson.id } },
+      update: {},
+      create: { userId, lessonId: lesson.id },
+    });
+    void this.achievements.tryAwardFirstConceptStep(userId, { chapterCode }).catch(() => {});
 
     // Per-user signals — both depend on userId.
     let nextProblemId: string | null = null;

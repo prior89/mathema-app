@@ -6,6 +6,7 @@ import { OcrService } from './services/ocr.service';
 import { PdfExtractorService } from './services/pdf-extractor.service';
 import { SimilarFinderService } from './services/similar-finder.service';
 import { SpacedRepetitionService } from './services/spaced-repetition.service';
+import { ReviewSchedulerService } from './review-scheduler.service';
 import { AttemptsModule } from '../attempts/attempts.module';
 
 /**
@@ -24,7 +25,8 @@ import { AttemptsModule } from '../attempts/attempts.module';
     PdfExtractorService,
     SimilarFinderService,
     SpacedRepetitionService,
+    ReviewSchedulerService,
   ],
-  exports: [WrongNotesService, SpacedRepetitionService, WrongNotesRepository],
+  exports: [WrongNotesService, SpacedRepetitionService, WrongNotesRepository, ReviewSchedulerService],
 })
 export class WrongNotesModule {}

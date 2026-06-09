@@ -13,6 +13,7 @@ import { track } from '../../lib/analytics';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { FirstAchievementModal } from './FirstAchievementModal';
 
 const PLAN_BADGE: Record<string, { glyph: string; bg: string; fg: string }> = {
   concept: { glyph: '∫', bg: 'var(--p-primary-tint)', fg: 'var(--p-primary)' },
@@ -114,12 +115,11 @@ export function HomeScreen() {
           {summary.data
             && !today.isLoading
             && summary.data.todayMinutes === 0
-            && summary.data.streakDays === 0
-            && (today.data?.length ?? 0) === 0 && (
+            && summary.data.streakDays === 0 && (
             <ColdStartHero
               name={userName.split(' ')[0]}
-              onStudy={() => nav('/app/study')}
-              onLearn={() => nav('/app/learn')}
+              placementChapter={today.data?.[0]?.chapterCode ?? null}
+              onPlacement={(code) => nav(`/app/learn/${code}`)}
             />
           )}
 
@@ -148,7 +148,12 @@ export function HomeScreen() {
                 // KPI 추적 — 추천 클릭. 추후 acceptRate 산출에 사용.
                 track('today.card.click', {
                   unitId: c.unitId, tag: c.tag, title: c.title, type: c.type,
+                  chapterCode: c.chapterCode,
                 });
+                if (c.chapterCode) {
+                  track('today.card.opened-lesson', { chapterCode: c.chapterCode });
+                  return nav(`/app/learn/${c.chapterCode}`);
+                }
                 if (!c.unitId) return nav('/app/learn');
                 try {
                   const lessons = await fetchConceptLessonsForUnit(c.unitId);
@@ -265,13 +270,32 @@ export function HomeScreen() {
             );
           })()}
 
-          {/* 12-week heatmap removed per user request — was always-zero on
-              cold starts and the month labels read as dead chrome. Streak +
-              activity surface in the per-chapter progress cards instead. */}
+          {/* Mastery map entry — unit heatmap + review schedule (PR-12). */}
+          <div className="section-h" style={{ marginTop: 8 }}>
+            <span className="label">{t('home.mastery.section')}</span>
+            <button
+              type="button"
+              className="more"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+              onClick={() => nav('/app/mastery')}
+            >
+              {t('home.mastery.viewAll')} →
+            </button>
+          </div>
+          <div
+            className="card"
+            style={{ padding: 14, cursor: 'pointer' }}
+            onClick={() => nav('/app/mastery')}
+          >
+            <div style={{ fontSize: 13, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
+              {t('home.mastery.desc')}
+            </div>
+          </div>
 
           <div style={{ height: 16 }} />
         </div>
       </div>
+      <FirstAchievementModal />
       <TabBar />
     </div>
   );
@@ -432,19 +456,16 @@ function EmptyCta({ msg, cta, onClick }: { msg: string; cta: string; onClick: ()
   );
 }
 
-/** First-impression hero shown when the user has not studied at all yet.
- *  Two clear next-step CTAs — Solve (AI helper) and Learn (concept lessons).
- *  Drops out as soon as any study minute / streak day / today-plan item is recorded. */
+/** First-impression hero — welcome banner + placement CTA (PR-22). */
 function ColdStartHero({
   name,
-}: { name: string; onStudy: () => void; onLearn: () => void }) {
-  // User decision 2026-05-27: CTA buttons removed. The "연습 시작" → /app/study
-  // was a NCERT-era artifact that dead-ends on cold start (Study tab needs
-  // mastered chapters to populate, which a cold-start user has zero of), and
-  // the duplicate "개념 학습" → /app/learn just races with the tab bar's own
-  // Learn entry point. The hero now functions as a pure welcome banner — the
-  // tab bar handles navigation. `onStudy`/`onLearn` props kept in the
-  // signature so HomeScreen's call site doesn't churn.
+  placementChapter,
+  onPlacement,
+}: {
+  name: string;
+  placementChapter: string | null | undefined;
+  onPlacement: (chapterCode: string) => void;
+}) {
   const { t } = useT();
   return (
     <div
@@ -469,6 +490,17 @@ function ColdStartHero({
       >
         {t('home.coldStart.desc')}
       </p>
+      {placementChapter && (
+        <button
+          className="btn"
+          type="button"
+          onClick={() => onPlacement(placementChapter)}
+          style={{ marginTop: 14, width: '100%' }}
+        >
+          {t('home.coldStart.cta.placement')}
+          <Glyph.ChevronR />
+        </button>
+      )}
     </div>
   );
 }

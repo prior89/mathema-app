@@ -58,6 +58,9 @@ import { ContentIngestModule } from './modules/content-ingest/content-ingest.mod
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { MathHelperModule } from './modules/math-helper/math-helper.module';
 import { BillingModule } from './modules/billing/billing.module';
+import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
+import { AchievementsModule } from './modules/achievements/achievements.module';
+import { MetricsModule } from './common/metrics/metrics.module';
 
 @Module({
   imports: [
@@ -80,6 +83,7 @@ import { BillingModule } from './modules/billing/billing.module';
     }]),
 
     // infra
+    MetricsModule,
     PrismaModule,
     RedisModule,
     BullSharedModule,
@@ -119,6 +123,8 @@ import { BillingModule } from './modules/billing/billing.module';
     UploadsModule,
     MathHelperModule,
     BillingModule,
+    FeatureFlagsModule,
+    AchievementsModule,
   ],
   providers: [
     // P1-3 + 2026-05-27 fix: global rate-limit, bucketed per-user (JWT.sub)

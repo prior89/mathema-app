@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { ConfigService } from '@nestjs/config';
-import { LLMValidationStatus, MasteryUpdateSource } from '@prisma/client';
+import { LLMValidationStatus, MasteryUpdateSource, Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AiService } from '../../infrastructure/ai/ai.service';
 import {
@@ -13,6 +13,7 @@ import {
 } from '../../infrastructure/ai/prompts/attempt-analyze.prompt';
 import { MasteryTrajectoryService } from '../mastery/mastery-trajectory.service';
 import { ErrorPatternService } from '../mastery/error-pattern.service';
+import { mapAttemptAnalysisToInsightJson } from '../wrong-notes/wrong-note-insight.mapper';
 
 /**
  * LLMAnalysisService — 명세서 Flow 3 (LLM 분석) 의 핵심 구현.
@@ -224,10 +225,26 @@ export class LLMAnalysisService {
       }
     }
 
-    // 4) WrongNote.insight 갱신 (LLM reasoningSummary 로).
+    // 4) WrongNote.insight + insightJson (derived from AttemptAnalysis, same write).
+    const insightJson = mapAttemptAnalysisToInsightJson({
+      analysis: parsed,
+      conceptTags: attempt.problem.concepts.map((pc) => pc.concept.code),
+      expectedSolutionSteps: attempt.problem.expectedSolutionSteps,
+      isCorrect: attempt.isCorrect,
+      selfConfidenceScore: attempt.selfConfidenceScore,
+      lang: input.lang,
+    });
     await this.prisma.wrongNote.updateMany({
-      where: { userId: attempt.userId, problemId: attempt.problemId },
-      data: { insight: parsed.reasoningSummary, status: 'ANALYZING' },
+      where: {
+        userId: attempt.userId,
+        problemId: attempt.problemId,
+        insightJson: { equals: Prisma.DbNull },
+      },
+      data: {
+        insight: parsed.reasoningSummary,
+        insightJson,
+        status: 'ANALYZING',
+      },
     });
 
     this.logger.log(`Attempt ${attemptId} LLM analysis VALIDATED — errorCodes=${parsed.errorCodes.join(',')} conf=${confidenceScore.toFixed(2)}`);

@@ -1,5 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import type { UserRole } from '../lib/queries';
+import { homePathForRole } from '../lib/role-routes';
 import { LoadingSplash } from './Brand';
 
 // Has the user reached the end of /onboarding (= ScreenReady.finalize ran
@@ -24,7 +26,13 @@ function onboardingCompletedLocally(): boolean {
   }
 }
 
-export default function ProtectedRoute({ children }: { children: JSX.Element }) {
+type ProtectedRouteProps = {
+  children: JSX.Element;
+  /** When set, only these roles may access the route (PR-04b). */
+  roles?: UserRole[];
+};
+
+export default function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   const { user, ready } = useAuth();
   const location = useLocation();
   if (!ready) return <LoadingSplash />;
@@ -38,12 +46,22 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
   if (!user.emailVerifiedAt && !location.pathname.startsWith('/verify-required')) {
     return <Navigate to="/verify-required" replace />;
   }
+  const userRole = user.role ?? 'STUDENT';
   // Google sign-up creates users without a class. Force them through the
   // NCERT picker (CLASS_7..CLASS_12) before /app/* is reachable — UNLESS
   // the user has already finished onboarding locally (PATCH may have just
-  // missed a beat; we don't want to loop them).
-  if (!user.gradeLevel && !onboardingCompletedLocally()) {
+  // missed a beat; we don't want to loop them). PARENT/TEACHER skip this.
+  if (
+    userRole === 'STUDENT'
+    && !user.gradeLevel
+    && !onboardingCompletedLocally()
+  ) {
     return <Navigate to="/onboarding" replace />;
+  }
+  if (roles && roles.length > 0) {
+    if (!roles.includes(userRole)) {
+      return <Navigate to={homePathForRole(userRole)} replace />;
+    }
   }
   return children;
 }

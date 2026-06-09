@@ -498,3 +498,5 @@ const input: React.CSSProperties = {
   border: `1px solid ${COLORS.line}`, borderRadius: 4, fontSize: 13, backgroundColor: COLORS.bg,
   fontFamily: 'inherit',
 };
+
+export default TeacherDashboardPage;

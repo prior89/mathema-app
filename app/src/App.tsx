@@ -4,20 +4,24 @@ import { useQuery } from '@tanstack/react-query';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastHost } from './components/Toast';
 import { LoadingSplash } from './components/Brand';
+import { useAuth } from './context/AuthContext';
 import { trackPageView } from './lib/analytics';
 import { fetchMe } from './lib/queries';
+import { homePathForRole } from './lib/role-routes';
 import { useT } from './lib/i18n';
+import { usePushSync } from './hooks/usePushSync';
 
 /**
  * Matheo — Sage 통합 앱 라우팅 (인도 PoC).
  *   /          → /app  (인증 후 단일 앱 진입점)
  *   /onboarding → 9 화면 sage 온보딩 → /app
  *   /login      → sage 로그인 (admin/admin PoC dev-login)
- *   /app/*      → MainAppPage (5탭 + lesson + settings)
+ *   /app/*      → MainAppPage (5탭 + lesson + settings) — STUDENT
+ *   /parent     → ParentDashboardPage — PARENT (PR-27)
+ *   /teacher    → TeacherDashboardPage — TEACHER (PR-27)
  *
- *   옛 web UI (StudentDashboard / ParentDashboard / TeacherDashboard /
- *   ConceptHub / 옛 ConceptLessonPage / MathLearningApp) 는 라우팅에서 제외 —
- *   소스는 보존하되 진입 차단.
+ *   옛 web UI (StudentDashboard / ConceptHub / 옛 ConceptLessonPage /
+ *   MathLearningApp) 는 라우팅에서 제외 — 소스는 보존하되 진입 차단.
  *
  *   /settings, /learn/:code 는 sage 화면으로 redirect 처리 (외부 링크 호환).
  */
@@ -34,6 +38,8 @@ const PolicyPage = lazy(() => import('./pages/PolicyPage'));
 
 // 메인 sage 앱
 const MainAppPage = lazy(() => import('./pages/MainAppPage'));
+const ParentDashboardPage = lazy(() => import('./pages/ParentDashboardPage'));
+const TeacherDashboardPage = lazy(() => import('./pages/TeacherDashboardPage'));
 
 function PageViewTracker() {
   const location = useLocation();
@@ -80,11 +86,17 @@ function I18nCountrySync() {
   return null;
 }
 
+function PushSync() {
+  usePushSync();
+  return null;
+}
+
 export default function App() {
   return (
     <>
       <PageViewTracker />
       <I18nCountrySync />
+      <PushSync />
       <Suspense fallback={<LoadingSplash />}>
         <Routes>
           {/* Auth flow */}
@@ -107,21 +119,37 @@ export default function App() {
           <Route path="/privacy" element={<PolicyPage kind="privacy" />} />
           <Route path="/terms" element={<PolicyPage kind="terms" />} />
 
-          {/* Main sage app — all post-auth UX */}
+          {/* Main sage app — student learning shell */}
           <Route
             path="/app/*"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute roles={['STUDENT', 'ADMIN']}>
                 <MainAppPage />
               </ProtectedRoute>
             }
           />
 
-          {/* Root + legacy paths → consolidate to /app */}
-          <Route path="/" element={<Navigate to="/app" replace />} />
+          {/* Role dashboards (PR-27) */}
+          <Route
+            path="/parent"
+            element={
+              <ProtectedRoute roles={['PARENT']}>
+                <ParentDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher"
+            element={
+              <ProtectedRoute roles={['TEACHER']}>
+                <TeacherDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Root + legacy paths */}
+          <Route path="/" element={<RoleHomeRedirect />} />
           <Route path="/student" element={<Navigate to="/app" replace />} />
-          <Route path="/parent" element={<Navigate to="/app" replace />} />
-          <Route path="/teacher" element={<Navigate to="/app" replace />} />
           <Route path="/learn" element={<Navigate to="/app/learn" replace />} />
           <Route path="/learn/:code" element={<LegacyLessonRedirect />} />
           <Route path="/settings" element={<Navigate to="/app/me/settings" replace />} />
@@ -134,6 +162,13 @@ export default function App() {
       <ToastHost />
     </>
   );
+}
+
+function RoleHomeRedirect() {
+  const { user, ready } = useAuth();
+  if (!ready) return <LoadingSplash />;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={homePathForRole(user.role)} replace />;
 }
 
 // /learn/:code → /app/learn/:code

@@ -84,7 +84,12 @@ describe('AttemptsRepository.create', () => {
     expect(r.isCorrect).toBe(false);
     expect(prisma.wrongNote.upsert).toHaveBeenCalledWith(expect.objectContaining({
       where: { userId_problemId: { userId: 'u1', problemId: 'p1' } },
-      create: expect.objectContaining({ status: 'PENDING', errorType: 'CALCULATION_MISTAKE' }),
+      create: expect.objectContaining({
+        status: 'PENDING',
+        errorType: 'CALCULATION_MISTAKE',
+        intervalDays: 3,
+        nextReviewAt: expect.any(Date),
+      }),
     }));
   });
 
@@ -115,6 +120,13 @@ describe('AttemptsRepository.create', () => {
     const prisma = mockPrisma({ problem: { answer: 'X+1' } });
     const { repo } = build({ prisma });
     const r = await repo.create('u1', { problemId: 'p1', answer: '  x + 1  ' });
+    expect(r.isCorrect).toBe(true);
+  });
+
+  it('accepts LaTeX frac equivalent to decimal answer (PR-19a)', async () => {
+    const prisma = mockPrisma({ problem: { answer: '0.5' } });
+    const { repo } = build({ prisma });
+    const r = await repo.create('u1', { problemId: 'p1', answer: '\\frac{1}{2}' });
     expect(r.isCorrect).toBe(true);
   });
 

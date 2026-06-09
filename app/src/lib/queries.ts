@@ -11,7 +11,20 @@ export type RecommendCard = {
   tag: string; tagColor: string; unit: string; title: string;
   reason: string; time: string; type: string; icon: string;
   unitId: string | null;
+  /** First-session plan direct route (PR-07). */
+  chapterCode?: string | null;
+  route?: string | null;
 };
+export type WrongNoteInsightJson = {
+  rootCause: string;
+  correctConcept: string;
+  drillSteps: string[];
+  similarPatterns: string[];
+  confidenceCalibration: 'over' | 'under' | 'aligned';
+  reviewIntervalDays: number;
+  lang: 'ko' | 'en';
+};
+
 export type WrongNoteCard = {
   id: string; problemId: string;
   /** ConceptLesson chapter code — populated for NCERT-derived problems; null for legacy seed. */
@@ -27,6 +40,7 @@ export type WrongNoteCard = {
   problemFormula?: string | null;
   unit: string; subUnit: string;
   errorType: string; errorTypeRaw: string; insight: string;
+  insightJson?: WrongNoteInsightJson | null;
   diff: string; date: string; similarCount: number; status: string;
   // SM-2
   easinessFactor: number; repetitionCount: number; intervalDays: number;
@@ -115,12 +129,89 @@ export type Me = {
   gradeLevel?: GradeLevel | null;
   studyGoal?: StudyGoal | null;
   role?: UserRole;
+  pushRemindersEnabled?: boolean;
   tenantId?: string | null;
   country?: CountryCode;
 };
 
+/** Onboarding diagnostic — shared problem shape (fixed + adaptive). */
+export type DiagnosticProblem = {
+  id: string;
+  body: string;
+  difficulty: string;
+  step: {
+    id: string;
+    stepIndex: number;
+    prompt: string;
+    choices: Array<{ id: string; choiceIndex: number; text: string }>;
+  } | null;
+  conceptLessonId: string | null;
+};
+
+export type DiagnosticMastery = {
+  conceptId: string;
+  conceptName: string;
+  conceptCode: string;
+  score: number;
+};
+
+export type DiagnosticResult = {
+  sessionId: string;
+  attempted: number;
+  correct: number;
+  masteries: DiagnosticMastery[];
+  placement?: {
+    estimatedGradeBand: string;
+    weakConceptIds: string[];
+    recommendedChapterCodes: string[];
+  };
+};
+
+export type AdaptiveDiagnosticStart = {
+  sessionId: string;
+  maxItems: number;
+  problem: DiagnosticProblem;
+};
+
+export type AdaptiveDiagnosticAnswer = {
+  attemptId: string;
+  isCorrect: boolean;
+  itemsAnswered: number;
+  meanSE: number;
+  shouldFinish: boolean;
+  nextProblem: DiagnosticProblem | null;
+};
+
 // fetchers
+export type FirstSessionAchievementKind =
+  | 'FIRST_CONCEPT_STEP'
+  | 'FIRST_PRACTICE_CORRECT'
+  | 'FIRST_WRONGNOTE_MASTERED';
+
+export type FirstSessionAchievement = {
+  kind: FirstSessionAchievementKind;
+  earnedAt: string;
+  celebratedAt: string | null;
+  metadata: Record<string, unknown> | null;
+};
+
 export const fetchMe = () => get<Me>('/users/me');
+
+export type StudentEfficacyCard = {
+  northStarPct: number | null;
+  cohortSize: number;
+  chaptersMastered: number;
+  wrongNotesMasteredPct: number;
+  errorPatternsImproving: number;
+  streakDays: number;
+  message: string;
+};
+
+export const fetchEfficacy = () => get<StudentEfficacyCard>('/users/me/efficacy');
+export const fetchFirstSessionAchievements = () =>
+  get<FirstSessionAchievement[]>('/achievements');
+export const celebrateFirstSessionAchievement = (kind: FirstSessionAchievementKind) =>
+  post<FirstSessionAchievement>(`/achievements/${kind}/celebrate`, {});
 export const fetchDashboardSummary = () => get<DashboardSummary>('/dashboard/summary');
 export const fetchMastery = () => get<Mastery[]>('/mastery');
 export const fetchToday = () => get<RecommendCard[]>('/recommendations/today');

@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from './users.repository';
 import { daysUntil } from '../../common/utils/date.util';
@@ -11,7 +12,57 @@ export class UsersService {
 
   create(data: any) { return this.repo.create(data); }
   findByEmail(email: string) { return this.repo.findByEmail(email); }
-  updateProfile(id: string, dto: any) { return this.repo.update(id, dto); }
+
+  async updateProfile(id: string, dto: {
+    name?: string;
+    gradeLevel?: string;
+    studyGoal?: string;
+    role?: string;
+    pushRemindersEnabled?: boolean;
+  }) {
+    const user = await this.repo.findById(id);
+    if (!user) throw new NotFoundException('User not found');
+
+    const data: Record<string, unknown> = {};
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.gradeLevel !== undefined) data.gradeLevel = dto.gradeLevel;
+    if (dto.studyGoal !== undefined) data.studyGoal = dto.studyGoal;
+    if (dto.pushRemindersEnabled !== undefined) {
+      data.pushRemindersEnabled = dto.pushRemindersEnabled;
+    }
+
+    if (dto.role !== undefined) {
+      this.assertRolePatchAllowed(user.role, dto.role as UserRole);
+      data.role = dto.role;
+    }
+
+    if (Object.keys(data).length === 0) return this.findOne(id);
+    await this.repo.update(id, data);
+    return this.findOne(id);
+  }
+
+  /** v1.1: only STUDENT self-assignment; PARENT/TEACHER require invite flow (PR-27). */
+  private assertRolePatchAllowed(currentRole: UserRole, requested: UserRole) {
+    if (requested === 'PARENT' || requested === 'TEACHER') {
+      throw new ForbiddenException({
+        code: 'role_elevation_blocked',
+        message: 'Parent and teacher accounts require an invite flow. Student role only for now.',
+      });
+    }
+    if (requested === 'ADMIN') {
+      throw new ForbiddenException({
+        code: 'role_elevation_blocked',
+        message: 'Admin role cannot be self-assigned.',
+      });
+    }
+    // Only STUDENT remains as a patchable role; non-student accounts cannot change role.
+    if (currentRole !== 'STUDENT') {
+      throw new ForbiddenException({
+        code: 'role_change_blocked',
+        message: 'Role changes are restricted for this account.',
+      });
+    }
+  }
 
   async findOne(id: string) {
     const u = await this.repo.findById(id);

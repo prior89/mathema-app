@@ -19,6 +19,7 @@ import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { MathInput } from '../MathInput';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
 
 const HINT_UNLOCK_AFTER = 3; // wrong submits before Hint button activates
@@ -275,7 +276,7 @@ function ActiveProblem({
       {/* Sticky bottom — hint + answer input + check */}
       <div className="screen-foot" style={{ paddingTop: 8 }}>
         <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('review.answerEyebrow')}</div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
           <button
             type="button"
             onClick={onHintClick}
@@ -292,16 +293,14 @@ function ActiveProblem({
           >
             💡
           </button>
-          <input
+          <MathInput
             value={studentAnswer}
-            onChange={(e) => setStudentAnswer(e.target.value)}
+            onChange={setStudentAnswer}
             placeholder={t('review.answer.placeholder')}
             onKeyDown={(e) => { if (e.key === 'Enter') onCheck(); }}
-            style={{
-              flex: 1, height: 44, padding: '0 14px', borderRadius: 12,
-              border: '1px solid var(--p-border-strong)', background: 'var(--p-surface)',
-              color: 'var(--p-ink)', fontFamily: 'inherit', fontSize: 15, outline: 'none',
-            }}
+            showPreview={false}
+            disabled={check.isPending}
+            style={{ flex: 1, minWidth: 0 }}
           />
           <button
             type="button"

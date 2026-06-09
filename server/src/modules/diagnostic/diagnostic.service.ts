@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { GradeLevel, KoreanGrade, ProblemStep } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AttemptsService } from '../attempts/attempts.service';
+import { FirstSessionPlanService } from '../recommendations/first-session-plan.service';
 
 // India NCERT GradeLevel → closest Korean grade. Same mapping used by
 // frontend HomeScreen / LearnScreen / OnboardingPage so KR students
@@ -28,6 +29,7 @@ export class DiagnosticService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly attempts: AttemptsService,
+    private readonly firstSessionPlan: FirstSessionPlanService,
   ) {}
 
   async start(userId: string) {
@@ -116,7 +118,13 @@ export class DiagnosticService {
       include: {
         attempts: {
           include: {
-            problem: { include: { concepts: { include: { concept: true } } } },
+            problem: {
+              include: {
+                concepts: { include: { concept: true } },
+                conceptLesson: { select: { chapterCode: true } },
+                koreanConceptLesson: { select: { chapterCode: true } },
+              },
+            },
           },
         },
       },
@@ -155,6 +163,23 @@ export class DiagnosticService {
         })
       : [];
 
+    const weakConceptIds = trajectories
+      .filter((t) => t.masteryScore < 50)
+      .map((t) => t.conceptId);
+    const recommendedChapterCodes = [
+      ...new Set(
+        session.attempts
+          .filter((a) => a.problem.concepts.some((pc) => weakConceptIds.includes(pc.conceptId)))
+          .map((a) => a.problem.conceptLesson?.chapterCode ?? a.problem.koreanConceptLesson?.chapterCode)
+          .filter((c): c is string => !!c),
+      ),
+    ].slice(0, 5);
+
+    const firstSessionPlan = await this.firstSessionPlan.seedFirstSession(userId, {
+      recommendedChapterCodes,
+      weakConceptIds,
+    });
+
     return {
       sessionId,
       attempted: session.attempts.length,
@@ -165,6 +190,7 @@ export class DiagnosticService {
         conceptCode: t.concept.code,
         score: t.masteryScore,
       })),
+      firstSessionPlan,
     };
   }
 
@@ -299,7 +325,7 @@ export class DiagnosticService {
       orderBy: { chapterCode: 'asc' },
       select: { problemIds: true },
     });
-    const ids = sets.flatMap((s) => s.problemIds.slice(0, 1)).slice(0, 12);
+    const ids = sets.flatMap((s) => s.problemIds.slice(0, 2)).slice(0, 24);
     if (ids.length < 4) return [];
 
     const rows = await this.prisma.problem.findMany({

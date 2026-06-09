@@ -25,6 +25,8 @@ export type MathHelperSolveResponse = {
   /// from the solver and may contain literal "\n" newlines for multi-line
   /// reasoning. Rendered as a numbered list in UploadProblemModal.
   steps?: string[];
+  /// One short "why this step" per entry in `steps` (Socratic pedagogy).
+  stepRationales?: string[];
   personalizedLearning?: string | null;
   mistakeDiagnosis?: string | null;
   hints: string[];

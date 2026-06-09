@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { post, tokens, get } from '../lib/api';
 import type { Me, GradeLevel } from '../lib/queries';
+import { homePathForRole } from '../lib/role-routes';
+import { unregisterPushToken } from '../native/push-bridge';
 import { track } from '../lib/analytics';
 
 // Sentry user tagging was removed alongside @sentry/react (v1.0). When the
@@ -145,7 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const me = await get<Me>('/users/me');
     setUser(me);
     track('auth.login', { method: 'password' });
-    navigate('/');
+    navigate(homePathForRole(me.role));
   };
 
   /** Google Sign-In — Web GIS or Capacitor plugin 이 발급한 idToken 으로 백엔드 인증. */
@@ -155,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const me = await get<Me>('/users/me');
     setUser(me);
     track('auth.login', { method: 'google' });
-    navigate('/');
+    navigate(homePathForRole(me.role));
   };
 
   const register = async (input: RegisterInput) => {
@@ -164,11 +166,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const me = await get<Me>('/users/me');
     setUser(me);
     track('auth.register', { role: input.role, targetGrade: input.targetGrade });
-    navigate('/');
+    navigate(homePathForRole(me.role));
   };
 
   const logout = async () => {
     track('auth.logout');
+    await unregisterPushToken().catch(() => {});
     tokens.clear();
     sessionStorage.clear();
     setUser(null);
@@ -182,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tokens.set(t.accessToken, t.refreshToken);
         const me = await get<Me>('/users/me');
         setUser(me);
-        navigate('/');
+        navigate(homePathForRole(me.role));
         return;
       } catch {/* fall through */}
     }

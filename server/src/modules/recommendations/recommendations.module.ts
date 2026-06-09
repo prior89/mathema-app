@@ -9,11 +9,25 @@ import { AdaptiveNextProblemService } from './services/adaptive-next-problem.ser
 import { SimilarProblemService } from './services/similar-problem.service';
 import { ReviewScheduleService } from './services/review-schedule.service';
 import { RecommendationMetricsService } from './services/recommendation-metrics.service';
+import { FirstSessionPlanService } from './first-session-plan.service';
+import { KrColdStartStrategy } from './strategies/kr-cold-start.strategy';
+import { KrFocusOnMistakesStrategy } from './strategies/kr-focus-on-mistakes.strategy';
+import { KrReinforceWeaknessStrategy } from './strategies/kr-reinforce-weakness.strategy';
+import { KrMaintainStrengthStrategy } from './strategies/kr-maintain-strength.strategy';
+import { KrChapterStatsService } from './services/kr-chapter-stats.service';
+import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
 
 @Module({
+  imports: [FeatureFlagsModule],
   controllers: [RecommendationsController],
   providers: [
+    FirstSessionPlanService,
     RecommendationsService,
+    KrColdStartStrategy,
+    KrFocusOnMistakesStrategy,
+    KrReinforceWeaknessStrategy,
+    KrMaintainStrengthStrategy,
+    KrChapterStatsService,
     FocusOnMistakesStrategy,
     ReinforceWeaknessStrategy,
     MaintainStrengthStrategy,
@@ -24,6 +38,7 @@ import { RecommendationMetricsService } from './services/recommendation-metrics.
     RecommendationMetricsService,
   ],
   exports: [
+    FirstSessionPlanService,
     RecommendationsService,
     StudyBalanceService,
     AdaptiveNextProblemService,

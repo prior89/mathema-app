@@ -22,6 +22,7 @@ import {
   type UnitBalance, type StudyBalanceResult, type AdaptiveResponse, type AdaptivePlan,
 } from '../lib/queries';
 import { useT } from '../lib/i18n';
+import { MasteryHeatmap, scoreToColor } from '../components/mastery/MasteryHeatmap';
 
 const COLORS = {
   bg: '#EFEBDF',
@@ -33,15 +34,6 @@ const COLORS = {
   warn: '#B45309',
   bad: '#8B3A1F',
 };
-
-/** mastery 점수 0~100 → 색상 (빨강→황→녹). */
-function scoreToColor(score: number): string {
-  const clamped = Math.max(0, Math.min(100, score));
-  if (clamped < 40) return '#D97757';
-  if (clamped < 60) return '#E0A458';
-  if (clamped < 80) return '#A4B574';
-  return '#4A5D3A';
-}
 
 const PLAN_LABELS: Record<string, { ko: string; en: string; hi: string; icon: any }> = {
   concept:     { ko: '개념',     en: 'Concept',     hi: 'अवधारणा',  icon: BookOpen },
@@ -143,7 +135,7 @@ export function WeaknessDashboardPage({ embedded = false }: { embedded?: boolean
               <UnitTimeBar perUnit={data.perUnit} lang={lang} />
             </Section>
             <Section title={L('heatmap', lang)}>
-              <MasteryHeatmap perUnit={data.perUnit} lang={lang} />
+              <MasteryHeatmap perUnit={data.perUnit} lang={lang} embeddedInCard />
             </Section>
             <AlertLists data={data} lang={lang} />
             <AdaptiveSection
@@ -279,44 +271,6 @@ function UnitTimeBar({ perUnit, lang }: { perUnit: UnitBalance[]; lang: 'ko' | '
             &lt;{threshold} {L('score', lang)}
           </span>
         ))}
-      </div>
-    </Card>
-  );
-}
-
-function MasteryHeatmap({ perUnit, lang }: { perUnit: UnitBalance[]; lang: 'ko' | 'en' | 'hi' }) {
-  return (
-    <Card>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
-        {perUnit.map((u) => {
-          const studied = u.studyTimeMin > 0;
-          return (
-            <div
-              key={u.unitId}
-              title={`${u.unitName}\n${L('score', lang)}: ${u.score}\n${L('time', lang)}: ${u.studyTimeMin}${L('minutes', lang)}\n${lang === 'ko' ? '표본' : lang === 'hi' ? 'नमूने' : 'samples'}: ${u.samples}`}
-              style={{
-                backgroundColor: studied ? scoreToColor(u.score) : '#D8D2C2',
-                color: studied ? '#FAF7EF' : COLORS.sub,
-                padding: '10px 12px', borderRadius: 6,
-                fontSize: 12, lineHeight: 1.3,
-                display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                minHeight: 64,
-              }}
-            >
-              <div style={{ fontWeight: 500, marginBottom: 4, fontSize: 11, opacity: 0.95 }}>
-                {u.unitName.length > 18 ? u.unitName.slice(0, 16) + '…' : u.unitName}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 16, fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                  {studied ? u.score : '—'}
-                </span>
-                <span style={{ fontSize: 10, opacity: 0.85 }}>
-                  {studied ? `${u.studyTimeMin}${L('minutes', lang)}` : L('noStudyYet', lang)}
-                </span>
-              </div>
-            </div>
-          );
-        })}
       </div>
     </Card>
   );

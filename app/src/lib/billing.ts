@@ -115,11 +115,17 @@ export interface BillingServerStatus {
       used: number;
       limit: number | null;
       resetAt: string;
+      inGrace?: boolean;
+      graceEndsAt?: string | null;
     };
   };
   monetization?: {
     mode: string;
-    free: { solverDailyLimit: number };
+    free: {
+      solverDailyLimit: number;
+      graceSolverDailyLimit?: number;
+      gracePeriodDays?: number;
+    };
     premiumPreview: {
       productId: string;
       days: number;

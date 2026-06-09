@@ -2,7 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as admin from 'firebase-admin';
+import { MetricsService } from '../../common/metrics/metrics.service';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { ReviewSchedulerService } from '../wrong-notes/review-scheduler.service';
 
 /**
  * Firebase Cloud Messaging — Android push notifications.
@@ -23,6 +25,8 @@ export class FcmService {
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly scheduler: ReviewSchedulerService,
+    private readonly metrics: MetricsService,
   ) {
     const projectId = this.config.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = this.config.get<string>('FIREBASE_CLIENT_EMAIL');
@@ -72,23 +76,18 @@ export class FcmService {
   }
 
   /**
-   * SM-2 due reminder — 복습 만기 오답이 있는 사용자에게 푸시.
+   * WrongNote due reminder — ReviewScheduler unified due set per user.
    * 매일 IST 08:00 자동 실행.
    */
   @Cron('0 8 * * *', { name: 'due-wrong-notes', timeZone: 'Asia/Kolkata' })
   async triggerDueWrongNotes() {
-    const now = new Date();
-    const due = await this.prisma.wrongNote.groupBy({
-      by: ['userId'],
-      where: { status: { not: 'MASTERED' }, nextReviewAt: { lte: now } },
-      _count: true,
-    });
+    const due = await this.scheduler.getDueCountsByUser();
     let total = 0;
     for (const d of due) {
       const r = await this.sendToUser(d.userId, {
         title: 'Time to revise',
-        body: `${d._count} wrong note${d._count > 1 ? 's are' : ' is'} due for review.`,
-        data: { type: 'wrongnote.due', count: String(d._count) },
+        body: `${d.count} wrong note${d.count > 1 ? 's are' : ' is'} due for review.`,
+        data: { type: 'wrongnote.due', count: String(d.count) },
       });
       total += r.sent;
     }
@@ -100,6 +99,14 @@ export class FcmService {
   async sendToUser(userId: string, payload: { title: string; body: string; data?: Record<string, string> }) {
     if (!this.app) {
       this.logger.debug(`[noop] sendToUser ${userId}: ${payload.title}`);
+      return { sent: 0, failed: 0, disabled: 0 };
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pushRemindersEnabled: true },
+    });
+    if (user && !user.pushRemindersEnabled) {
+      this.logger.debug(`[skip] pushRemindersEnabled=false for ${userId}`);
       return { sent: 0, failed: 0, disabled: 0 };
     }
     const tokens = await this.prisma.deviceToken.findMany({
@@ -117,6 +124,7 @@ export class FcmService {
           data: payload.data,
         });
         sent++;
+        this.metrics.incPushDelivery('sent', payload.data?.type ?? 'unknown');
         await this.prisma.deviceToken.update({
           where: { id: t.id }, data: { lastSentAt: new Date() },
         });
@@ -129,6 +137,9 @@ export class FcmService {
             where: { id: t.id }, data: { disabledAt: new Date() },
           });
           disabled++;
+          this.metrics.incPushDelivery('disabled', payload.data?.type ?? 'unknown');
+        } else {
+          this.metrics.incPushDelivery('failed', payload.data?.type ?? 'unknown');
         }
         this.logger.warn(`fcm send failed ${t.token.slice(0, 12)}…: ${code}`);
       }

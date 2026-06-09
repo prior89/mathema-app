@@ -6,9 +6,11 @@
  */
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomeScreen } from '../components/main/HomeScreen';
+import { MasteryScreen } from '../components/main/MasteryScreen';
 import { LearnScreen } from '../components/main/LearnScreen';
 import { ConceptLessonScreen } from '../components/main/ConceptLessonScreen';
 import { NotesListScreen } from '../components/main/NotesListScreen';
+import { WrongNoteDetailScreen } from '../components/main/WrongNoteDetailScreen';
 import { StudyScreen } from '../components/main/StudyScreen';
 import { TestScreen } from '../components/main/TestScreen';
 import { ReviewQueueScreen } from '../components/main/ReviewQueueScreen';
@@ -39,11 +41,13 @@ export default function MainAppPage() {
         <div className="mathema-phone">
           <Routes>
             <Route index element={<HomeScreen />} />
+            <Route path="mastery" element={<MasteryScreen />} />
             <Route path="learn" element={<LearnScreen />} />
             <Route path="learn/:code" element={<ConceptLessonScreen />} />
             <Route path="study" element={<StudyScreen />} />
             <Route path="test" element={<TestScreen />} />
             <Route path="review" element={<ReviewQueueScreen />} />
+            <Route path="notes/:id" element={<WrongNoteDetailScreen />} />
             <Route path="notes" element={<NotesListScreen />} />
             <Route path="practice/:problemId" element={<SoloProblemScreen />} />
             {/* Study tab single-step practice (5-choice MC + handwriting pad).

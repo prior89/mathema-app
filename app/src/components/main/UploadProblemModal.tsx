@@ -28,14 +28,20 @@ type Props = {
 
 type Translate = ReturnType<typeof useT>['t'];
 
-// 2-step Photomath-style flow:
-//   pick        → user picks/takes a file
-//   ocr-running → 1-3 s OCR call (cheap, no quota)
-//   ocr-done    → recognised text shown to the user; solveExtractedText runs in
-//                 the background. User can retake here if the OCR is wrong.
-//   result      → solve completed, full response rendered
-//   error       → OCR or solve failed (which one is in the error string)
-type Phase = 'pick' | 'ocr-running' | 'ocr-done' | 'result' | 'error';
+// 3-step Photomath-style flow (PR-16: OCR review before quota-gated solve):
+//   pick          → user picks/takes a file
+//   ocr-running   → 1-3 s OCR call (cheap, no quota)
+//   ocr-review    → confidence badge + editable recognised text; user confirms
+//   solve-running → solveExtractedText in flight (spinner)
+//   result        → solve completed
+//   error         → OCR or solve failed
+type Phase = 'pick' | 'ocr-running' | 'ocr-review' | 'solve-running' | 'result' | 'error';
+
+function normalizeOcrConfidence(raw: number | null | undefined): number | null {
+  if (raw == null || !Number.isFinite(raw)) return null;
+  const n = raw > 1 ? raw / 100 : raw;
+  return Math.max(0, Math.min(1, n));
+}
 
 export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   const nav = useNavigate();
@@ -44,6 +50,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
+  const [editedOcrText, setEditedOcrText] = useState('');
   const [result, setResult] = useState<UploadAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [studentAnswer, setStudentAnswer] = useState('');
@@ -59,6 +66,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       setPhase('pick');
       setFile(null);
       setOcrResult(null);
+      setEditedOcrText('');
       setResult(null);
       setError(null);
       setStudentAnswer('');
@@ -123,34 +131,45 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     }
   };
 
-  const analyze = async () => {
+  const runOcr = async () => {
     if (!file) return;
     const requestSeq = requestSeqRef.current + 1;
     requestSeqRef.current = requestSeq;
     setPhase('ocr-running');
     setError(null);
     setOcrResult(null);
+    setEditedOcrText('');
     try {
-      // Step 1 — OCR only (Photomath-style instant recognition feedback).
-      // Resolves in 1-3 s and unblocks the user's "is my photo readable?"
-      // question before the much longer solve call starts.
       const ocr = await extractProblemText(file);
       if (requestSeq !== requestSeqRef.current) return;
       setOcrResult(ocr);
-      setPhase('ocr-done');
+      setEditedOcrText(ocr.text);
+      setPhase('ocr-review');
+    } catch (e) {
+      if (requestSeq !== requestSeqRef.current) return;
+      const msg = extractErrorMessage(e, t) ?? t('upload.error.failed');
+      setError(msg);
+      setPhase('error');
+    }
+  };
 
-      // Step 2 — solve runs while the OCR card is on screen. The user reads
-      // the recognised text and (optionally) retakes the photo during this
-      // 5-15 s window, which is otherwise the spinner-only stretch that
-      // made the old single-shot flow feel broken.
+  const runSolve = async () => {
+    if (!ocrResult) return;
+    const question = editedOcrText.trim();
+    if (!question) return;
+    const requestSeq = requestSeqRef.current + 1;
+    requestSeqRef.current = requestSeq;
+    setPhase('solve-running');
+    setError(null);
+    try {
       const durationSec = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
-      const solveResponse = await solveExtractedText(ocr.text, studentAnswer, durationSec);
+      const solveResponse = await solveExtractedText(question, studentAnswer, durationSec);
       if (requestSeq !== requestSeqRef.current) return;
       setResult({
-        extractedText: ocr.text,
-        latex: ocr.latex ?? null,
-        confidence: ocr.confidence ?? null,
-        source: ocr.source,
+        extractedText: question,
+        latex: ocrResult.latex ?? null,
+        confidence: ocrResult.confidence ?? null,
+        source: ocrResult.source,
         result: solveResponse,
       });
       setPhase('result');
@@ -174,14 +193,16 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     setPhase('pick');
     setError(null);
     setOcrResult(null);
+    setEditedOcrText('');
     setResult(null);
   };
 
-  /** From ocr-done: user spots a misread, taps "다시 찍기", returns to picker. */
+  /** Return to picker — cancels any in-flight OCR/solve via requestSeq bump. */
   const retakePhoto = () => {
     requestSeqRef.current += 1;
     setPhase('pick');
     setOcrResult(null);
+    setEditedOcrText('');
     setResult(null);
     setError(null);
   };
@@ -224,7 +245,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
             file={file}
             previewUrl={previewUrl}
             onPick={onPick}
-            onAnalyze={analyze}
+            onAnalyze={runOcr}
             studentAnswer={studentAnswer}
             onStudentAnswer={setStudentAnswer}
             fileInputRef={fileInputRef}
@@ -239,8 +260,21 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
           />
         )}
 
-        {phase === 'ocr-done' && ocrResult && (
-          <OcrDonePhase ocrResult={ocrResult} onRetake={retakePhoto} />
+        {phase === 'ocr-review' && ocrResult && (
+          <OcrReviewPhase
+            ocrResult={ocrResult}
+            editedText={editedOcrText}
+            onEditedText={setEditedOcrText}
+            onRetake={retakePhoto}
+            onSolve={runSolve}
+          />
+        )}
+
+        {phase === 'solve-running' && ocrResult && (
+          <SolveRunningPhase
+            questionText={editedOcrText.trim() || ocrResult.text}
+            onRetake={retakePhoto}
+          />
         )}
 
         {phase === 'result' && result && (
@@ -257,6 +291,88 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
         )}
       </div>
     </div>
+  );
+}
+
+/** PR-14 — per-step "why" accordion layered on PR-15 Socratic reveal. */
+function SolutionStepsList({
+  steps,
+  rationales,
+}: {
+  steps: string[];
+  rationales?: string[];
+}) {
+  const { t } = useT();
+  const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
+
+  const toggleWhy = (idx: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  return (
+    <ol style={{
+      margin: 0,
+      paddingLeft: 0,
+      listStyle: 'none',
+      display: 'grid',
+      gap: 10,
+      fontSize: 13.5,
+      lineHeight: 1.6,
+      color: 'var(--p-ink-2)',
+    }}>
+      {steps.map((step, idx) => {
+        const why = rationales?.[idx]?.trim();
+        const isOpen = expanded.has(idx);
+        return (
+          <li key={idx}>
+            <div style={{ whiteSpace: 'pre-wrap' }}>
+              <MathText text={step} />
+            </div>
+            {why ? (
+              <div style={{ marginTop: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => toggleWhy(idx)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    color: 'var(--p-primary)',
+                    fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  {isOpen ? t('upload.result.step.whyHide') : t('upload.result.step.why')}
+                </button>
+                {isOpen && (
+                  <div style={{
+                    marginTop: 6,
+                    padding: '8px 10px',
+                    borderRadius: 8,
+                    background: 'var(--p-accent-tint)',
+                    fontSize: 12.5,
+                    lineHeight: 1.55,
+                    color: 'var(--p-ink-2)',
+                    whiteSpace: 'pre-wrap',
+                  }}>
+                    <MathText text={why} />
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -527,20 +643,105 @@ function OcrRunningPhase({
   );
 }
 
-/**
- * OCR-done phase — recognised problem text shown to the user while solve runs
- * in the background. Matches the Photomath "instant text" pattern: the user
- * sees that the photo was read correctly within seconds, even though the full
- * solution arrives later. "다시 찍기" gives a clean escape when OCR misread
- * the equation, before the longer solve call starts charging real LLM cost.
- *
- * Sub-loader text rotates on a 4 s / 12 s schedule to mirror gpt-5-mini's
- * empirical 5-15 s solve window from the model bench.
- */
-function OcrDonePhase({
-  ocrResult, onRetake,
+function OcrConfidenceBadge({ confidence }: { confidence: number | null | undefined }) {
+  const { t } = useT();
+  const norm = normalizeOcrConfidence(confidence);
+  const pct = norm != null ? Math.round(norm * 100) : null;
+  const tier = norm == null ? 'unknown' : norm >= 0.8 ? 'high' : norm >= 0.5 ? 'medium' : 'low';
+  const bg = tier === 'high'
+    ? 'var(--p-success-tint)'
+    : tier === 'medium'
+      ? 'var(--p-accent-tint)'
+      : tier === 'low'
+        ? 'var(--p-warning-tint)'
+        : 'var(--p-surface-2)';
+  const label = pct != null
+    ? t(`upload.ocrReview.confidence.${tier}`, { pct })
+    : t('upload.ocrReview.confidence.unknown');
+  return (
+    <span className="chip" style={{ fontSize: 10.5, background: bg, color: 'var(--p-ink)' }}>
+      {label}
+    </span>
+  );
+}
+
+/** PR-16 — user verifies/edits OCR text before quota-gated solve starts. */
+function OcrReviewPhase({
+  ocrResult, editedText, onEditedText, onRetake, onSolve,
 }: {
   ocrResult: OcrResult;
+  editedText: string;
+  onEditedText: (value: string) => void;
+  onRetake: () => void;
+  onSolve: () => void;
+}) {
+  const { t } = useT();
+  const norm = normalizeOcrConfidence(ocrResult.confidence);
+  const showLowWarning = norm == null || norm < 0.7;
+  const canSolve = editedText.trim().length > 0;
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div className="eyebrow" style={{ fontSize: 10 }}>{t('upload.ocrReview.title')}</div>
+        <OcrConfidenceBadge confidence={ocrResult.confidence} />
+      </div>
+
+      {showLowWarning && (
+        <div style={{
+          marginTop: 10, padding: '10px 12px', borderRadius: 10, fontSize: 12.5, lineHeight: 1.45,
+          background: 'var(--p-warning-tint)', color: 'var(--p-ink-2)',
+        }}>
+          {t('upload.ocrReview.lowWarning')}
+        </div>
+      )}
+
+      <label style={{ ...fieldLabel, marginTop: 12 }}>
+        {t('upload.ocrReview.editLabel')}
+        <textarea
+          value={editedText}
+          onChange={(e) => onEditedText(e.target.value)}
+          placeholder={t('upload.ocrReview.placeholder')}
+          rows={5}
+          style={{
+            ...inputStyle,
+            minHeight: 120,
+            resize: 'vertical',
+            fontFamily: 'var(--font-mono)',
+            lineHeight: 1.5,
+            textTransform: 'none',
+          }}
+        />
+      </label>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+        <button
+          type="button"
+          onClick={onRetake}
+          className="btn outline"
+          style={{ flex: 1 }}
+        >
+          {t('upload.ocrReview.retake')}
+        </button>
+        <button
+          type="button"
+          onClick={onSolve}
+          disabled={!canSolve}
+          className="btn"
+          style={{ flex: 1, opacity: canSolve ? 1 : 0.55 }}
+        >
+          {t('upload.ocrReview.solve')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Solve in flight — read-only confirmed text + rotating status labels. */
+function SolveRunningPhase({
+  questionText, onRetake,
+}: {
+  questionText: string;
   onRetake: () => void;
 }) {
   const { t } = useT();
@@ -555,22 +756,16 @@ function OcrDonePhase({
     t('upload.solving.writing'),
     t('upload.solving.almost'),
   ][stage];
+
   return (
     <div>
-      {/* Recognised problem card — same visual language as ResultPhase's
-          problem card so the transition to the final state feels continuous
-          (Gestalt similarity / Norman conceptual model). */}
       <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
         <div className="eyebrow" style={{ fontSize: 10 }}>{t('upload.ocrDone.title')}</div>
         <div className="math-big" style={{ fontSize: 15, marginTop: 6, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-          <MathText text={ocrResult.text} />
+          <MathText text={questionText} />
         </div>
       </div>
 
-      {/* Retake CTA — only OCR cost spent so far, no quota consumed. Keeping
-          this button visible during the solve window is intentional: it tells
-          the user the photo isn't locked in, which lowers the "did I just
-          waste a credit?" anxiety the old single-shot flow surfaced. */}
       <button
         type="button"
         onClick={onRetake}
@@ -588,9 +783,6 @@ function OcrDonePhase({
         {t('upload.ocrDone.retake')}
       </button>
 
-      {/* Sub-loader for the in-progress solve. Uses the same spinner geometry
-          as OcrRunningPhase but smaller, so it reads as "next step still
-          happening" rather than "we're back at the start". */}
       <div style={{
         marginTop: 18,
         padding: '14px 16px',
@@ -625,6 +817,14 @@ function ResultPhase({
   const solve = result.result;
   const checked = solve.isStudentCorrect !== undefined && solve.isStudentCorrect !== null;
   const conceptText = [solve.detected.chapter, solve.detected.topic].filter(Boolean).join(' · ');
+  const hints = (solve.hints ?? []).filter(Boolean);
+  const [revealedHintCount, setRevealedHintCount] = useState(0);
+  const [solutionRevealed, setSolutionRevealed] = useState(false);
+  const verification = solve.verification;
+  const confidencePct = verification
+    ? Math.round(Math.max(0, Math.min(1, verification.confidence)) * 100)
+    : null;
+
   return (
     <div>
       {/* PROBLEM card -- matches the Mastery / Study problem card style */}
@@ -645,64 +845,128 @@ function ResultPhase({
         </div>
       )}
 
-      {/* Solution steps -- numbered list when the solver emitted structured
-          step text. Falls back to a single explanation paragraph if the
-          solver only returned the legacy `explanation` field (older clients
-          or deterministic-check path). The `explanation` summary, when both
-          exist, renders BELOW the steps as a brief takeaway. */}
-      {(solve.steps && solve.steps.length > 0) || solve.explanation ? (
-        <div className="card" style={{ padding: 14, marginTop: 12, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
-          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>{t('upload.result.solution.eyebrow')}</div>
-          {solve.steps && solve.steps.length > 0 ? (
-            <ol style={{
-              margin: 0,
-              paddingLeft: 0,
-              listStyle: 'none',
-              display: 'grid',
-              gap: 10,
-              fontSize: 13.5,
-              lineHeight: 1.6,
-              color: 'var(--p-ink-2)',
-            }}>
-              {solve.steps.map((step, idx) => (
-                <li key={idx} style={{ whiteSpace: 'pre-wrap' }}>
-                  <MathText text={step} />
-                </li>
+      {verification && (
+        <div className="card" style={{
+          marginTop: 12, padding: 12,
+          background: verification.isVerified ? 'var(--p-success-tint)' : 'var(--p-warning-tint)',
+          borderColor: 'transparent',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <Glyph.Check accent={verification.isVerified ? 'var(--p-success)' : 'var(--p-warning)'} size={14} />
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--p-ink)' }}>
+              {verification.isVerified
+                ? t('upload.result.verification.verified')
+                : t('upload.result.verification.unverified')}
+            </span>
+            {confidencePct != null && (
+              <span className="chip" style={{ fontSize: 10.5 }}>
+                {t('upload.result.verification.confidence', { pct: confidencePct })}
+              </span>
+            )}
+          </div>
+          {verification.caution && (
+            <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.5, color: 'var(--p-ink-2)' }}>
+              <span style={{ fontWeight: 600 }}>{t('upload.result.verification.caution')}: </span>
+              <MathText text={verification.caution} />
+            </div>
+          )}
+          {verification.issues.length > 0 && (
+            <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontSize: 12, lineHeight: 1.5, color: 'var(--p-ink-2)' }}>
+              {verification.issues.map((issue, idx) => (
+                <li key={idx}><MathText text={issue} /></li>
               ))}
-            </ol>
-          ) : null}
-          {solve.explanation && solve.steps && solve.steps.length > 0 ? (
-            <div style={{
-              marginTop: 12,
-              paddingTop: 10,
-              borderTop: '1px solid var(--p-border)',
-              fontSize: 12.5,
-              lineHeight: 1.55,
-              color: 'var(--p-ink-3)',
-              fontStyle: 'italic',
-              whiteSpace: 'pre-wrap',
-            }}>
-              <MathText text={solve.explanation} />
-            </div>
-          ) : null}
-          {solve.explanation && (!solve.steps || solve.steps.length === 0) ? (
-            <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap' }}>
-              <MathText text={solve.explanation} />
-            </div>
-          ) : null}
+            </ul>
+          )}
         </div>
-      ) : null}
+      )}
 
-      {/* Answer card -- primary accent so it reads as the headline result */}
-      <div className="card" style={{
-        marginTop: 12, padding: '14px 16px',
-        background: 'var(--p-primary-tint)', borderColor: 'var(--p-primary)',
-      }}>
-        <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>{t('upload.result.answer.eyebrow')}</div>
-        <div style={{ marginTop: 6, fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
-          <MathText text={solve.answer || '—'} />
+      {hints.length > 0 && (
+        <div className="card" style={{ padding: 14, marginTop: 12, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
+          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>{t('upload.result.hints.eyebrow')}</div>
+          <div style={{ display: 'grid', gap: 8 }}>
+            {hints.slice(0, revealedHintCount).map((hint, idx) => (
+              <div
+                key={idx}
+                style={{
+                  padding: '10px 12px', borderRadius: 10,
+                  background: 'var(--p-accent-tint)', fontSize: 13.5, lineHeight: 1.55,
+                  color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap',
+                }}
+              >
+                <MathText text={hint} />
+              </div>
+            ))}
+          </div>
+          {revealedHintCount < hints.length ? (
+            <button
+              type="button"
+              className="btn outline"
+              style={{ marginTop: 10, width: '100%' }}
+              onClick={() => setRevealedHintCount((n) => Math.min(n + 1, hints.length))}
+            >
+              {t('upload.result.hints.next', { n: revealedHintCount + 1, total: hints.length })}
+            </button>
+          ) : (
+            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--p-muted)' }}>
+              {t('upload.result.hints.allShown')}
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
+      {!solutionRevealed ? (
+        <div style={{ marginTop: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--p-muted)', marginBottom: 8 }}>
+            {t('upload.result.reveal.hint')}
+          </div>
+          <button type="button" className="btn" style={{ width: '100%' }} onClick={() => setSolutionRevealed(true)}>
+            {t('upload.result.reveal')}
+          </button>
+        </div>
+      ) : (
+        <>
+          {(solve.steps && solve.steps.length > 0) || solve.explanation ? (
+            <div className="card" style={{ padding: 14, marginTop: 12, background: 'var(--p-surface)', borderColor: 'var(--p-border)' }}>
+              <div className="eyebrow" style={{ fontSize: 10, marginBottom: 8 }}>{t('upload.result.solution.eyebrow')}</div>
+              {solve.steps && solve.steps.length > 0 ? (
+                <SolutionStepsList
+                  steps={solve.steps}
+                  rationales={solve.stepRationales}
+                />
+              ) : null}
+              {solve.explanation && solve.steps && solve.steps.length > 0 ? (
+                <div style={{
+                  marginTop: 12,
+                  paddingTop: 10,
+                  borderTop: '1px solid var(--p-border)',
+                  fontSize: 12.5,
+                  lineHeight: 1.55,
+                  color: 'var(--p-ink-3)',
+                  fontStyle: 'italic',
+                  whiteSpace: 'pre-wrap',
+                }}>
+                  <MathText text={solve.explanation} />
+                </div>
+              ) : null}
+              {solve.explanation && (!solve.steps || solve.steps.length === 0) ? (
+                <div style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--p-ink-2)', whiteSpace: 'pre-wrap' }}>
+                  <MathText text={solve.explanation} />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="card" style={{
+            marginTop: 12, padding: '14px 16px',
+            background: 'var(--p-primary-tint)', borderColor: 'var(--p-primary)',
+          }}>
+            <div className="eyebrow" style={{ fontSize: 10, color: 'var(--p-primary)' }}>{t('upload.result.answer.eyebrow')}</div>
+            <div style={{ marginTop: 6, fontSize: 18, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>
+              <MathText text={solve.answer || '—'} />
+            </div>
+          </div>
+        </>
+      )}
 
       {checked && (
         <div className="card" style={{

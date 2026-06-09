@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { post, tokens, get } from '../lib/api';
 import type { Me } from '../lib/queries';
+import { homePathForRole } from '../lib/role-routes';
 import { useT } from '../lib/i18n';
 import { Glyph } from '../components/onboarding/Glyph';
 import { BrandLogo } from '../components/Brand';
@@ -55,12 +56,12 @@ export default function LoginPage() {
         // /users/me but the response was thrown away — AuthContext.user
         // stayed null, so ProtectedRoute on /app bounced back to /login.
         // Hydrate the context properly so the navigation actually sticks.
+        const me = await get<Me>('/users/me');
         await refreshUser();
-        navigate('/app');
+        navigate(homePathForRole(me.role));
         return;
       }
       await login(email, password);
-      navigate('/app');
     } catch (e: any) {
       // P4 fix 2026-05-27: surface 429 / network as actionable copy instead of
       // raw backend message. Locale picked from localStorage since LoginPage

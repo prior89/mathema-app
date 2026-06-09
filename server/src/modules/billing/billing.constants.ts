@@ -11,9 +11,16 @@
  * Keep this file dependency-free.
  */
 
-/** Free-tier daily AI Solver call cap. Premium users bypass. Keep in sync
- *  with the pricing memory (`project_matheo_pricing_india`). */
+/** Free-tier daily AI Solver call cap after the new-user grace window.
+ *  Premium users bypass. Keep in sync with the pricing memory
+ *  (`project_matheo_pricing_india`). */
 export const FREE_TIER_SOLVER_LIMIT = 8;
+
+/** Elevated daily cap during the post-signup grace window (PR-17). */
+export const GRACE_SOLVER_LIMIT = 16;
+
+/** Days after account creation during which GRACE_SOLVER_LIMIT applies. */
+export const GRACE_PERIOD_DAYS = 7;
 
 /** Cardless launch preview.
  *
@@ -32,6 +39,8 @@ export const MONETIZATION_STRATEGY = {
   mode: 'freemium_contextual_upgrade',
   free: {
     solverDailyLimit: FREE_TIER_SOLVER_LIMIT,
+    graceSolverDailyLimit: GRACE_SOLVER_LIMIT,
+    gracePeriodDays: GRACE_PERIOD_DAYS,
   },
   premium: {
     products: PLAY_PRODUCT_IDS,

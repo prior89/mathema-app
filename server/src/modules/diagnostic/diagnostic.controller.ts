@@ -1,13 +1,18 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { AdaptiveDiagnosticService } from './adaptive-diagnostic.service';
 import { DiagnosticService } from './diagnostic.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { AdaptiveDiagnosticAnswerDto } from './dto/adaptive-diagnostic-answer.dto';
 import { DiagnosticAnswerDto } from './dto/diagnostic-answer.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('diagnostic')
 export class DiagnosticController {
-  constructor(private readonly service: DiagnosticService) {}
+  constructor(
+    private readonly service: DiagnosticService,
+    private readonly adaptive: AdaptiveDiagnosticService,
+  ) {}
 
   /** 4문항 진단 시작 — StudySession(DIAGNOSTIC) 생성 + 4 problems 반환. */
   @Post('start')
@@ -31,5 +36,27 @@ export class DiagnosticController {
     @Param('sessionId') sessionId: string,
   ) {
     return this.service.finish(userId, sessionId);
+  }
+
+  /** Adaptive CAT-lite diagnostic — one problem at a time (PR-05). */
+  @Post('adaptive/start')
+  adaptiveStart(@CurrentUser('id') userId: string) {
+    return this.adaptive.start(userId);
+  }
+
+  @Post('adaptive/answer')
+  adaptiveAnswer(
+    @CurrentUser('id') userId: string,
+    @Body() dto: AdaptiveDiagnosticAnswerDto,
+  ) {
+    return this.adaptive.submitAnswer(userId, dto);
+  }
+
+  @Post('adaptive/:sessionId/finish')
+  adaptiveFinish(
+    @CurrentUser('id') userId: string,
+    @Param('sessionId') sessionId: string,
+  ) {
+    return this.adaptive.finish(userId, sessionId);
   }
 }

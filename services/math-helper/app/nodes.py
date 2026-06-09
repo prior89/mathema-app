@@ -26,6 +26,9 @@ class Classification(BaseModel):
 class SolutionDraft(BaseModel):
     answer: str
     steps: List[str]
+    # Pedagogical "why" for each step — same length as `steps`. Explains the
+    # insight or rule behind that move without repeating the algebra.
+    stepRationales: List[str] = Field(default_factory=list)
     explanation: str
 
 
@@ -152,16 +155,19 @@ async def solve(state):
             "solutionDraft": {
                 "answer": deterministic["answer"],
                 "steps": steps,
+                "stepRationales": _fallback_rationales(steps),
                 "explanation": " ".join(explanation_lines),
             }
         }
 
     if matched_problem and matched_problem.get("solution") and not personalized_context.get("hasProfile"):
         solution = matched_problem["solution"]
+        ncert_steps = solution.get("steps", []) or []
         return {
             "solutionDraft": {
                 "answer": solution.get("finalAnswer") or matched_problem.get("answer"),
-                "steps": solution.get("steps", []),
+                "steps": ncert_steps,
+                "stepRationales": _fallback_rationales(ncert_steps),
                 "explanation": solution.get("explanation", ""),
             }
         }
@@ -220,6 +226,13 @@ STEPS FORMAT — strict requirements:
 
 `explanation` is a 1-2 sentence intuitive summary AFTER the steps array (e.g., what concept this connects to, what a student should remember). It is NOT a replacement for steps.
 
+STEP RATIONALES — strict requirements:
+- Produce a `stepRationales` array with EXACTLY the same length as `steps`.
+- `stepRationales[i]` is 1-2 sentences explaining WHY step i+1 is the right move (the insight, rule, or common pitfall avoided).
+- Do NOT repeat the algebra from `steps[i]` — explain the reasoning behind it.
+- Write in the same language as the question (Korean / English / Hindi).
+- Example rationale tone: "분모가 0으로 가면 분자도 0이어야 극한이 유한하므로, 먼저 f(1)=g(1) 조건을 잡습니다."
+
 Return JSON only:
 Example format (English):
 {{
@@ -230,6 +243,13 @@ Example format (English):
     "Step 3. Adding: $2 f'(1) = 12 \\Rightarrow f'(1) = 6$.\\nSubtracting: $-2 g'(1) = -2 \\Rightarrow g'(1) = 1$.",
     "Step 4. For the third limit to be finite, $a = f(1) = c$. Then the left side equals $f'(1) = 6$ and the right side is $b \\cdot g(1) = b c$, so $bc = 6$.",
     "Step 5. Therefore $ab = c \\cdot b = bc = 6$.\\nFinal answer: $ab = 6$."
+  ],
+  "stepRationales": [
+    "When the denominator goes to 0, the numerator must also vanish for a finite limit — so we pin down f(1) = g(1) first.",
+    "Rewriting each limit as a derivative at x=1 turns the given numbers into equations for f'(1) and g'(1).",
+    "Adding and subtracting the two derivative equations gives a simple 2×2 system.",
+    "The third limit forces a = f(1); matching both sides yields bc = 6.",
+    "Since a = c, ab equals bc, giving the final value."
   ],
   "explanation": "The key idea is that whenever a limit of the form $\\lim_{{x\\to 1}} \\frac{{F(x)}}{{x-1}}$ is finite, $F(1)$ must be 0, and the limit then equals $F'(1)$. Applying this to both given limits gives a 2×2 linear system in $f'(1)$ and $g'(1)$."
 }}
@@ -255,7 +275,12 @@ Question:
 {state["question"]}
 """
     result = await structured(prompt, SolutionDraft)
-    return {"solutionDraft": result.model_dump()}
+    draft = result.model_dump()
+    draft["stepRationales"] = _align_rationales(
+        draft.get("steps", []) or [],
+        draft.get("stepRationales", []) or [],
+    )
+    return {"solutionDraft": draft}
 
 
 async def retry_solve(state):
@@ -273,6 +298,7 @@ Example format:
 {{
   "answer": "-3",
   "steps": ["step 1", "step 2"],
+  "stepRationales": ["why step 1", "why step 2"],
   "explanation": "student-friendly explanation"
 }}
 
@@ -298,7 +324,12 @@ Question:
 {state["question"]}
 """
     result = await structured(prompt, SolutionDraft)
-    return {"solutionDraft": result.model_dump(), "retryCount": state.get("retryCount", 0) + 1}
+    draft = result.model_dump()
+    draft["stepRationales"] = _align_rationales(
+        draft.get("steps", []) or [],
+        draft.get("stepRationales", []) or [],
+    )
+    return {"solutionDraft": draft, "retryCount": state.get("retryCount", 0) + 1}
 
 
 async def verify(state):
@@ -429,6 +460,10 @@ async def format_response(state):
             "isStudentCorrect": is_correct,
             "explanation": draft["explanation"],
             "steps": draft.get("steps", []) or [],
+            "stepRationales": _align_rationales(
+                draft.get("steps", []) or [],
+                draft.get("stepRationales", []) or [],
+            ),
             "personalizedLearning": _personalized_learning_summary(state),
             "mistakeDiagnosis": mistake,
             "hints": [
@@ -444,6 +479,21 @@ async def format_response(state):
             "verification": verification,
         }
     }
+
+
+def _align_rationales(steps: list[str], rationales: list[str]) -> list[str]:
+    """Pad or trim rationales so len == len(steps); empty strings when missing."""
+    if not steps:
+        return []
+    aligned = [str(r).strip() for r in (rationales or [])]
+    if len(aligned) < len(steps):
+        aligned.extend([""] * (len(steps) - len(aligned)))
+    return aligned[: len(steps)]
+
+
+def _fallback_rationales(steps: list[str]) -> list[str]:
+    """Deterministic / NCERT paths have no LLM rationales — return empty slots."""
+    return [""] * len(steps)
 
 
 def _mistake_diagnosis(state):

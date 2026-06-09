@@ -2,12 +2,13 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { fetchWrongNotes, fetchWrongNotesStats, fetchPatterns } from '../../lib/queries';
+import { fetchActivePatterns, fetchWrongNotes, fetchWrongNotesStats, fetchPatterns } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
 import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { ActiveErrorPatternBanner } from '../mastery/ActiveErrorPatterns';
 
 type StatusFilter = 'active' | 'mastered' | 'all';
 
@@ -19,7 +20,7 @@ const FILTERS: Array<{ id: StatusFilter; labelKey: TranslationKey }> = [
 
 export function NotesListScreen() {
   const nav = useNavigate();
-  const { t } = useT();
+  const { t, lang } = useT();
   // Default to 'active' so the grid surfaces what still needs attention.
   // Without a filter every MASTERED note stays visible forever, so heavy users
   // ended up scrolling past months of done items to reach their open queue.
@@ -27,6 +28,8 @@ export function NotesListScreen() {
   const stats = useQuery({ queryKey: ['wn-stats'], queryFn: fetchWrongNotesStats });
   const notes = useQuery({ queryKey: ['wn-list'], queryFn: () => fetchWrongNotes() });
   const patterns = useQuery({ queryKey: ['patterns'], queryFn: fetchPatterns });
+  const activePatterns = useQuery({ queryKey: ['error-patterns', 'active'], queryFn: fetchActivePatterns });
+  const uiLang = (lang === 'ko' || lang === 'hi' ? lang : 'en') as 'ko' | 'en' | 'hi';
 
   const visibleNotes = (notes.data ?? []).filter((n) => {
     const s = (n.status ?? '').toLowerCase();
@@ -64,8 +67,14 @@ export function NotesListScreen() {
       {/* Scroll surface — banner + chips + grid all ride here together. */}
       <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
         <div style={{ padding: '12px 22px 0' }}>
-        {/* AI pattern banner */}
-        {patterns.data && patterns.data.length > 0 && (
+        {/* Error DNA L2 — active patterns (PR-25); L1 ai-coach fallback */}
+        {activePatterns.data && activePatterns.data.length > 0 ? (
+          <ActiveErrorPatternBanner
+            pattern={activePatterns.data[0]}
+            lang={uiLang}
+            onClick={() => nav('/app/mastery')}
+          />
+        ) : patterns.data && patterns.data.length > 0 ? (
           <div className="card" style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent', padding: 12, display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, marginTop: 8 }}>
             <div style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--p-primary)', color: 'var(--p-primary-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Glyph.Sparkle accent="#fff" size={14} />
@@ -76,7 +85,7 @@ export function NotesListScreen() {
             </div>
             <Glyph.ChevronR accent="var(--p-primary)" size={16} />
           </div>
-        )}
+        ) : null}
 
         {/* Status filter — defaults to "In progress" so the user reaches
             what still needs work without scrolling past every MASTERED card. */}
@@ -112,7 +121,7 @@ export function NotesListScreen() {
             <div
               key={n.id}
               className="note-card"
-              onClick={() => nav(`/app/practice/${n.problemId}`)}
+              onClick={() => nav(`/app/notes/${n.id}`)}
             >
                 {/* Attribution (e.g. "NCERT Class 11 Mathematics, Ch.8 Ex.8.2
                     Q.11 (derived for matheo, Reprint 2024-25)") lives on

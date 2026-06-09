@@ -2,7 +2,8 @@
  * useBillingStatus — React Query wrapper around GET /billing/status.
  *
  * Returns both the premium flag and the Phase 5 server-side AI Solver quota
- * (Free: 8/day, Premium: unlimited). Used by QuotaMeter and any
+ * (Free: 16/day for first 7 days, then 8/day; Premium: unlimited). Used by
+ * QuotaMeter and any
  * UI surface that needs to render a meter or a "Premium" CTA inline.
  *
  * Cache policy:

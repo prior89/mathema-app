@@ -1,19 +1,37 @@
-import { Body, Controller, Delete, Get, Header, Patch, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, Header, Patch, Post, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { UsersService } from './users.service';
+import { StudentEfficacyService } from './student-efficacy.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly service: UsersService) {}
+  constructor(
+    private readonly service: UsersService,
+    private readonly efficacy: StudentEfficacyService,
+    private readonly flags: FeatureFlagsService,
+  ) {}
 
   // TopNav 의 아바타 이름·D-day 계산용
   @Get('me')
   me(@CurrentUser('id') id: string) { return this.service.findOne(id); }
+
+  /** Student efficacy card — Redis cached 1h; gated by student_efficacy_card flag. */
+  @Get('me/efficacy')
+  async myEfficacy(@CurrentUser('id') id: string) {
+    if (!this.flags.isEnabled('student_efficacy_card', id)) {
+      throw new ForbiddenException({
+        code: 'student_efficacy_card_disabled',
+        message: 'Student efficacy card is not enabled for this account.',
+      });
+    }
+    return this.efficacy.getCard(id);
+  }
 
   @Patch('me')
   updateProfile(@CurrentUser('id') id: string, @Body() dto: UpdateProfileDto) {

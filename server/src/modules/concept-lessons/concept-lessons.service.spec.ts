@@ -50,7 +50,8 @@ function build(over: any = {}) {
   const llm = over.llm ?? mockLlm();
   const det = over.det ?? mockDeterministic();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const svc = new ConceptLessonsService(prisma as any, llm as any, det as any);
+  const achievements = over.achievements ?? { tryAwardFirstConceptStep: jest.fn() };
+  const svc = new ConceptLessonsService(prisma as any, llm as any, det as any, achievements as any);
   return { svc, prisma, llm };
 }
 
