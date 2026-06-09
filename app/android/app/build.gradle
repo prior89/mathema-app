@@ -75,6 +75,9 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-// google-services plugin intentionally omitted in v1.0 — push is deferred to
-// Phase 2 along with the Firebase project. Re-introduce the apply block when
-// google-services.json is committed under app/android/app/.
+// FCM (Phase D): apply google-services only when google-services.json exists.
+// Download from Firebase Console → Project settings → Android app (ai.matheo.app).
+def googleServicesJson = file('google-services.json')
+if (googleServicesJson.exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
