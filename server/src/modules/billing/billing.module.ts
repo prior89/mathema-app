@@ -12,6 +12,7 @@ import { PlayApiClient } from './play-api-client.service';
 import { QuotaService } from './quota.service';
 import { RtdnController } from './rtdn.controller';
 import { RtdnInboxService } from './rtdn-inbox.service';
+import { BillingOpsService } from './billing-ops.service';
 import { RtdnOrphanReconcileService } from './rtdn-orphan-reconcile.service';
 import { RtdnService } from './rtdn.service';
 
@@ -30,14 +31,18 @@ import { RtdnService } from './rtdn.service';
     RtdnInboxService,
     RtdnService,
     RtdnOrphanReconcileService,
+    BillingOpsService,
   ],
   controllers: [BillingController, RtdnController],
   exports: [
     BillingService,
+    BillingOpsService,
     QuotaService,
     FreeTierSolverQuotaGuard,
     PremiumFeatureGuard,
     PremiumAccessService,
+    RtdnService,
+    RtdnInboxService,
   ],
 })
 export class BillingModule {}

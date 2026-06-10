@@ -40,5 +40,10 @@ export default defineConfig({
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
+    // Paywall E2E needs the build gate on — otherwise useBillingStatus overwrites
+    // the sessionStorage cache to '0' even when the server kill-switch is true.
+    env: {
+      VITE_BILLING_ENABLED: 'true',
+    },
   },
 });

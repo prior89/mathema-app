@@ -113,7 +113,11 @@ api.interceptors.response.use(
 
     if (err.response?.status === 403) {
       const data: any = err.response.data;
-      const code = data?.error?.code ?? data?.error;
+      const errBody = data?.error;
+      const code =
+        (typeof errBody === 'string' ? errBody : undefined)
+        ?? errBody?.code
+        ?? errBody?.error;
       if (readCachedBillingUiEnabled()) {
         try {
           if (code === 'QuotaExceeded' && !window.location.pathname.startsWith('/app/paywall')) {
@@ -121,7 +125,10 @@ api.interceptors.response.use(
             return Promise.reject(err);
           }
           if (code === 'PremiumRequired' && !window.location.pathname.startsWith('/app/paywall')) {
-            const feature = data?.error?.feature ?? data?.feature ?? 'premium';
+            const feature =
+              (typeof errBody === 'object' ? errBody?.feature : undefined)
+              ?? data?.feature
+              ?? 'premium';
             window.location.assign(`/app/paywall?reason=premium&feature=${encodeURIComponent(feature)}`);
             return Promise.reject(err);
           }

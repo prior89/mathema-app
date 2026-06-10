@@ -174,7 +174,8 @@ jobs:
           ENABLE_DEV_LOGIN: 'true'
           NODE_ENV: development
           PWNED_PASSWORDS_DISABLED: 'true'
-        run: npx playwright test e2e/smoke.spec.ts --project=chromium
+          VITE_BILLING_ENABLED: 'true'
+        run: npx playwright test e2e/smoke.spec.ts e2e/billing-paywall.spec.ts --project=chromium
 
       - name: Upload Playwright report
         if: failure()
