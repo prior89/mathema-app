@@ -75,10 +75,17 @@ function mockDevices(): AnyMock {
   };
 }
 
+function mockParentLinks(): AnyMock {
+  return {
+    requestLink: jest.fn().mockResolvedValue({ linkId: 'link-1', status: 'PENDING' }),
+    hasApprovedAccess: jest.fn().mockResolvedValue(false),
+  };
+}
+
 function build(over: Partial<{
   users: AnyMock; jwt: AnyMock; config: AnyMock; prisma: any;
   redis: AnyMock; mail: AnyMock; privacy: AnyMock;
-  events: AnyMock; devices: AnyMock;
+  events: AnyMock; devices: AnyMock; parentLinks: AnyMock;
 }> = {}) {
   const users   = over.users   ?? mockUsers();
   const jwt     = over.jwt     ?? mockJwt();
@@ -95,13 +102,14 @@ function build(over: Partial<{
   const privacy = over.privacy ?? mockPrivacy();
   const events  = over.events  ?? mockSecurityEvents();
   const devices = over.devices ?? mockDevices();
+  const parentLinks = over.parentLinks ?? mockParentLinks();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const svc = new AuthService(
     users as any, jwt as any, config as any, prisma,
     redis as any, mail as any, privacy as any,
-    events as any, devices as any,
+    events as any, devices as any, parentLinks as any,
   );
-  return { svc, users, jwt, config, prisma, redis, mail, privacy, events, devices };
+  return { svc, users, jwt, config, prisma, redis, mail, privacy, events, devices, parentLinks };
 }
 
 describe('AuthService', () => {
@@ -130,6 +138,28 @@ describe('AuthService', () => {
       await expect(
         svc.register({ email: 'p@b.com', password: 'pw12345678', name: 'P', role: 'PARENT' } as any),
       ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('creates PARENT invite without immediate childOfUserId link', async () => {
+      const users = mockUsers();
+      users.findByEmail
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 'child-1', role: 'STUDENT', email: 'child@b.com' });
+      users.create.mockResolvedValue({ id: 'parent-1', email: 'p@b.com' });
+      const jwt = mockJwt();
+      jwt.sign.mockImplementation((p) => `token-${(p as any).sub ?? 'x'}`);
+      const parentLinks = mockParentLinks();
+      const { svc } = build({ users, jwt, parentLinks });
+      const result = await svc.register({
+        email: 'p@b.com', password: 'pw12345678', name: 'Parent', role: 'PARENT',
+        childEmail: 'child@b.com',
+      } as any);
+      expect(users.create).toHaveBeenCalledWith(expect.not.objectContaining({ childOfUserId: 'child-1' }));
+      expect(parentLinks.requestLink).toHaveBeenCalledWith(expect.objectContaining({
+        parentUserId: 'parent-1',
+        childUserId: 'child-1',
+      }));
+      expect(result).toEqual(expect.objectContaining({ parentLinkPending: true }));
     });
 
     it('creates STUDENT + issues tokens', async () => {

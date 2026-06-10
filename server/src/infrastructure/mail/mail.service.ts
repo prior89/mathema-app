@@ -210,6 +210,48 @@ ${this.ctaButton(link, 'Confirm my email')}
    * into the account. Anti-theft signal: if it was not the user, they can
    * change their password from the reset link.
    */
+  async sendParentLinkApproval(
+    to: string,
+    token: string,
+    opts: { parentName: string; childName: string },
+  ): Promise<void> {
+    const approveLink = `${this.appUrl()}/parent-link/approve?token=${encodeURIComponent(token)}`;
+    const rejectLink = `${this.appUrl()}/parent-link/reject?token=${encodeURIComponent(token)}`;
+    const bodyHtml = `
+<h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 16px 0;line-height:1.35;">Parent access request</h1>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;"><strong>${opts.parentName}</strong> wants to view your Matheo learning progress as a parent/guardian.</p>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">If you recognise this person, approve the request. If not, reject it — they will not see your study data.</p>
+${this.ctaButton(approveLink, 'Approve parent access')}
+<p style="text-align:center;margin:12px 0 0 0;"><a href="${rejectLink}" style="color:#6b7280;font-size:13px;text-decoration:underline;">Reject this request</a></p>
+<p style="font-size:13px;line-height:1.6;color:#9ca3af;margin:24px 0 0 0;">This link expires in 7 days. You can also approve from the Matheo app after signing in.</p>`;
+    const text = [
+      'Parent access request — Matheo',
+      '',
+      `${opts.parentName} wants to view your learning progress.`,
+      'Approve:',
+      approveLink,
+      '',
+      'Reject:',
+      rejectLink,
+      '',
+      'Expires in 7 days.',
+      '',
+      '--',
+      'Matheo',
+      this.appUrl(),
+    ].join('\n');
+    await this.deliver(
+      'parent-link-approval',
+      to,
+      'Approve parent access to your Matheo account',
+      text,
+      this.htmlLayout({
+        preheader: `${opts.parentName} requested parent access to your Matheo account.`,
+        bodyHtml,
+      }),
+    );
+  }
+
   async sendNewDeviceLoginAlert(to: string, opts: { ip?: string | null; ua?: string | null; at?: Date }): Promise<void> {
     const when = (opts.at ?? new Date()).toISOString();
     const resetLink = `${this.appUrl()}/forgot-password`;

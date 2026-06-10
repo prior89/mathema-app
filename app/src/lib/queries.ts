@@ -197,6 +197,16 @@ export type FirstSessionAchievement = {
 
 export const fetchMe = () => get<Me>('/users/me');
 
+export type ParentLinkStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED' | null;
+
+export type ParentLinkStatusResponse = {
+  status: ParentLinkStatus;
+  child: { id: string; name: string; email: string } | null;
+  approvedAt?: string | null;
+};
+
+export const fetchParentLinkStatus = () => get<ParentLinkStatusResponse>('/parent-links/me/status');
+
 export type StudentEfficacyCard = {
   northStarPct: number | null;
   cohortSize: number;

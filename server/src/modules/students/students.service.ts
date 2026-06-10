@@ -3,6 +3,7 @@ import { UserRole } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { MasteryTrajectoryService } from '../mastery/mastery-trajectory.service';
 import { ErrorPatternService } from '../mastery/error-pattern.service';
+import { ParentLinksService } from '../parent-links/parent-links.service';
 
 /**
  * StudentsService — 명세서 §5 `/students/:studentId/...` 패턴의 권한 분리.
@@ -22,6 +23,7 @@ export class StudentsService {
     private readonly prisma: PrismaService,
     private readonly trajectory: MasteryTrajectoryService,
     private readonly errorPattern: ErrorPatternService,
+    private readonly parentLinks: ParentLinksService,
   ) {}
 
   /** Teacher 가 보는 담당 학생 리스트 (같은 tenantId 의 STUDENT). */
@@ -75,11 +77,8 @@ export class StudentsService {
       if (requester.tenantId && requester.tenantId === target.tenantId) return target;
     }
     if (requester.role === UserRole.PARENT) {
-      // PARENT 의 childOfUserId 가 target.id 이어야 함 — 즉 부모.childOfUserId = 자녀.id 매핑.
-      const parent = await this.prisma.user.findUnique({
-        where: { id: requesterId }, select: { childOfUserId: true },
-      });
-      if (parent?.childOfUserId === target.id) return target;
+      const approved = await this.parentLinks.hasApprovedAccess(requesterId, target.id);
+      if (approved) return target;
     }
     throw new ForbiddenException('Cannot access this student');
   }

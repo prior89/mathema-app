@@ -18,7 +18,8 @@ import { useNavigate } from 'react-router-dom';
 import { Clock, TrendingUp, AlertTriangle, Target } from 'lucide-react';
 import { TopNav, NAV_TO_HASH, NavKey } from '../components/TopNav';
 import {
-  fetchConceptMastery, fetchActivePatterns, fetchWeeklyList,
+  fetchParentLinkStatus,
+  fetchStudentMastery, fetchStudentPatterns, fetchStudentWeekly,
   type ConceptMastery, type ErrorPatternRow, type WeeklyReportListItem,
 } from '../lib/queries';
 import { useT } from '../lib/i18n';
@@ -31,9 +32,24 @@ const COLORS = {
 export function ParentDashboardPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { lang } = useT();
   const navigate = useNavigate();
-  const mastery   = useQuery({ queryKey: ['parent','mastery'],   queryFn: fetchConceptMastery });
-  const patterns  = useQuery({ queryKey: ['parent','patterns'],  queryFn: fetchActivePatterns });
-  const weekly    = useQuery({ queryKey: ['parent','weekly'],    queryFn: fetchWeeklyList });
+  const linkStatus = useQuery({ queryKey: ['parent', 'link-status'], queryFn: fetchParentLinkStatus });
+  const childId = linkStatus.data?.status === 'APPROVED' ? linkStatus.data.child?.id : undefined;
+
+  const mastery   = useQuery({
+    queryKey: ['parent', 'mastery', childId],
+    queryFn: () => fetchStudentMastery(childId!),
+    enabled: !!childId,
+  });
+  const patterns  = useQuery({
+    queryKey: ['parent', 'patterns', childId],
+    queryFn: () => fetchStudentPatterns(childId!),
+    enabled: !!childId,
+  });
+  const weekly    = useQuery({
+    queryKey: ['parent', 'weekly', childId],
+    queryFn: () => fetchStudentWeekly(childId!),
+    enabled: !!childId,
+  });
 
   const latest = weekly.data?.[0];
   // 학부모 대시보드(/parent) 에서 TopNav 클릭 시:
@@ -57,7 +73,27 @@ export function ParentDashboardPage({ embedded = false }: { embedded?: boolean }
           </h1>
         </header>
 
-        {!latest && (
+        {linkStatus.data?.status === 'PENDING' && (
+          <Card>
+            <Sub>
+              {lang === 'ko'
+                ? `${linkStatus.data.child?.name ?? '자녀'}에게 연결 승인 요청을 보냈어요. 학생이 이메일 또는 앱에서 승인하면 학습 데이터를 볼 수 있어요.`
+                : `Approval request sent to ${linkStatus.data.child?.name ?? 'your child'}. You can view study data after they approve via email or the app.`}
+            </Sub>
+          </Card>
+        )}
+
+        {linkStatus.data?.status === 'REJECTED' && (
+          <Card>
+            <Sub>
+              {lang === 'ko'
+                ? '연결 요청이 거절되었어요. 자녀와 다시 확인한 뒤 재요청해주세요.'
+                : 'The link request was rejected. Please confirm with your child and try again.'}
+            </Sub>
+          </Card>
+        )}
+
+        {linkStatus.data?.status === 'APPROVED' && !latest && (
           <Card>
             <Sub>{lang === 'ko' ? '이번 주 데이터가 없습니다. 학생이 한 문제 풀면 자동으로 분석됩니다.' : 'No data yet — analysis activates after first attempt.'}</Sub>
           </Card>

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes, createHash, randomUUID } from 'crypto';
@@ -20,6 +20,8 @@ import {
 } from '../../common/utils/login-lockout';
 import { SecurityEventService } from './security-event.service';
 import { AuthDeviceService } from './auth-device.service';
+import { ParentLinksService } from '../parent-links/parent-links.service';
+import { UserRole } from '@prisma/client';
 
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
@@ -41,6 +43,8 @@ export class AuthService {
     private readonly privacy: PrivacyService,
     private readonly events: SecurityEventService,
     private readonly devices: AuthDeviceService,
+    @Inject(forwardRef(() => ParentLinksService))
+    private readonly parentLinks: ParentLinksService,
   ) {
     const cid = this.config.get<string>('GOOGLE_CLIENT_ID');
     if (cid && cid !== 'api입력칸') this.googleClient = new OAuth2Client(cid);
@@ -54,17 +58,17 @@ export class AuthService {
 
     const role = dto.role ?? 'STUDENT';
 
-    // ── PARENT: 자녀(STUDENT) 이메일 매칭 ────────────────────────
-    let childOfUserId: string | null = null;
+    // ── PARENT: 자녀 이메일로 초대 요청 (즉시 연결 금지 — 학생 승인 필요) ──
+    let pendingChildUserId: string | null = null;
     if (role === 'PARENT') {
       if (!childEmail) {
         throw new BadRequestException('childEmail required for PARENT role');
       }
       const child = await this.users.findByEmail(childEmail);
-      if (!child) {
+      if (!child || child.role !== UserRole.STUDENT) {
         throw new BadRequestException('child account not found — student must register first');
       }
-      childOfUserId = child.id;
+      pendingChildUserId = child.id;
     }
 
     // ── TEACHER: tenantCode 매칭. 없으면 solo 교사 (tenantId null). ─
@@ -101,9 +105,19 @@ export class AuthService {
       // default leak into diagnostics and ProtectedRoute decisions.
       ...(isStudent ? { gradeLevel: gradeLevel ?? null } : {}),
       ...(studyGoal ? { studyGoal } : {}),
-      ...(childOfUserId ? { childOfUserId } : {}),
       ...(tenantId ? { tenantId } : {}),
     });
+
+    if (role === 'PARENT' && pendingChildUserId) {
+      await this.parentLinks.requestLink({
+        parentUserId: user.id,
+        childUserId: pendingChildUserId,
+        parentName: dto.name,
+        childEmail: childEmail!,
+        ip: ctx.ip,
+        ua: ctx.ua,
+      });
+    }
 
     // DPDP/GDPR — 가입 시 필수 동의(DATA_PROCESSING) + 선택 동의(가입 폼에서 보낸 값)
     await this.privacy.grantInitial(user.id, {
@@ -125,7 +139,11 @@ export class AuthService {
       deviceHash: ctx.deviceHash,
       ip: ctx.ip, ua: ctx.ua,
     });
-    return this.issueTokens(user.id, ctx.deviceHash);
+    const tokens = this.issueTokens(user.id, ctx.deviceHash);
+    if (role === 'PARENT' && pendingChildUserId) {
+      return { ...tokens, parentLinkPending: true };
+    }
+    return tokens;
   }
 
   async login(

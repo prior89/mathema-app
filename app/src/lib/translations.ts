@@ -470,6 +470,14 @@ const ko = {
   'verify.failed': '검증 실패 — 링크가 만료되었거나 유효하지 않습니다.',
   'verify.goHome': '홈으로 이동',
 
+  'parentLink.approve.title': '보호자 연결 승인',
+  'parentLink.reject.title': '보호자 연결 거절',
+  'parentLink.working': '처리 중…',
+  'parentLink.approve.success': '보호자 연결이 승인되었어요.',
+  'parentLink.reject.success': '보호자 연결 요청을 거절했어요.',
+  'parentLink.failed': '요청을 처리할 수 없어요. 링크가 만료되었거나 이미 처리되었을 수 있어요.',
+  'parentLink.goLogin': '로그인으로 이동',
+
   // ===== Concept Learning banner (study tab) =====
   'study.concept.banner.label': 'New · 개념 학습',
   'study.concept.banner.title': '문제 풀기 전, 단원의 빅 아이디어부터 →',
@@ -1617,6 +1625,14 @@ const en: typeof ko = {
   'verify.success': 'Your email has been verified.',
   'verify.failed': 'Verification failed — link expired or invalid.',
   'verify.goHome': 'Go home',
+
+  'parentLink.approve.title': 'Approve parent link',
+  'parentLink.reject.title': 'Reject parent link',
+  'parentLink.working': 'Processing…',
+  'parentLink.approve.success': 'Parent link approved.',
+  'parentLink.reject.success': 'Parent link request rejected.',
+  'parentLink.failed': 'Could not process this request. The link may be expired or already used.',
+  'parentLink.goLogin': 'Go to sign in',
 
   // Concept Learning banner (study tab)
   'study.concept.banner.label': 'New · Concept Learning',

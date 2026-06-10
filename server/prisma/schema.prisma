@@ -397,6 +397,8 @@ model User {
   placementProfile        UserPlacementProfile?
   firstSessionPlan        FirstSessionPlan?
   achievements            UserAchievement[]
+  parentChildLinksAsParent ParentChildLink[] @relation("ParentChildLinksAsParent")
+  parentChildLinksAsChild  ParentChildLink[] @relation("ParentChildLinksAsChild")
 
   @@index([examDate])
   @@index([deletedAt])
@@ -937,6 +939,41 @@ model EmailVerificationToken {
   @@index([userId, expiresAt])
 }
 
+/// Parent requests access to a student account; student must approve before data access.
+model ParentChildLink {
+  id           String           @id @default(uuid())
+  parentUserId String
+  childUserId  String
+  status       ParentLinkStatus @default(PENDING)
+  approvedAt   DateTime?
+  rejectedAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  parent User @relation("ParentChildLinksAsParent", fields: [parentUserId], references: [id], onDelete: Cascade)
+  child  User @relation("ParentChildLinksAsChild", fields: [childUserId], references: [id], onDelete: Cascade)
+  approvalTokens ParentLinkApprovalToken[]
+
+  @@unique([parentUserId, childUserId])
+  @@index([childUserId, status])
+  @@index([parentUserId, status])
+}
+
+/// One-time token emailed to the student for parent-link approval.
+model ParentLinkApprovalToken {
+  id        String    @id @default(uuid())
+  linkId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  link ParentChildLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  @@index([linkId, expiresAt])
+}
+
 /// Admin-action audit log — who accessed / modified which user data, and when.
 /// For trace in disputes / regulatory response. Also includes email-allowlist change history.
 model AdminAccessLog {
@@ -988,6 +1025,18 @@ enum SecurityEventType {
   PASSWORD_CHANGE
   BREACH_PASSWORD_BLOCKED // pwnedpasswords rejected the chosen password
   ACCOUNT_DELETED
+  PARENT_LINK_REQUESTED
+  PARENT_LINK_APPROVED
+  PARENT_LINK_REJECTED
+  PARENT_LINK_REVOKED
+}
+
+/// Parent ↔ student link lifecycle. APPROVED required before parent can read child data.
+enum ParentLinkStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVOKED
 }
 
 /// DEV-1 -- concurrent 1-device-per-account enforcement.
