@@ -15,8 +15,9 @@ test.describe('matheo — public smoke', () => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/login/);
 
-    await expect(page.getByLabel(/email|이메일/i)).toBeVisible();
-    await expect(page.getByLabel(/password|비밀번호/i)).toBeVisible();
+    // Labels are sibling <label> nodes (no htmlFor) — use placeholder/role instead.
+    await expect(page.getByPlaceholder('you@example.com')).toBeVisible();
+    await expect(page.locator('input[type="password"]')).toBeVisible();
     await expect(
       page.getByRole('button', { name: /sign in|로그인|साइन इन/i }),
     ).toBeVisible();
