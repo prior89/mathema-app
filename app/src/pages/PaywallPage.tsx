@@ -1,31 +1,41 @@
-/* PaywallPage — Matheo Premium purchase flow.
- *
- * Region-aware: prices come from Google Play SkuDetails (BillingProductDetails),
- * never hardcoded. On non-Android builds (web preview, iOS later) renders a
- * "Android only" notice.
- *
- * Flow: mount ??initBilling listeners attach ??queryProductDetails ?? *   user taps Subscribe ??buy() launches Play UI ??purchaseUpdate listener
- *   calls /billing/verify ??acknowledgePurchase. Server status refetch then
- *   flips this page to "already Premium" on next render.
- */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams, Navigate } from 'react-router-dom';
-import { useBillingUiEnabled } from '../lib/billing-flags';
-import { openPlaySubscriptionManage } from '../lib/play-subscription';
 import {
-  fetchProducts,
+  BarChart3,
+  BookOpenCheck,
+  Brain,
+  Check,
+  ChevronLeft,
+  CircleAlert,
+  ExternalLink,
+  FileSearch,
+  RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  annualSavingsPercent,
+  monthlyEquivalent,
+} from '../lib/billing-pricing';
+import { useBillingUiEnabled } from '../lib/billing-flags';
+import {
   buy,
-  restore,
-  getServerStatus,
-  isBillingAvailable,
-  initBilling,
-  selectPaidOffer,
   displayRecurringPhase,
+  fetchProducts,
+  getServerStatus,
+  initBilling,
+  isBillingAvailable,
+  restore,
+  selectPaidOffer,
   startPremiumPreview,
 } from '../lib/billing';
 import { useT } from '../lib/i18n';
+import { openPlaySubscriptionManage } from '../lib/play-subscription';
+import type { BillingProductDetails } from '../native/billing-bridge';
 import type { TranslationKey } from '../lib/translations';
+import '../styles/billing.css';
 
 const PREMIUM_FEATURE_KEYS: Record<string, TranslationKey> = {
   weekly_reports: 'paywall.premiumBanner.feature.weekly_reports',
@@ -33,24 +43,54 @@ const PREMIUM_FEATURE_KEYS: Record<string, TranslationKey> = {
   wrong_note_analysis: 'paywall.premiumBanner.feature.wrong_note_analysis',
   full_mastery_sets: 'paywall.premiumBanner.feature.full_mastery_sets',
 };
-import { TabBar } from '../components/main/TabBar';
+
+const BENEFITS: Array<{
+  key: TranslationKey;
+  Icon: typeof Brain;
+  tone: string;
+}> = [
+  { key: 'paywall.benefit.adaptive', Icon: Brain, tone: 'var(--p-primary)' },
+  { key: 'paywall.benefit.mastery', Icon: BookOpenCheck, tone: 'var(--p-accent-ink)' },
+  { key: 'paywall.benefit.wrongNote', Icon: FileSearch, tone: 'var(--p-step-pictorial-accent)' },
+  { key: 'paywall.benefit.report', Icon: BarChart3, tone: 'var(--p-success)' },
+];
+
+type ProductId = 'premium_monthly' | 'premium_yearly';
+type BusyAction = ProductId | 'preview' | 'restore' | null;
+type Notice = { tone: 'success' | 'error' | 'info'; text: string } | null;
+
+type PlanView = {
+  productId: ProductId;
+  product: BillingProductDetails;
+  offer: ReturnType<typeof selectPaidOffer>;
+  phase: NonNullable<ReturnType<typeof displayRecurringPhase>>;
+};
+
+function getPlan(
+  products: BillingProductDetails[] | undefined,
+  productId: ProductId,
+): PlanView | null {
+  const product = products?.find((item) => item.productId === productId);
+  const offer = product ? selectPaidOffer(product) : undefined;
+  const phase = offer ? displayRecurringPhase(offer) : undefined;
+  if (!product || !offer || !phase) return null;
+  return { productId, product, offer, phase };
+}
 
 export default function PaywallPage() {
   const billingUi = useBillingUiEnabled();
-  const qc = useQueryClient();
-  const { t } = useT();
-  const nav = useNavigate();
-  const [busy, setBusy] = useState(false);
+  const queryClient = useQueryClient();
+  const { t, lang } = useT();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  // `?reason=quota` is set by the api.ts 403/QuotaExceeded interceptor.
-  // It only changes the headline banner ??the rest of the page (products,
-  // restore link, premium gate) stays identical. We deliberately read the
-  // status quota object so we can show the actual numeric limit instead of
-  // hardcoding "8" ??keeps the UI honest if backend defaults change.
+  const [selectedProductId, setSelectedProductId] = useState<ProductId>('premium_yearly');
+  const [busyAction, setBusyAction] = useState<BusyAction>(null);
+  const [notice, setNotice] = useState<Notice>(null);
+
   const reason = searchParams.get('reason');
   const premiumFeature = searchParams.get('feature');
+  const isAndroidBilling = isBillingAvailable();
 
-  // Attach listeners on mount so the first purchaseUpdate after buy() lands.
   useEffect(() => {
     void initBilling();
   }, []);
@@ -58,353 +98,470 @@ export default function PaywallPage() {
   const products = useQuery({
     queryKey: ['billing-products'],
     queryFn: fetchProducts,
-    enabled: isBillingAvailable(),
+    enabled: isAndroidBilling,
     staleTime: 5 * 60 * 1000,
   });
 
   const status = useQuery({
     queryKey: ['billing-status'],
     queryFn: getServerStatus,
-    // Re-fetch when window regains focus ??covers the case where the user
-    // came back from Play after a successful purchase.
     refetchOnWindowFocus: true,
   });
 
+  const monthlyPlan = useMemo(
+    () => getPlan(products.data, 'premium_monthly'),
+    [products.data],
+  );
+  const yearlyPlan = useMemo(
+    () => getPlan(products.data, 'premium_yearly'),
+    [products.data],
+  );
+  const selectedPlan = selectedProductId === 'premium_yearly' ? yearlyPlan : monthlyPlan;
+
+  useEffect(() => {
+    if (selectedProductId === 'premium_yearly' && !yearlyPlan && monthlyPlan) {
+      setSelectedProductId('premium_monthly');
+    }
+  }, [monthlyPlan, selectedProductId, yearlyPlan]);
+
+  if (!billingUi) return <Navigate to="/app" replace />;
+
+  const locale = lang === 'ko' ? 'ko-KR' : lang === 'hi' ? 'hi-IN' : 'en-US';
   const quotaLimit = status.data?.quota?.solver?.limit ?? 8;
   const previewEligibility = status.data?.entitlement?.previewEligibility;
-  const previewEligible = !!previewEligibility?.eligible;
+  const previewEligible = previewEligibility?.eligible === true;
   const previewLoading = status.isLoading && !status.data;
   const previewDays = status.data?.monetization?.premiumPreview?.days ?? 3;
-  const isAndroidBilling = isBillingAvailable();
+  const isPreviewActive =
+    status.data?.premium === true && status.data.entitlement?.source === 'PREVIEW';
+  const isPaidPremium =
+    status.data?.premium === true && status.data.entitlement?.source === 'PLAY';
 
-  if (!billingUi) {
-    return <Navigate to="/app" replace />;
-  }
+  const yearlyEquivalent = yearlyPlan
+    ? monthlyEquivalent(
+        yearlyPlan.phase.priceAmountMicros,
+        yearlyPlan.phase.currencyCode,
+        locale,
+      )
+    : null;
+  const yearlySaving =
+    monthlyPlan && yearlyPlan
+      ? annualSavingsPercent(
+          monthlyPlan.phase.priceAmountMicros,
+          yearlyPlan.phase.priceAmountMicros,
+        )
+      : null;
 
-  // Header strip: a back button so paywall always has an explicit exit.
-  // Without it the "already Premium / Preview active" branch is a dead-end ??  // the user has no way back to the rest of the app from inside Capacitor.
-  const header = (
-    <div style={{ padding: '14px 18px 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-      <button
-        type="button"
-        onClick={() => nav(-1)}
-        aria-label={t('paywall.back')}
-        style={{
-          background: 'transparent',
-          border: 0,
-          padding: 8,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-          <path
-            d="M 15 6 L 9 12 L 15 18"
-            fill="none"
-            stroke="var(--p-ink)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-    </div>
-  );
-
-  if (status.data?.premium) {
-    const isPreview = status.data.entitlement?.source === 'PREVIEW';
-    const expiryTime = status.data.subscription?.expiryTime;
-    const productId = status.data.subscription?.productId;
-    return (
-      <div className="screen">
-        <div style={{ flex: 1, overflow: 'auto' }}>
-          {header}
-          <div style={{ padding: 32, textAlign: 'center' }}>
-            <h2 style={{ fontSize: 22, fontWeight: 700 }}>
-              {isPreview ? t('paywall.preview.activeTitle') : t('paywall.already')}
-            </h2>
-            {expiryTime && (
-              <p style={{ color: '#6B7280', marginTop: 8 }}>
-                {isPreview
-                  ? t('paywall.previewEndsAt', { date: new Date(expiryTime).toLocaleDateString() })
-                  : t('paywall.renewAt', { date: new Date(expiryTime).toLocaleDateString() })}
-              </p>
-            )}
-            {!isPreview && (
-              <button
-                type="button"
-                onClick={() => openPlaySubscriptionManage(productId)}
-                style={{
-                  marginTop: 20,
-                  background: 'transparent',
-                  border: 0,
-                  color: '#2563EB',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                }}
-              >
-                {t('paywall.manageSubscription')}
-              </button>
-            )}
-          </div>
-        </div>
-        <TabBar />
-      </div>
-    );
-  }
-
-  const renderProduct = (productId: string, label: string, periodLabel: string) => {
-    const prod = products.data?.find((p) => p.productId === productId);
-    const offer = prod ? selectPaidOffer(prod) : undefined;
-    const phase = offer ? displayRecurringPhase(offer) : undefined;
-    if (!prod || !offer || !phase) return null;
-    return (
-      <div
-        key={productId}
-        style={{
-          border: '1px solid #E5E7EB',
-          borderRadius: 16,
-          padding: 20,
-          marginBottom: 14,
-        }}
-      >
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{label}</h3>
-        <p style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>
-          {phase.priceFormatted}
-          <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 500 }}>
-            {' '}
-            / {periodLabel}
-          </span>
-        </p>
-        <button
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            try {
-              await buy(productId, offer.offerToken);
-              // launchBillingFlow resolves once UI is up ??actual purchase
-              // completes via listener. Refetch status shortly after to pick
-              // up the new entitlement once verify+ack runs.
-              setTimeout(() => {
-                qc.invalidateQueries({ queryKey: ['billing-status'] });
-              }, 3000);
-            } finally {
-              setBusy(false);
-            }
-          }}
-          style={{
-            marginTop: 12,
-            background: '#047857',
-            color: '#fff',
-            border: 0,
-            borderRadius: 12,
-            padding: '12px 22px',
-            fontWeight: 700,
-            cursor: busy ? 'not-allowed' : 'pointer',
-            opacity: busy ? 0.6 : 1,
-          }}
-        >
-          {t('paywall.subscribe')}
-        </button>
-      </div>
-    );
+  const closePaywall = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate('/app');
   };
 
-  return (
-    <div className="screen">
-      <div style={{ flex: 1, overflow: 'auto' }}>
-        {header}
-        <div style={{ maxWidth: 420, margin: '0 auto', padding: '0 24px 24px' }}>
-          {reason === 'quota' && (
-        <div
-          style={{
-            background: 'var(--p-danger-tint, #FEF2F2)',
-            border: '1px solid var(--p-danger, #DC2626)',
-            color: 'var(--p-danger, #B91C1C)',
-            borderRadius: 12,
-            padding: '12px 14px',
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
-            {t('paywall.quotaBanner.title')}
-          </div>
-          <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
-            {t('paywall.quotaBanner.desc', { limit: quotaLimit })}
-          </div>
-        </div>
-      )}
-          {reason === 'premium' && (
-        <div
-          style={{
-            background: 'var(--p-primary-tint, #ECFDF5)',
-            border: '1px solid var(--p-primary, #2d6a5a)',
-            color: 'var(--p-text, #1a2e2a)',
-            borderRadius: 12,
-            padding: '12px 14px',
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
-            {t('paywall.premiumBanner.title')}
-          </div>
-          <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
-            {premiumFeature && PREMIUM_FEATURE_KEYS[premiumFeature]
-              ? t(PREMIUM_FEATURE_KEYS[premiumFeature])
-              : t('paywall.premiumBanner.desc')}
-          </div>
-        </div>
-      )}
-      <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>{t('paywall.title')}</h1>
-      <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 20 }}>
-        {t('paywall.tagline')}
-      </p>
+  const runPurchase = async () => {
+    if (!selectedPlan || busyAction) return;
+    setNotice(null);
+    setBusyAction(selectedPlan.productId);
+    try {
+      await buy(selectedPlan.productId, selectedPlan.offer.offerToken);
+      setNotice({ tone: 'info', text: t('paywall.purchase.opened') });
+      window.setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ['billing-status'] });
+      }, 3000);
+    } catch {
+      setNotice({ tone: 'error', text: t('paywall.purchase.failed') });
+    } finally {
+      setBusyAction(null);
+    }
+  };
 
-      <div
-        style={{
-          border: '1px solid #D1FAE5',
-          background: '#ECFDF5',
-          borderRadius: 16,
-          padding: 18,
-          marginBottom: 16,
-        }}
-      >
-        <h2 style={{ fontSize: 16, fontWeight: 800, margin: '0 0 6px' }}>
-          {t('paywall.preview.title')}
-        </h2>
-        <p style={{ fontSize: 13, color: '#065F46', lineHeight: 1.5, margin: '0 0 12px' }}>
-          {t('paywall.preview.desc', { days: previewDays })}
-        </p>
-        {previewLoading ? (
-          <div style={{ fontSize: 12.5, color: '#047857', fontWeight: 700 }}>
-            {t('paywall.preview.loading')}
-          </div>
-        ) : previewEligible ? (
-          <button
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              try {
-                await startPremiumPreview();
-                await qc.invalidateQueries({ queryKey: ['billing-status'] });
-              } finally {
-                setBusy(false);
-              }
-            }}
-            style={{
-              background: '#065F46',
-              color: '#fff',
-              border: 0,
-              borderRadius: 12,
-              padding: '11px 16px',
-              fontWeight: 800,
-              cursor: busy ? 'not-allowed' : 'pointer',
-              opacity: busy ? 0.6 : 1,
-            }}
-          >
-            {t('paywall.preview.cta')}
+  const runPreview = async () => {
+    if (busyAction) return;
+    setNotice(null);
+    setBusyAction('preview');
+    try {
+      await startPremiumPreview();
+      await queryClient.invalidateQueries({ queryKey: ['billing-status'] });
+      setNotice({ tone: 'success', text: t('paywall.preview.started') });
+    } catch {
+      setNotice({ tone: 'error', text: t('paywall.preview.failed') });
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const runRestore = async () => {
+    if (busyAction) return;
+    setNotice(null);
+    setBusyAction('restore');
+    try {
+      const restored = await restore();
+      await queryClient.invalidateQueries({ queryKey: ['billing-status'] });
+      setNotice({
+        tone: restored.length > 0 ? 'success' : 'info',
+        text: restored.length > 0 ? t('paywall.restore.success') : t('paywall.restore.empty'),
+      });
+    } catch {
+      setNotice({ tone: 'error', text: t('paywall.restore.failed') });
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  if (isPaidPremium) {
+    const expiryTime = status.data?.subscription?.expiryTime;
+    const productId = status.data?.subscription?.productId;
+    const autoRenewing = status.data?.subscription?.autoRenewing === true;
+    const planLabel =
+      productId === 'premium_yearly' ? t('paywall.yearly') : t('paywall.monthly');
+
+    return (
+      <div className="screen paywall-screen">
+        <header className="paywall-topbar">
+          <button type="button" className="paywall-icon-button" onClick={closePaywall} aria-label={t('paywall.back')}>
+            <X size={21} />
           </button>
-        ) : (
-          <div style={{ fontSize: 12.5, color: '#047857', fontWeight: 700 }}>
-            {previewEligibility?.reason === 'subscription_history_exists'
-              ? t('paywall.preview.notAvailable')
-              : t('paywall.preview.used')}
+          <span>{t('paywall.title')}</span>
+          <span className="paywall-topbar-spacer" />
+        </header>
+
+        <main className="paywall-member">
+          <div className="paywall-member-mark" aria-hidden="true">
+            <Check size={28} strokeWidth={2.5} />
+          </div>
+          <div className="paywall-status-chip">{t('paywall.member.active')}</div>
+          <h1>{t('paywall.already')}</h1>
+          <p>{t('paywall.member.plan', { plan: planLabel })}</p>
+
+          <dl className="paywall-subscription-summary">
+            <div>
+              <dt>{t('paywall.member.status')}</dt>
+              <dd>
+                {autoRenewing
+                  ? t('paywall.member.renewing')
+                  : t('paywall.member.endsAfterPeriod')}
+              </dd>
+            </div>
+            {expiryTime && (
+              <div>
+                <dt>
+                  {autoRenewing
+                    ? t('paywall.member.nextBilling')
+                    : t('paywall.member.accessUntil')}
+                </dt>
+                <dd>{new Date(expiryTime).toLocaleDateString(locale)}</dd>
+              </div>
+            )}
+          </dl>
+
+          <button
+            type="button"
+            className="paywall-primary-button"
+            onClick={() => navigate('/app')}
+          >
+            <ChevronLeft size={18} />
+            {t('paywall.member.continue')}
+          </button>
+          <button
+            type="button"
+            className="paywall-secondary-button"
+            onClick={() => openPlaySubscriptionManage(productId)}
+          >
+            <ExternalLink size={17} />
+            {t('paywall.manageSubscription')}
+          </button>
+          <p className="paywall-member-help">{t('paywall.member.manageHint')}</p>
+        </main>
+      </div>
+    );
+  }
+
+  const selectedPrice = selectedPlan?.phase.priceFormatted;
+  const selectedPeriod =
+    selectedProductId === 'premium_yearly'
+      ? t('paywall.yearly.per')
+      : t('paywall.monthly.per');
+  const purchaseLabel =
+    selectedProductId === 'premium_yearly'
+      ? t('paywall.cta.yearly')
+      : t('paywall.cta.monthly');
+
+  return (
+    <div className="screen paywall-screen">
+      <header className="paywall-topbar">
+        <button type="button" className="paywall-icon-button" onClick={closePaywall} aria-label={t('paywall.back')}>
+          <X size={21} />
+        </button>
+        <span>{t('paywall.title')}</span>
+        <span className="paywall-topbar-spacer" />
+      </header>
+
+      <div className="paywall-scroll">
+        <main className="paywall-content">
+          {reason === 'quota' && (
+            <div className="paywall-context-notice" role="status">
+              <CircleAlert size={18} />
+              <div>
+                <strong>{t('paywall.quotaBanner.title')}</strong>
+                <span>{t('paywall.quotaBanner.desc', { limit: quotaLimit })}</span>
+              </div>
+            </div>
+          )}
+
+          {reason === 'premium' && (
+            <div className="paywall-context-notice" role="status">
+              <Sparkles size={18} />
+              <div>
+                <strong>{t('paywall.premiumBanner.title')}</strong>
+                <span>
+                  {premiumFeature && PREMIUM_FEATURE_KEYS[premiumFeature]
+                    ? t(PREMIUM_FEATURE_KEYS[premiumFeature])
+                    : t('paywall.premiumBanner.desc')}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <section className="paywall-intro">
+            <span className="paywall-eyebrow">{t('paywall.eyebrow')}</span>
+            <h1>{t('paywall.headline')}</h1>
+            <p>{t('paywall.tagline')}</p>
+          </section>
+
+          <section className="paywall-benefits" aria-labelledby="paywall-benefits-title">
+            <h2 id="paywall-benefits-title">{t('paywall.benefits.title')}</h2>
+            <div className="paywall-benefit-list">
+              {BENEFITS.map(({ key, Icon, tone }) => (
+                <div className="paywall-benefit" key={key}>
+                  <span className="paywall-benefit-icon" style={{ color: tone }}>
+                    <Icon size={18} />
+                  </span>
+                  <span>{t(key)}</span>
+                  <Check size={17} className="paywall-benefit-check" />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {isPreviewActive ? (
+            <section className="paywall-preview-band paywall-preview-active">
+              <div className="paywall-preview-icon">
+                <Sparkles size={20} />
+              </div>
+              <div>
+                <span className="paywall-preview-label">{t('paywall.preview.activeLabel')}</span>
+                <h2>{t('paywall.preview.activeTitle')}</h2>
+                <p>
+                  {status.data?.subscription?.expiryTime
+                    ? t('paywall.previewEndsAt', {
+                        date: new Date(status.data.subscription.expiryTime).toLocaleDateString(locale),
+                      })
+                    : t('paywall.preview.activeNoDate')}
+                </p>
+              </div>
+            </section>
+          ) : (
+            <section className="paywall-preview-band">
+              <div className="paywall-preview-icon">
+                <Sparkles size={20} />
+              </div>
+              <div className="paywall-preview-copy">
+                <span className="paywall-preview-label">{t('paywall.preview.eyebrow')}</span>
+                <h2>{t('paywall.preview.choiceTitle', { days: previewDays })}</h2>
+                <p>{t('paywall.preview.choiceDesc')}</p>
+                {previewLoading ? (
+                  <span className="paywall-inline-status">{t('paywall.preview.loading')}</span>
+                ) : previewEligible ? (
+                  <button
+                    type="button"
+                    className="paywall-preview-button"
+                    onClick={runPreview}
+                    disabled={busyAction !== null}
+                  >
+                    <Sparkles size={16} />
+                    {busyAction === 'preview'
+                      ? t('paywall.preview.starting')
+                      : t('paywall.preview.cta', { days: previewDays })}
+                  </button>
+                ) : (
+                  <span className="paywall-inline-status">
+                    {previewEligibility?.reason === 'subscription_history_exists'
+                      ? t('paywall.preview.notAvailable')
+                      : t('paywall.preview.used')}
+                  </span>
+                )}
+              </div>
+            </section>
+          )}
+
+          <section className="paywall-plans" aria-labelledby="paywall-plan-title">
+            <div className="paywall-section-heading">
+              <span>{t('paywall.step.plan')}</span>
+              <h2 id="paywall-plan-title">{t('paywall.plan.title')}</h2>
+              <p>{t('paywall.plan.subtitle')}</p>
+            </div>
+
+            {!isAndroidBilling && (
+              <div className="paywall-platform-notice">
+                <ShieldCheck size={19} />
+                <span>{t('paywall.androidOnly')}</span>
+              </div>
+            )}
+
+            {isAndroidBilling && products.isLoading && (
+              <div className="paywall-loading">{t('paywall.loading')}</div>
+            )}
+
+            {isAndroidBilling && products.isError && (
+              <div className="paywall-load-error">
+                <CircleAlert size={18} />
+                <span>{t('paywall.loadFailed')}</span>
+                <button type="button" onClick={() => void products.refetch()}>
+                  {t('paywall.retry')}
+                </button>
+              </div>
+            )}
+
+            {isAndroidBilling && yearlyPlan && (
+              <button
+                type="button"
+                className={`paywall-plan-option ${
+                  selectedProductId === 'premium_yearly' ? 'selected' : ''
+                }`}
+                aria-pressed={selectedProductId === 'premium_yearly'}
+                onClick={() => setSelectedProductId('premium_yearly')}
+              >
+                <span className="paywall-plan-radio" aria-hidden="true">
+                  {selectedProductId === 'premium_yearly' && <Check size={13} />}
+                </span>
+                <span className="paywall-plan-copy">
+                  <span className="paywall-plan-name-row">
+                    <strong>{t('paywall.yearly')}</strong>
+                    <span className="paywall-recommended">{t('paywall.plan.recommended')}</span>
+                  </span>
+                  <span className="paywall-plan-detail">
+                    {t('paywall.plan.billedYearly', { price: yearlyPlan.phase.priceFormatted })}
+                  </span>
+                  {yearlySaving !== null && yearlySaving > 0 && (
+                    <span className="paywall-plan-saving">
+                      {t('paywall.plan.save', { percent: yearlySaving })}
+                    </span>
+                  )}
+                </span>
+                <span className="paywall-plan-price">
+                  <strong>{yearlyEquivalent}</strong>
+                  <span>/ {t('paywall.monthly.per')}</span>
+                </span>
+              </button>
+            )}
+
+            {isAndroidBilling && monthlyPlan && (
+              <button
+                type="button"
+                className={`paywall-plan-option ${
+                  selectedProductId === 'premium_monthly' ? 'selected' : ''
+                }`}
+                aria-pressed={selectedProductId === 'premium_monthly'}
+                onClick={() => setSelectedProductId('premium_monthly')}
+              >
+                <span className="paywall-plan-radio" aria-hidden="true">
+                  {selectedProductId === 'premium_monthly' && <Check size={13} />}
+                </span>
+                <span className="paywall-plan-copy">
+                  <span className="paywall-plan-name-row">
+                    <strong>{t('paywall.monthly')}</strong>
+                  </span>
+                  <span className="paywall-plan-detail">{t('paywall.plan.monthlyFlex')}</span>
+                </span>
+                <span className="paywall-plan-price">
+                  <strong>{monthlyPlan.phase.priceFormatted}</strong>
+                  <span>/ {t('paywall.monthly.per')}</span>
+                </span>
+              </button>
+            )}
+          </section>
+
+          {notice && (
+            <div className={`paywall-action-notice ${notice.tone}`} role="status">
+              {notice.tone === 'success' ? (
+                <Check size={17} />
+              ) : notice.tone === 'error' ? (
+                <CircleAlert size={17} />
+              ) : (
+                <ShieldCheck size={17} />
+              )}
+              <span>{notice.text}</span>
+            </div>
+          )}
+
+          <section className="paywall-trust">
+            <div>
+              <ShieldCheck size={18} />
+              <span>
+                <strong>{t('paywall.trust.playTitle')}</strong>
+                {t('paywall.trust.playDesc')}
+              </span>
+            </div>
+            <div>
+              <RotateCcw size={18} />
+              <span>
+                <strong>{t('paywall.trust.cancelTitle')}</strong>
+                {t('paywall.trust.cancelDesc')}
+              </span>
+            </div>
+          </section>
+
+          <p className="paywall-free-note">{t('paywall.freeStillAvailable')}</p>
+
+          <div className="paywall-footer-actions">
+            {isAndroidBilling && (
+              <button
+                type="button"
+                className="paywall-text-button"
+                onClick={runRestore}
+                disabled={busyAction !== null}
+              >
+                <RotateCcw size={15} />
+                {busyAction === 'restore' ? t('paywall.restore.working') : t('paywall.restore')}
+              </button>
+            )}
+            <button
+              type="button"
+              className="paywall-text-button"
+              onClick={() => openPlaySubscriptionManage(null)}
+            >
+              <ExternalLink size={15} />
+              {t('paywall.manageSubscription')}
+            </button>
+          </div>
+
+          <p className="paywall-legal">
+            {t('paywall.autoRenew.disclosure')}{' '}
+            <Link to="/terms">{t('paywall.legal.terms')}</Link>
+            {' · '}
+            <Link to="/privacy">{t('paywall.legal.privacy')}</Link>
+          </p>
+        </main>
+
+        {isAndroidBilling && selectedPlan && (
+          <div className="paywall-purchase-dock">
+            <div className="paywall-purchase-summary">
+              <span>{purchaseLabel}</span>
+              <strong>
+                {selectedPrice} / {selectedPeriod}
+              </strong>
+            </div>
+            <button
+              type="button"
+              className="paywall-primary-button"
+              onClick={runPurchase}
+              disabled={busyAction !== null}
+            >
+              {busyAction === selectedProductId ? t('paywall.purchase.opening') : purchaseLabel}
+            </button>
+            <p>{t('paywall.purchase.confirmHint')}</p>
           </div>
         )}
       </div>
-
-      {!isAndroidBilling && (
-        <div
-          style={{
-            border: '1px solid #E5E7EB',
-            borderRadius: 12,
-            padding: 14,
-            marginBottom: 16,
-            color: '#4B5563',
-            fontSize: 13,
-            lineHeight: 1.5,
-          }}
-        >
-          {t('paywall.androidOnly')}
-        </div>
-      )}
-
-      {isAndroidBilling && products.isLoading && <div style={{ padding: 24 }}>{t('paywall.loading')}</div>}
-      {isAndroidBilling && products.isError && (
-        <div style={{ padding: 16, color: '#B91C1C' }}>
-          {t('paywall.loadFailed')}
-        </div>
-      )}
-
-      {isAndroidBilling && renderProduct('premium_monthly', t('paywall.monthly'), t('paywall.monthly.per'))}
-      {isAndroidBilling && renderProduct('premium_yearly', t('paywall.yearly'), t('paywall.yearly.per'))}
-
-      {isAndroidBilling && (
-        <button
-          onClick={async () => {
-            setBusy(true);
-            try {
-              await restore();
-              await qc.invalidateQueries({ queryKey: ['billing-status'] });
-            } finally {
-              setBusy(false);
-            }
-          }}
-          disabled={busy}
-          style={{
-            marginTop: 14,
-            background: 'transparent',
-            border: 0,
-            color: '#2563EB',
-            textDecoration: 'underline',
-            fontSize: 13,
-            cursor: busy ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {t('paywall.restore')}
-        </button>
-      )}
-
-      {isAndroidBilling && (
-        <p style={{ marginTop: 20, fontSize: 12, color: '#6B7280', lineHeight: 1.55 }}>
-          {t('paywall.autoRenew.disclosure')}
-        </p>
-      )}
-
-      <p style={{ marginTop: 12, fontSize: 12, color: '#6B7280', lineHeight: 1.55 }}>
-        {t('paywall.cancel.hint')}{' '}
-        <button
-          type="button"
-          onClick={() => openPlaySubscriptionManage(null)}
-          style={{
-            background: 'transparent',
-            border: 0,
-            padding: 0,
-            color: '#2563EB',
-            fontSize: 12,
-            textDecoration: 'underline',
-            cursor: 'pointer',
-          }}
-        >
-          {t('paywall.manageSubscription')}
-        </button>
-      </p>
-
-      <p style={{ marginTop: 10, fontSize: 12, color: '#6B7280' }}>
-        <Link to="/terms" style={{ color: '#2563EB' }}>
-          {t('paywall.legal.terms')}
-        </Link>
-        {' · '}
-        <Link to="/privacy" style={{ color: '#2563EB' }}>
-          {t('paywall.legal.privacy')}
-        </Link>
-      </p>
-        </div>
-      </div>
-      <TabBar />
     </div>
   );
 }

@@ -8,6 +8,94 @@ test.describe('billing — 403 paywall redirect', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       sessionStorage.setItem('matheo.billingUiEnabled', '1');
+      localStorage.setItem('mathema.lang', 'ko');
+
+      // Make Capacitor report Android and provide a deterministic Billing
+      // bridge so the real paywall plan selector can be exercised in CI.
+      (window as any).androidBridge = {};
+      const methods = (names: string[]) =>
+        names.map((name) => ({
+          name,
+          rtype: name === 'addListener' ? 'callback' : 'promise',
+        }));
+      (window as any).Capacitor = {
+        PluginHeaders: [
+          {
+            name: 'Billing',
+            methods: methods([
+              'initialize',
+              'queryProductDetails',
+              'launchBillingFlow',
+              'acknowledgePurchase',
+              'restorePurchases',
+              'addListener',
+              'removeListener',
+            ]),
+          },
+          { name: 'App', methods: methods(['addListener', 'removeListener', 'getState']) },
+        ],
+        nativePromise: async (plugin: string, method: string) => {
+          if (plugin === 'Billing' && method === 'initialize') return { ready: true };
+          if (plugin === 'Billing' && method === 'queryProductDetails') {
+            return {
+              products: [
+                {
+                  productId: 'premium_monthly',
+                  title: 'Matheo Premium Monthly',
+                  description: '',
+                  offers: [
+                    {
+                      offerToken: 'monthly-token',
+                      basePlanId: 'monthly',
+                      offerId: null,
+                      pricingPhases: [
+                        {
+                          priceFormatted: '₩9,900',
+                          priceAmountMicros: '9900000000',
+                          currencyCode: 'KRW',
+                          billingPeriod: 'P1M',
+                          recurrenceMode: 1,
+                          billingCycleCount: 0,
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  productId: 'premium_yearly',
+                  title: 'Matheo Premium Yearly',
+                  description: '',
+                  offers: [
+                    {
+                      offerToken: 'yearly-token',
+                      basePlanId: 'yearly',
+                      offerId: null,
+                      pricingPhases: [
+                        {
+                          priceFormatted: '₩79,000',
+                          priceAmountMicros: '79000000000',
+                          currencyCode: 'KRW',
+                          billingPeriod: 'P1Y',
+                          recurrenceMode: 1,
+                          billingCycleCount: 0,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            };
+          }
+          if (plugin === 'Billing' && method === 'launchBillingFlow') return { launched: true };
+          if (plugin === 'Billing' && method === 'acknowledgePurchase') {
+            return { acknowledged: true };
+          }
+          if (plugin === 'Billing' && method === 'restorePurchases') return { purchases: [] };
+          if (plugin === 'App' && method === 'getState') return { isActive: true };
+          return {};
+        },
+        nativeCallback: () => 'e2e-callback',
+      };
     });
 
     await page.route('**/api/v1/**', async (route) => {
@@ -23,7 +111,8 @@ test.describe('billing — 403 paywall redirect', () => {
               name: 'E2E User',
               role: 'STUDENT',
               gradeLevel: 'CLASS_11',
-              country: 'IN',
+              country: 'KR',
+              birthDate: '2000-07-01T00:00:00.000Z',
               emailVerifiedAt: '2026-06-01T00:00:00.000Z',
             },
           }),
@@ -46,8 +135,32 @@ test.describe('billing — 403 paywall redirect', () => {
             data: {
               premium: false,
               billingUiEnabled: true,
-              entitlement: { premium: false, tier: 'FREE' },
+              entitlement: {
+                premium: false,
+                tier: 'FREE',
+                source: null,
+                preview: null,
+                previewEligibility: { eligible: true, reason: null },
+              },
               subscription: null,
+              quota: {
+                solver: {
+                  used: 8,
+                  limit: 8,
+                  resetAt: '2026-06-12T00:00:00.000Z',
+                },
+              },
+              monetization: {
+                mode: 'PLAY',
+                free: { solverDailyLimit: 8 },
+                premiumPreview: {
+                  productId: 'premium_preview_3d',
+                  days: 3,
+                  paymentMethodRequired: false,
+                  eligibility: 'ONE_TIME',
+                },
+                playTrialPolicy: { defaultSurface: 'NONE', note: '' },
+              },
             },
           }),
         });
@@ -110,5 +223,44 @@ test.describe('billing — 403 paywall redirect', () => {
     await page.goto('/app/report');
     await expect(page).toHaveURL(/\/app\/paywall\?reason=premium/, { timeout: 15_000 });
     await expect(page.getByText(/premium|프리미엄/i).first()).toBeVisible();
+  });
+
+  test('paywall explains benefits and makes the paid choice unambiguous', async ({ page }) => {
+    await page.goto('/login');
+    await page.evaluate(() => {
+      localStorage.setItem('mathema.access', 'e2e-test-token');
+      localStorage.setItem('mathema.refresh', 'e2e-refresh-token');
+      localStorage.setItem(
+        'mathema.onboarding',
+        JSON.stringify({ completedAt: new Date().toISOString() }),
+      );
+    });
+
+    await page.goto('/app/paywall?reason=quota');
+
+    await expect(
+      page.getByRole('heading', { name: '막힌 부분을 놓치지 않고 공부를 이어가세요' }),
+    ).toBeVisible();
+    await expect(page.getByText('Premium에서 달라지는 점')).toBeVisible();
+    await expect(page.getByText('먼저 3일 무료로 써볼까요?')).toBeVisible();
+
+    const plans = page.locator('.paywall-plan-option');
+    await expect(plans).toHaveCount(2);
+    await expect(page.getByText('월간 결제 대비 34% 절약')).toBeVisible();
+
+    const yearlyCta = page.getByRole('button', { name: '연간 구독 시작' });
+    await expect(yearlyCta).toHaveCount(1);
+
+    await page.getByRole('button', { name: /월간 구독/ }).click();
+    await expect(page.getByRole('button', { name: '월간 구독 시작' })).toBeVisible();
+    await expect(
+      page.getByText('이 버튼만 눌러서는 결제되지 않으며 Google Play에서 한 번 더 확인합니다.'),
+    ).toBeVisible();
+
+    const hasHorizontalOverflow = await page.evaluate(() => {
+      const content = document.querySelector('.paywall-content');
+      return !!content && content.scrollWidth > content.clientWidth;
+    });
+    expect(hasHorizontalOverflow).toBe(false);
   });
 });
