@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../lib/i18n';
-import { fetchGuardianConsentStatus, requestGuardianConsent } from '../lib/queries';
+import { fetchGuardianConsentStatus, requestGuardianConsent, type Me } from '../lib/queries';
+import { get } from '../lib/api';
+import { postAuthPath } from '../lib/post-auth-path';
 import { BrandLogo } from '../components/Brand';
 import '../styles/onboarding.css';
 
@@ -20,7 +22,11 @@ export default function GuardianConsentPage() {
 
   useEffect(() => {
     if (!statusQ.data?.verified) return;
-    void refreshUser().then(() => navigate('/app', { replace: true }));
+    void (async () => {
+      await refreshUser();
+      const me = await get<Me>('/users/me');
+      navigate(postAuthPath(me), { replace: true });
+    })();
   }, [statusQ.data?.verified, refreshUser, navigate]);
 
   const [parentName, setParentName] = useState('');
@@ -29,6 +35,9 @@ export default function GuardianConsentPage() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+
+  const status = statusQ.data;
+  const waiting = sent || (status?.requestStatus === 'PENDING' && !!status?.parentEmail);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -51,7 +60,26 @@ export default function GuardianConsentPage() {
     }
   };
 
-  const status = statusQ.data;
+  const resend = async () => {
+    const email = status?.parentEmail ?? parentEmail;
+    const name = parentName || status?.parentEmail?.split('@')[0] || 'Parent';
+    if (!email) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      await requestGuardianConsent({
+        parentName: name,
+        parentEmail: email,
+        parentPhone: parentPhone || undefined,
+      });
+      setSent(true);
+      await qc.invalidateQueries({ queryKey: ['guardian-consent-status'] });
+    } catch (ex: any) {
+      setErr(ex?.response?.data?.error?.message ?? t('guardianConsent.failed'));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="mathema-app">
@@ -64,14 +92,21 @@ export default function GuardianConsentPage() {
             <div className="screen-body" style={{ gap: 18, paddingTop: 16 }}>
               <div>
                 <span className="eyebrow">{t('guardianConsent.eyebrow')}</span>
-                <h2 className="title" style={{ marginTop: 8 }}>{t('guardianConsent.title')}</h2>
+                <h2 className="title" style={{ marginTop: 8 }}>
+                  {waiting ? t('guardianConsent.waiting.title') : t('guardianConsent.title')}
+                </h2>
                 <p className="subtitle">{t('guardianConsent.sub')}</p>
               </div>
 
-              {sent || (status?.requestStatus === 'PENDING' && status?.parentEmail) ? (
-                <div className="alert success">
-                  {t('guardianConsent.sent', { email: status?.parentEmail ?? parentEmail })}
-                </div>
+              {waiting ? (
+                <>
+                  <div className="alert success">
+                    {t('guardianConsent.sent', { email: status?.parentEmail ?? parentEmail })}
+                  </div>
+                  <button type="button" className="btn text" disabled={busy} onClick={resend}>
+                    {busy ? t('guardianConsent.sending') : t('guardianConsent.resend')}
+                  </button>
+                </>
               ) : (
                 <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div className="field">
@@ -94,6 +129,7 @@ export default function GuardianConsentPage() {
                 </form>
               )}
 
+              {err && waiting && <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>}
               <p className="caption" style={{ fontSize: 11.5 }}>{t('guardianConsent.policy')}</p>
             </div>
           </div>

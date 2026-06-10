@@ -25,8 +25,11 @@ function build(over: { user?: ReturnType<typeof mockUser> | null } = {}) {
     findById: jest.fn().mockResolvedValue(over.user === null ? null : (over.user ?? mockUser())),
     update: jest.fn().mockResolvedValue(undefined),
   };
-  const svc = new UsersService(repo as never);
-  return { svc, repo };
+  const guardianConsent = {
+    ensurePendingForStudent: jest.fn().mockResolvedValue({ required: false }),
+  };
+  const svc = new UsersService(repo as never, guardianConsent as never);
+  return { svc, repo, guardianConsent };
 }
 
 describe('UsersService.updateProfile', () => {

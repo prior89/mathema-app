@@ -50,7 +50,11 @@ export type RegisterInput = {
   // Country chip (IN | KR | ...). Optional — backend defaults to IN when
   // missing for back-compat with the pre-2026-05-24 onboarding flow.
   country?: 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'GLOBAL';
-  // DPDP/GDPR
+  // Minor student — parent contact (sent during signup)
+  parentName?: string;
+  parentEmail?: string;
+  parentPhone?: string;
+  // DPDP/GDPR (adults only — minors must not self-grant optional consents)
   consentAnalytics?: boolean; consentMarketing?: boolean; consentAiTraining?: boolean;
 };
 

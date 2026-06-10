@@ -54,4 +54,9 @@ export class RegisterDto {
   @IsOptional() @IsBoolean() consentAnalytics?: boolean;
   @IsOptional() @IsBoolean() consentMarketing?: boolean;
   @IsOptional() @IsBoolean() consentAiTraining?: boolean;
+
+  /** Minor student signup — parent/guardian contact (email verification link). */
+  @IsOptional() @IsString() @MinLength(2) parentName?: string;
+  @IsOptional() @IsEmail() parentEmail?: string;
+  @IsOptional() @IsString() parentPhone?: string;
 }

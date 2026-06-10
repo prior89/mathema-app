@@ -2,13 +2,17 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from './users.repository';
+import { GuardianConsentService } from '../guardian-consent/guardian-consent.service';
 import { daysUntil } from '../../common/utils/date.util';
 import { BCRYPT_COST } from '../../common/utils/auth-constants';
 import { assertPasswordNotBreached } from '../../common/utils/password-breach';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly repo: UsersRepository) {}
+  constructor(
+    private readonly repo: UsersRepository,
+    private readonly guardianConsent: GuardianConsentService,
+  ) {}
 
   create(data: any) { return this.repo.create(data); }
   findByEmail(email: string) { return this.repo.findByEmail(email); }
@@ -19,6 +23,7 @@ export class UsersService {
     studyGoal?: string;
     role?: string;
     pushRemindersEnabled?: boolean;
+    birthDate?: string;
   }) {
     const user = await this.repo.findById(id);
     if (!user) throw new NotFoundException('User not found');
@@ -31,6 +36,16 @@ export class UsersService {
       data.pushRemindersEnabled = dto.pushRemindersEnabled;
     }
 
+    if (dto.birthDate !== undefined) {
+      if (user.birthDate) {
+        throw new ForbiddenException({
+          code: 'birth_date_immutable',
+          message: 'Date of birth cannot be changed after it is set.',
+        });
+      }
+      data.birthDate = new Date(dto.birthDate);
+    }
+
     if (dto.role !== undefined) {
       this.assertRolePatchAllowed(user.role, dto.role as UserRole);
       data.role = dto.role;
@@ -38,6 +53,12 @@ export class UsersService {
 
     if (Object.keys(data).length === 0) return this.findOne(id);
     await this.repo.update(id, data);
+    if (dto.birthDate && user.role === UserRole.STUDENT) {
+      await this.guardianConsent.ensurePendingForStudent({
+        studentUserId: id,
+        country: user.country,
+      });
+    }
     return this.findOne(id);
   }
 

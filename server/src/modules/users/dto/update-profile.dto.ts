@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDateString, IsIn, IsOptional, IsString } from 'class-validator';
 import { GRADE_LEVELS, GradeLevel } from '../../../common/enums/unit.enum';
 import { STUDY_GOALS, StudyGoal } from '../../auth/dto/register.dto';
 
@@ -15,4 +15,6 @@ export class UpdateProfileDto {
   role?: PatchableUserRole;
   @IsOptional() @IsBoolean()
   pushRemindersEnabled?: boolean;
+  /** Set once at onboarding — used for minor guardian consent gating. */
+  @IsOptional() @IsDateString() birthDate?: string;
 }

@@ -1,25 +1,17 @@
 /**
  * RegisterPage — Matheo 폰-프레임 3단계 회원가입.
  *
- *   명세서 §1 — 역할별 분기 (STUDENT / PARENT / TEACHER).
- *
- *   단계 구성:
- *     0 · 역할 + 기본 정보 (역할 카드 + email/password/name + Google Sign-In)
- *     1 · 프로필
- *          - STUDENT: NCERT 학년 6개 (Class 7~12) + 시험 날짜 + 목표 등급
- *          - PARENT : 자녀 이메일
- *          - TEACHER: 학원 코드 (선택)
- *     2 · 동의 (DPDP 2023 · GDPR — 필수/분석/AI훈련/마케팅)
- *
- *   디자인: .mathema-app phone frame (LoginPage / 온보딩 / 메인 앱과 통일).
+ *   STUDENT 미성년: Step 2 = 보호자 정보 (이메일 확인 링크 발송)
+ *   STUDENT 성인·기타 역할: Step 2 = 개인정보 동의
  */
 
-import { FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { FormEvent, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth, RegisterRole } from '../context/AuthContext';
 import type { GradeLevel, NcertClass } from '../lib/queries';
 import { useT } from '../lib/i18n';
 import { isLikelyEmail } from '../lib/email';
+import { requiresGuardianConsent } from '../lib/guardian-consent';
 import { Glyph } from '../components/onboarding/Glyph';
 import { BrandLogo } from '../components/Brand';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
@@ -40,34 +32,26 @@ const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
 export default function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();
   const { t, lang, setLang } = useT();
-  const navigate = useNavigate();
 
-  // 진행 단계 0 (역할+기본정보) → 1 (프로필) → 2 (동의)
   const [step, setStep] = useState<0 | 1 | 2>(0);
-
-  // 공통 입력
   const [role, setRole] = useState<RegisterRole>('STUDENT');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
 
-  // STUDENT
   const [ncertClass, setNcertClass] = useState<NcertClass>('CLASS_11');
   const [birthDate, setBirthDate] = useState('');
   const [examDate, setExamDate] = useState('2027-02-14');
   const [targetGrade, setTargetGrade] = useState('3');
 
-  // PARENT
   const [childEmail, setChildEmail] = useState('');
-
-  // TEACHER
   const [tenantCode, setTenantCode] = useState('');
-
-  // 국가 — 가입 시점에 확정. 이후 PATCH /me 로 바꿀 수 없음.
-  // (i18n setLang 도 KR 선택 시 즉시 ko 로 전환)
   const [country, setCountry] = useState<'IN' | 'KR'>('IN');
 
-  // 동의
+  const [parentName, setParentName] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [parentPhone, setParentPhone] = useState('');
+
   const [consentAnalytics, setConsentAnalytics] = useState(true);
   const [consentAiTraining, setConsentAiTraining] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
@@ -76,18 +60,26 @@ export default function RegisterPage() {
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
 
-  // 단계별 next 조건
+  const isMinorStudent = useMemo(
+    () => role === 'STUDENT' && !!birthDate && requiresGuardianConsent(birthDate),
+    [role, birthDate],
+  );
+
   const canStep1Next = isLikelyEmail(email) && password.length >= 8 && !!name.trim() && !!role;
   const canStep2Next = (
-    role === 'STUDENT' ? (!!ncertClass && !!birthDate && !!examDate && !!targetGrade)
-    : role === 'PARENT' ? !!childEmail
-    : true // TEACHER tenantCode 는 선택
+    role === 'STUDENT'
+      ? (!!ncertClass && !!birthDate && !!examDate && !!targetGrade)
+      : role === 'PARENT'
+        ? !!childEmail
+        : true
   );
+  const canFinishMinor = parentName.trim().length >= 2 && isLikelyEmail(parentEmail);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (step !== 2) return;
-    setErr(null); setBusy(true);
+    setErr(null);
+    setBusy(true);
     try {
       await register({
         email, password, name,
@@ -99,9 +91,18 @@ export default function RegisterPage() {
           targetGrade: Number(targetGrade),
           gradeLevel: NCERT_TO_GRADE[ncertClass],
         } : {}),
-        ...(role === 'PARENT'  ? { childEmail } : {}),
+        ...(role === 'PARENT' ? { childEmail } : {}),
         ...(role === 'TEACHER' ? (tenantCode ? { tenantCode } : {}) : {}),
-        consentAnalytics, consentAiTraining, consentMarketing,
+        ...(isMinorStudent ? {
+          parentName: parentName.trim(),
+          parentEmail: parentEmail.trim(),
+          parentPhone: parentPhone.trim() || undefined,
+          consentAnalytics: false,
+          consentAiTraining: false,
+          consentMarketing: false,
+        } : {
+          consentAnalytics, consentAiTraining, consentMarketing,
+        }),
       });
     } catch (e: any) {
       setErr(e?.response?.data?.error?.message ?? t('auth.register.failed'));
@@ -125,13 +126,11 @@ export default function RegisterPage() {
       <div className="mathema-viewport">
         <div className="mathema-phone">
           <div className="screen">
-            {/* Top: brand + lang toggle */}
             <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <BrandLogo size="sm" />
               <LangToggle lang={lang} setLang={setLang} />
             </div>
 
-            {/* Progress dots */}
             <div className="steps" style={{ padding: '14px 24px 0' }}>
               {[0, 1, 2].map((i) => (
                 <div key={i} className={`dot ${i === step ? 'active' : i < step ? 'done' : ''}`} />
@@ -169,7 +168,15 @@ export default function RegisterPage() {
                 {step === 1 && role === 'TEACHER' && (
                   <StepTeacher tenantCode={tenantCode} setTenantCode={setTenantCode} t={t} />
                 )}
-                {step === 2 && (
+                {step === 2 && isMinorStudent && (
+                  <StepGuardianMinor
+                    parentName={parentName} setParentName={setParentName}
+                    parentEmail={parentEmail} setParentEmail={setParentEmail}
+                    parentPhone={parentPhone} setParentPhone={setParentPhone}
+                    t={t}
+                  />
+                )}
+                {step === 2 && !isMinorStudent && (
                   <StepConsent
                     analytics={consentAnalytics} setAnalytics={setConsentAnalytics}
                     aiTraining={consentAiTraining} setAiTraining={setConsentAiTraining}
@@ -180,7 +187,6 @@ export default function RegisterPage() {
 
                 {err && <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>}
 
-                {/* 액션 버튼 — step 마다 다름 */}
                 {step < 2 && (
                   <button
                     type="button"
@@ -194,13 +200,17 @@ export default function RegisterPage() {
                   </button>
                 )}
                 {step === 2 && (
-                  <button type="submit" className="btn" disabled={busy} style={{ marginTop: 4 }}>
-                    {busy ? t('auth.login.busy') : t('reg.finish')}
+                  <button
+                    type="submit"
+                    className="btn"
+                    disabled={busy || (isMinorStudent && !canFinishMinor)}
+                    style={{ marginTop: 4 }}
+                  >
+                    {busy ? t('auth.login.busy') : (isMinorStudent ? t('reg.finish.minor') : t('reg.finish'))}
                     <Glyph.ChevronR />
                   </button>
                 )}
 
-                {/* 뒤로 / 로그인 링크 */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 }}>
                   {step > 0 ? (
                     <button type="button" className="btn text" style={{ width: 'auto', padding: '6px 4px' }} onClick={() => setStep((step - 1) as 0 | 1 | 2)}>
@@ -229,32 +239,26 @@ export default function RegisterPage() {
   );
 }
 
-// ─── Step 0 : 역할 + 기본 정보 + Google ───────────────────────
 function StepRoleAndCredentials({
   role, setRole, email, setEmail, password, setPassword, name, setName,
   country, setCountry, setLang, googleBusy, onGoogleSignIn, formBusy, t,
 }: any) {
-  // Country chip group — same set as OnboardingPage.ScreenCountry. KR
-  // 선택 시 setLang('ko') 즉시 호출 → 이후 라벨/모든 화면 한국어.
-  // v1 active = IN + KR. 4국 (US/UK/AU/SG) coming-soon disabled.
   const COUNTRIES: Array<{ id: 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG'; flag: string; name: string; active: boolean }> = [
-    { id: 'IN', flag: '🇮🇳', name: 'India',          active: true  },
-    { id: 'KR', flag: '🇰🇷', name: '대한민국',         active: true  },
-    { id: 'US', flag: '🇺🇸', name: 'United States',  active: false },
+    { id: 'IN', flag: '🇮🇳', name: 'India', active: true },
+    { id: 'KR', flag: '🇰🇷', name: '대한민국', active: true },
+    { id: 'US', flag: '🇺🇸', name: 'United States', active: false },
     { id: 'UK', flag: '🇬🇧', name: 'United Kingdom', active: false },
-    { id: 'AU', flag: '🇦🇺', name: 'Australia',      active: false },
-    { id: 'SG', flag: '🇸🇬', name: 'Singapore',      active: false },
+    { id: 'AU', flag: '🇦🇺', name: 'Australia', active: false },
+    { id: 'SG', flag: '🇸🇬', name: 'Singapore', active: false },
   ];
   const pickCountry = (c: typeof COUNTRIES[number]['id']) => {
     setCountry(c);
     if (c === 'KR') setLang('ko');
     else setLang('en');
   };
-  // PARENT/TEACHER 가입은 별도 대시보드 출시 전까지 잠금. 카드는 보이되 선택은 불가
-  // — 향후 메뉴 재배치 비용을 줄이고 사용자에게 로드맵을 자연스럽게 노출.
   const roles: { id: RegisterRole; Icon: any; label: string; sub: string; popular?: boolean; comingSoon?: boolean }[] = [
-    { id: 'STUDENT', Icon: Glyph.Person,  label: t('reg.role.student'), sub: t('reg.role.student.sub'), popular: true },
-    { id: 'PARENT',  Icon: Glyph.Parent,  label: t('reg.role.parent'),  sub: t('reg.role.parent.sub') },
+    { id: 'STUDENT', Icon: Glyph.Person, label: t('reg.role.student'), sub: t('reg.role.student.sub'), popular: true },
+    { id: 'PARENT', Icon: Glyph.Parent, label: t('reg.role.parent'), sub: t('reg.role.parent.sub') },
     { id: 'TEACHER', Icon: Glyph.Teacher, label: t('reg.role.teacher'), sub: t('reg.role.teacher.sub') },
   ];
   return (
@@ -264,7 +268,6 @@ function StepRoleAndCredentials({
         <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step1.title')}</h2>
         <p className="subtitle">{t('reg.step1.sub')}</p>
       </div>
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {roles.map((r) => {
           const selected = role === r.id;
@@ -275,9 +278,7 @@ function StepRoleAndCredentials({
               onClick={() => !r.comingSoon && setRole(r.id)}
               role="button" tabIndex={r.comingSoon ? -1 : 0}
               aria-disabled={r.comingSoon || undefined}
-              onKeyDown={(e) => {
-                if (!r.comingSoon && (e.key === 'Enter' || e.key === ' ')) setRole(r.id);
-              }}
+              onKeyDown={(e) => { if (!r.comingSoon && (e.key === 'Enter' || e.key === ' ')) setRole(r.id); }}
               style={r.comingSoon ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
             >
               <div style={{
@@ -303,7 +304,6 @@ function StepRoleAndCredentials({
           );
         })}
       </div>
-
       <div className="field">
         <label>{t('auth.email')}</label>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" autoComplete="email" />
@@ -316,9 +316,6 @@ function StepRoleAndCredentials({
         <label>{t('auth.name')}</label>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('reg.name.placeholder')} />
       </div>
-
-      {/* Country picker — drives curriculum (IN→NCERT, KR→Korean 2022 개정)
-          + immediate lang flip. Symmetric with OnboardingPage ScreenCountry. */}
       <div className="field">
         <label>{country === 'KR' ? '국가' : 'Country'}</label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
@@ -331,17 +328,11 @@ function StepRoleAndCredentials({
                 onClick={() => c.active && pickCountry(c.id)}
                 disabled={!c.active}
                 style={{
-                  padding: '10px 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  cursor: c.active ? 'pointer' : 'not-allowed',
-                  opacity: c.active ? 1 : 0.45,
+                  padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8,
+                  cursor: c.active ? 'pointer' : 'not-allowed', opacity: c.active ? 1 : 0.45,
                   border: selected ? '2px solid var(--p-primary)' : '1px solid var(--p-border)',
                   background: selected ? 'var(--p-primary-tint)' : 'var(--p-surface)',
-                  borderRadius: 10,
-                  fontSize: 13,
-                  textAlign: 'left',
+                  borderRadius: 10, fontSize: 13, textAlign: 'left',
                 }}
               >
                 <span style={{ fontSize: 18, lineHeight: 1 }}>{c.flag}</span>
@@ -352,28 +343,21 @@ function StepRoleAndCredentials({
           })}
         </div>
       </div>
-
       {isGoogleSignInConfigured() && (
         <>
           <AuthDivider labelKey="reg.or" />
-          <GoogleSignInButton
-            mode="signup"
-            onCredential={onGoogleSignIn}
-            busy={googleBusy}
-            disabled={formBusy}
-          />
+          <GoogleSignInButton mode="signup" onCredential={onGoogleSignIn} busy={googleBusy} disabled={formBusy} />
         </>
       )}
     </>
   );
 }
 
-// ─── Step 1 (STUDENT) : NCERT class + exam date + target ──
 function StepStudent({ ncertClass, setNcertClass, birthDate, setBirthDate, examDate, setExamDate, targetGrade, setTargetGrade, t }: any) {
   const grades: { id: NcertClass; num: string; lbl: string }[] = [
-    { id: 'CLASS_7',  num: '7',  lbl: t('reg.student.classCaption') },
-    { id: 'CLASS_8',  num: '8',  lbl: t('reg.student.classCaption') },
-    { id: 'CLASS_9',  num: '9',  lbl: t('reg.student.classCaption') },
+    { id: 'CLASS_7', num: '7', lbl: t('reg.student.classCaption') },
+    { id: 'CLASS_8', num: '8', lbl: t('reg.student.classCaption') },
+    { id: 'CLASS_9', num: '9', lbl: t('reg.student.classCaption') },
     { id: 'CLASS_10', num: '10', lbl: t('reg.student.classBoard') },
     { id: 'CLASS_11', num: '11', lbl: t('reg.student.classCaption') },
     { id: 'CLASS_12', num: '12', lbl: t('reg.student.classBoard') },
@@ -418,7 +402,6 @@ function StepStudent({ ncertClass, setNcertClass, birthDate, setBirthDate, examD
   );
 }
 
-// ─── Step 1 (PARENT) : 자녀 이메일 ──────────────────────────
 function StepParent({ childEmail, setChildEmail, t }: any) {
   return (
     <>
@@ -435,7 +418,6 @@ function StepParent({ childEmail, setChildEmail, t }: any) {
   );
 }
 
-// ─── Step 1 (TEACHER) : tenantCode 선택 ─────────────────────
 function StepTeacher({ tenantCode, setTenantCode, t }: any) {
   return (
     <>
@@ -452,17 +434,55 @@ function StepTeacher({ tenantCode, setTenantCode, t }: any) {
   );
 }
 
-// ─── Step 2 : 동의 ─────────────────────────────────────────
+function StepGuardianMinor({
+  parentName, setParentName, parentEmail, setParentEmail, parentPhone, setParentPhone, t,
+}: any) {
+  return (
+    <>
+      <div>
+        <span className="eyebrow">{t('reg.step3.guardian.eyebrow')}</span>
+        <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step3.guardian.title')}</h2>
+        <p className="subtitle">{t('reg.step3.guardian.sub')}</p>
+      </div>
+      <div className="field">
+        <label>{t('guardianConsent.parentName')}</label>
+        <input value={parentName} onChange={(e) => setParentName(e.target.value)} required minLength={2} />
+      </div>
+      <div className="field">
+        <label>{t('guardianConsent.parentEmail')}</label>
+        <input type="email" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} required />
+      </div>
+      <div className="field">
+        <label>{t('guardianConsent.parentPhone')}</label>
+        <input type="tel" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
+        <span className="caption" style={{ marginTop: 6 }}>{t('guardianConsent.parentPhone.hint')}</span>
+      </div>
+      <div className="consent-row">
+        <div className="ck checked" style={{ opacity: 0.85, cursor: 'default' }}>
+          <Glyph.Check size={12} />
+        </div>
+        <div className="info">
+          <div className="name">
+            <span>{t('reg.step3.guardian.essential')}</span>
+            <span className="req-pill">{t('reg.consent.required')}</span>
+          </div>
+          <div className="desc">{t('reg.step3.guardian.essential.desc')}</div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function StepConsent({ analytics, setAnalytics, aiTraining, setAiTraining, marketing, setMarketing, t }: any) {
   const items = [
-    { id: 'essential',  required: true,  checked: true,       set: () => {},
-      name: t('reg.consent.essential'),  desc: t('reg.consent.essential.desc') },
-    { id: 'analytics',  required: false, checked: analytics,  set: () => setAnalytics(!analytics),
-      name: t('reg.consent.analytics'),  desc: t('reg.consent.analytics.desc') },
+    { id: 'essential', required: true, checked: true, set: () => {},
+      name: t('reg.consent.essential'), desc: t('reg.consent.essential.desc') },
+    { id: 'analytics', required: false, checked: analytics, set: () => setAnalytics(!analytics),
+      name: t('reg.consent.analytics'), desc: t('reg.consent.analytics.desc') },
     { id: 'aiTraining', required: false, checked: aiTraining, set: () => setAiTraining(!aiTraining),
       name: t('reg.consent.aiTraining'), desc: t('reg.consent.aiTraining.desc') },
-    { id: 'marketing',  required: false, checked: marketing,  set: () => setMarketing(!marketing),
-      name: t('reg.consent.marketing'),  desc: t('reg.consent.marketing.desc') },
+    { id: 'marketing', required: false, checked: marketing, set: () => setMarketing(!marketing),
+      name: t('reg.consent.marketing'), desc: t('reg.consent.marketing.desc') },
   ];
   return (
     <>

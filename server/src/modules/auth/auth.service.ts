@@ -140,6 +140,17 @@ export class AuthService {
         ua: ctx.ua,
       });
       guardianConsentPending = !!gc.required && !gc.verified;
+      if (guardianConsentPending && dto.parentEmail && dto.parentName) {
+        await this.guardianConsent.requestParentVerification(
+          user.id,
+          {
+            parentName: dto.parentName,
+            parentEmail: dto.parentEmail,
+            parentPhone: dto.parentPhone,
+          },
+          { ip: ctx.ip, ua: ctx.ua },
+        );
+      }
     }
 
     // 가입 직후 이메일 검증 토큰 발급 — 실패해도 가입은 진행 (fire-and-forget).

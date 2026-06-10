@@ -103,6 +103,12 @@ const ko = {
   'reg.step3.eyebrow': '03단계 · 개인정보',
   'reg.step3.title': '데이터, 당신의 선택입니다.',
   'reg.step3.sub': '개인정보보호법(한국) · GDPR 기준. 언제든 설정에서 변경 가능합니다.',
+  'reg.step3.guardian.eyebrow': '03단계 · 보호자 동의',
+  'reg.step3.guardian.title': '보호자 정보를 입력해주세요',
+  'reg.step3.guardian.sub': '만 18세 미만은 보호자가 이메일로 동의해야 앱을 이용할 수 있어요.',
+  'reg.step3.guardian.essential': '필수 데이터 처리',
+  'reg.step3.guardian.essential.desc': '계정·학습 기록 저장 — 보호자 동의 후 진행됩니다.',
+  'reg.finish.minor': '가입하고 보호자에게 메일 보내기',
   'reg.consent.essential': '필수 데이터 처리',
   'reg.consent.essential.desc': '계정·풀이·진척도 저장 (앱 동작에 필수). 개인정보보호법 요구사항.',
   'reg.consent.analytics': '학습 분석',
@@ -499,6 +505,8 @@ const ko = {
   'guardianConsent.verify.success': '보호자 동의가 완료되었어요. 학생이 앱을 이용할 수 있습니다.',
   'guardianConsent.verify.failed': '링크가 만료되었거나 유효하지 않아요.',
   'guardianConsent.verify.goLogin': '로그인으로 이동',
+  'guardianConsent.waiting.title': '보호자 확인을 기다리는 중',
+  'guardianConsent.resend': '확인 메일 다시 보내기',
 
   // ===== Concept Learning banner (study tab) =====
   'study.concept.banner.label': 'New · 개념 학습',
@@ -1295,6 +1303,12 @@ const en: typeof ko = {
   'reg.step3.eyebrow': 'Step 03 · Privacy',
   'reg.step3.title': 'Your data, your call.',
   'reg.step3.sub': 'We follow India\'s DPDP Act 2023 and GDPR. Change any of these later in Settings.',
+  'reg.step3.guardian.eyebrow': 'Step 03 · Guardian',
+  'reg.step3.guardian.title': 'Parent/guardian details',
+  'reg.step3.guardian.sub': 'Under-18 accounts need a parent or guardian to confirm by email before you can use Matheo.',
+  'reg.step3.guardian.essential': 'Essential data',
+  'reg.step3.guardian.essential.desc': 'Account and learning progress — unlocked after guardian consent.',
+  'reg.finish.minor': 'Sign up and email my parent',
   'reg.consent.essential': 'Essential data',
   'reg.consent.essential.desc': 'Process your account, attempts and progress so the app works. Required by DPDP 2023.',
   'reg.consent.analytics': 'Learning analytics',
@@ -1690,6 +1704,8 @@ const en: typeof ko = {
   'guardianConsent.verify.success': 'Guardian consent confirmed. The student can now use Matheo.',
   'guardianConsent.verify.failed': 'This link is invalid or has expired.',
   'guardianConsent.verify.goLogin': 'Go to sign in',
+  'guardianConsent.waiting.title': 'Waiting for parent confirmation',
+  'guardianConsent.resend': 'Resend confirmation email',
 
   // Concept Learning banner (study tab)
   'study.concept.banner.label': 'New · Concept Learning',

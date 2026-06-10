@@ -24,9 +24,11 @@ import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
 import { isGoogleSignInConfigured } from '../lib/google-client-id';
+import { requiresGuardianConsent } from '../lib/guardian-consent';
+import { fetchGuardianConsentStatus, requestGuardianConsent } from '../lib/queries';
 import '../styles/onboarding.css';
 
-type StepKey = 'welcome' | 'country' | 'auth' | 'role' | 'profile' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
+type StepKey = 'welcome' | 'country' | 'auth' | 'role' | 'profile' | 'guardian' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
 type Role = 'STUDENT' | 'PARENT' | 'TEACHER';
 type GradeId = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12';
 type GoalId = 'BOARD' | 'JEE' | 'SCHOOL' | 'CATCHUP';
@@ -85,6 +87,10 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [grade, setGrade] = useState<GradeId | ''>('CLASS_11');
+  const [birthDate, setBirthDate] = useState('');
+  const [parentName, setParentName] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [parentPhone, setParentPhone] = useState('');
   const [goal, setGoal] = useState<GoalId | ''>('BOARD');
   // Country defaults to IN. The country step (after welcome) lets the user
   // flip to KR — picking KR also calls i18n setLang('ko') immediately so the
@@ -139,9 +145,45 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
         />
       );
     case 'profile':
-      return <ScreenProfile step={stepIndex} onBack={back} onNext={next} name={name} setName={setName} grade={grade} setGrade={setGrade} country={country} />;
+      return (
+        <ScreenProfile
+          step={stepIndex} onBack={back}
+          onNext={() => {
+            if (birthDate && requiresGuardianConsent(birthDate)) go('guardian');
+            else next();
+          }}
+          name={name} setName={setName}
+          grade={grade} setGrade={setGrade}
+          birthDate={birthDate} setBirthDate={setBirthDate}
+          country={country}
+        />
+      );
+    case 'guardian':
+      return (
+        <ScreenGuardian
+          step={stepIndex}
+          onBack={() => go('profile')}
+          onNext={next}
+          birthDate={birthDate}
+          parentName={parentName} setParentName={setParentName}
+          parentEmail={parentEmail} setParentEmail={setParentEmail}
+          parentPhone={parentPhone} setParentPhone={setParentPhone}
+          refreshUser={refreshUser}
+        />
+      );
     case 'goal':
-      return <ScreenGoal step={stepIndex} onBack={back} onNext={syncProfileThenDiagnostic} goal={goal} setGoal={setGoal} />;
+      return (
+        <ScreenGoal
+          step={stepIndex}
+          onBack={() => {
+            if (birthDate && requiresGuardianConsent(birthDate)) go('guardian');
+            else back();
+          }}
+          onNext={syncProfileThenDiagnostic}
+          goal={goal}
+          setGoal={setGoal}
+        />
+      );
     case 'diagnostic':
       return <ScreenDiagnostic step={stepIndex} onBack={back} onNext={next} onComplete={setDiagnosticResult} />;
     case 'results':
@@ -637,8 +679,14 @@ function ScreenRole({
 
 // ─────────── 04 Profile (name + class) ───────────
 function ScreenProfile({
-  step, onBack, onNext, name, setName, grade, setGrade, country,
-}: { step: number; onBack: () => void; onNext: () => void; name: string; setName: (n: string) => void; grade: GradeId | ''; setGrade: (g: GradeId) => void; country: CountryId }) {
+  step, onBack, onNext, name, setName, grade, setGrade, birthDate, setBirthDate, country,
+}: {
+  step: number; onBack: () => void; onNext: () => void;
+  name: string; setName: (n: string) => void;
+  grade: GradeId | ''; setGrade: (g: GradeId) => void;
+  birthDate: string; setBirthDate: (v: string) => void;
+  country: CountryId;
+}) {
   const { t } = useT();
   // Grade chips re-label by country. Backend stores GradeLevel (CLASS_N), so
   // KR labels (중1~고3) map onto the same CLASS_7..CLASS_12 IDs the IN
@@ -684,6 +732,11 @@ function ScreenProfile({
             ))}
           </div>
         </div>
+        <div className="field">
+          <label>{t('reg.student.birthDate')}</label>
+          <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
+          <span className="caption" style={{ marginTop: 6 }}>{t('reg.student.birthDate.hint')}</span>
+        </div>
         <div className="card" style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--p-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--p-primary-fg)' }}>
             <Glyph.Sparkle accent="var(--p-primary-fg)" size={14} />
@@ -698,10 +751,113 @@ function ScreenProfile({
         <div style={{ flex: 1 }} />
       </div>
       <div className="screen-foot">
-        <button className="btn" onClick={onNext} disabled={!name || !grade} style={{ opacity: name && grade ? 1 : 0.45 }}>
+        <button className="btn" onClick={onNext} disabled={!name || !grade || !birthDate} style={{ opacity: name && grade && birthDate ? 1 : 0.45 }}>
           {t('onboarding.profile.continue')}
           <Glyph.ChevronR />
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────── 04b Guardian (minor students) ───────────
+function ScreenGuardian({
+  step, onBack, onNext, birthDate,
+  parentName, setParentName, parentEmail, setParentEmail, parentPhone, setParentPhone,
+  refreshUser,
+}: {
+  step: number; onBack: () => void; onNext: () => void;
+  birthDate: string;
+  parentName: string; setParentName: (v: string) => void;
+  parentEmail: string; setParentEmail: (v: string) => void;
+  parentPhone: string; setParentPhone: (v: string) => void;
+  refreshUser: () => Promise<void>;
+}) {
+  const { t } = useT();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [waiting, setWaiting] = useState(false);
+  const [poll, setPoll] = useState(false);
+
+  useEffect(() => {
+    if (!poll) return;
+    const id = window.setInterval(async () => {
+      try {
+        const st = await fetchGuardianConsentStatus();
+        if (st.verified) {
+          window.clearInterval(id);
+          await refreshUser();
+          onNext();
+        }
+      } catch { /* ignore */ }
+    }, 10_000);
+    return () => window.clearInterval(id);
+  }, [poll, onNext, refreshUser]);
+
+  const submit = async () => {
+    if (!parentName.trim() || !parentEmail.trim() || !birthDate) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      await patch<Me>('/users/me', { birthDate: new Date(birthDate).toISOString() });
+      await requestGuardianConsent({
+        parentName: parentName.trim(),
+        parentEmail: parentEmail.trim(),
+        parentPhone: parentPhone.trim() || undefined,
+      });
+      await refreshUser();
+      setWaiting(true);
+      setPoll(true);
+      const st = await fetchGuardianConsentStatus();
+      if (st.verified) onNext();
+    } catch (e: any) {
+      setErr(e?.response?.data?.error?.message ?? t('guardianConsent.failed'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="screen">
+      <TopScaffold step={step} onBack={onBack} />
+      <div className="screen-body" style={{ gap: 22 }}>
+        <div>
+          <span className="eyebrow">{t('reg.step3.guardian.eyebrow')}</span>
+          <h2 className="title" style={{ marginTop: 10 }}>
+            {waiting ? t('guardianConsent.waiting.title') : t('reg.step3.guardian.title')}
+          </h2>
+          <p className="subtitle">{t('reg.step3.guardian.sub')}</p>
+        </div>
+        {waiting ? (
+          <div className="alert success">
+            {t('guardianConsent.sent', { email: parentEmail })}
+          </div>
+        ) : (
+          <>
+            <div className="field">
+              <label>{t('guardianConsent.parentName')}</label>
+              <input value={parentName} onChange={(e) => setParentName(e.target.value)} required minLength={2} />
+            </div>
+            <div className="field">
+              <label>{t('guardianConsent.parentEmail')}</label>
+              <input type="email" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} required />
+            </div>
+            <div className="field">
+              <label>{t('guardianConsent.parentPhone')}</label>
+              <input type="tel" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
+            </div>
+          </>
+        )}
+        {err && <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>}
+        <div style={{ flex: 1 }} />
+      </div>
+      <div className="screen-foot">
+        {!waiting && (
+          <button className="btn" onClick={submit} disabled={busy || parentName.trim().length < 2 || !parentEmail}>
+            {busy ? t('guardianConsent.sending') : t('reg.finish.minor')}
+            <Glyph.ChevronR />
+          </button>
+        )}
       </div>
     </div>
   );
