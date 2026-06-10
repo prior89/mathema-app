@@ -21,7 +21,16 @@ const checks = [
   {
     id: 'PLAY_SERVICE_ACCOUNT_JSON',
     ok: () => {
-      const raw = process.env.PLAY_SERVICE_ACCOUNT_JSON ?? '';
+      const inline = process.env.PLAY_SERVICE_ACCOUNT_JSON ?? '';
+      const file = process.env.PLAY_SERVICE_ACCOUNT_JSON_FILE ?? '';
+      let raw = inline;
+      if (!raw && file) {
+        try {
+          raw = fs.readFileSync(path.resolve(file), 'utf8');
+        } catch {
+          return false;
+        }
+      }
       if (!raw) return false;
       try {
         const j = JSON.parse(raw);
@@ -30,7 +39,7 @@ const checks = [
         return false;
       }
     },
-    hint: 'Service account JSON with androidpublisher scope',
+    hint: 'PLAY_SERVICE_ACCOUNT_JSON or PLAY_SERVICE_ACCOUNT_JSON_FILE (androidpublisher scope)',
   },
   {
     id: 'PLAY_PACKAGE_NAME',

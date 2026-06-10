@@ -1,4 +1,18 @@
+import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
 import { registerAs } from '@nestjs/config';
+
+function resolvePlayServiceAccountRaw(): string {
+  const inline = process.env.PLAY_SERVICE_ACCOUNT_JSON?.trim() ?? '';
+  if (inline) return inline;
+  const file = process.env.PLAY_SERVICE_ACCOUNT_JSON_FILE?.trim() ?? '';
+  if (!file) return '';
+  const abs = resolve(file);
+  if (!existsSync(abs)) {
+    throw new Error(`PLAY_SERVICE_ACCOUNT_JSON_FILE not found: ${abs}`);
+  }
+  return readFileSync(abs, 'utf8');
+}
 
 interface PlayServiceAccountKey {
   client_email: string;
@@ -8,7 +22,7 @@ interface PlayServiceAccountKey {
 }
 
 export default registerAs('playBilling', () => {
-  const raw = process.env.PLAY_SERVICE_ACCOUNT_JSON;
+  const raw = resolvePlayServiceAccountRaw();
   const packageName = process.env.PLAY_PACKAGE_NAME ?? '';
 
   const obfuscatedAccountSecret = process.env.PLAY_OBFUSCATED_ACCOUNT_SECRET ?? '';

@@ -31,7 +31,8 @@
     "postinstall": "node scripts/sync-env.cjs",
     "cap:sync": "npm -w app run cap:sync",
     "cap:open": "npm -w app run cap:open",
-    "billing:preflight": "node scripts/billing-g1-preflight.cjs"
+    "billing:preflight": "node scripts/billing-g1-preflight.cjs",
+    "billing:sync-env": "node scripts/billing-g1-sync-env.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
