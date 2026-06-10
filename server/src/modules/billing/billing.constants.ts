@@ -16,6 +16,9 @@
  *  (`project_matheo_pricing_india`). */
 export const FREE_TIER_SOLVER_LIMIT = 8;
 
+/** Free-tier cap on problems visible per chapter mastery set (of 20 frozen). */
+export const FREE_TIER_MASTERY_PROBLEMS = 5;
+
 /** Elevated daily cap during the post-signup grace window (PR-17). */
 export const GRACE_SOLVER_LIMIT = 16;
 

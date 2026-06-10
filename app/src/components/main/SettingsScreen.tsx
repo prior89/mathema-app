@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { get, post, patch, del, downloadExport, tokens } from '../../lib/api';
+import { get, post, patch, del, downloadExport } from '../../lib/api';
 import { fetchMe, type Me } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
 import { useTheme, type ThemeMode } from '../../context/ThemeContext';
@@ -25,7 +25,7 @@ export function SettingsScreen() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const { t } = useT();
-  const { refreshUser } = useAuth();
+  const { refreshUser, logout, completeAccountDeletion } = useAuth();
   const { mode: themeMode, setMode: setThemeMode } = useTheme();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const consents = useQuery({
@@ -54,10 +54,7 @@ export function SettingsScreen() {
   const [confirmText, setConfirmText] = useState('');
   const deleteAccount = useMutation({
     mutationFn: () => del('/users/me'),
-    onSuccess: () => {
-      tokens.clear();
-      nav('/login');
-    },
+    onSuccess: () => { void completeAccountDeletion(); },
   });
   const confirmOk = confirmText === 'DELETE';
 
@@ -176,7 +173,7 @@ export function SettingsScreen() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <button
             className="btn outline"
-            onClick={() => { tokens.clear(); nav('/login'); }}
+            onClick={() => { void logout(); }}
           >
             {t('settingsScreen.logout')}
           </button>

@@ -8,6 +8,7 @@ import { SimilarFinderService } from './services/similar-finder.service';
 import { SpacedRepetitionService } from './services/spaced-repetition.service';
 import { ReviewSchedulerService } from './review-scheduler.service';
 import { AttemptsModule } from '../attempts/attempts.module';
+import { BillingModule } from '../billing/billing.module';
 
 /**
  * 오답노트 — 오답노트 페이지 전체 + 대시보드 "최근 오답 인사이트" 카드.
@@ -16,7 +17,7 @@ import { AttemptsModule } from '../attempts/attempts.module';
  * checkAnswer 가 Attempt + (오답 시) WrongNote upsert 흐름을 재사용하기 위함.
  */
 @Module({
-  imports: [AttemptsModule],
+  imports: [AttemptsModule, BillingModule],
   controllers: [WrongNotesController],
   providers: [
     WrongNotesService,

@@ -491,6 +491,12 @@ const ko = {
   'quota.solver.grace': '신규 혜택 {limit}/일 · {daysLeft}일 남음',
   'paywall.quotaBanner.title': 'Free 한도에 도달했어요',
   'paywall.quotaBanner.desc': 'Free 플랜은 하루 {limit}회 AI Solver 사용 — Premium은 무제한',
+  'paywall.premiumBanner.title': 'Premium 기능이에요',
+  'paywall.premiumBanner.desc': '이 기능은 Matheo Premium에서 이용할 수 있어요.',
+  'paywall.premiumBanner.feature.weekly_reports': '주간 학습 리포트는 Premium에서 제공돼요.',
+  'paywall.premiumBanner.feature.adaptive_practice': '맞춤형 적응 학습은 Premium에서 제공돼요.',
+  'paywall.premiumBanner.feature.wrong_note_analysis': '오답 AI 분석은 Premium에서 제공돼요.',
+  'paywall.premiumBanner.feature.full_mastery_sets': '전체 20문제 마스터리 세트는 Premium에서 제공돼요.',
 
   // ===== TabBar =====
   'tabbar.aria': '주 메뉴',
@@ -983,6 +989,7 @@ const ko = {
   'login.tagline': '마지막으로 본 페이지부터 이어서 진행하세요. 학습 기록과 노트는 그대로 저장돼 있어요.',
   'login.notice.displaced': '다른 기기에서 로그인되어 자동으로 로그아웃되었어요.',
   'login.notice.mismatch': '로그인 정보가 이 기기와 일치하지 않아요. 다시 로그인해 주세요.',
+  'login.notice.expired': '보안을 위해 로그인 세션이 만료되었어요. 다시 로그인해 주세요.',
   'login.field.email': '이메일',
   'login.field.password': '비밀번호',
   'login.busy': '로그인 중…',
@@ -1647,6 +1654,12 @@ const en: typeof ko = {
   'quota.solver.grace': 'Welcome bonus {limit}/day · {daysLeft}d left',
   'paywall.quotaBanner.title': 'You\'ve reached the Free limit',
   'paywall.quotaBanner.desc': 'Free plan: {limit} AI Solver calls per day — Premium is unlimited.',
+  'paywall.premiumBanner.title': 'Premium feature',
+  'paywall.premiumBanner.desc': 'This feature is available with Matheo Premium.',
+  'paywall.premiumBanner.feature.weekly_reports': 'Weekly learning reports are a Premium feature.',
+  'paywall.premiumBanner.feature.adaptive_practice': 'Adaptive practice plans are a Premium feature.',
+  'paywall.premiumBanner.feature.wrong_note_analysis': 'Wrong-note AI analysis is a Premium feature.',
+  'paywall.premiumBanner.feature.full_mastery_sets': 'Full 20-problem mastery sets are a Premium feature.',
 
   // TabBar
   'tabbar.aria': 'Main navigation',
@@ -2139,6 +2152,7 @@ const en: typeof ko = {
   'login.tagline': 'Pick up where you left off — your history and notes are right where you left them.',
   'login.notice.displaced': 'You were signed out because another device signed in.',
   'login.notice.mismatch': 'Session token does not match this device. Please sign in again.',
+  'login.notice.expired': 'Your secure session expired. Please sign in again.',
   'login.field.email': 'Email',
   'login.field.password': 'Password',
   'login.busy': 'Signing in…',

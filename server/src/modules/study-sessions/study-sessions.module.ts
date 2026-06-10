@@ -5,6 +5,7 @@ import { StudySessionsRepository } from './study-sessions.repository';
 import { AiGuideService } from './services/ai-guide.service';
 import { AttemptsModule } from '../attempts/attempts.module';
 import { RecommendationsModule } from '../recommendations/recommendations.module';
+import { BillingModule } from '../billing/billing.module';
 
 /**
  * 학습 세션 — 학습 페이지 (Session 03/05, 5단계 progress, 14:32 타이머).
@@ -12,7 +13,7 @@ import { RecommendationsModule } from '../recommendations/recommendations.module
  * 명세서 §4 Flow 1 — start() 가 next-problem 추천도 함께 반환.
  */
 @Module({
-  imports: [AttemptsModule, RecommendationsModule],
+  imports: [AttemptsModule, RecommendationsModule, BillingModule],
   controllers: [StudySessionsController],
   providers: [StudySessionsService, StudySessionsRepository, AiGuideService],
   exports: [StudySessionsService],

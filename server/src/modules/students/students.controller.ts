@@ -3,6 +3,8 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { StudentsService } from './students.service';
 import { AdaptiveNextProblemService } from '../recommendations/services/adaptive-next-problem.service';
+import { PremiumFeatureGuard } from '../billing/premium-feature.guard';
+import { RequirePremium } from '../billing/premium-feature.decorator';
 
 /**
  * 명세서 §5 — `/api/students/:studentId/...` path 표준.
@@ -80,6 +82,8 @@ export class StudentsController {
 
   /** GET /api/students/:studentId/weekly-reports */
   @Get(':studentId/weekly-reports')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('weekly_reports')
   weeklyReports(@CurrentUser('id') userId: string, @Param('studentId') sid: string) {
     return this.service.getWeeklyReports(userId, sid);
   }

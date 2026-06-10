@@ -72,6 +72,11 @@ function mockScheduler(): AnyMock {
     countDueWrongNotes: jest.fn().mockResolvedValue(0),
   };
 }
+function mockPremiumAccess(): AnyMock {
+  return {
+    redactInsightJson: jest.fn().mockImplementation(async (_uid: string, note: unknown) => note),
+  };
+}
 
 function build(over: any = {}) {
   const repo = over.repo ?? mockRepo();
@@ -83,9 +88,21 @@ function build(over: any = {}) {
   const prisma = over.prisma ?? mockPrisma();
   const events = over.events ?? mockEvents();
   const scheduler = over.scheduler ?? mockScheduler();
+  const premiumAccess = over.premiumAccess ?? mockPremiumAccess();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const svc = new WrongNotesService(repo as any, ocr as any, pdf as any, similar as any, sr as any, attempts as any, prisma as any, events as any, scheduler as any);
-  return { svc, repo, similar, sr, attempts, prisma, events, scheduler };
+  const svc = new WrongNotesService(
+    repo as any,
+    ocr as any,
+    pdf as any,
+    similar as any,
+    sr as any,
+    attempts as any,
+    prisma as any,
+    events as any,
+    scheduler as any,
+    premiumAccess as any,
+  );
+  return { svc, repo, similar, sr, attempts, prisma, events, scheduler, premiumAccess };
 }
 
 const FOUR_DAYS_AGO = new Date(Date.now() - 4 * 24 * 3600 * 1000);

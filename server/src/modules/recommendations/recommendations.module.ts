@@ -16,9 +16,10 @@ import { KrReinforceWeaknessStrategy } from './strategies/kr-reinforce-weakness.
 import { KrMaintainStrengthStrategy } from './strategies/kr-maintain-strength.strategy';
 import { KrChapterStatsService } from './services/kr-chapter-stats.service';
 import { FeatureFlagsModule } from '../feature-flags/feature-flags.module';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
-  imports: [FeatureFlagsModule],
+  imports: [FeatureFlagsModule, BillingModule],
   controllers: [RecommendationsController],
   providers: [
     FirstSessionPlanService,

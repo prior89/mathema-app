@@ -5,8 +5,10 @@ import { ReportsRepository } from './reports.repository';
 import { WeeklyReportService } from './weekly-report.service';
 import { WeeklyStatsService } from './weekly-stats.service';
 import { WeeklyReportsAliasController } from './weekly-reports-alias.controller';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
+  imports: [BillingModule],
   controllers: [ReportsController, WeeklyReportsAliasController],
   providers: [ReportsService, ReportsRepository, WeeklyReportService, WeeklyStatsService],
   exports: [ReportsService, WeeklyReportService, WeeklyStatsService],

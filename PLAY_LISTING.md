@@ -19,8 +19,8 @@ verbatim. Hindi locale (`hi-IN`) is intentionally omitted in v1.0; see
 | Tags (≤ 5) | NCERT, CBSE, Class 7-12, Math practice, JEE foundation |
 | Contact email | `VeraStudy01@gmail.com` |
 | Website | `https://black-wave-093b02b00.7.azurestaticapps.net` *(replace once a custom domain is live)* |
-| Privacy Policy URL | `https://black-wave-093b02b00.7.azurestaticapps.net/legal/privacy-policy.md` |
-| Terms of Service URL | `https://black-wave-093b02b00.7.azurestaticapps.net/legal/terms-of-service.md` |
+| Privacy Policy URL | `https://black-wave-093b02b00.7.azurestaticapps.net/privacy` |
+| Terms of Service URL | `https://black-wave-093b02b00.7.azurestaticapps.net/terms` |
 | Account deletion URL | `https://black-wave-093b02b00.7.azurestaticapps.net/legal/account-deletion.md` |
 
 > **Action item before submission:** swap the placeholder Azure subdomain for

@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { KoreanGrade, KoreanSubject } from '@prisma/client';
+import { KoreanGrade, KoreanSubject, Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { AchievementsService } from '../achievements/achievements.service';
+import { PremiumAccessService } from '../billing/premium-access.service';
 
 /**
  * Korean-curriculum (2022 개정) parallel to ConceptLessonsService. Country=KR
@@ -14,6 +15,7 @@ export class KoreanConceptLessonsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly achievements: AchievementsService,
+    private readonly premiumAccess: PremiumAccessService,
   ) {}
 
   /** List all Korean chapters, optionally filtered by grade + subject.
@@ -81,10 +83,14 @@ export class KoreanConceptLessonsService {
     let nextProblemId: string | null = null;
     let mastered = false;
     if (lesson.masterySetProblemIds.length === 20) {
+      const visibleIds = await this.premiumAccess.effectiveMasterySetIds(
+        userId,
+        lesson.masterySetProblemIds,
+      );
       const attempts = await this.prisma.attempt.findMany({
         where: {
           userId,
-          problemId: { in: lesson.masterySetProblemIds },
+          problemId: { in: visibleIds },
           stepIndex: 3,
           context: { in: ['STUDY' as const, 'PRACTICE' as const] },
         },
@@ -92,8 +98,8 @@ export class KoreanConceptLessonsService {
         select: { problemId: true },
       });
       const attempted = new Set(attempts.map((a) => a.problemId));
-      // Preserve seed order — first unattempted in masterySetProblemIds.
-      nextProblemId = lesson.masterySetProblemIds.find((id) => !attempted.has(id)) ?? null;
+      // Preserve seed order — first unattempted in the visible mastery set.
+      nextProblemId = visibleIds.find((id) => !attempted.has(id)) ?? null;
     }
     const progress = await this.prisma.koreanConceptProgress.findUnique({
       where: { userId_lessonId: { userId, lessonId: lesson.id } },
@@ -134,40 +140,45 @@ export class KoreanConceptLessonsService {
    *  until those chapters are re-authored as 3-step in Phase 2 of the
    *  user-spec rebuild. Frontend KoreanConceptLessonScreen displays
    *  "이 챕터의 연습 문제는 아직 준비 중입니다" when this returns []. */
-  async practiceProblems(chapterCode: string) {
+  async practiceProblems(chapterCode: string, userId?: string) {
     const lesson = await this.prisma.koreanConceptLesson.findUnique({
       where: { chapterCode },
-      select: { id: true },
+      select: { id: true, masterySetProblemIds: true },
     });
     if (!lesson) throw new NotFoundException(`KoreanConceptLesson ${chapterCode} not found`);
 
-    const problems = await this.prisma.problem.findMany({
-      where: {
+    const activePoolFilter: Prisma.ProblemWhereInput = {
+      conceptMismatch: { not: true },
+      OR: [
+        { qualityStatus: null },
+        { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+      ],
+    };
+
+    let problemRows: Awaited<ReturnType<typeof this.fetchKrPracticeRows>>;
+    if (lesson.masterySetProblemIds.length === 20) {
+      const visibleIds = await this.premiumAccess.effectiveMasterySetIds(
+        userId,
+        lesson.masterySetProblemIds,
+      );
+      problemRows = await this.fetchKrPracticeRows({
+        id: { in: visibleIds },
+        ...activePoolFilter,
+      });
+      const byId = new Map(problemRows.map((p) => [p.id, p]));
+      problemRows = visibleIds
+        .map((id) => byId.get(id))
+        .filter((p): p is NonNullable<typeof p> => !!p && p.steps.length === 3);
+    } else {
+      problemRows = (await this.fetchKrPracticeRows({
         koreanConceptLessonId: lesson.id,
-        // Sprint 1 B1 + Sprint 4 #44: active-pool filter. NULL = unsignaled
-        // (legacy seed assumed safe), APPROVED/USABLE = LLM grader passed.
-        // EXCLUDED rows and chapter-mismatched rows never reach students.
-        conceptMismatch: { not: true },
-        OR: [
-          { qualityStatus: null },
-          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
-        ],
-      },
-      orderBy: [{ difficultyLevel: 'asc' }, { createdAt: 'asc' }],
-      include: {
-        steps: {
-          orderBy: { stepIndex: 'asc' },
-          include: {
-            choices: { orderBy: { choiceIndex: 'asc' } },
-          },
-        },
-      },
-    });
+        ...activePoolFilter,
+      })).filter(
+        (p) => p.steps.length === 3,
+      );
+    }
 
-    // Keep only 3-step problems (per user spec — single-step legacy excluded).
-    const multiStep = problems.filter((p) => p.steps.length === 3);
-
-    return multiStep.map((p) => ({
+    return problemRows.map((p) => ({
       id: p.id,
       stem: p.body,
       concept: p.concept,
@@ -191,6 +202,21 @@ export class KoreanConceptLessonsService {
         })),
       })),
     }));
+  }
+
+  private fetchKrPracticeRows(where: Prisma.ProblemWhereInput) {
+    return this.prisma.problem.findMany({
+      where,
+      orderBy: [{ difficultyLevel: 'asc' }, { createdAt: 'asc' }],
+      include: {
+        steps: {
+          orderBy: { stepIndex: 'asc' },
+          include: {
+            choices: { orderBy: { choiceIndex: 'asc' } },
+          },
+        },
+      },
+    });
   }
 
   /** KR Study pool — single-step problems for this chapter. Returned shape

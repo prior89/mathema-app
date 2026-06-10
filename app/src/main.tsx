@@ -3,17 +3,16 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './context/AuthContext';
 import { bootstrapTheme, ThemeProvider } from './context/ThemeContext';
 import { I18nProvider } from './lib/i18n';
+import { initSentry } from './lib/sentry';
 import { initCapacitorBridge } from './native/capacitor-bridge';
 import './styles/onboarding.css';
 
 bootstrapTheme();
-
-// Sentry is intentionally omitted in v1.0 — DSN provisioning is Phase 2.
-// Keeping @sentry/react in the bundle for a no-op init wastes ~30KB; we'll
-// re-introduce Sentry.init + tagSentry once the Sentry project exists.
+initSentry();
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false, retry: 1 } },
@@ -68,7 +67,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
             <AuthProvider>
-              <App />
+              <ErrorBoundary>
+                <App />
+              </ErrorBoundary>
             </AuthProvider>
           </BrowserRouter>
         </QueryClientProvider>

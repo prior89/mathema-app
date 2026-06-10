@@ -93,7 +93,7 @@ function build(over: Partial<{
     'jwt.accessSecret': 'a'.repeat(48),
     'jwt.refreshSecret': 'b'.repeat(48),
     'jwt.accessTtl': '15m',
-    'jwt.refreshTtl': '14d',
+    'jwt.refreshTtl': '30d',
     'GOOGLE_CLIENT_ID': '',
   });
   const prisma  = over.prisma  ?? mockPrisma();
@@ -356,6 +356,38 @@ describe('AuthService', () => {
       const out = await svc.refresh('whatever');
       expect(redis.set).toHaveBeenCalledWith(expect.stringContaining('j-old'), '1', expect.any(Number));
       expect(out.accessToken).toBe('t-u1');
+    });
+  });
+
+  describe('logout', () => {
+    it('blacklists the presented refresh token until its expiry', async () => {
+      const jwt = mockJwt();
+      jwt.decode.mockReturnValue({
+        sub: 'u1',
+        type: 'refresh',
+        jti: 'j-logout',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      });
+      const redis = mockRedis();
+      const { svc } = build({ jwt, redis });
+
+      await expect(svc.logout('refresh-token')).resolves.toEqual({ ok: true });
+      expect(redis.set).toHaveBeenCalledWith(
+        expect.stringContaining('j-logout'),
+        '1',
+        expect.any(Number),
+      );
+    });
+
+    it('is idempotent for missing or malformed tokens', async () => {
+      const jwt = mockJwt();
+      jwt.decode.mockImplementation(() => { throw new Error('malformed'); });
+      const redis = mockRedis();
+      const { svc } = build({ jwt, redis });
+
+      await expect(svc.logout('')).resolves.toEqual({ ok: true });
+      await expect(svc.logout('bad-token')).resolves.toEqual({ ok: true });
+      expect(redis.set).not.toHaveBeenCalled();
     });
   });
 

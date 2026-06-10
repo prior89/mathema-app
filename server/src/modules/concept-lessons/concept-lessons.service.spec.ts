@@ -44,6 +44,11 @@ function mockDeterministic(): AnyMock {
     check: jest.fn().mockReturnValue({ matches: true, expected: null, given: null }),
   };
 }
+function mockPremiumAccess(): AnyMock {
+  return {
+    effectiveMasterySetIds: jest.fn().mockImplementation(async (_uid: string, ids: string[]) => ids),
+  };
+}
 
 function build(over: any = {}) {
   const prisma = over.prisma ?? mockPrisma();
@@ -51,8 +56,15 @@ function build(over: any = {}) {
   const det = over.det ?? mockDeterministic();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const achievements = over.achievements ?? { tryAwardFirstConceptStep: jest.fn() };
-  const svc = new ConceptLessonsService(prisma as any, llm as any, det as any, achievements as any);
-  return { svc, prisma, llm };
+  const premiumAccess = over.premiumAccess ?? mockPremiumAccess();
+  const svc = new ConceptLessonsService(
+    prisma as any,
+    llm as any,
+    det as any,
+    achievements as any,
+    premiumAccess as any,
+  );
+  return { svc, prisma, llm, premiumAccess };
 }
 
 function makeProblem(id: string, difficulty: Difficulty) {

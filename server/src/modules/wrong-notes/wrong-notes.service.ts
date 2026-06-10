@@ -12,6 +12,7 @@ import { QueryWrongNotesDto } from './dto/query-wrong-notes.dto';
 import { ReviewWrongNoteDto } from './dto/review-wrong-note.dto';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { ReviewSchedulerService } from './review-scheduler.service';
+import { PremiumAccessService } from '../billing/premium-access.service';
 
 @Injectable()
 export class WrongNotesService {
@@ -25,6 +26,7 @@ export class WrongNotesService {
     private readonly prisma: PrismaService,
     private readonly events: EventEmitter2,
     private readonly scheduler: ReviewSchedulerService,
+    private readonly premiumAccess: PremiumAccessService,
   ) {}
 
   getStats(userId: string) { return this.repo.aggregateStats(userId); }
@@ -170,7 +172,8 @@ export class WrongNotesService {
   async getOne(userId: string, id: string, lang: Lang = 'en') {
     const note = await this.repo.findOne(userId, id, lang);
     const similar = await this.similar.findSimilar(note.problemId, 5);
-    return { ...note, similar };
+    const redacted = await this.premiumAccess.redactInsightJson(userId, note);
+    return { ...redacted, similar };
   }
   create(userId: string, dto: CreateWrongNoteDto) { return this.repo.create(userId, dto); }
 

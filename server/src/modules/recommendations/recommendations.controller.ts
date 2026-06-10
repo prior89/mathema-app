@@ -7,6 +7,8 @@ import { AdaptiveNextProblemService } from './services/adaptive-next-problem.ser
 import { SimilarProblemService } from './services/similar-problem.service';
 import { ReviewScheduleService } from './services/review-schedule.service';
 import { RecommendationMetricsService } from './services/recommendation-metrics.service';
+import { PremiumFeatureGuard } from '../billing/premium-feature.guard';
+import { RequirePremium } from '../billing/premium-feature.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('recommendations')
@@ -48,6 +50,8 @@ export class RecommendationsController {
    * `?minutes=60` 으로 가용 학습 시간 지정 (기본 45). LLM 호출이므로 latency 2~5s.
    */
   @Get('adaptive')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('adaptive_practice')
   adaptive(
     @CurrentUser('id') userId: string,
     @CurrentLang() lang: Lang,

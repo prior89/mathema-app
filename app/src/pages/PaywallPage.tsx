@@ -24,6 +24,14 @@ import {
   startPremiumPreview,
 } from '../lib/billing';
 import { useT } from '../lib/i18n';
+import type { TranslationKey } from '../lib/translations';
+
+const PREMIUM_FEATURE_KEYS: Record<string, TranslationKey> = {
+  weekly_reports: 'paywall.premiumBanner.feature.weekly_reports',
+  adaptive_practice: 'paywall.premiumBanner.feature.adaptive_practice',
+  wrong_note_analysis: 'paywall.premiumBanner.feature.wrong_note_analysis',
+  full_mastery_sets: 'paywall.premiumBanner.feature.full_mastery_sets',
+};
 import { TabBar } from '../components/main/TabBar';
 
 export default function PaywallPage() {
@@ -39,6 +47,7 @@ export default function PaywallPage() {
   // status quota object so we can show the actual numeric limit instead of
   // hardcoding "8" ??keeps the UI honest if backend defaults change.
   const reason = searchParams.get('reason');
+  const premiumFeature = searchParams.get('feature');
 
   // Attach listeners on mount so the first purchaseUpdate after buy() lands.
   useEffect(() => {
@@ -205,6 +214,27 @@ export default function PaywallPage() {
           </div>
           <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
             {t('paywall.quotaBanner.desc', { limit: quotaLimit })}
+          </div>
+        </div>
+      )}
+          {reason === 'premium' && (
+        <div
+          style={{
+            background: 'var(--p-primary-tint, #ECFDF5)',
+            border: '1px solid var(--p-primary, #2d6a5a)',
+            color: 'var(--p-text, #1a2e2a)',
+            borderRadius: 12,
+            padding: '12px 14px',
+            marginBottom: 16,
+          }}
+        >
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
+            {t('paywall.premiumBanner.title')}
+          </div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+            {premiumFeature && PREMIUM_FEATURE_KEYS[premiumFeature]
+              ? t(PREMIUM_FEATURE_KEYS[premiumFeature])
+              : t('paywall.premiumBanner.desc')}
           </div>
         </div>
       )}

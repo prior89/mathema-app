@@ -3,6 +3,8 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ReportsService } from './reports.service';
 import { WeeklyReportService } from './weekly-report.service';
+import { PremiumFeatureGuard } from '../billing/premium-feature.guard';
+import { RequirePremium } from '../billing/premium-feature.decorator';
 
 /**
  * 명세서 §5 path 정합 — `/weekly-reports/...` (기존 `/reports/weekly/...` 별칭).
@@ -10,7 +12,8 @@ import { WeeklyReportService } from './weekly-report.service';
  *   - POST /api/weekly-reports/generate
  *   - GET  /api/weekly-reports                 (본인 목록 — 명세서 §5 §6)
  */
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PremiumFeatureGuard)
+@RequirePremium('weekly_reports')
 @Controller('weekly-reports')
 export class WeeklyReportsAliasController {
   constructor(

@@ -427,6 +427,9 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             // signs with — RtdnService pins the OIDC `email` claim to it.
             { name: 'RTDN_AUDIENCE',               value: '' }
             { name: 'RTDN_SERVICE_ACCOUNT_EMAIL',  value: '' }
+            // Billing UI runtime switch — flip to true via GitHub secret
+            // BILLING_UI_ENABLED or `az containerapp update --set-env-vars`.
+            { name: 'BILLING_UI_ENABLED',          value: 'false' }
             { name: 'STORAGE_DRIVER',      value: 'local' }
             { name: 'LLM_DRAFT_CONCURRENCY', value: '5' }
             // SPA origins for the backend's CORS allowlist. Both point at the

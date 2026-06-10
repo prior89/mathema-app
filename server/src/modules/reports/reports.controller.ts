@@ -4,6 +4,8 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CurrentLang, Lang } from '../../common/i18n/current-lang.decorator';
 import { WeeklyReportService } from './weekly-report.service';
+import { PremiumFeatureGuard } from '../billing/premium-feature.guard';
+import { RequirePremium } from '../billing/premium-feature.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('reports')
@@ -15,18 +17,24 @@ export class ReportsController {
 
   /** 명세서 §5 — POST /weekly-reports/generate. 이번 주 (또는 주어진 weekStart) 리포트 upsert. */
   @Post('weekly/generate')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('weekly_reports')
   generate(@CurrentUser('id') userId: string) {
     return this.weekly.generate(userId);
   }
 
   /** 명세서 §5 — GET /students/:studentId/weekly-reports (목록). */
   @Get('weekly')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('weekly_reports')
   weeklyList(@CurrentUser('id') userId: string) {
     return this.service.listWeekly(userId);
   }
 
   /** 명세서 §5 — GET /weekly-reports/:reportId. */
   @Get('weekly/by-id/:id')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('weekly_reports')
   weeklyById(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.service.weeklyById(userId, id);
   }

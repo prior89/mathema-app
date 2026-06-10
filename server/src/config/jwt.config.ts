@@ -4,5 +4,6 @@ export default registerAs('jwt', () => ({
   accessSecret: process.env.JWT_ACCESS_SECRET!,
   refreshSecret: process.env.JWT_REFRESH_SECRET!,
   accessTtl: process.env.JWT_ACCESS_TTL ?? '15m',
-  refreshTtl: process.env.JWT_REFRESH_TTL ?? '14d',
+  // Sliding inactivity window: active users receive a rotated token on refresh.
+  refreshTtl: process.env.JWT_REFRESH_TTL ?? '30d',
 }));

@@ -5,6 +5,8 @@ import { RedisModule } from '../../infrastructure/redis/redis.module';
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
 import { FreeTierSolverQuotaGuard } from './free-tier-solver-quota.guard';
+import { PremiumAccessService } from './premium-access.service';
+import { PremiumFeatureGuard } from './premium-feature.guard';
 import { PlayApiClient } from './play-api-client.service';
 import { QuotaService } from './quota.service';
 import { RtdnController } from './rtdn.controller';
@@ -19,11 +21,17 @@ import { RtdnService } from './rtdn.service';
     PlayApiClient,
     QuotaService,
     FreeTierSolverQuotaGuard,
+    PremiumFeatureGuard,
+    PremiumAccessService,
     RtdnService,
   ],
   controllers: [BillingController, RtdnController],
-  // Export the guard + QuotaService so MathHelperModule can wire the guard
-  // onto its POST endpoints.
-  exports: [BillingService, QuotaService, FreeTierSolverQuotaGuard],
+  exports: [
+    BillingService,
+    QuotaService,
+    FreeTierSolverQuotaGuard,
+    PremiumFeatureGuard,
+    PremiumAccessService,
+  ],
 })
 export class BillingModule {}

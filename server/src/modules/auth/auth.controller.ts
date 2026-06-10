@@ -89,7 +89,8 @@ export class AuthController {
     return this.service.refresh(token, deviceHash || undefined);
   }
 
-  @Post('logout')
+  // Logout must remain callable when the access token has already expired.
+  @Public() @Post('logout')
   logout(@Body('refreshToken') token: string) { return this.service.logout(token); }
 
   // 비밀번호 재설정 요청 — 응답은 항상 200 (enumeration 방지).

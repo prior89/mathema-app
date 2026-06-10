@@ -51,8 +51,8 @@ export class KoreanConceptLessonsController {
 
   /** GET /korean-concept-lessons/:code/practice-problems — 20 3-step MC problems (Mastery) */
   @Get(':code/practice-problems')
-  practiceProblems(@Param('code') code: string) {
-    return this.service.practiceProblems(code);
+  practiceProblems(@Param('code') code: string, @CurrentUser('id') userId: string) {
+    return this.service.practiceProblems(code, userId);
   }
 
   /** GET /korean-concept-lessons/:code/study-problems — 20 single-step MC (Study).

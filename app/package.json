@@ -21,6 +21,7 @@
     "@capacitor/core": "^8.3.3",
     "@capacitor/push-notifications": "^8.1.1",
     "@capacitor/status-bar": "^8.0.0",
+    "@sentry/react": "^10.57.0",
     "@tanstack/react-query": "^5.28.0",
     "axios": "^1.6.7",
     "katex": "^0.16.10",

@@ -6,6 +6,8 @@ import { CurrentLang, Lang } from '../../common/i18n/current-lang.decorator';
 import { StartSessionDto } from './dto/start-session.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { AdaptiveStartDto } from './dto/adaptive-start.dto';
+import { PremiumFeatureGuard } from '../billing/premium-feature.guard';
+import { RequirePremium } from '../billing/premium-feature.decorator';
 
 // 명세서 §5: /api/sessions/... 별칭과 기존 /api/study-sessions/... 둘 다 노출.
 @UseGuards(JwtAuthGuard)
@@ -23,6 +25,8 @@ export class StudySessionsController {
    * Builds the "오늘의 맞춤 20문제" session — KR/IN both, country picked from JWT user.
    */
   @Post('adaptive/start')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('adaptive_practice')
   startAdaptive(@CurrentUser('id') userId: string, @Body() dto: AdaptiveStartDto) {
     return this.service.startAdaptive(userId, dto);
   }

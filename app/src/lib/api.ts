@@ -114,15 +114,20 @@ api.interceptors.response.use(
     if (err.response?.status === 403) {
       const data: any = err.response.data;
       const code = data?.error?.code ?? data?.error;
-      if (code === 'QuotaExceeded' && readCachedBillingUiEnabled()) {
+      if (readCachedBillingUiEnabled()) {
         try {
-          if (!window.location.pathname.startsWith('/app/paywall')) {
+          if (code === 'QuotaExceeded' && !window.location.pathname.startsWith('/app/paywall')) {
             window.location.assign('/app/paywall?reason=quota');
+            return Promise.reject(err);
+          }
+          if (code === 'PremiumRequired' && !window.location.pathname.startsWith('/app/paywall')) {
+            const feature = data?.error?.feature ?? data?.feature ?? 'premium';
+            window.location.assign(`/app/paywall?reason=premium&feature=${encodeURIComponent(feature)}`);
+            return Promise.reject(err);
           }
         } catch {
           /* non-browser */
         }
-        return Promise.reject(err);
       }
     }
 

@@ -1,16 +1,18 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { post, tokens, get } from '../lib/api';
+import {
+  post,
+  tokens,
+  get,
+  restoreStoredSession,
+  revokeRefreshToken,
+} from '../lib/api';
 import type { Me, GradeLevel } from '../lib/queries';
-import { homePathForRole } from '../lib/role-routes';
 import { postAuthPath } from '../lib/post-auth-path';
 import { unregisterPushToken } from '../native/push-bridge';
 import { track } from '../lib/analytics';
-
-// Sentry user tagging was removed alongside @sentry/react (v1.0). When the
-// Sentry project lands in Phase 2, restore tagSentry + the useEffect that
-// wires it to the user state.
+import { clearSentryUser, tagSentryUser } from '../lib/sentry';
 
 export type { GradeLevel };
 
@@ -20,7 +22,8 @@ type AuthState = {
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (idToken: string, opts?: { skipNavigate?: boolean }) => Promise<Me>;
   register: (input: RegisterInput) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  completeAccountDeletion: () => Promise<void>;
   /** Re-fetch /users/me and replace the cached user. Onboarding calls this
    *  after PATCH /users/me so ProtectedRoute drops the !gradeLevel guard. */
   refreshUser: () => Promise<void>;
@@ -104,7 +107,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [navigate, queryClient]);
 
   useEffect(() => {
+    if (user) tagSentryUser({ id: user.id, email: user.email });
+    else clearSentryUser();
+  }, [user?.id, user?.email]);
+
+  useEffect(() => {
     const init = async () => {
+      if (!tokens.get() && tokens.getRefresh()) {
+        try {
+          await restoreStoredSession();
+        } catch (e) {
+          if (isAuthRejection(e)) {
+            tokens.clear();
+            try { sessionStorage.setItem('matheo.loginNotice', 'session_expired'); } catch {}
+          }
+          setReady(true);
+          return;
+        }
+      }
+
       if (!tokens.get()) {
         // 토큰 없음 + 데모 모드 비활성화 → 무인증 상태로 진입 (ProtectedRoute가 /login 으로 리다이렉트).
         if (!DEMO_AUTO_LOGIN) {
@@ -175,25 +196,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     track('auth.logout');
+    const refreshToken = tokens.getRefresh();
     await unregisterPushToken().catch(() => {});
     tokens.clear();
     sessionStorage.clear();
+    queryClient.clear();
     setUser(null);
-    // 데모 모드에서만 로그아웃 직후 시드 계정으로 재진입.
-    // production: /login 으로 이동.
-    if (DEMO_AUTO_LOGIN) {
-      try {
-        const t = await post<{ accessToken: string; refreshToken: string }>('/auth/login', {
-          email: DEMO_EMAIL, password: DEMO_PASSWORD,
-        });
-        tokens.set(t.accessToken, t.refreshToken);
-        const me = await get<Me>('/users/me');
-        setUser(me);
-        navigate(homePathForRole(me.role));
-        return;
-      } catch {/* fall through */}
-    }
-    navigate('/login');
+    await revokeRefreshToken(refreshToken).catch(() => {});
+    navigate('/login', { replace: true });
+  };
+
+  const completeAccountDeletion = async () => {
+    const refreshToken = tokens.getRefresh();
+    tokens.clear();
+    sessionStorage.clear();
+    queryClient.clear();
+    setUser(null);
+    // The account deletion transaction already removes the server push token.
+    // Clearing auth first makes unregisterPushToken perform local/native cleanup only.
+    await Promise.allSettled([
+      unregisterPushToken(),
+      revokeRefreshToken(refreshToken),
+    ]);
+    navigate('/login', { replace: true });
   };
 
   const refreshUser = async () => {
@@ -205,7 +230,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  return <Ctx.Provider value={{ user, ready, login, loginWithGoogle, register, logout, refreshUser }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={{
+      user,
+      ready,
+      login,
+      loginWithGoogle,
+      register,
+      logout,
+      completeAccountDeletion,
+      refreshUser,
+    }}>
+      {children}
+    </Ctx.Provider>
+  );
 }
 
 export function useAuth() {

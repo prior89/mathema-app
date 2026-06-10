@@ -23,6 +23,10 @@ on:
           - backfill-lesson-problem-set
           - verify-diagnostic-pools
           - backfill-insight-json
+          - reclassify-chapter-mismatch
+          - verify-chapter-mismatch
+          - fix-no-correct-option
+          - verify-no-correct-option
 
 env:
   RESOURCE_GROUP: mathema-prod-cin
@@ -84,6 +88,8 @@ jobs:
 
       - name: Run selected task(s)
         working-directory: server
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           set -euo pipefail
           task="${{ inputs.task }}"
@@ -92,6 +98,22 @@ jobs:
           run_lesson_set() { npx ts-node scripts/backfill-lesson-problem-set.ts; }
           run_verify() { npm run verify:diagnostic-pools; }
           run_insight_json() { npm run backfill:insight-json; }
+          run_reclassify() {
+            test -n "$GEMINI_API_KEY" || {
+              echo "::error::Set repo secret GEMINI_API_KEY for reclassify-chapter-mismatch"
+              exit 1
+            }
+            npm run reclassify:chapter-mismatch
+          }
+          run_verify_mismatch() {
+            test -n "$GEMINI_API_KEY" || {
+              echo "::error::Set repo secret GEMINI_API_KEY for verify-chapter-mismatch"
+              exit 1
+            }
+            npm run verify:chapter-mismatch
+          }
+          run_fix_no_correct() { npm run fix:no-correct-option; }
+          run_verify_no_correct() { npm run verify:no-correct-option; }
 
           case "$task" in
             all)
@@ -106,6 +128,10 @@ jobs:
             backfill-lesson-problem-set) run_lesson_set ;;
             backfill-insight-json)      run_insight_json ;;
             verify-diagnostic-pools)    run_verify ;;
+            reclassify-chapter-mismatch) run_reclassify ;;
+            verify-chapter-mismatch)    run_verify_mismatch ;;
+            fix-no-correct-option)      run_fix_no_correct ;;
+            verify-no-correct-option)   run_verify_no_correct ;;
             *) echo "Unknown task: $task"; exit 1 ;;
           esac
 

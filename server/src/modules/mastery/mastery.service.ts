@@ -4,6 +4,7 @@ import { Lang } from '../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN } from '../../common/i18n/content-en';
 import { UNIT_NAME_HI } from '../../common/i18n/content-hi';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { aggregateKrGradeMastery } from './kr-grade-mastery.util';
 
 function localizeUnit(name: string, lang: Lang): string {
   if (lang === 'hi') return UNIT_NAME_HI[name] ?? UNIT_NAME_EN[name] ?? name;
@@ -19,14 +20,23 @@ export class MasteryService {
   ) {}
 
   async all(userId: string, lang: Lang = 'en') {
-    // Country gate: findAll queries MasterySnapshot.include({unit:true}) and
-    // Unit is NCERT-only. KR 사용자에게는 NCERT 단원명 (Linear Programming,
-    // Application of Integrals 등) 영어/HI 라벨이 노출되는 cross-curriculum
-    // 결함. KR Mastery aggregation 은 Phase 4. 그 전엔 빈 배열.
     const me = await this.prisma.user.findUnique({
       where: { id: userId }, select: { country: true },
     });
-    if (me?.country === 'KR') return [];
+
+    // KR: NCERT Unit names must not surface on the mastery tab. Aggregate
+    // concept-level trajectories by grade instead (Phase 4).
+    if (me?.country === 'KR') {
+      const trajectories = await this.prisma.masteryTrajectory.findMany({
+        where: { userId },
+        select: {
+          masteryScore: true,
+          evidenceCount: true,
+          concept: { select: { gradeLevel: true } },
+        },
+      });
+      return aggregateKrGradeMastery(trajectories, lang);
+    }
 
     const list = await this.repo.findAll(userId);
     return list

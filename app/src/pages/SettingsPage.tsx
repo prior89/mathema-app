@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { post, del, downloadExport, tokens } from '../lib/api';
+import { post, del, downloadExport } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../lib/i18n';
 import { toast } from '../components/Toast';
@@ -14,7 +14,7 @@ const OK = '#5A8A45';
 
 export default function SettingsPage() {
   const { t } = useT();
-  const { user, logout } = useAuth();
+  const { user, logout, completeAccountDeletion } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -40,7 +40,7 @@ export default function SettingsPage() {
         </Section>
 
         <Section title={t('settings.section.danger')} tone={DANGER}>
-          <DeleteAccount onDeleted={() => { tokens.clear(); navigate('/login'); }} />
+          <DeleteAccount onDeleted={() => { void completeAccountDeletion(); }} />
           <div style={{ marginTop: 12 }}>
             <button onClick={logout} style={{ ...linkBtn, color: TEXT_MUTED }}>{t('nav.logout')}</button>
           </div>

@@ -7,6 +7,7 @@ import { UNIT_NAME_HI } from '../../common/i18n/content-hi';
 import { LlmDraftService, DraftPayload } from '../content-ingest/llm-draft.service';
 import { DeterministicCheckService } from '../../infrastructure/math/deterministic-check.service';
 import { AchievementsService } from '../achievements/achievements.service';
+import { PremiumAccessService } from '../billing/premium-access.service';
 
 /**
  * 수학식 답안 비교 — 학생 표기 변이를 흡수.
@@ -82,7 +83,22 @@ export class ConceptLessonsService {
     private readonly llmDraft: LlmDraftService,
     private readonly deterministicCheck: DeterministicCheckService,
     private readonly achievements: AchievementsService,
+    private readonly premiumAccess: PremiumAccessService,
   ) {}
+
+  /** Free tier sees the first N of a frozen 20-problem mastery set. */
+  private async applyMasterySetLimit<T extends { id: string }>(
+    userId: string | undefined,
+    problems: T[],
+  ): Promise<T[]> {
+    if (!userId || problems.length === 0) return problems;
+    const effectiveIds = await this.premiumAccess.effectiveMasterySetIds(
+      userId,
+      problems.map((p) => p.id),
+    );
+    const allowed = new Set(effectiveIds);
+    return problems.filter((p) => allowed.has(p.id));
+  }
 
   // ---------- LIST ----------
   async tree(userId: string, lang: Lang, ncertClass?: NcertClass) {
@@ -505,7 +521,9 @@ export class ConceptLessonsService {
         .filter((p): p is NonNullable<typeof p> => !!p);
       // If even one frozen Problem has been deleted from the pool we fall
       // through to re-curation — a 19-problem set defeats the purpose.
-      if (ordered.length === target) return ordered;
+      if (ordered.length === target) {
+        return this.applyMasterySetLimit(userId, ordered);
+      }
     }
 
     // Path 2 — no frozen set yet (or the frozen set lost a row to deletion).
@@ -562,7 +580,7 @@ export class ConceptLessonsService {
       }).catch(() => undefined);
     }
 
-    return picked;
+    return this.applyMasterySetLimit(userId, picked);
   }
 
   /**

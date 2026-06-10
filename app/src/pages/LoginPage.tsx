@@ -39,6 +39,8 @@ export default function LoginPage() {
         return t('login.notice.displaced');
       if (v === 'device_mismatch')
         return t('login.notice.mismatch');
+      if (v === 'session_expired')
+        return t('login.notice.expired');
       return null;
     } catch { return null; }
   });

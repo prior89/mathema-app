@@ -3,6 +3,7 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { Lang } from '../../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN } from '../../../common/i18n/content-en';
 import { UNIT_NAME_HI } from '../../../common/i18n/content-hi';
+import { krGradeLabel, krGradeSortOrder } from '../../mastery/kr-grade-mastery.util';
 
 /**
  * 단원별 공부 시간 균형 분석 — Phase 2 핵심.
@@ -82,6 +83,15 @@ export class StudyBalanceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async analyze(userId: string, lang: Lang = 'en'): Promise<StudyBalanceResult> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { country: true },
+    });
+
+    if (user?.country === 'KR') {
+      return this.analyzeKr(userId, lang);
+    }
+
     const snapshots = await this.prisma.masterySnapshot.findMany({
       where: { userId },
       include: { unit: { select: { name: true, order: true } } },
@@ -113,6 +123,81 @@ export class StudyBalanceService {
       .slice(0, 5);
 
     // 저효율: 시간 90분 이상이지만 mastery 65 미만 (시간을 썼는데 안 늘었음)
+    const lowEfficiency = perUnit
+      .filter((u) => u.studyTimeMin >= 90 && u.score < 65)
+      .sort((a, b) => (b.studyTimeMin - 2 * b.score) - (a.studyTimeMin - 2 * a.score))
+      .slice(0, 3);
+
+    const W = lang === 'ko' ? WARN_KO : lang === 'hi' ? WARN_HI : WARN_EN;
+    const warnings: string[] = [];
+    if (gini > 0.5) warnings.push(W.imbalance);
+    if (underStudied.length >= 3) warnings.push(W.under(underStudied.length));
+    if (lowEfficiency.length > 0) warnings.push(W.lowEff(lowEfficiency.length));
+
+    return {
+      gini: Math.round(gini * 1000) / 1000,
+      balanced: gini < 0.4,
+      totalStudyMin,
+      perUnit,
+      underStudied,
+      lowEfficiency,
+      warnings,
+    };
+  }
+
+  /** KR heatmap — grade-level buckets from MasteryTrajectory (no NCERT units). */
+  private async analyzeKr(userId: string, lang: Lang): Promise<StudyBalanceResult> {
+    const trajectories = await this.prisma.masteryTrajectory.findMany({
+      where: { userId },
+      select: {
+        masteryScore: true,
+        evidenceCount: true,
+        concept: { select: { gradeLevel: true } },
+      },
+    });
+
+    const buckets = new Map<string, {
+      grade: typeof trajectories[0]['concept']['gradeLevel'];
+      scoreSum: number;
+      count: number;
+      evidence: number;
+    }>();
+
+    for (const t of trajectories) {
+      const grade = t.concept.gradeLevel;
+      const key = grade ?? 'OTHER';
+      const bucket = buckets.get(key) ?? { grade, scoreSum: 0, count: 0, evidence: 0 };
+      bucket.scoreSum += t.masteryScore;
+      bucket.count += 1;
+      bucket.evidence += t.evidenceCount;
+      buckets.set(key, bucket);
+    }
+
+    const perUnit: UnitBalance[] = [...buckets.entries()]
+      .map(([key, b]) => {
+        const score = Math.round(b.scoreSum / b.count);
+        const studyTimeMin = b.evidence * 5;
+        return {
+          unitId: `kr-grade:${key}`,
+          unitName: krGradeLabel(b.grade, lang),
+          order: krGradeSortOrder(b.grade),
+          score,
+          studyTimeMin,
+          samples: b.evidence,
+          efficiency: studyTimeMin > 0 ? Math.round((score / studyTimeMin) * 100) / 100 : null,
+        };
+      })
+      .sort((a, b) => a.order - b.order);
+
+    const times = perUnit.map((u) => u.studyTimeMin);
+    const totalStudyMin = times.reduce((s, t) => s + t, 0);
+    const gini = computeGini(times);
+
+    const underStudied = perUnit
+      .filter((u) => u.studyTimeMin < 30 && u.score < 60 && u.samples < 5)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 5);
+
     const lowEfficiency = perUnit
       .filter((u) => u.studyTimeMin >= 90 && u.score < 65)
       .sort((a, b) => (b.studyTimeMin - 2 * b.score) - (a.studyTimeMin - 2 * a.score))
