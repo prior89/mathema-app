@@ -94,8 +94,13 @@ repository). Categories summarised here:
   revoking `ANALYTICS` consent.
 
 We do **not** collect precise GPS location, browsing history outside the app,
-contact lists, photos other than ones you explicitly upload to OCR a math
-problem, or financial information.
+contact lists, or photos other than ones you explicitly upload to OCR a math
+problem.
+
+**Premium subscriptions (Google Play):** If you subscribe via the Android app,
+Google Play processes payment. We receive an opaque purchase token and
+subscription metadata (product, status, renewal dates) to grant Premium access.
+We do **not** receive your card or bank details.
 
 ---
 

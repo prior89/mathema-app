@@ -5,7 +5,7 @@ this document before every store submission — when a new field is added to
 `server/prisma/schema.prisma` or a new 3rd-party SDK lands, the corresponding
 row here MUST be updated, otherwise the listing falls out of compliance.
 
-Last updated: 2026-05-21 (HEAD `23c8bcd`)
+Last updated: 2026-06-11 (Premium / Play Billing)
 Backend reference: `server/prisma/schema.prisma`
 Frontend reference: `app/src/lib/{api,analytics,queries,mutations}.ts`
 
@@ -30,9 +30,18 @@ still works (degraded for the relevant feature).
 | IP address + user agent | `Consent.ipAddress`, `Consent.userAgent`, `PasswordResetToken.requestIp` | Legal — DPDP 2023 evidence of consent | Required (for users granting consent) | — |
 
 ### 1.2 Financial info
-**None.** The v1.0 PoC is free; no payment, credit card, or purchase history is
-collected. When a subscription model is added later, this section must be
-extended.
+
+Matheo offers an optional **Premium subscription** via **Google Play Billing**.
+We do **not** collect payment card, UPI, or bank details — Google Play processes
+payments. Our servers store purchase-metadata needed for entitlement only.
+
+| Field | Where | Purpose | Req / Opt | Shared with 3P |
+|---|---|---|---|---|
+| Purchase history (productId, status, start/expiry, autoRenewing, intro offer, countryCode) | `Subscription` | Entitlement gating, renewal handling | Required (Premium subscribers only) | — |
+| Google Play purchase token (opaque reference; stored as received for API re-verification) | `Subscription.purchaseToken` | Play Developer API verification | Required (Premium subscribers only) | Google Play Developer API |
+| Subscription audit events | `SubscriptionEvent` | RTDN / verify audit trail | Required (Premium subscribers only) | — |
+
+**Not collected:** credit card number, UPI ID, bank account, billing address.
 
 ### 1.3 Location
 **None precise / approximate.** `User.country` is set by the user at signup —

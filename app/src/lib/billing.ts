@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Higher-level billing helpers that wrap the raw BillingPlugin bridge.
  *
  * Lifecycle:

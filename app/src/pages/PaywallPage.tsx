@@ -10,8 +10,9 @@
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams, Navigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { useBillingUiEnabled } from '../lib/billing-flags';
+import { openPlaySubscriptionManage } from '../lib/play-subscription';
 import {
   fetchProducts,
   buy,
@@ -114,6 +115,7 @@ export default function PaywallPage() {
   if (status.data?.premium) {
     const isPreview = status.data.entitlement?.source === 'PREVIEW';
     const expiryTime = status.data.subscription?.expiryTime;
+    const productId = status.data.subscription?.productId;
     return (
       <div className="screen">
         <div style={{ flex: 1, overflow: 'auto' }}>
@@ -128,6 +130,24 @@ export default function PaywallPage() {
                   ? t('paywall.previewEndsAt', { date: new Date(expiryTime).toLocaleDateString() })
                   : t('paywall.renewAt', { date: new Date(expiryTime).toLocaleDateString() })}
               </p>
+            )}
+            {!isPreview && (
+              <button
+                type="button"
+                onClick={() => openPlaySubscriptionManage(productId)}
+                style={{
+                  marginTop: 20,
+                  background: 'transparent',
+                  border: 0,
+                  color: '#2563EB',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('paywall.manageSubscription')}
+              </button>
             )}
           </div>
         </div>
@@ -347,6 +367,41 @@ export default function PaywallPage() {
           {t('paywall.restore')}
         </button>
       )}
+
+      {isAndroidBilling && (
+        <p style={{ marginTop: 20, fontSize: 12, color: '#6B7280', lineHeight: 1.55 }}>
+          {t('paywall.autoRenew.disclosure')}
+        </p>
+      )}
+
+      <p style={{ marginTop: 12, fontSize: 12, color: '#6B7280', lineHeight: 1.55 }}>
+        {t('paywall.cancel.hint')}{' '}
+        <button
+          type="button"
+          onClick={() => openPlaySubscriptionManage(null)}
+          style={{
+            background: 'transparent',
+            border: 0,
+            padding: 0,
+            color: '#2563EB',
+            fontSize: 12,
+            textDecoration: 'underline',
+            cursor: 'pointer',
+          }}
+        >
+          {t('paywall.manageSubscription')}
+        </button>
+      </p>
+
+      <p style={{ marginTop: 10, fontSize: 12, color: '#6B7280' }}>
+        <Link to="/terms" style={{ color: '#2563EB' }}>
+          {t('paywall.legal.terms')}
+        </Link>
+        {' · '}
+        <Link to="/privacy" style={{ color: '#2563EB' }}>
+          {t('paywall.legal.privacy')}
+        </Link>
+      </p>
         </div>
       </div>
       <TabBar />

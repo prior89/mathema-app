@@ -1,4 +1,4 @@
-﻿package ai.matheo.app;
+package ai.matheo.app;
 
 import com.android.billingclient.api.AcknowledgePurchaseParams;
 import com.android.billingclient.api.BillingClient;

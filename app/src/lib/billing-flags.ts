@@ -1,11 +1,11 @@
 /**
  * Billing UI feature switch.
  *
- * OFF by default (v1.0 free PoC). Turn ON via either:
- *   1. Server: BILLING_UI_ENABLED=true on the backend (runtime, no app rebuild)
- *   2. Build:  VITE_BILLING_ENABLED=true in CI / .env.production
+ * Two gates (both must pass):
+ *   1. Build:  VITE_BILLING_ENABLED=true — this binary includes paywall UI
+ *   2. Server: BILLING_UI_ENABLED=true  — runtime kill switch from /billing/status
  *
- * Server flag wins when /billing/status returns billingUiEnabled: true.
+ * Fail-closed: until /billing/status resolves, billing UI stays hidden.
  */
 import { useBillingStatus } from '../hooks/useBillingStatus';
 
@@ -16,6 +16,17 @@ export function isBillingUiBuildEnabled(): boolean {
     ?.VITE_BILLING_ENABLED === 'true';
 }
 
+/** Pure resolver — unit-tested. */
+export function resolveBillingUiEnabled(
+  serverFlag: boolean | undefined,
+  buildEnabled: boolean,
+  statusKnown: boolean,
+): boolean {
+  if (!buildEnabled) return false;
+  if (!statusKnown) return false;
+  return serverFlag === true;
+}
+
 export function cacheBillingUiEnabled(enabled: boolean): void {
   try {
     sessionStorage.setItem(BILLING_UI_CACHE_KEY, enabled ? '1' : '0');
@@ -24,7 +35,7 @@ export function cacheBillingUiEnabled(enabled: boolean): void {
   }
 }
 
-/** Sync read for axios interceptors (no React). Falls back to build flag. */
+/** Sync read for axios interceptors (no React). Fail-closed when cache empty. */
 export function readCachedBillingUiEnabled(): boolean {
   try {
     const v = sessionStorage.getItem(BILLING_UI_CACHE_KEY);
@@ -33,12 +44,14 @@ export function readCachedBillingUiEnabled(): boolean {
   } catch {
     /* ignore */
   }
-  return isBillingUiBuildEnabled();
+  return false;
 }
 
 export function useBillingUiEnabled(): boolean {
-  const { data } = useBillingStatus();
-  if (data?.billingUiEnabled === true) return true;
-  if (data?.billingUiEnabled === false) return isBillingUiBuildEnabled();
-  return isBillingUiBuildEnabled();
+  const { data, isFetched } = useBillingStatus();
+  return resolveBillingUiEnabled(
+    data?.billingUiEnabled,
+    isBillingUiBuildEnabled(),
+    isFetched,
+  );
 }

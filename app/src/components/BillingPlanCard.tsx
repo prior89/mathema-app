@@ -1,10 +1,12 @@
 /**
  * Me tab — plan / billing hero card. Gated by useBillingUiEnabled().
  */
+import type { MouseEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useBillingStatus } from '../hooks/useBillingStatus';
 import { useBillingUiEnabled } from '../lib/billing-flags';
 import { useT } from '../lib/i18n';
+import { openPlaySubscriptionManage } from '../lib/play-subscription';
 import { Glyph } from './onboarding/Glyph';
 
 export function BillingPlanCard() {
@@ -97,6 +99,11 @@ export function BillingPlanCard() {
   const progressDanger = usedRatio >= 0.875;
 
   const goPaywall = () => nav('/app/paywall');
+  const productId = billing.data?.subscription?.productId;
+  const openManage = (e: MouseEvent) => {
+    e.stopPropagation();
+    openPlaySubscriptionManage(productId);
+  };
 
   return (
     <>
@@ -104,21 +111,25 @@ export function BillingPlanCard() {
         <span className="label">{t('me.billing.section')}</span>
       </div>
       <div
-        onClick={goPaywall}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            goPaywall();
-          }
-        }}
+        onClick={isPaid ? undefined : goPaywall}
+        role={isPaid ? undefined : 'button'}
+        tabIndex={isPaid ? undefined : 0}
+        onKeyDown={
+          isPaid
+            ? undefined
+            : (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  goPaywall();
+                }
+              }
+        }
         style={{
           background: cardBg,
           border: cardBorder,
           borderRadius: 18,
           padding: 18,
-          cursor: 'pointer',
+          cursor: isPaid ? 'default' : 'pointer',
           boxShadow: cardShadow,
           transition: 'transform 0.12s ease-out',
         }}
@@ -199,9 +210,23 @@ export function BillingPlanCard() {
           </div>
         )}
         {isPaid && (
-          <div style={{ marginTop: 12, fontSize: 12, color: 'rgba(255, 255, 255, 0.72)', fontWeight: 600 }}>
+          <button
+            type="button"
+            onClick={openManage}
+            style={{
+              marginTop: 12,
+              padding: 0,
+              border: 0,
+              background: 'transparent',
+              fontSize: 12,
+              color: 'rgba(255, 255, 255, 0.92)',
+              fontWeight: 700,
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
             {t('me.billing.manage')}
-          </div>
+          </button>
         )}
       </div>
     </>

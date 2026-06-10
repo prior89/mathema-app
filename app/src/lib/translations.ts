@@ -1167,6 +1167,12 @@ const ko = {
   'paywall.yearly': '연간 구독',
   'paywall.yearly.per': '년',
   'paywall.restore': '이미 구매하셨나요? 복원하기',
+  'paywall.manageSubscription': 'Google Play에서 구독 관리',
+  'paywall.autoRenew.disclosure':
+    '구독은 취소할 때까지 선택한 주기(월/년)마다 자동 갱신됩니다. Google Play 결제를 통해 청구되며, 가격은 Play에서 표시된 지역 가격이 적용됩니다.',
+  'paywall.cancel.hint': '해지는 Google Play 구독 센터에서 할 수 있어요.',
+  'paywall.legal.terms': '이용약관',
+  'paywall.legal.privacy': '개인정보처리방침',
 };
 
 const en: typeof ko = {
@@ -2330,6 +2336,12 @@ const en: typeof ko = {
   'paywall.yearly': 'Yearly',
   'paywall.yearly.per': 'yr',
   'paywall.restore': 'Already purchased? Restore',
+  'paywall.manageSubscription': 'Manage subscription in Google Play',
+  'paywall.autoRenew.disclosure':
+    'Subscriptions renew automatically each billing period (monthly or yearly) until you cancel. You are charged through Google Play at the regional price shown at purchase.',
+  'paywall.cancel.hint': 'You can cancel anytime in the Google Play subscriptions center:',
+  'paywall.legal.terms': 'Terms of Service',
+  'paywall.legal.privacy': 'Privacy Policy',
 };
 
 // ----- HINDI (हिन्दी) -----

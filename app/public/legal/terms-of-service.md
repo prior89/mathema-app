@@ -133,10 +133,20 @@ third-party AI models unless you have granted `AI_TRAINING` consent.
 
 ## 7. Subscriptions and payments
 
-The Service is currently provided **free of charge** for the v1.0 release.
-If we later introduce paid subscriptions or in-app purchases, those will be
-governed by separate terms that you will be asked to accept before any
-charge.
+The core Service is available **free of charge**. An optional **Matheo Premium**
+subscription is offered on the Android app through **Google Play Billing**.
+
+- Prices and billing periods (monthly or yearly) are shown in Google Play before
+  you confirm purchase.
+- Subscriptions **renew automatically** until you cancel in the [Google Play
+  subscriptions center](https://play.google.com/store/account/subscriptions).
+- Payment is processed by Google; we do not store your payment instrument.
+- Cancellation takes effect at the end of the current paid period unless
+  applicable law provides otherwise.
+- Refunds follow Google Play policies unless we offer a separate refund policy.
+
+Premium Preview (when offered) provides time-limited access without a payment
+method and does not auto-renew.
 
 ---
 

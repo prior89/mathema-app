@@ -39,7 +39,7 @@ store purchase-history metadata needed for entitlement gating.
 | Field | Where | Purpose | Req / Opt | Shared with 3P |
 |---|---|---|---|---|
 | Purchase history (productId, status, startTime, expiryTime, autoRenewing, isInIntroOfferPeriod, countryCode) | `Subscription` model | App functionality — entitlement gating, renewal handling, launch-promo tracking | Required (for Premium subscribers only) | — |
-| Google Play purchase token (server-side reference, not a payment instrument) | `Subscription.purchaseToken` | App functionality — Play Developer API v3 (`subscriptionsv2`) verification + acknowledgement | Required (for Premium subscribers only) | Google Play Developer API |
+| Google Play purchase token (opaque; stored as received for API re-verification — not hashed) | `Subscription.purchaseToken` | App functionality — Play Developer API v3 (`subscriptionsv2`) verification; acknowledgement currently on-device after verify (server acknowledge planned) | Required (for Premium subscribers only) | Google Play Developer API |
 | Subscription audit trail (eventType, redacted payload) | `SubscriptionEvent` model | App functionality — RTDN (Real-time Developer Notifications) processing audit | Required (for Premium subscribers only) | — |
 
 **Not collected**: credit card number, UPI ID, bank account, billing
@@ -105,7 +105,7 @@ its own data-processing addendum (DPA) and listed in the Privacy Policy.
 | **Firebase Cloud Messaging** | Push notification delivery | `DeviceToken.token`, message payload | `MARKETING` consent + OS-level permission |
 | **Sentry** | Crash + error capture | Stack trace, user id, breadcrumb, environment | `ANALYTICS` recommended; engineering-only viewers |
 | **Microsoft Azure Application Insights** | Backend performance telemetry | Request path, latency, response size, anonymised user id | Required (operational) |
-| **Google Play Developer API (subscriptionsv2)** | Subscription purchase verification + acknowledgement, RTDN re-verification | Product id + purchase token (no PII, no payment instrument) | User-initiated purchase via Google Play Billing |
+| **Google Play Developer API (subscriptionsv2)** | Subscription purchase verification, RTDN re-verification; purchase acknowledgement on device today (server-side ack planned) | Product id + purchase token (no PII, no payment instrument) | User-initiated purchase via Google Play Billing |
 
 ---
 
