@@ -5,8 +5,8 @@
  *   1. initBilling()         ??startConnection + idempotent listener attach
  *   2. fetchProducts()       ??Play SkuDetails (region-aware, no hardcoded prices)
  *   3. buy(prod, offerToken) ??launches billing flow; result via listener
- *   4. listener:purchaseUpdate ??verifyOnServer ??acknowledge
- *   5. restore()             ??re-verify + re-acknowledge any existing purchases
+ *   4. listener:purchaseUpdate ??verifyOnServer ??client ack (fallback if server ack failed)
+ *   5. restore()             ??re-verify + client ack fallback for unacked purchases
  *
  * Web builds: every function is a no-op / returns empty. Only Capacitor
  * Android has Play Billing available.
@@ -40,10 +40,8 @@ export async function initBilling(): Promise<void> {
     for (const p of purchases) {
       if (p.purchaseState !== 1) continue; // 1 = PURCHASED; 2 = PENDING (wait)
       try {
-        await verifyOnServer(p);
-        if (!p.acknowledged) {
-          await Billing.acknowledgePurchase({ purchaseToken: p.purchaseToken });
-        }
+        const verified = await verifyOnServer(p);
+        await acknowledgeIfNeeded(p, verified);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error('billing verify/ack failed', e);
@@ -89,7 +87,17 @@ export function displayRecurringPhase(offer: BillingProductDetails['offers'][num
 
 export async function buy(productId: string, offerToken: string): Promise<{ launched: boolean }> {
   await initBilling();
-  return Billing.launchBillingFlow({ productId, offerToken });
+  let obfuscatedAccountId: string | undefined;
+  try {
+    const { obfuscatedAccountId: id } = await get<{ obfuscatedAccountId: string }>(
+      '/billing/obfuscated-account-id',
+    );
+    obfuscatedAccountId = id;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('obfuscated account id unavailable — purchase proceeds without binding', e);
+  }
+  return Billing.launchBillingFlow({ productId, offerToken, obfuscatedAccountId });
 }
 
 export async function restore(): Promise<BillingPurchase[]> {
@@ -99,10 +107,8 @@ export async function restore(): Promise<BillingPurchase[]> {
   for (const p of purchases) {
     if (p.purchaseState !== 1) continue;
     try {
-      await verifyOnServer(p);
-      if (!p.acknowledged) {
-        await Billing.acknowledgePurchase({ purchaseToken: p.purchaseToken });
-      }
+      const verified = await verifyOnServer(p);
+      await acknowledgeIfNeeded(p, verified);
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('restore verify failed', e);
@@ -111,11 +117,28 @@ export async function restore(): Promise<BillingPurchase[]> {
   return purchases;
 }
 
-async function verifyOnServer(p: BillingPurchase): Promise<void> {
-  await post('/billing/verify', {
+interface VerifyPurchaseResponse {
+  status: string;
+  expiryTime: string;
+  isInIntroOfferPeriod: boolean;
+  acknowledged: boolean;
+  acknowledgedAt: string | null;
+}
+
+async function verifyOnServer(p: BillingPurchase): Promise<VerifyPurchaseResponse> {
+  return post<VerifyPurchaseResponse>('/billing/verify', {
     productId: p.productId,
     purchaseToken: p.purchaseToken,
   });
+}
+
+/** Server ack is primary; client ack is fallback within Play's 3-day window. */
+async function acknowledgeIfNeeded(
+  p: BillingPurchase,
+  verified: VerifyPurchaseResponse,
+): Promise<void> {
+  if (verified.acknowledged || p.acknowledged) return;
+  await Billing.acknowledgePurchase({ purchaseToken: p.purchaseToken });
 }
 
 export interface BillingServerStatus {

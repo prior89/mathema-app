@@ -179,15 +179,17 @@ public class BillingPlugin extends Plugin {
     }
 
     /**
-     * Launches the billing flow. Input: { productId, offerToken }. Resolves
-     * once the billing UI is up; the actual purchase result fires later via
-     * the 'purchaseUpdate' / 'purchaseError' event.
+     * Launches the billing flow. Input: { productId, offerToken,
+     * obfuscatedAccountId? }. Resolves once the billing UI is up; the actual
+     * purchase result fires later via the 'purchaseUpdate' / 'purchaseError'
+     * event.
      */
     @PluginMethod
     public void launchBillingFlow(PluginCall call) {
         ensureConnected(call, () -> {
             String productId = call.getString("productId");
             String offerToken = call.getString("offerToken");
+            String obfuscatedAccountId = call.getString("obfuscatedAccountId");
             if (productId == null || offerToken == null) {
                 call.reject("productId and offerToken required");
                 return;
@@ -211,9 +213,12 @@ public class BillingPlugin extends Plugin {
                         .setProductDetails(pd)
                         .setOfferToken(offerToken)
                         .build();
-                BillingFlowParams flow = BillingFlowParams.newBuilder()
-                        .setProductDetailsParamsList(Arrays.asList(pdp))
-                        .build();
+                BillingFlowParams.Builder flowBuilder = BillingFlowParams.newBuilder()
+                        .setProductDetailsParamsList(Arrays.asList(pdp));
+                if (obfuscatedAccountId != null && !obfuscatedAccountId.isEmpty()) {
+                    flowBuilder.setObfuscatedAccountId(obfuscatedAccountId);
+                }
+                BillingFlowParams flow = flowBuilder.build();
                 getActivity().runOnUiThread(() -> {
                     BillingResult br2 = billingClient.launchBillingFlow(getActivity(), flow);
                     if (br2.getResponseCode() != BillingClient.BillingResponseCode.OK) {

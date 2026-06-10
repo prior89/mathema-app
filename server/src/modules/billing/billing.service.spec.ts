@@ -15,7 +15,10 @@ function mockPrisma() {
 }
 
 function mockPlayApi() {
-  return { getSubscription: jest.fn() };
+  return {
+    getSubscription: jest.fn(),
+    acknowledgeSubscription: jest.fn().mockResolvedValue(undefined),
+  };
 }
 
 function mockQuota() {
@@ -30,12 +33,36 @@ function mockQuota() {
   };
 }
 
+function mockObfuscatedAccount() {
+  return {
+    isConfigured: jest.fn().mockReturnValue(true),
+    forUser: jest.fn().mockReturnValue('obf-user-u1'),
+  };
+}
+
 function build() {
   const prisma = mockPrisma();
   const playApi = mockPlayApi();
   const quota = mockQuota();
-  const svc = new BillingService(prisma as any, playApi as any, quota as any);
-  return { svc, prisma, playApi, quota };
+  const obfuscatedAccount = mockObfuscatedAccount();
+  const svc = new BillingService(
+    prisma as any,
+    playApi as any,
+    quota as any,
+    obfuscatedAccount as any,
+  );
+  return { svc, prisma, playApi, quota, obfuscatedAccount };
+}
+
+function activePlayPayload(extra: Record<string, unknown> = {}) {
+  const expiry = new Date('2026-07-01T00:00:00Z');
+  return {
+    subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE',
+    startTime: '2026-06-01T00:00:00Z',
+    acknowledgementState: 'ACKNOWLEDGEMENT_STATE_PENDING',
+    lineItems: [{ productId: 'premium_monthly', expiryTime: expiry.toISOString() }],
+    ...extra,
+  };
 }
 
 describe('BillingService', () => {
@@ -58,6 +85,14 @@ describe('BillingService', () => {
       expect(svc.isBillingUiEnabled()).toBe(true);
       process.env.BILLING_UI_ENABLED = '1';
       expect(svc.isBillingUiEnabled()).toBe(true);
+    });
+  });
+
+  describe('getObfuscatedAccountIdForUser', () => {
+    it('delegates to ObfuscatedAccountService', () => {
+      const { svc, obfuscatedAccount } = build();
+      expect(svc.getObfuscatedAccountIdForUser('u1')).toBe('obf-user-u1');
+      expect(obfuscatedAccount.forUser).toHaveBeenCalledWith('u1');
     });
   });
 
@@ -163,18 +198,49 @@ describe('BillingService', () => {
     it('maps Play ACTIVE state and upserts subscription', async () => {
       const { svc, prisma, playApi } = build();
       const expiry = new Date('2026-07-01T00:00:00Z');
-      playApi.getSubscription.mockResolvedValue({
-        subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE',
-        startTime: '2026-06-01T00:00:00Z',
-        lineItems: [{ productId: 'premium_monthly', expiryTime: expiry.toISOString() }],
-      });
+      playApi.getSubscription.mockResolvedValue(activePlayPayload());
+      prisma.subscription.findUnique.mockResolvedValue(null);
       prisma.subscription.upsert.mockResolvedValue({ id: 'sub-1' });
+      prisma.subscription.update.mockResolvedValue({ id: 'sub-1' });
       prisma.subscriptionEvent.create.mockResolvedValue({});
 
       const result = await svc.verifyAndRecordPurchase('u1', 'premium_monthly', 'token-abc');
       expect(result.status).toBe('ACTIVE');
       expect(result.expiryTime).toEqual(expiry);
+      expect(result.acknowledged).toBe(true);
+      expect(playApi.acknowledgeSubscription).toHaveBeenCalledWith(
+        'premium_monthly',
+        'token-abc',
+      );
       expect(prisma.subscription.upsert).toHaveBeenCalled();
+    });
+
+    it('throws AccountBindingMismatch when Play obfuscated id differs', async () => {
+      const { svc, prisma, playApi } = build();
+      playApi.getSubscription.mockResolvedValue(
+        activePlayPayload({
+          externalAccountIdentifiers: { obfuscatedExternalAccountId: 'wrong-id' },
+        }),
+      );
+      prisma.subscription.findUnique.mockResolvedValue(null);
+
+      await expect(
+        svc.verifyAndRecordPurchase('u1', 'premium_monthly', 'token-abc'),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('returns acknowledged:false when server ack fails', async () => {
+      const { svc, prisma, playApi } = build();
+      playApi.getSubscription.mockResolvedValue(activePlayPayload());
+      playApi.acknowledgeSubscription.mockRejectedValue(new Error('Play down'));
+      prisma.subscription.findUnique.mockResolvedValue(null);
+      prisma.subscription.upsert.mockResolvedValue({ id: 'sub-1' });
+      prisma.subscription.update.mockResolvedValue({ id: 'sub-1' });
+      prisma.subscriptionEvent.create.mockResolvedValue({});
+
+      const result = await svc.verifyAndRecordPurchase('u1', 'premium_monthly', 'token-abc');
+      expect(result.acknowledged).toBe(false);
+      expect(result.acknowledgedAt).toBeNull();
     });
 
     it('throws when Play API fails', async () => {

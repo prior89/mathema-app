@@ -49,4 +49,28 @@ export class PlayApiClient implements OnModuleInit {
     });
     return res.data;
   }
+
+  /** Acknowledge initial subscription purchase on secure backend (Play docs). */
+  async acknowledgeSubscription(subscriptionId: string, purchaseToken: string): Promise<void> {
+    if (!this.client) {
+      throw new InternalServerErrorException('Play Billing client not configured');
+    }
+    try {
+      await this.client.purchases.subscriptions.acknowledge({
+        packageName: this.packageName,
+        subscriptionId,
+        token: purchaseToken,
+      });
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      // Idempotent: already-acknowledged purchases are success for our pipeline.
+      if (/already been acknowledged|already acknowledged/i.test(msg)) {
+        this.logger.log(
+          `Subscription ${subscriptionId} token ${purchaseToken.slice(0, 8)}... already acknowledged`,
+        );
+        return;
+      }
+      throw e;
+    }
+  }
 }

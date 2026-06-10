@@ -1927,7 +1927,10 @@ model Subscription {
   userId               String              @unique
   productId            String              // 'premium_monthly' | 'premium_yearly'
   purchaseToken        String              @unique
-  orderId              String?             // Google Play orderId (refund-trace)
+  orderId              String?             // Google Play latestOrderId (refund-trace)
+  linkedPurchaseToken  String?             // prior token after upgrade/downgrade (Play API)
+  acknowledgedAt       DateTime?           // server (or client fallback) ack timestamp
+  acknowledgementState String?             // PENDING | ACKNOWLEDGED | FAILED
   status               SubscriptionStatus
   startTime            DateTime
   expiryTime           DateTime

@@ -11,9 +11,11 @@ export default registerAs('playBilling', () => {
   const raw = process.env.PLAY_SERVICE_ACCOUNT_JSON;
   const packageName = process.env.PLAY_PACKAGE_NAME ?? '';
 
+  const obfuscatedAccountSecret = process.env.PLAY_OBFUSCATED_ACCOUNT_SECRET ?? '';
+
   if (!raw || !packageName) {
     // dev / test allows missing values; production guard happens in PlayApiClient.onModuleInit.
-    return { credentials: null as PlayServiceAccountKey | null, packageName };
+    return { credentials: null as PlayServiceAccountKey | null, packageName, obfuscatedAccountSecret };
   }
 
   let credentials: PlayServiceAccountKey;
@@ -25,5 +27,6 @@ export default registerAs('playBilling', () => {
   if (!credentials.client_email || !credentials.private_key) {
     throw new Error('PLAY_SERVICE_ACCOUNT_JSON missing client_email or private_key');
   }
-  return { credentials, packageName };
+
+  return { credentials, packageName, obfuscatedAccountSecret };
 });

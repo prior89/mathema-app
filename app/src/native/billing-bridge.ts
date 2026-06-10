@@ -54,8 +54,13 @@ export interface BillingPlugin {
   initialize(): Promise<{ ready: boolean }>;
   queryProductDetails(opts: { productIds: string[] }): Promise<{ products: BillingProductDetails[] }>;
   /** Resolves once the billing UI launches ??actual result via 'purchaseUpdate'. */
-  launchBillingFlow(opts: { productId: string; offerToken: string }): Promise<{ launched: boolean }>;
-  /** Call AFTER server /billing/verify returns 200. */
+  launchBillingFlow(opts: {
+    productId: string;
+    offerToken: string;
+    /** HMAC id from GET /billing/obfuscated-account-id — binds purchase to Matheo user. */
+    obfuscatedAccountId?: string;
+  }): Promise<{ launched: boolean }>;
+  /** Fallback ack when server /billing/verify returns acknowledged: false. */
   acknowledgePurchase(opts: { purchaseToken: string }): Promise<{ acknowledged: boolean }>;
   /** Active SUBS purchases for the current Google account. */
   restorePurchases(): Promise<{ purchases: BillingPurchase[] }>;

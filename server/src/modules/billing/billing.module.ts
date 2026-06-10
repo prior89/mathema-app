@@ -7,6 +7,7 @@ import { BillingService } from './billing.service';
 import { FreeTierSolverQuotaGuard } from './free-tier-solver-quota.guard';
 import { PremiumAccessService } from './premium-access.service';
 import { PremiumFeatureGuard } from './premium-feature.guard';
+import { ObfuscatedAccountService } from './obfuscated-account.service';
 import { PlayApiClient } from './play-api-client.service';
 import { QuotaService } from './quota.service';
 import { RtdnController } from './rtdn.controller';
@@ -18,6 +19,7 @@ import { RtdnService } from './rtdn.service';
   imports: [ConfigModule, PrismaModule, RedisModule],
   providers: [
     BillingService,
+    ObfuscatedAccountService,
     PlayApiClient,
     QuotaService,
     FreeTierSolverQuotaGuard,

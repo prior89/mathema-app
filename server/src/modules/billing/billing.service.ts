@@ -6,6 +6,7 @@ import {
   PREMIUM_PREVIEW_DAYS,
   PREMIUM_PREVIEW_PRODUCT_ID,
 } from './billing.constants';
+import { ObfuscatedAccountService } from './obfuscated-account.service';
 import { PlayApiClient } from './play-api-client.service';
 import { QuotaService } from './quota.service';
 
@@ -20,9 +21,19 @@ interface MappedSubscriptionState {
   autoRenewing: boolean;
   isInIntroOfferPeriod: boolean;
   orderId?: string;
+  linkedPurchaseToken?: string;
   countryCode?: string;
   playSubscriptionState: string;
+  playAcknowledgementState?: string;
 }
+
+type VerifyPurchaseResult = {
+  status: SubscriptionStatus;
+  expiryTime: Date;
+  isInIntroOfferPeriod: boolean;
+  acknowledged: boolean;
+  acknowledgedAt: Date | null;
+};
 
 /**
  * Google Play Billing — Phase 2 + Phase 4.
@@ -41,7 +52,13 @@ export class BillingService {
     private readonly prisma: PrismaService,
     private readonly playApi: PlayApiClient,
     private readonly quota: QuotaService,
+    private readonly obfuscatedAccount: ObfuscatedAccountService,
   ) {}
+
+  /** HMAC obfuscated id for BillingFlowParams.setObfuscatedAccountId (Android). */
+  getObfuscatedAccountIdForUser(userId: string): string {
+    return this.obfuscatedAccount.forUser(userId);
+  }
 
   getMonetizationStrategy() {
     return MONETIZATION_STRATEGY;
@@ -254,8 +271,11 @@ export class BillingService {
     const autoRenewing =
       lineItems[0]?.autoRenewingPlan?.autoRenewEnabled ?? (status === 'ACTIVE');
 
-    const orderId: string | undefined =
-      playSubscription.latestOrderId ?? playSubscription.linkedPurchaseToken ?? undefined;
+    const orderId: string | undefined = playSubscription.latestOrderId ?? undefined;
+    const linkedPurchaseToken: string | undefined =
+      playSubscription.linkedPurchaseToken ?? undefined;
+    const playAcknowledgementState: string | undefined =
+      playSubscription.acknowledgementState ?? undefined;
 
     const startTime = playSubscription.startTime
       ? new Date(playSubscription.startTime)
@@ -275,9 +295,119 @@ export class BillingService {
       autoRenewing,
       isInIntroOfferPeriod,
       orderId,
+      linkedPurchaseToken,
       countryCode,
       playSubscriptionState,
+      playAcknowledgementState,
     };
+  }
+
+  private assertPlayPurchaseReady(playSubscription: any): void {
+    const state = String(playSubscription?.subscriptionState ?? '');
+    if (state.includes('PENDING')) {
+      throw new BadRequestException(
+        'Purchase is still pending — wait until Google confirms payment before verifying',
+      );
+    }
+  }
+
+  /** Bind purchase token + optional Play obfuscated account id to JWT user. */
+  private async assertPurchaseAccountBinding(
+    userId: string,
+    playSubscription: any,
+    purchaseToken: string,
+  ): Promise<'matched' | 'legacy_no_id'> {
+    const byToken = await this.prisma.subscription.findUnique({
+      where: { purchaseToken },
+    });
+    if (byToken && byToken.userId !== userId) {
+      throw new ConflictException({
+        error: 'PurchaseTokenConflict',
+        message: 'This Google Play purchase is already linked to another Matheo account.',
+      });
+    }
+
+    const playId: string | null =
+      playSubscription?.externalAccountIdentifiers?.obfuscatedExternalAccountId ?? null;
+
+    if (!playId) {
+      return 'legacy_no_id';
+    }
+
+    if (!this.obfuscatedAccount.isConfigured()) {
+      this.logger.warn(
+        'Play returned obfuscatedExternalAccountId but PLAY_OBFUSCATED_ACCOUNT_SECRET is unset',
+      );
+      return 'legacy_no_id';
+    }
+
+    const expected = this.obfuscatedAccount.forUser(userId);
+    if (playId !== expected) {
+      throw new ConflictException({
+        error: 'AccountBindingMismatch',
+        message: 'Purchase account identifier does not match the signed-in Matheo user.',
+      });
+    }
+
+    return 'matched';
+  }
+
+  private subscriptionRowData(mapped: MappedSubscriptionState, purchaseToken: string) {
+    return {
+      productId: mapped.productId,
+      purchaseToken,
+      orderId: mapped.orderId,
+      linkedPurchaseToken: mapped.linkedPurchaseToken,
+      status: mapped.status,
+      startTime: mapped.startTime,
+      expiryTime: mapped.expiryTime,
+      autoRenewing: mapped.autoRenewing,
+      isInIntroOfferPeriod: mapped.isInIntroOfferPeriod,
+      countryCode: mapped.countryCode,
+    };
+  }
+
+  private async ensureServerAcknowledgement(
+    subscriptionId: string,
+    mapped: MappedSubscriptionState,
+    purchaseToken: string,
+  ): Promise<{ acknowledged: boolean; acknowledgedAt: Date | null; acknowledgementState: string }> {
+    const alreadyAcked =
+      mapped.playAcknowledgementState === 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED';
+
+    if (alreadyAcked) {
+      const now = new Date();
+      await this.prisma.subscription.update({
+        where: { id: subscriptionId },
+        data: {
+          acknowledgedAt: now,
+          acknowledgementState: 'ACKNOWLEDGED',
+        },
+      });
+      return { acknowledged: true, acknowledgedAt: now, acknowledgementState: 'ACKNOWLEDGED' };
+    }
+
+    try {
+      await this.playApi.acknowledgeSubscription(mapped.productId, purchaseToken);
+      const now = new Date();
+      await this.prisma.subscription.update({
+        where: { id: subscriptionId },
+        data: {
+          acknowledgedAt: now,
+          acknowledgementState: 'ACKNOWLEDGED',
+        },
+      });
+      return { acknowledged: true, acknowledgedAt: now, acknowledgementState: 'ACKNOWLEDGED' };
+    } catch (e) {
+      this.logger.error(
+        `Server acknowledge failed for ${mapped.productId} token ${purchaseToken.slice(0, 8)}...: ${(e as Error).message}`,
+      );
+      await this.prisma.subscription.update({
+        where: { id: subscriptionId },
+        data: { acknowledgementState: 'FAILED' },
+      });
+      return { acknowledged: false, acknowledgedAt: null, acknowledgementState: 'FAILED' };
+    }
   }
 
   /** Verifies a purchaseToken via Google Play Developer API v3 (subscriptionsv2)
@@ -288,7 +418,7 @@ export class BillingService {
     userId: string,
     productId: string,
     purchaseToken: string,
-  ): Promise<{ status: SubscriptionStatus; expiryTime: Date; isInIntroOfferPeriod: boolean }> {
+  ): Promise<VerifyPurchaseResult> {
     let playSubscription: any;
     try {
       playSubscription = await this.playApi.getSubscription(productId, purchaseToken);
@@ -297,35 +427,25 @@ export class BillingService {
       throw new BadRequestException('Invalid purchase token or Play API unavailable');
     }
 
+    this.assertPlayPurchaseReady(playSubscription);
+    const binding = await this.assertPurchaseAccountBinding(
+      userId,
+      playSubscription,
+      purchaseToken,
+    );
     const mapped = this.mapPlaySubscription(playSubscription, productId);
 
-    // Upsert by userId (unique) — different purchaseToken for the same user
-    // replaces (e.g. user upgraded or repurchased).
     const sub = await this.prisma.subscription.upsert({
       where: { userId },
       create: {
         userId,
-        productId: mapped.productId,
-        purchaseToken,
-        orderId: mapped.orderId,
-        status: mapped.status,
-        startTime: mapped.startTime,
-        expiryTime: mapped.expiryTime,
-        autoRenewing: mapped.autoRenewing,
-        isInIntroOfferPeriod: mapped.isInIntroOfferPeriod,
-        countryCode: mapped.countryCode,
+        ...this.subscriptionRowData(mapped, purchaseToken),
+        acknowledgementState:
+          mapped.playAcknowledgementState === 'ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED'
+            ? 'ACKNOWLEDGED'
+            : 'PENDING',
       },
-      update: {
-        productId: mapped.productId,
-        purchaseToken,
-        orderId: mapped.orderId,
-        status: mapped.status,
-        startTime: mapped.startTime,
-        expiryTime: mapped.expiryTime,
-        autoRenewing: mapped.autoRenewing,
-        isInIntroOfferPeriod: mapped.isInIntroOfferPeriod,
-        countryCode: mapped.countryCode,
-      },
+      update: this.subscriptionRowData(mapped, purchaseToken),
     });
 
     await this.prisma.subscriptionEvent.create({
@@ -335,18 +455,23 @@ export class BillingService {
         payload: {
           playSubscriptionState: mapped.playSubscriptionState,
           productId: mapped.productId,
-          purchaseToken: purchaseToken.slice(0, 8) + '...', // truncate — token is sensitive
+          purchaseToken: purchaseToken.slice(0, 8) + '...',
           derivedStatus: mapped.status,
           expiryTime: mapped.expiryTime.toISOString(),
           isInIntroOfferPeriod: mapped.isInIntroOfferPeriod,
+          accountBinding: binding,
         } as any,
       },
     });
+
+    const ack = await this.ensureServerAcknowledgement(sub.id, mapped, purchaseToken);
 
     return {
       status: mapped.status,
       expiryTime: mapped.expiryTime,
       isInIntroOfferPeriod: mapped.isInIntroOfferPeriod,
+      acknowledged: ack.acknowledged,
+      acknowledgedAt: ack.acknowledgedAt,
     };
   }
 
@@ -407,17 +532,7 @@ export class BillingService {
 
     const sub = await this.prisma.subscription.update({
       where: { id: existing.id },
-      data: {
-        productId: mapped.productId,
-        // purchaseToken is unchanged (we looked up by it)
-        orderId: mapped.orderId,
-        status: mapped.status,
-        startTime: mapped.startTime,
-        expiryTime: mapped.expiryTime,
-        autoRenewing: mapped.autoRenewing,
-        isInIntroOfferPeriod: mapped.isInIntroOfferPeriod,
-        countryCode: mapped.countryCode,
-      },
+      data: this.subscriptionRowData(mapped, purchaseToken),
     });
 
     await this.prisma.subscriptionEvent.create({
@@ -434,6 +549,8 @@ export class BillingService {
         } as any,
       },
     });
+
+    await this.ensureServerAcknowledgement(sub.id, mapped, purchaseToken);
 
     return {
       found: true,

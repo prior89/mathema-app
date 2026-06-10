@@ -49,6 +49,12 @@ export class BillingController {
     return this.billing.startPremiumPreview(userId);
   }
 
+  /** Obfuscated account id for Play BillingFlowParams (HMAC, non-PII). */
+  @Get('obfuscated-account-id')
+  obfuscatedAccountId(@CurrentUser('id') userId: string) {
+    return { obfuscatedAccountId: this.billing.getObfuscatedAccountIdForUser(userId) };
+  }
+
   /** Client posts the Play purchaseToken after a successful purchase.
    * Phase 1: throws NotImplemented; Phase 2 will verify via Google API and
    * upsert the Subscription row. */
