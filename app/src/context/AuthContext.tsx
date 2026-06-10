@@ -112,6 +112,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [navigate, queryClient]);
 
   useEffect(() => {
+    const onBillingRedirect = (event: Event) => {
+      const path = (event as CustomEvent<{ path?: string }>).detail?.path;
+      if (!path?.startsWith('/app/paywall')) return;
+      (window as any).__matheoBillingRedirectHandled = true;
+      navigate(path, { replace: true });
+    };
+    window.addEventListener('matheo:billing-redirect', onBillingRedirect);
+    return () => window.removeEventListener('matheo:billing-redirect', onBillingRedirect);
+  }, [navigate]);
+
+  useEffect(() => {
     if (user) tagSentryUser({ id: user.id, email: user.email });
     else clearSentryUser();
   }, [user?.id, user?.email]);

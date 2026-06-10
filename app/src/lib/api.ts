@@ -106,6 +106,21 @@ let isRefreshing = false;
 type PendingEntry = { resolve: (t: string) => void; reject: (e: unknown) => void };
 let pending: Array<PendingEntry> = [];
 
+function redirectToBillingPaywall(path: string): void {
+  try {
+    (window as any).__matheoBillingRedirectHandled = false;
+    window.dispatchEvent(
+      new CustomEvent('matheo:billing-redirect', {
+        detail: { path },
+      }),
+    );
+    if ((window as any).__matheoBillingRedirectHandled) return;
+  } catch {
+    /* fall through to a full navigation */
+  }
+  window.location.replace(path);
+}
+
 api.interceptors.response.use(
   (r) => r,
   async (err: AxiosError) => {
@@ -121,7 +136,7 @@ api.interceptors.response.use(
       if (readCachedBillingUiEnabled()) {
         try {
           if (code === 'QuotaExceeded' && !window.location.pathname.startsWith('/app/paywall')) {
-            window.location.assign('/app/paywall?reason=quota');
+            redirectToBillingPaywall('/app/paywall?reason=quota');
             return Promise.reject(err);
           }
           if (code === 'PremiumRequired' && !window.location.pathname.startsWith('/app/paywall')) {
@@ -129,7 +144,9 @@ api.interceptors.response.use(
               (typeof errBody === 'object' ? errBody?.feature : undefined)
               ?? data?.feature
               ?? 'premium';
-            window.location.assign(`/app/paywall?reason=premium&feature=${encodeURIComponent(feature)}`);
+            redirectToBillingPaywall(
+              `/app/paywall?reason=premium&feature=${encodeURIComponent(feature)}`,
+            );
             return Promise.reject(err);
           }
         } catch {
