@@ -122,7 +122,7 @@ jobs:
         working-directory: app
         run: npx playwright install --with-deps chromium
 
-      - name: Playwright smoke (public flows + health)
+      - name: Playwright smoke (public SPA — no backend sidecar)
         working-directory: app
         env:
           CI: 'true'
