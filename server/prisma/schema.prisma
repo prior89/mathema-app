@@ -357,6 +357,10 @@ model User {
   /// user has never confirmed they own the email on file. Frontend can show a
   /// "verify your email" banner; future policy may gate certain features.
   emailVerifiedAt DateTime?
+  /// Student birth date — used for KR PIPA / IN DPDP minor & parental consent gates.
+  birthDate DateTime?
+  /// Set when a verifiable parent/guardian consent flow completes (see GuardianConsentRequest).
+  guardianConsentVerifiedAt DateTime?
   /// MFA-1 — base32 TOTP secret. NULL = MFA never enrolled. Encrypted at rest
   /// is a v1.1 follow-up; for now the column is plain text + relies on DB-
   /// level access control. Setting this does NOT enable the challenge until
@@ -399,6 +403,7 @@ model User {
   achievements            UserAchievement[]
   parentChildLinksAsParent ParentChildLink[] @relation("ParentChildLinksAsParent")
   parentChildLinksAsChild  ParentChildLink[] @relation("ParentChildLinksAsChild")
+  guardianConsentRequest   GuardianConsentRequest?
 
   @@index([examDate])
   @@index([deletedAt])
@@ -972,6 +977,58 @@ model ParentLinkApprovalToken {
   link ParentChildLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
 
   @@index([linkId, expiresAt])
+}
+
+/// Verifiable parent/guardian consent for minor students (KR PIPA / IN DPDP §9).
+enum GuardianConsentMethod {
+  KR_PASS
+  KR_EMAIL_OTP
+  IN_EMAIL_OTP
+}
+
+enum GuardianConsentStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+}
+
+model GuardianConsentRequest {
+  id              String                @id @default(uuid())
+  studentUserId   String                @unique
+  country         CountryCode
+  method          GuardianConsentMethod
+  status          GuardianConsentStatus @default(PENDING)
+  parentName      String?
+  parentEmail     String?
+  /// KR — collected for PASS hand-off; not stored after verify when possible.
+  parentPhone     String?
+  policyVersion   String
+  providerRef     String?
+  verifiedAt      DateTime?
+  requestIp       String?
+  requestUa       String?
+  verifyIp        String?
+  verifyUa        String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  student User                   @relation(fields: [studentUserId], references: [id], onDelete: Cascade)
+  tokens  GuardianConsentToken[]
+
+  @@index([status, createdAt])
+}
+
+model GuardianConsentToken {
+  id        String    @id @default(uuid())
+  requestId String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  request GuardianConsentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId, expiresAt])
 }
 
 /// Admin-action audit log — who accessed / modified which user data, and when.

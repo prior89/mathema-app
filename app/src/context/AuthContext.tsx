@@ -41,6 +41,7 @@ export type RegisterInput = {
   email: string; password: string; name: string;
   role: RegisterRole;
   // STUDENT 전용
+  birthDate?: string;
   examDate?: string; targetGrade?: number; gradeLevel?: GradeLevel;
   // PARENT 전용
   childEmail?: string;

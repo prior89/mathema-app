@@ -125,6 +125,8 @@ export type CountryCode = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'GLOBAL';
 export type Me = {
   id: string; name: string; email: string;
   emailVerifiedAt?: string | null;
+  birthDate?: string | null;
+  guardianConsentVerifiedAt?: string | null;
   examDate: string; targetGrade: number; dDay: number;
   gradeLevel?: GradeLevel | null;
   studyGoal?: StudyGoal | null;
@@ -132,6 +134,15 @@ export type Me = {
   pushRemindersEnabled?: boolean;
   tenantId?: string | null;
   country?: CountryCode;
+};
+
+export type GuardianConsentStatus = {
+  required: boolean;
+  verified: boolean;
+  method: 'KR_PASS' | 'KR_EMAIL_OTP' | 'IN_EMAIL_OTP' | null;
+  requestStatus?: 'PENDING' | 'VERIFIED' | 'EXPIRED' | null;
+  parentEmail?: string | null;
+  verifiedAt?: string | null;
 };
 
 /** Onboarding diagnostic — shared problem shape (fixed + adaptive). */
@@ -196,6 +207,14 @@ export type FirstSessionAchievement = {
 };
 
 export const fetchMe = () => get<Me>('/users/me');
+
+export const fetchGuardianConsentStatus = () => get<GuardianConsentStatus>('/guardian-consent/status');
+
+export const requestGuardianConsent = (body: {
+  parentName: string;
+  parentEmail: string;
+  parentPhone?: string;
+}) => post<{ sent: boolean; method: string }>('/guardian-consent/request', body);
 
 export type ParentLinkStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED' | null;
 

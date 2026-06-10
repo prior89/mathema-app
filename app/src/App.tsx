@@ -35,6 +35,8 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 const ParentLinkApprovePage = lazy(() => import('./pages/ParentLinkApprovePage'));
+const GuardianConsentPage = lazy(() => import('./pages/GuardianConsentPage'));
+const GuardianConsentVerifyPage = lazy(() => import('./pages/GuardianConsentVerifyPage'));
 const VerifyRequiredPage = lazy(() => import('./pages/VerifyRequiredPage'));
 const PolicyPage = lazy(() => import('./pages/PolicyPage'));
 
@@ -81,7 +83,7 @@ function I18nCountrySync() {
     // bounces the user back to welcome, eventually landing on /login.
     // Once onboarding completes and routes to /app, this effect runs and
     // does the country→lang flip exactly once.
-    if (location.pathname.startsWith('/onboarding')) return;
+    if (location.pathname.startsWith('/onboarding') || location.pathname.startsWith('/guardian-consent')) return;
     const want: 'ko' | 'en' = me.data.country === 'KR' ? 'ko' : 'en';
     if (lang !== want) setLang(want);
   }, [me.data, lang, setLang, location.pathname]);
@@ -116,6 +118,15 @@ export default function App() {
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/parent-link/approve" element={<ParentLinkApprovePage action="approve" />} />
           <Route path="/parent-link/reject" element={<ParentLinkApprovePage action="reject" />} />
+          <Route path="/guardian-consent/verify" element={<GuardianConsentVerifyPage />} />
+          <Route
+            path="/guardian-consent"
+            element={
+              <ProtectedRoute>
+                <GuardianConsentPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/verify-required"
             element={

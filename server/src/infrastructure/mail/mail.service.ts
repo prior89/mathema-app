@@ -210,6 +210,53 @@ ${this.ctaButton(link, 'Confirm my email')}
    * into the account. Anti-theft signal: if it was not the user, they can
    * change their password from the reset link.
    */
+  async sendGuardianConsent(
+    to: string,
+    token: string,
+    opts: { parentName: string; childName: string; country: string },
+  ): Promise<void> {
+    const verifyLink = `${this.appUrl()}/guardian-consent/verify?token=${encodeURIComponent(token)}`;
+    const regionNote = opts.country === 'KR'
+      ? '대한민국 개인정보보호법에 따라 미성년자 계정은 보호자의 확인이 필요합니다.'
+      : 'Under India\'s DPDP Act 2023, verifiable parental consent is required for minor accounts.';
+    const bodyHtml = `
+<h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 16px 0;line-height:1.35;">Parent/guardian consent required</h1>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">Hello <strong>${opts.parentName}</strong>,</p>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;"><strong>${opts.childName}</strong> created a Matheo student account. ${regionNote}</p>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">By confirming below, you verify that you are the parent or legal guardian and consent to Matheo processing your child's learning data as described in our Privacy Policy.</p>
+${this.ctaButton(verifyLink, 'Confirm as parent/guardian')}
+<p style="font-size:13px;line-height:1.6;color:#6b7280;margin:24px 0 0 0;">Or copy and paste this link into your browser:</p>
+<p style="font-size:13px;line-height:1.5;word-break:break-all;margin:6px 0 0 0;"><a href="${verifyLink}" style="color:#4f46e5;text-decoration:underline;">${verifyLink}</a></p>
+<p style="font-size:13px;line-height:1.6;color:#9ca3af;margin:24px 0 0 0;">This link expires in 7 days. If you did not expect this email, you can ignore it — the account will remain restricted until consent is given.</p>`;
+    const text = [
+      'Parent/guardian consent — Matheo',
+      '',
+      `Hello ${opts.parentName},`,
+      '',
+      `${opts.childName} created a Matheo student account.`,
+      regionNote,
+      '',
+      'Confirm as parent/guardian:',
+      verifyLink,
+      '',
+      'Expires in 7 days.',
+      '',
+      '--',
+      'Matheo',
+      this.appUrl(),
+    ].join('\n');
+    await this.deliver(
+      'guardian-consent',
+      to,
+      `Confirm parent consent for ${opts.childName}'s Matheo account`,
+      text,
+      this.htmlLayout({
+        preheader: `${opts.childName} needs your consent to use Matheo.`,
+        bodyHtml,
+      }),
+    );
+  }
+
   async sendParentLinkApproval(
     to: string,
     token: string,

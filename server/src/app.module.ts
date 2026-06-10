@@ -61,6 +61,7 @@ import { BillingModule } from './modules/billing/billing.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { AchievementsModule } from './modules/achievements/achievements.module';
 import { ParentLinksModule } from './modules/parent-links/parent-links.module';
+import { GuardianConsentModule } from './modules/guardian-consent/guardian-consent.module';
 import { MetricsModule } from './common/metrics/metrics.module';
 
 @Module({
@@ -96,6 +97,7 @@ import { MetricsModule } from './common/metrics/metrics.module';
     // 도메인 (의존성 방향: 위 → 아래)
     AuthModule,
     ParentLinksModule,
+    GuardianConsentModule,
     UsersModule,
     CurriculumModule,
     ConceptLessonsModule,

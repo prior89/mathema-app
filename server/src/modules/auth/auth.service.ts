@@ -21,6 +21,7 @@ import {
 import { SecurityEventService } from './security-event.service';
 import { AuthDeviceService } from './auth-device.service';
 import { ParentLinksService } from '../parent-links/parent-links.service';
+import { GuardianConsentService } from '../guardian-consent/guardian-consent.service';
 import { UserRole } from '@prisma/client';
 
 const RESET_TOKEN_TTL_MIN = 30;
@@ -45,6 +46,7 @@ export class AuthService {
     private readonly devices: AuthDeviceService,
     @Inject(forwardRef(() => ParentLinksService))
     private readonly parentLinks: ParentLinksService,
+    private readonly guardianConsent: GuardianConsentService,
   ) {
     const cid = this.config.get<string>('GOOGLE_CLIENT_ID');
     if (cid && cid !== 'api입력칸') this.googleClient = new OAuth2Client(cid);
@@ -104,6 +106,7 @@ export class AuthService {
       // Write an explicit null instead of letting Prisma's legacy CLASS_12
       // default leak into diagnostics and ProtectedRoute decisions.
       ...(isStudent ? { gradeLevel: gradeLevel ?? null } : {}),
+      ...(isStudent && dto.birthDate ? { birthDate: new Date(dto.birthDate) } : {}),
       ...(studyGoal ? { studyGoal } : {}),
       ...(tenantId ? { tenantId } : {}),
     });
@@ -128,6 +131,17 @@ export class AuthService {
       userAgent: ctx.ua,
     });
 
+    let guardianConsentPending = false;
+    if (role === 'STUDENT' && dto.birthDate) {
+      const gc = await this.guardianConsent.ensurePendingForStudent({
+        studentUserId: user.id,
+        country: (dto.country ?? 'IN') as any,
+        ip: ctx.ip,
+        ua: ctx.ua,
+      });
+      guardianConsentPending = !!gc.required && !gc.verified;
+    }
+
     // 가입 직후 이메일 검증 토큰 발급 — 실패해도 가입은 진행 (fire-and-forget).
     this.issueVerificationToken(user.id, user.email).catch((e) =>
       this.logger.error(`verification token issue failed: ${e?.message}`),
@@ -142,6 +156,9 @@ export class AuthService {
     const tokens = this.issueTokens(user.id, ctx.deviceHash);
     if (role === 'PARENT' && pendingChildUserId) {
       return { ...tokens, parentLinkPending: true };
+    }
+    if (guardianConsentPending) {
+      return { ...tokens, guardianConsentPending: true };
     }
     return tokens;
   }

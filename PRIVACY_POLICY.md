@@ -204,11 +204,19 @@ so a substantial fraction of users are **under 18 years old**.
 - Students **under 13** may use the Service only under direct parental
   supervision and where local law permits. We do not knowingly accept new
   accounts from anyone under 13 acting without that supervision.
-- Indian users between **13 and 18** are minors under DPDP §9. A parent or
-  legal guardian must read this Policy on the student's behalf and approve
-  the account.
+- Users **under 18** are minors. We collect date of birth at student
+  registration and require **verifiable parent/guardian consent** before
+  full access:
+  - **India (IN):** parent/guardian email confirmation link (DPDP Act 2023
+    §9 and Rule 10).
+  - **Korea (KR):** parent/guardian email confirmation link at launch;
+    mobile identity verification (PASS) when `GUARDIAN_PASS_ENABLED` is
+    turned on in production.
+- Consent records (method, policy version, timestamps, request IP/UA) are
+  stored in `GuardianConsentRequest` for audit.
 - A **PARENT role** is provided so that a parent can register, link to
-  their child's account by email, and supervise progress.
+  their child's account by email, and supervise progress (separate from the
+  minor-consent gate above).
 - Parents may exercise all of the rights listed in Section 7 on behalf of
   their child.
 - We do not target advertising to any user and do not collect more

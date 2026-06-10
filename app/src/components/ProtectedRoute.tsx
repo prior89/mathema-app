@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import type { UserRole } from '../lib/queries';
 import { homePathForRole } from '../lib/role-routes';
 import { onboardingCompletedLocally } from '../lib/post-auth-path';
+import { guardianConsentSatisfied } from '../lib/guardian-consent';
 import { LoadingSplash } from './Brand';
 
 type ProtectedRouteProps = {
@@ -26,6 +27,13 @@ export default function ProtectedRoute({ children, roles }: ProtectedRouteProps)
     return <Navigate to="/verify-required" replace />;
   }
   const userRole = user.role ?? 'STUDENT';
+  if (
+    userRole === 'STUDENT'
+    && !guardianConsentSatisfied(user)
+    && !location.pathname.startsWith('/guardian-consent')
+  ) {
+    return <Navigate to="/guardian-consent" replace />;
+  }
   // Google sign-up creates users without a class. Force them through the
   // NCERT picker (CLASS_7..CLASS_12) before /app/* is reachable — UNLESS
   // the user has already finished onboarding locally (PATCH may have just

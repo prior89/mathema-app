@@ -13,12 +13,14 @@ import { RefreshStrategy } from './strategies/refresh.strategy';
 import { UsersModule } from '../users/users.module';
 import { PrivacyModule } from '../privacy/privacy.module';
 import { ParentLinksModule } from '../parent-links/parent-links.module';
+import { GuardianConsentModule } from '../guardian-consent/guardian-consent.module';
 
 @Module({
   imports: [
     UsersModule,
     PrivacyModule,
     forwardRef(() => ParentLinksModule),
+    GuardianConsentModule,
     PassportModule,
     // /auth/* 엔드포인트 전용 throttler — 글로벌(120/min)보다 훨씬 빡빡하게.
     // login: 5/min/IP 로 brute-force 차단. (per-endpoint 데코레이터로 조정)

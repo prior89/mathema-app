@@ -53,6 +53,7 @@ export default function RegisterPage() {
 
   // STUDENT
   const [ncertClass, setNcertClass] = useState<NcertClass>('CLASS_11');
+  const [birthDate, setBirthDate] = useState('');
   const [examDate, setExamDate] = useState('2027-02-14');
   const [targetGrade, setTargetGrade] = useState('3');
 
@@ -78,7 +79,7 @@ export default function RegisterPage() {
   // 단계별 next 조건
   const canStep1Next = isLikelyEmail(email) && password.length >= 8 && !!name.trim() && !!role;
   const canStep2Next = (
-    role === 'STUDENT' ? (!!ncertClass && !!examDate && !!targetGrade)
+    role === 'STUDENT' ? (!!ncertClass && !!birthDate && !!examDate && !!targetGrade)
     : role === 'PARENT' ? !!childEmail
     : true // TEACHER tenantCode 는 선택
   );
@@ -93,6 +94,7 @@ export default function RegisterPage() {
         role,
         country,
         ...(role === 'STUDENT' ? {
+          birthDate: new Date(birthDate).toISOString(),
           examDate: new Date(examDate).toISOString(),
           targetGrade: Number(targetGrade),
           gradeLevel: NCERT_TO_GRADE[ncertClass],
@@ -155,6 +157,7 @@ export default function RegisterPage() {
                 {step === 1 && role === 'STUDENT' && (
                   <StepStudent
                     ncertClass={ncertClass} setNcertClass={setNcertClass}
+                    birthDate={birthDate} setBirthDate={setBirthDate}
                     examDate={examDate} setExamDate={setExamDate}
                     targetGrade={targetGrade} setTargetGrade={setTargetGrade}
                     t={t}
@@ -366,7 +369,7 @@ function StepRoleAndCredentials({
 }
 
 // ─── Step 1 (STUDENT) : NCERT class + exam date + target ──
-function StepStudent({ ncertClass, setNcertClass, examDate, setExamDate, targetGrade, setTargetGrade, t }: any) {
+function StepStudent({ ncertClass, setNcertClass, birthDate, setBirthDate, examDate, setExamDate, targetGrade, setTargetGrade, t }: any) {
   const grades: { id: NcertClass; num: string; lbl: string }[] = [
     { id: 'CLASS_7',  num: '7',  lbl: t('reg.student.classCaption') },
     { id: 'CLASS_8',  num: '8',  lbl: t('reg.student.classCaption') },
@@ -397,6 +400,11 @@ function StepStudent({ ncertClass, setNcertClass, examDate, setExamDate, targetG
             </div>
           ))}
         </div>
+      </div>
+      <div className="field">
+        <label>{t('reg.student.birthDate')}</label>
+        <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
+        <span className="caption" style={{ marginTop: 6 }}>{t('reg.student.birthDate.hint')}</span>
       </div>
       <div className="field">
         <label>{t('reg.student.examDate')}</label>

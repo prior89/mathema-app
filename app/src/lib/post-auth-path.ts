@@ -1,5 +1,6 @@
 import type { Me } from './queries';
 import { homePathForRole } from './role-routes';
+import { guardianConsentSatisfied } from './guardian-consent';
 
 /** Mirrors ProtectedRoute — local flag covers transient PATCH misses during onboarding. */
 export function onboardingCompletedLocally(): boolean {
@@ -16,6 +17,9 @@ export function onboardingCompletedLocally(): boolean {
 /** Where to land after password / Google / register auth succeeds. */
 export function postAuthPath(me: Me): string {
   const role = me.role ?? 'STUDENT';
+  if (role === 'STUDENT' && !guardianConsentSatisfied(me)) {
+    return '/guardian-consent';
+  }
   if (role === 'STUDENT' && !me.gradeLevel && !onboardingCompletedLocally()) {
     return '/onboarding';
   }

@@ -41,6 +41,8 @@ export class RegisterDto {
   country?: CountryCode;
 
   // ─── STUDENT 만 의미 — PARENT/TEACHER 일 때는 무시 ─────────────
+  /** Birth date — required for minor consent gating (IN DPDP §9 / KR PIPA). */
+  @IsOptional() @IsDateString() birthDate?: string;
   @IsOptional() @IsDateString() examDate?: string;
   @IsOptional() @IsInt() @Min(1) @Max(9) targetGrade?: number;
   @IsOptional() @IsString() @IsIn(GRADE_LEVELS as unknown as string[])
