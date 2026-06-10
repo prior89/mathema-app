@@ -12,6 +12,10 @@ function mockPrisma() {
       upsert: jest.fn(),
       update: jest.fn(),
     },
+    subscriptionPurchaseToken: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      upsert: jest.fn().mockResolvedValue({}),
+    },
     subscriptionEvent: { create: jest.fn() },
   };
 }
@@ -215,6 +219,37 @@ describe('BillingService', () => {
         'token-abc',
       );
       expect(prisma.subscription.upsert).toHaveBeenCalled();
+      expect(prisma.subscriptionPurchaseToken.upsert).toHaveBeenCalled();
+    });
+
+    it('records superseded token when purchaseToken changes on upgrade', async () => {
+      const { svc, prisma, playApi } = build();
+      playApi.getSubscription.mockResolvedValue(
+        activePlayPayload({ linkedPurchaseToken: 'token-old' }),
+      );
+      prisma.subscription.findUnique.mockImplementation(({ where }: { where: Record<string, string> }) => {
+        if (where.userId) {
+          return Promise.resolve({
+            id: 'sub-1',
+            purchaseToken: 'token-old',
+            productId: 'premium_monthly',
+          });
+        }
+        if (where.purchaseToken === 'token-new') return Promise.resolve(null);
+        return Promise.resolve(null);
+      });
+      prisma.subscription.upsert.mockResolvedValue({ id: 'sub-1' });
+      prisma.subscription.update.mockResolvedValue({ id: 'sub-1' });
+      prisma.subscriptionEvent.create.mockResolvedValue({});
+
+      await svc.verifyAndRecordPurchase('u1', 'premium_monthly', 'token-new');
+
+      expect(prisma.subscriptionPurchaseToken.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { purchaseToken: 'token-old' },
+          create: expect.objectContaining({ supersededAt: expect.any(Date) }),
+        }),
+      );
     });
 
     it('throws AccountBindingMismatch when Play obfuscated id differs', async () => {
@@ -261,11 +296,33 @@ describe('BillingService', () => {
         id: 'sub-1',
         productId: 'premium_monthly',
         userId: 'u1',
+        purchaseToken: 'token-abc',
       });
       playApi.getSubscription.mockRejectedValue(new Error('Play down'));
       await expect(
         svc.verifyAndRecordPurchaseByToken('token-abc', 'rtdn:2'),
       ).rejects.toBeInstanceOf(RtdnRetryableError);
+    });
+
+    it('re-queries current token when RTDN targets a superseded purchaseToken', async () => {
+      const { svc, prisma, playApi } = build();
+      prisma.subscription.findUnique.mockResolvedValue(null);
+      prisma.subscriptionPurchaseToken.findUnique.mockResolvedValue({
+        purchaseToken: 'token-old',
+        supersededAt: new Date('2026-06-01'),
+        subscription: {
+          id: 'sub-1',
+          productId: 'premium_monthly',
+          purchaseToken: 'token-new',
+        },
+      });
+      playApi.getSubscription.mockResolvedValue(activePlayPayload());
+      prisma.subscription.update.mockResolvedValue({ id: 'sub-1' });
+      prisma.subscriptionEvent.create.mockResolvedValue({});
+
+      await svc.verifyAndRecordPurchaseByToken('token-old', 'rtdn:2');
+
+      expect(playApi.getSubscription).toHaveBeenCalledWith('premium_monthly', 'token-new');
     });
   });
 

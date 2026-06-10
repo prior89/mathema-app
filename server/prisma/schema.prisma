@@ -1955,10 +1955,28 @@ model Subscription {
 
   user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   events               SubscriptionEvent[]
+  purchaseTokens       SubscriptionPurchaseToken[]
 
   @@index([status])
   @@index([expiryTime])
   @@index([orderId])
+}
+
+/// Purchase-token history for upgrade/downgrade — maps superseded tokens to
+/// the current Subscription row so RTDN / voided events on old tokens resolve.
+model SubscriptionPurchaseToken {
+  id              String       @id @default(cuid())
+  subscriptionId  String
+  purchaseToken   String       @unique
+  productId       String
+  linkedFromToken String?
+  supersededAt    DateTime?
+  createdAt       DateTime     @default(now())
+
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([linkedFromToken])
 }
 
 /// Durable Google Play RTDN inbox (Pub/Sub messageId is unique).

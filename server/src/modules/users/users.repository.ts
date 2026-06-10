@@ -81,6 +81,12 @@ export class UsersRepository {
         weeklyReports: { take: 200, orderBy: { generatedAt: 'desc' } },
         analyticsEvents: { take: 5000, orderBy: { createdAt: 'desc' } },
         deviceTokens: true,
+        subscription: {
+          include: {
+            events: { take: 500, orderBy: { receivedAt: 'desc' } },
+            purchaseTokens: { orderBy: { createdAt: 'asc' } },
+          },
+        },
       },
     });
   }

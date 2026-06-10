@@ -353,12 +353,18 @@ export class BillingService {
     return 'matched';
   }
 
-  /** Resolve a subscription row for RTDN / voided paths (token, linked token, orderId). */
+  /** Resolve a subscription row for RTDN / voided paths (token history included). */
   private async findSubscriptionForRtdn(purchaseToken: string, orderId?: string) {
     const byToken = await this.prisma.subscription.findUnique({
       where: { purchaseToken },
     });
     if (byToken) return byToken;
+
+    const byHistory = await this.prisma.subscriptionPurchaseToken.findUnique({
+      where: { purchaseToken },
+      include: { subscription: true },
+    });
+    if (byHistory) return byHistory.subscription;
 
     if (orderId) {
       const byOrder = await this.prisma.subscription.findFirst({
@@ -369,6 +375,60 @@ export class BillingService {
 
     return this.prisma.subscription.findFirst({
       where: { linkedPurchaseToken: purchaseToken },
+    });
+  }
+
+  /** When RTDN targets a superseded token, re-query Play with the current token. */
+  private async resolveAuthoritativePurchaseToken(
+    sub: { purchaseToken: string; productId: string },
+    eventToken: string,
+  ): Promise<{ productId: string; token: string }> {
+    if (sub.purchaseToken === eventToken) {
+      return { productId: sub.productId, token: eventToken };
+    }
+    const hist = await this.prisma.subscriptionPurchaseToken.findUnique({
+      where: { purchaseToken: eventToken },
+    });
+    if (hist?.supersededAt) {
+      return { productId: sub.productId, token: sub.purchaseToken };
+    }
+    return { productId: sub.productId, token: eventToken };
+  }
+
+  private async recordPurchaseTokenHistory(
+    subscriptionId: string,
+    previousToken: string | null,
+    newToken: string,
+    productId: string,
+    linkedFromToken?: string,
+  ): Promise<void> {
+    if (previousToken && previousToken !== newToken) {
+      await this.prisma.subscriptionPurchaseToken.upsert({
+        where: { purchaseToken: previousToken },
+        create: {
+          subscriptionId,
+          purchaseToken: previousToken,
+          productId,
+          supersededAt: new Date(),
+        },
+        update: { supersededAt: new Date() },
+      });
+    }
+
+    await this.prisma.subscriptionPurchaseToken.upsert({
+      where: { purchaseToken: newToken },
+      create: {
+        subscriptionId,
+        purchaseToken: newToken,
+        productId,
+        linkedFromToken:
+          linkedFromToken ?? (previousToken && previousToken !== newToken ? previousToken : null),
+      },
+      update: {
+        productId,
+        linkedFromToken:
+          linkedFromToken ?? (previousToken && previousToken !== newToken ? previousToken : undefined),
+      },
     });
   }
 
@@ -454,6 +514,7 @@ export class BillingService {
       purchaseToken,
     );
     const mapped = this.mapPlaySubscription(playSubscription, productId);
+    const priorSub = await this.prisma.subscription.findUnique({ where: { userId } });
 
     const sub = await this.prisma.subscription.upsert({
       where: { userId },
@@ -467,6 +528,14 @@ export class BillingService {
       },
       update: this.subscriptionRowData(mapped, purchaseToken),
     });
+
+    await this.recordPurchaseTokenHistory(
+      sub.id,
+      priorSub?.purchaseToken ?? null,
+      purchaseToken,
+      mapped.productId,
+      mapped.linkedPurchaseToken,
+    );
 
     await this.prisma.subscriptionEvent.create({
       data: {
@@ -531,11 +600,13 @@ export class BillingService {
       return { found: false };
     }
 
+    const authToken = await this.resolveAuthoritativePurchaseToken(existing, purchaseToken);
+
     let playSubscription: any;
     try {
       playSubscription = await this.playApi.getSubscription(
-        existing.productId,
-        purchaseToken,
+        authToken.productId,
+        authToken.token,
       );
     } catch (e) {
       this.logger.error(
@@ -546,12 +617,23 @@ export class BillingService {
       );
     }
 
-    const mapped = this.mapPlaySubscription(playSubscription, existing.productId);
+    const mapped = this.mapPlaySubscription(playSubscription, authToken.productId);
+    const rowToken = authToken.token;
 
     const sub = await this.prisma.subscription.update({
       where: { id: existing.id },
-      data: this.subscriptionRowData(mapped, purchaseToken),
+      data: this.subscriptionRowData(mapped, rowToken),
     });
+
+    if (existing.purchaseToken !== rowToken) {
+      await this.recordPurchaseTokenHistory(
+        sub.id,
+        existing.purchaseToken,
+        rowToken,
+        mapped.productId,
+        mapped.linkedPurchaseToken,
+      );
+    }
 
     await this.prisma.subscriptionEvent.create({
       data: {
@@ -561,6 +643,8 @@ export class BillingService {
           playSubscriptionState: mapped.playSubscriptionState,
           productId: mapped.productId,
           purchaseToken: purchaseToken.slice(0, 8) + '...',
+          authoritativeToken:
+            authToken.token !== purchaseToken ? authToken.token.slice(0, 8) + '...' : undefined,
           derivedStatus: mapped.status,
           expiryTime: mapped.expiryTime.toISOString(),
           isInIntroOfferPeriod: mapped.isInIntroOfferPeriod,
@@ -568,7 +652,7 @@ export class BillingService {
       },
     });
 
-    await this.ensureServerAcknowledgement(sub.id, mapped, purchaseToken);
+    await this.ensureServerAcknowledgement(sub.id, mapped, rowToken);
 
     return {
       found: true,

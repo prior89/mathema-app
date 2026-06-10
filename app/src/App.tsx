@@ -9,6 +9,7 @@ import { trackPageView } from './lib/analytics';
 import { fetchMe } from './lib/queries';
 import { homePathForRole } from './lib/role-routes';
 import { useT } from './lib/i18n';
+import { useBillingRecovery } from './hooks/useBillingRecovery';
 import { usePushSync } from './hooks/usePushSync';
 
 /**
@@ -92,12 +93,18 @@ function PushSync() {
   return null;
 }
 
+function BillingRecoverySync() {
+  useBillingRecovery();
+  return null;
+}
+
 export default function App() {
   return (
     <>
       <PageViewTracker />
       <I18nCountrySync />
       <PushSync />
+      <BillingRecoverySync />
       <Suspense fallback={<LoadingSplash />}>
         <Routes>
           {/* Auth flow */}
