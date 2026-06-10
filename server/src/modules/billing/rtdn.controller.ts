@@ -12,13 +12,13 @@ import { RtdnService } from './rtdn.service';
 
 /**
  * Public webhook (no JwtAuthGuard) — Google Pub/Sub push subscription POSTs
- * here. Authentication is via the OIDC token in the Authorization header,
- * which RtdnService.verifyOidcToken validates against Google's JWKS and the
- * configured audience + service-account email.
+ * here. Authentication is via the OIDC token in the Authorization header.
  *
- * Always returns HTTP 200 on well-formed requests (even unknown notification
- * types). Returning anything else triggers Pub/Sub retries, which we don't
- * want for permanently-unrecognized payloads.
+ * Response contract (Pub/Sub push):
+ *   - 2xx: acknowledged (PROCESSED, ORPHAN, DEAD, or duplicate)
+ *   - 5xx: transient failure — Pub/Sub retries (inbox stays RETRYABLE)
+ *   - 400: permanently malformed payload (durable inbox audit, no retry)
+ *   - 401/403: auth failure
  */
 @Controller('billing')
 export class RtdnController {

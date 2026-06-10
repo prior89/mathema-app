@@ -1919,6 +1919,16 @@ enum SubscriptionStatus {
   EXPIRED     /// expired, no longer entitled
 }
 
+/// Durable Pub/Sub RTDN inbox — PROCESSED only after successful dispatch.
+enum RtdnInboxStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  RETRYABLE
+  ORPHAN
+  DEAD
+}
+
 /// One row per user that has ever subscribed. We update in place when the
 /// status changes (RTDN notifications + verify-on-purchase). Token uniqueness
 /// is enforced by Google; we keep it unique so dupe webhooks no-op.
@@ -1948,6 +1958,29 @@ model Subscription {
 
   @@index([status])
   @@index([expiryTime])
+  @@index([orderId])
+}
+
+/// Durable Google Play RTDN inbox (Pub/Sub messageId is unique).
+/// Transient failures stay RETRYABLE and return 5xx so Pub/Sub retries.
+model RtdnInbox {
+  id               String           @id @default(cuid())
+  messageId        String           @unique
+  status           RtdnInboxStatus  @default(RECEIVED)
+  attempts         Int              @default(0)
+  payloadHash      String
+  payload          Json
+  notificationKind String?
+  purchaseToken    String?
+  lastError        String?
+  leaseUntil       DateTime?
+  receivedAt       DateTime         @default(now())
+  processedAt      DateTime?
+  updatedAt        DateTime         @updatedAt
+
+  @@index([status, receivedAt])
+  @@index([purchaseToken])
+  @@index([status, leaseUntil])
 }
 
 /// Audit log of every subscription state-change signal we receive

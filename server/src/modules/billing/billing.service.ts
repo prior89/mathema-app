@@ -9,6 +9,7 @@ import {
 import { ObfuscatedAccountService } from './obfuscated-account.service';
 import { PlayApiClient } from './play-api-client.service';
 import { QuotaService } from './quota.service';
+import { RtdnRetryableError } from './rtdn.errors';
 
 /** Internal shape after mapping a Play subscriptionsv2 payload to our row
  *  fields. Reused by both verify-on-purchase (with userId in scope) and
@@ -352,6 +353,25 @@ export class BillingService {
     return 'matched';
   }
 
+  /** Resolve a subscription row for RTDN / voided paths (token, linked token, orderId). */
+  private async findSubscriptionForRtdn(purchaseToken: string, orderId?: string) {
+    const byToken = await this.prisma.subscription.findUnique({
+      where: { purchaseToken },
+    });
+    if (byToken) return byToken;
+
+    if (orderId) {
+      const byOrder = await this.prisma.subscription.findFirst({
+        where: { orderId },
+      });
+      if (byOrder) return byOrder;
+    }
+
+    return this.prisma.subscription.findFirst({
+      where: { linkedPurchaseToken: purchaseToken },
+    });
+  }
+
   private subscriptionRowData(mapped: MappedSubscriptionState, purchaseToken: string) {
     return {
       productId: mapped.productId,
@@ -503,9 +523,7 @@ export class BillingService {
         isInIntroOfferPeriod: boolean;
       }
   > {
-    const existing = await this.prisma.subscription.findUnique({
-      where: { purchaseToken },
-    });
+    const existing = await this.findSubscriptionForRtdn(purchaseToken);
     if (!existing) {
       this.logger.warn(
         `RTDN for unknown purchaseToken ${purchaseToken.slice(0, 8)}... — no local user mapping yet, skipping.`,
@@ -523,9 +541,9 @@ export class BillingService {
       this.logger.error(
         `Play API re-verify failed for token ${purchaseToken.slice(0, 8)}...: ${(e as Error).message}`,
       );
-      // Don't throw — RTDN handler must return 200 to Pub/Sub. Re-throw as a
-      // typed error so the caller can audit + swallow.
-      throw new BadRequestException('Play API unavailable for RTDN re-verify');
+      throw new RtdnRetryableError(
+        `Play API unavailable for RTDN re-verify: ${(e as Error).message}`,
+      );
     }
 
     const mapped = this.mapPlaySubscription(playSubscription, existing.productId);
@@ -560,6 +578,81 @@ export class BillingService {
     };
   }
 
+  /** Voided purchase RTDN: re-query Play API before revoking entitlement. */
+  async handleVoidedPurchase(
+    purchaseToken: string,
+    orderId: string | undefined,
+    eventType: string,
+    voidedMeta: Record<string, unknown>,
+  ): Promise<{ found: boolean; revoked: boolean }> {
+    const existing = await this.findSubscriptionForRtdn(purchaseToken, orderId);
+    if (!existing) {
+      this.logger.warn(
+        `Voided RTDN for unknown purchaseToken ${purchaseToken.slice(0, 8)}... — orphan.`,
+      );
+      return { found: false, revoked: false };
+    }
+
+    let playSubscription: any;
+    try {
+      playSubscription = await this.playApi.getSubscription(
+        existing.productId,
+        purchaseToken,
+      );
+    } catch (e) {
+      throw new RtdnRetryableError(
+        `Play API voided re-verify failed: ${(e as Error).message}`,
+      );
+    }
+
+    const mapped = this.mapPlaySubscription(playSubscription, existing.productId);
+    const stillEntitled = this.isEntitled({
+      status: mapped.status,
+      expiryTime: mapped.expiryTime,
+    });
+
+    if (stillEntitled) {
+      this.logger.warn(
+        `Voided RTDN but Play API still entitled (state=${mapped.playSubscriptionState}) — no revoke`,
+      );
+      await this.prisma.subscriptionEvent.create({
+        data: {
+          subscriptionId: existing.id,
+          eventType,
+          payload: {
+            ...voidedMeta,
+            playSubscriptionState: mapped.playSubscriptionState,
+            derivedStatus: mapped.status,
+            revoked: false,
+            purchaseToken: purchaseToken.slice(0, 8) + '...',
+          } as any,
+        },
+      });
+      return { found: true, revoked: false };
+    }
+
+    const sub = await this.prisma.subscription.update({
+      where: { id: existing.id },
+      data: this.subscriptionRowData(mapped, purchaseToken),
+    });
+
+    await this.prisma.subscriptionEvent.create({
+      data: {
+        subscriptionId: sub.id,
+        eventType,
+        payload: {
+          ...voidedMeta,
+          playSubscriptionState: mapped.playSubscriptionState,
+          derivedStatus: mapped.status,
+          revoked: true,
+          purchaseToken: purchaseToken.slice(0, 8) + '...',
+        } as any,
+      },
+    });
+
+    return { found: true, revoked: true };
+  }
+
   /** Lightweight informational-audit path: write a SubscriptionEvent row
    *  WITHOUT re-querying Play. Used for notification types that don't
    *  warrant a state mutation (e.g. PRICE_CHANGE_CONFIRMED). Returns `false`
@@ -569,9 +662,7 @@ export class BillingService {
     eventType: string,
     payload: Record<string, unknown>,
   ): Promise<boolean> {
-    const existing = await this.prisma.subscription.findUnique({
-      where: { purchaseToken },
-    });
+    const existing = await this.findSubscriptionForRtdn(purchaseToken);
     if (!existing) {
       this.logger.warn(
         `RTDN informational event ${eventType} for unknown token ${purchaseToken.slice(0, 8)}... — skipping audit.`,

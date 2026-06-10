@@ -1,4 +1,9 @@
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { RtdnInbox } from '@prisma/client';
 import { RtdnService } from './rtdn.service';
 
 function mockConfig(values: Record<string, string> = {}) {
@@ -7,9 +12,35 @@ function mockConfig(values: Record<string, string> = {}) {
   };
 }
 
-function mockRedis() {
+function inboxRow(overrides: Partial<RtdnInbox> = {}): RtdnInbox {
   return {
-    setNx: jest.fn().mockResolvedValue(true),
+    id: 'inbox-1',
+    messageId: 'msg-1',
+    status: 'RECEIVED',
+    attempts: 0,
+    payloadHash: 'hash',
+    payload: {},
+    notificationKind: 'subscription',
+    purchaseToken: 'tok-abc',
+    lastError: null,
+    leaseUntil: null,
+    receivedAt: new Date(),
+    processedAt: null,
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
+
+function mockInbox() {
+  return {
+    ingest: jest.fn().mockResolvedValue({ row: inboxRow(), alreadyProcessed: false }),
+    claim: jest.fn().mockResolvedValue(true),
+    markProcessed: jest.fn().mockResolvedValue(undefined),
+    markOrphan: jest.fn().mockResolvedValue(undefined),
+    markRetryable: jest.fn().mockResolvedValue({ dead: false }),
+    findById: jest.fn(),
+    resetForRetry: jest.fn(),
+    listForReconcile: jest.fn(),
   };
 }
 
@@ -22,14 +53,24 @@ function mockBilling() {
       isInIntroOfferPeriod: false,
     }),
     appendInformationalEvent: jest.fn().mockResolvedValue(true),
+    handleVoidedPurchase: jest.fn().mockResolvedValue({ found: true, revoked: true }),
   };
 }
 
 function build(config: Record<string, string> = { 'rtdn.audience': 'https://api.example/rtdn' }) {
   const billing = mockBilling();
-  const redis = mockRedis();
-  const svc = new RtdnService(mockConfig(config) as any, redis as any, billing as any);
-  return { svc, billing, redis, config };
+  const inbox = mockInbox();
+  const svc = new RtdnService(mockConfig(config) as any, inbox as any, billing as any);
+  return { svc, billing, inbox, config };
+}
+
+function rtdnBody(payload: object, messageId = 'msg-1') {
+  return {
+    message: {
+      messageId,
+      data: Buffer.from(JSON.stringify(payload), 'utf8').toString('base64'),
+    },
+  };
 }
 
 describe('RtdnService', () => {
@@ -74,66 +115,121 @@ describe('RtdnService', () => {
   });
 
   describe('handle', () => {
-    it('no-ops duplicate messageId via Redis SET NX', async () => {
-      const { svc, billing, redis } = build();
-      redis.setNx.mockResolvedValue(false);
-      const payload = {
-        version: '1.0',
-        packageName: 'ai.matheo.app',
-        subscriptionNotification: {
-          notificationType: 2,
-          purchaseToken: 'tok-dup',
-          subscriptionId: 'premium_monthly',
-        },
-      };
-      const body = {
-        message: {
-          messageId: 'msg-dup',
-          data: Buffer.from(JSON.stringify(payload), 'utf8').toString('base64'),
-        },
-      };
-      await svc.handle(body);
+    it('no-ops duplicate messageId when inbox already PROCESSED', async () => {
+      const { svc, billing, inbox } = build();
+      inbox.ingest.mockResolvedValue({
+        row: inboxRow({ status: 'PROCESSED' }),
+        alreadyProcessed: true,
+      });
+      await svc.handle(
+        rtdnBody({
+          version: '1.0',
+          packageName: 'ai.matheo.app',
+          subscriptionNotification: {
+            notificationType: 2,
+            purchaseToken: 'tok-dup',
+            subscriptionId: 'premium_monthly',
+          },
+        }, 'msg-dup'),
+      );
+      expect(inbox.claim).not.toHaveBeenCalled();
       expect(billing.verifyAndRecordPurchaseByToken).not.toHaveBeenCalled();
     });
 
     it('dispatches state-mutating RENEWED notifications', async () => {
-      const { svc, billing } = build();
-      const payload = {
-        version: '1.0',
-        packageName: 'ai.matheo.app',
-        subscriptionNotification: {
-          notificationType: 2,
-          purchaseToken: 'tok-renew',
-          subscriptionId: 'premium_monthly',
-        },
-      };
-      const body = {
-        message: {
-          messageId: 'msg-renew',
-          data: Buffer.from(JSON.stringify(payload), 'utf8').toString('base64'),
-        },
-      };
-      await svc.handle(body);
+      const { svc, billing, inbox } = build();
+      await svc.handle(
+        rtdnBody({
+          version: '1.0',
+          packageName: 'ai.matheo.app',
+          subscriptionNotification: {
+            notificationType: 2,
+            purchaseToken: 'tok-renew',
+            subscriptionId: 'premium_monthly',
+          },
+        }, 'msg-renew'),
+      );
+      expect(inbox.claim).toHaveBeenCalled();
+      expect(inbox.markProcessed).toHaveBeenCalled();
       expect(billing.verifyAndRecordPurchaseByToken).toHaveBeenCalledWith(
         'tok-renew',
         'rtdn:2:SUBSCRIPTION_RENEWED',
       );
     });
 
+    it('marks ORPHAN when no local subscription row exists', async () => {
+      const { svc, billing, inbox } = build();
+      billing.verifyAndRecordPurchaseByToken.mockResolvedValue({ found: false });
+      await svc.handle(
+        rtdnBody({
+          version: '1.0',
+          packageName: 'ai.matheo.app',
+          subscriptionNotification: {
+            notificationType: 4,
+            purchaseToken: 'tok-orphan',
+            subscriptionId: 'premium_monthly',
+          },
+        }),
+      );
+      expect(inbox.markOrphan).toHaveBeenCalled();
+      expect(inbox.markProcessed).not.toHaveBeenCalled();
+    });
+
+    it('returns 503 path on transient Play API failure', async () => {
+      const { svc, billing, inbox } = build();
+      const { RtdnRetryableError } = await import('./rtdn.errors');
+      billing.verifyAndRecordPurchaseByToken.mockRejectedValue(
+        new RtdnRetryableError('Play API down'),
+      );
+      await expect(
+        svc.handle(
+          rtdnBody({
+            version: '1.0',
+            packageName: 'ai.matheo.app',
+            subscriptionNotification: {
+              notificationType: 2,
+              purchaseToken: 'tok-fail',
+              subscriptionId: 'premium_monthly',
+            },
+          }),
+        ),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      expect(inbox.markRetryable).toHaveBeenCalled();
+    });
+
+    it('dispatches voided subscription notifications', async () => {
+      const { svc, billing, inbox } = build();
+      await svc.handle(
+        rtdnBody({
+          version: '1.0',
+          packageName: 'ai.matheo.app',
+          eventTimeMillis: '1',
+          voidedPurchaseNotification: {
+            purchaseToken: 'tok-void',
+            orderId: 'GPA.123',
+            productType: 1,
+            refundType: 1,
+          },
+        }),
+      );
+      expect(billing.handleVoidedPurchase).toHaveBeenCalledWith(
+        'tok-void',
+        'GPA.123',
+        'rtdn:voided:VOIDED_PURCHASE',
+        expect.objectContaining({ productType: 1 }),
+      );
+      expect(inbox.markProcessed).toHaveBeenCalled();
+    });
+
     it('ignores test notifications', async () => {
       const { svc, billing } = build();
-      const payload = {
-        version: '1.0',
-        packageName: 'ai.matheo.app',
-        testNotification: { version: '1.0' },
-      };
-      const body = {
-        message: {
-          messageId: 'msg-test',
-          data: Buffer.from(JSON.stringify(payload), 'utf8').toString('base64'),
-        },
-      };
-      await svc.handle(body);
+      await svc.handle(
+        rtdnBody({
+          version: '1.0',
+          packageName: 'ai.matheo.app',
+          testNotification: { version: '1.0' },
+        }, 'msg-test'),
+      );
       expect(billing.verifyAndRecordPurchaseByToken).not.toHaveBeenCalled();
     });
   });

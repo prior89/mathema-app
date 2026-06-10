@@ -1,11 +1,13 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { PREMIUM_PREVIEW_DAYS, PREMIUM_PREVIEW_PRODUCT_ID } from './billing.constants';
+import { RtdnRetryableError } from './rtdn.errors';
 
 function mockPrisma() {
   return {
     subscription: {
       findUnique: jest.fn(),
+      findFirst: jest.fn().mockResolvedValue(null),
       create: jest.fn(),
       upsert: jest.fn(),
       update: jest.fn(),
@@ -249,6 +251,74 @@ describe('BillingService', () => {
       await expect(
         svc.verifyAndRecordPurchase('u1', 'premium_monthly', 'bad-token'),
       ).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
+  describe('verifyAndRecordPurchaseByToken (RTDN)', () => {
+    it('throws RtdnRetryableError when Play API is unavailable', async () => {
+      const { svc, prisma, playApi } = build();
+      prisma.subscription.findUnique.mockResolvedValue({
+        id: 'sub-1',
+        productId: 'premium_monthly',
+        userId: 'u1',
+      });
+      playApi.getSubscription.mockRejectedValue(new Error('Play down'));
+      await expect(
+        svc.verifyAndRecordPurchaseByToken('token-abc', 'rtdn:2'),
+      ).rejects.toBeInstanceOf(RtdnRetryableError);
+    });
+  });
+
+  describe('handleVoidedPurchase', () => {
+    it('revokes entitlement when Play API shows no longer entitled', async () => {
+      const { svc, prisma, playApi } = build();
+      prisma.subscription.findUnique.mockResolvedValue({
+        id: 'sub-1',
+        productId: 'premium_monthly',
+        userId: 'u1',
+        status: 'ACTIVE',
+        expiryTime: new Date('2026-07-01'),
+      });
+      playApi.getSubscription.mockResolvedValue({
+        subscriptionState: 'SUBSCRIPTION_STATE_EXPIRED',
+        lineItems: [{ productId: 'premium_monthly', expiryTime: '2026-05-01T00:00:00Z' }],
+      });
+      prisma.subscription.update.mockResolvedValue({ id: 'sub-1' });
+      prisma.subscriptionEvent.create.mockResolvedValue({});
+
+      const result = await svc.handleVoidedPurchase(
+        'token-void',
+        'GPA.1',
+        'rtdn:voided',
+        { refundType: 1 },
+      );
+      expect(result).toEqual({ found: true, revoked: true });
+      expect(prisma.subscription.update).toHaveBeenCalled();
+    });
+
+    it('does not revoke when Play API still shows entitled', async () => {
+      const { svc, prisma, playApi } = build();
+      prisma.subscription.findUnique.mockResolvedValue({
+        id: 'sub-1',
+        productId: 'premium_monthly',
+        userId: 'u1',
+        status: 'ACTIVE',
+        expiryTime: new Date('2026-07-01'),
+      });
+      playApi.getSubscription.mockResolvedValue({
+        subscriptionState: 'SUBSCRIPTION_STATE_ACTIVE',
+        lineItems: [{ productId: 'premium_monthly', expiryTime: '2026-08-01T00:00:00Z' }],
+      });
+      prisma.subscriptionEvent.create.mockResolvedValue({});
+
+      const result = await svc.handleVoidedPurchase(
+        'token-void',
+        undefined,
+        'rtdn:voided',
+        {},
+      );
+      expect(result).toEqual({ found: true, revoked: false });
+      expect(prisma.subscription.update).not.toHaveBeenCalled();
     });
   });
 

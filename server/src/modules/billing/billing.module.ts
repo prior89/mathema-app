@@ -11,6 +11,8 @@ import { ObfuscatedAccountService } from './obfuscated-account.service';
 import { PlayApiClient } from './play-api-client.service';
 import { QuotaService } from './quota.service';
 import { RtdnController } from './rtdn.controller';
+import { RtdnInboxService } from './rtdn-inbox.service';
+import { RtdnOrphanReconcileService } from './rtdn-orphan-reconcile.service';
 import { RtdnService } from './rtdn.service';
 
 @Module({
@@ -25,7 +27,9 @@ import { RtdnService } from './rtdn.service';
     FreeTierSolverQuotaGuard,
     PremiumFeatureGuard,
     PremiumAccessService,
+    RtdnInboxService,
     RtdnService,
+    RtdnOrphanReconcileService,
   ],
   controllers: [BillingController, RtdnController],
   exports: [

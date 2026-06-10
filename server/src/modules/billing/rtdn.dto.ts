@@ -43,6 +43,12 @@ export interface DeveloperNotification {
     subscriptionId: string;
   };
   oneTimeProductNotification?: unknown;
-  voidedPurchaseNotification?: unknown;
+  /** productType: 1 = subscription, 2 = one-time (we only sell subscriptions). */
+  voidedPurchaseNotification?: {
+    purchaseToken: string;
+    orderId?: string;
+    productType: number;
+    refundType?: number;
+  };
   testNotification?: { version: string };
 }
