@@ -32,7 +32,9 @@
     "cap:sync": "npm -w app run cap:sync",
     "cap:open": "npm -w app run cap:open",
     "billing:preflight": "node scripts/billing-g1-preflight.cjs",
-    "billing:sync-env": "node scripts/billing-g1-sync-env.cjs"
+    "billing:sync-env": "node scripts/billing-g1-sync-env.cjs",
+    "billing:push-secrets": "node scripts/billing-g1-push-gh-secrets.cjs",
+    "billing:rtdn-setup": "node scripts/billing-g1-rtdn-setup.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

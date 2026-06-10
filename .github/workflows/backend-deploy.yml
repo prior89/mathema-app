@@ -143,6 +143,9 @@ jobs:
           if [ -n "${{ secrets.RTDN_SERVICE_ACCOUNT_EMAIL }}" ]; then
             ENV_VARS="$ENV_VARS RTDN_SERVICE_ACCOUNT_EMAIL=${{ secrets.RTDN_SERVICE_ACCOUNT_EMAIL }}"
           fi
+          if [ -n "${{ secrets.PLAY_OBFUSCATED_ACCOUNT_SECRET }}" ]; then
+            ENV_VARS="$ENV_VARS PLAY_OBFUSCATED_ACCOUNT_SECRET=${{ secrets.PLAY_OBFUSCATED_ACCOUNT_SECRET }}"
+          fi
           az containerapp update \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
