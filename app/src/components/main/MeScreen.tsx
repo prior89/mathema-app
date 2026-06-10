@@ -2,11 +2,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import { fetchMe } from '../../lib/queries';
-import { tokens } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import { EfficacyCard } from './EfficacyCard';
+import { BillingPlanCard } from '../BillingPlanCard';
 
 const GRADE_LABEL: Record<string, string> = {
   CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
@@ -16,14 +17,10 @@ const GRADE_LABEL: Record<string, string> = {
 export function MeScreen() {
   const nav = useNavigate();
   const { t } = useT();
+  const { logout } = useAuth();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const userName = me.data?.name ?? '';
   const initial = userName.charAt(0).toUpperCase();
-
-  function logout() {
-    tokens.clear();
-    nav('/login');
-  }
 
   return (
     <div className="screen">
@@ -55,9 +52,7 @@ export function MeScreen() {
 
           <EfficacyCard />
 
-          {/* Billing / paywall card removed in v1.0 — paywall is Phase 2 work.
-              Profile card above + Quick links below give identity + reports;
-              StudyScreen's QuotaMeter still surfaces the Free-tier counter. */}
+          <BillingPlanCard />
 
           {/* Quick links */}
           <div className="section-h">

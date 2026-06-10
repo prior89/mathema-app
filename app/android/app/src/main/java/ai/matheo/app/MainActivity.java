@@ -1,8 +1,13 @@
 package ai.matheo.app;
 
+import android.os.Bundle;
+
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
-    // v1.0 has no custom Capacitor plugins. BillingPlugin and the Play Billing
-    // surface are deferred to Phase 2; re-register here when the paywall lands.
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(BillingPlugin.class);
+        super.onCreate(savedInstanceState);
+    }
 }

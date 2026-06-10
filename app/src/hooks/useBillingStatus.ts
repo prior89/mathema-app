@@ -22,13 +22,19 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { getServerStatus, BillingServerStatus } from '../lib/billing';
+import { cacheBillingUiEnabled, isBillingUiBuildEnabled } from '../lib/billing-flags';
 
 export type BillingStatusData = BillingServerStatus;
 
 export function useBillingStatus() {
   return useQuery<BillingStatusData>({
     queryKey: ['billing-status'],
-    queryFn: getServerStatus,
+    queryFn: async () => {
+      const status = await getServerStatus();
+      const enabled = status.billingUiEnabled === true || isBillingUiBuildEnabled();
+      cacheBillingUiEnabled(enabled);
+      return status;
+    },
     staleTime: 30_000,
     refetchOnWindowFocus: true,
     refetchInterval: 60_000,

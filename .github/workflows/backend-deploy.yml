@@ -131,6 +131,11 @@ jobs:
           if [ -n "${{ secrets.VITE_GOOGLE_CLIENT_ID }}" ]; then
             ENV_VARS="$ENV_VARS GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}"
           fi
+          # Billing UI switch — set GitHub secret BILLING_UI_ENABLED=true to
+          # expose paywall / upgrade CTAs without a frontend rebuild.
+          if [ -n "${{ secrets.BILLING_UI_ENABLED }}" ]; then
+            ENV_VARS="$ENV_VARS BILLING_UI_ENABLED=${{ secrets.BILLING_UI_ENABLED }}"
+          fi
           az containerapp update \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \

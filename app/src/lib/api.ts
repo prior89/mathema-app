@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import { readCachedBillingUiEnabled } from './billing-flags';
 import { getDeviceHash } from './deviceId';
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL ?? '/api/v1';
@@ -10,19 +11,71 @@ export const api = axios.create({
 
 const TOKEN_KEY = 'mathema.access';
 const REFRESH_KEY = 'mathema.refresh';
+let tokenRevision = 0;
 
 export const tokens = {
   get: () => localStorage.getItem(TOKEN_KEY),
   getRefresh: () => localStorage.getItem(REFRESH_KEY),
   set: (a: string, r: string) => {
+    tokenRevision += 1;
     localStorage.setItem(TOKEN_KEY, a);
     localStorage.setItem(REFRESH_KEY, r);
   },
   clear: () => {
+    tokenRevision += 1;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
   },
 };
+
+type TokenPair = {
+  accessToken: string;
+  refreshToken: string;
+};
+
+async function requestTokenRefresh(refreshToken: string): Promise<TokenPair> {
+  const deviceHash = await getDeviceHash().catch(() => '');
+  const { data } = await axios.post(
+    `${API_BASE}/auth/refresh`,
+    { refreshToken },
+    {
+      headers: deviceHash ? { 'X-Device-Hash': deviceHash } : {},
+      timeout: 10_000,
+    },
+  );
+  return data.data as TokenPair;
+}
+
+/**
+ * Restore a persisted login when the short-lived access token is missing but
+ * the refresh token is still valid. This is intentionally a raw axios call so
+ * it cannot recurse through the API response interceptor.
+ */
+export async function restoreStoredSession(): Promise<boolean> {
+  const refreshToken = tokens.getRefresh();
+  if (!refreshToken) return false;
+
+  const revision = tokenRevision;
+  const next = await requestTokenRefresh(refreshToken);
+  if (revision !== tokenRevision || tokens.getRefresh() !== refreshToken) {
+    return false;
+  }
+  tokens.set(next.accessToken, next.refreshToken);
+  return true;
+}
+
+/**
+ * Best-effort server-side logout. Callers must still clear local state even
+ * when this request is offline or times out.
+ */
+export async function revokeRefreshToken(refreshToken: string | null): Promise<void> {
+  if (!refreshToken) return;
+  await axios.post(
+    `${API_BASE}/auth/logout`,
+    { refreshToken },
+    { timeout: 3_000 },
+  );
+}
 
 api.interceptors.request.use(async (cfg) => {
   const t = tokens.get();
@@ -58,12 +111,20 @@ api.interceptors.response.use(
   async (err: AxiosError) => {
     const original = err.config as AxiosRequestConfig & { _retry?: boolean };
 
-    // AI Solver Free-tier quota: backend returns 403 with body.error.code
-    // === 'QuotaExceeded' once the daily counter is exhausted. v1.0 has no
-    // paywall surface, so we just let the rejection bubble up — the calling
-    // screen renders an inline message ("오늘 풀이 8회 모두 사용했어요") via
-    // its normal error handler. Re-introduce a redirect here when the Phase
-    // 2 paywall lands.
+    if (err.response?.status === 403) {
+      const data: any = err.response.data;
+      const code = data?.error?.code ?? data?.error;
+      if (code === 'QuotaExceeded' && readCachedBillingUiEnabled()) {
+        try {
+          if (!window.location.pathname.startsWith('/app/paywall')) {
+            window.location.assign('/app/paywall?reason=quota');
+          }
+        } catch {
+          /* non-browser */
+        }
+        return Promise.reject(err);
+      }
+    }
 
     if (err.response?.status === 401 && !original?._retry && tokens.getRefresh()) {
       if (isRefreshing) {
@@ -83,19 +144,27 @@ api.interceptors.response.use(
       original._retry = true;
       isRefreshing = true;
       try {
-        // DEV-6: include X-Device-Hash so /auth/refresh can match against the
-        // user's currently-bound AuthDevice. Without this, refresh from a
-        // displaced device would silently succeed and break the single-session
-        // invariant.
-        const deviceHash = await getDeviceHash().catch(() => '');
-        const { data } = await axios.post(
-          `${API_BASE}/auth/refresh`,
-          { refreshToken: tokens.getRefresh() },
-          { headers: deviceHash ? { 'X-Device-Hash': deviceHash } : {} },
-        );
-        const access = data.data.accessToken;
-        const refresh = data.data.refreshToken;
-        tokens.set(access, refresh);
+        const refreshToken = tokens.getRefresh();
+        const revision = tokenRevision;
+        if (!refreshToken) {
+          const drain = pending;
+          pending = [];
+          drain.forEach((p) => p.reject(err));
+          return Promise.reject(err);
+        }
+
+        const next = await requestTokenRefresh(refreshToken);
+        // An explicit logout or a newer login may have happened while the
+        // refresh request was in flight. Never resurrect or overwrite that
+        // changed session with this stale response.
+        if (revision !== tokenRevision || tokens.getRefresh() !== refreshToken) {
+          const drain = pending;
+          pending = [];
+          drain.forEach((p) => p.reject(err));
+          return Promise.reject(err);
+        }
+        const access = next.accessToken;
+        tokens.set(access, next.refreshToken);
         // Drain pending FIRST, then resolve original. Snapshot+empty before
         // notifying so any new 401s while we resolve queue up cleanly into
         // a fresh pending array (would-be-impossible today since
@@ -146,9 +215,14 @@ api.interceptors.response.use(
         // query cancelled and the cache rebuilt against the new identity.
         tokens.clear();
         drain.forEach((p) => p.reject(e));
-        if (code === 'device_displaced' || code === 'device_mismatch') {
-          try { sessionStorage.setItem('matheo.loginNotice', code); } catch {}
-        }
+        try {
+          sessionStorage.setItem(
+            'matheo.loginNotice',
+            code === 'device_displaced' || code === 'device_mismatch'
+              ? code
+              : 'session_expired',
+          );
+        } catch {}
         // P5 fix 2026-05-27: emit a custom event instead of forcing a hard
         // page reload. AuthContext listens, clears the QueryClient cache, and
         // performs a React Router navigate(). Falls back to window.location

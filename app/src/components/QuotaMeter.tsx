@@ -1,27 +1,23 @@
 /**
  * QuotaMeter — inline AI Solver quota indicator.
  *
- * Rendering rules:
- *   - loading / no quota field on server response: render nothing (avoid
- *     flashing "0/0" before /billing/status returns).
- *   - premium (limit === null): render nothing — premium users never see a counter.
- *   - free, under limit: small line showing "{used}/{limit} today".
- *   - free, in grace window: bonus hint (16/day for first 7 days after signup).
- *   - free, at limit: red status text. No paywall link in v1.0 (the paywall
- *     route is gone); Phase 2 re-introduces the tappable upgrade CTA here.
+ * When billing UI is enabled (BILLING_UI_ENABLED), exhausted state links to paywall.
+ * When disabled (v1.0 default), shows counter only — no upgrade CTA.
  */
+import { useNavigate } from 'react-router-dom';
 import { useBillingStatus } from '../hooks/useBillingStatus';
+import { useBillingUiEnabled } from '../lib/billing-flags';
 import { useT } from '../lib/i18n';
 
 interface Props {
-  /** Optional className passthrough for placement-specific tweaks. */
   className?: string;
-  /** Inline style passthrough. */
   style?: React.CSSProperties;
 }
 
 export function QuotaMeter({ className, style }: Props) {
+  const nav = useNavigate();
   const { t } = useT();
+  const billingUi = useBillingUiEnabled();
   const status = useBillingStatus();
 
   const quota = status.data?.quota?.solver;
@@ -48,9 +44,29 @@ export function QuotaMeter({ className, style }: Props) {
         ...style,
       }}
     >
-      <span style={exhausted ? { fontWeight: 600 } : undefined}>
-        {t(exhausted ? 'quota.solver.exhausted' : 'quota.solver.remaining', { used, limit })}
-      </span>
+      {exhausted && billingUi ? (
+        <button
+          type="button"
+          onClick={() => nav('/app/paywall?reason=quota')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            color: 'var(--p-danger)',
+            fontWeight: 600,
+            fontSize: 11.5,
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            fontFamily: 'inherit',
+          }}
+        >
+          {t('quota.solver.exhausted', { used, limit })}
+        </button>
+      ) : (
+        <span style={exhausted ? { fontWeight: 600 } : undefined}>
+          {t(exhausted ? 'quota.solver.exhausted' : 'quota.solver.remaining', { used, limit })}
+        </span>
+      )}
       {inGrace && !exhausted && graceDaysLeft > 0 && (
         <span style={{ color: 'var(--p-accent)', fontSize: 10.5 }}>
           {t('quota.solver.grace', { limit, daysLeft: graceDaysLeft })}

@@ -50,6 +50,7 @@ jobs:
           VITE_API_BASE_URL: https://mathema-backend.redcoast-6e6508a7.centralindia.azurecontainerapps.io/api/v1
           # OAuth Web Client ID — when unset the Google button is hidden.
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_BILLING_ENABLED: ${{ secrets.BILLING_UI_ENABLED }}
         run: npm -w app run build
 
       - name: Capacitor sync (android)

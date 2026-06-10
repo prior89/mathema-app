@@ -33,6 +33,7 @@ export class BillingController {
         : null,
       quota: { solver: solverQuota },
       monetization: this.billing.getMonetizationStrategy(),
+      billingUiEnabled: this.billing.isBillingUiEnabled(),
     };
   }
 

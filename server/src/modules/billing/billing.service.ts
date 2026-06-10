@@ -47,6 +47,13 @@ export class BillingService {
     return MONETIZATION_STRATEGY;
   }
 
+  /** Runtime switch: flip BILLING_UI_ENABLED=true on the backend to expose
+   *  paywall / upgrade CTAs without an app rebuild. Defaults off (v1.0 free). */
+  isBillingUiEnabled(): boolean {
+    const raw = process.env.BILLING_UI_ENABLED ?? '';
+    return raw === 'true' || raw === '1';
+  }
+
   private isEntitled(sub: {
     status: SubscriptionStatus;
     expiryTime: Date;

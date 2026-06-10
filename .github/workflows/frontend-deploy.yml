@@ -43,6 +43,8 @@ jobs:
           # GitHub repo secret — OAuth Web Client ID from Cloud Console.
           # When unset the Google button is hidden; email/password still works.
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          # Optional: force billing UI on at build time (server BILLING_UI_ENABLED also works).
+          VITE_BILLING_ENABLED: ${{ secrets.BILLING_UI_ENABLED }}
         run: npm -w app run build
 
       # OIDC login — fetches the canonical SWA deployment token from Azure so
