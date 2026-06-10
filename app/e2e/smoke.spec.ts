@@ -21,7 +21,8 @@ test.describe('matheo — public smoke', () => {
     await expect(
       page.getByRole('button', { name: /sign in|로그인|साइन इन/i }),
     ).toBeVisible();
-    await expect(page.getByAltText('Matheo')).toBeVisible();
+    // LoginPage renders two BrandLogo images (header + hero).
+    await expect(page.getByRole('img', { name: 'Matheo' }).first()).toBeVisible();
   });
 
   test('privacy page renders without login', async ({ page }) => {
