@@ -935,7 +935,7 @@ function StudySession({ sessionId, focusProblemId, onClear }: { sessionId: strin
     enabled: !!session.data?.unitId,
   });
   const [perspective, setPerspective] = useState<'공식 중심' | '단계별' | '시각화' | '실생활 예시'>('단계별');
-  const [confidence, setConfidence] = useState(50);
+  const [confidence, setConfidence] = useState<number | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [paused, setPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -978,7 +978,7 @@ function StudySession({ sessionId, focusProblemId, onClear }: { sessionId: strin
     setStepResults({});
     setWrongChoiceIds(new Set());
     setLastFeedback(null);
-    setConfidence(50);
+    setConfidence(null);
     startedAt.current = Date.now();
   }, [currentProblem?.id]);
 
@@ -999,7 +999,7 @@ function StudySession({ sessionId, focusProblemId, onClear }: { sessionId: strin
       problemId: currentProblem!.id, answer: '',
       durationSec: Math.max(1, Math.floor((Date.now() - startedAt.current) / 1000)),
       // 첫 시도에만 confidence 보냄 (재시도엔 메타인지 의미 흐려짐)
-      confidence: wrongChoiceIds.size === 0 ? confidence : undefined,
+      confidence: wrongChoiceIds.size === 0 && confidence != null ? confidence : undefined,
       stepIndex: problemStep,
       choiceId,
     }),

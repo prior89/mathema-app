@@ -11,7 +11,7 @@ Monorepo:
 > **Status: v0.1.0 release candidate — Internal Testing track upload in progress.**
 >
 > - 🟢 Backend live on Azure Central India (Container Apps + Postgres Flexible + Redis + Key Vault).
-> - 🟢 Frontend live on Azure Static Web Apps (`https://black-wave-093b02b00.7.azurestaticapps.net`).
+> - 🟢 Frontend live on custom domain (`https://app.matheo.verastudy.net`).
 > - 🟢 Math-helper sidecar live (internal ingress, called from server).
 > - 🟢 Signed Android AAB ready (Capacitor 8 + Play Billing 7.1.1 native plugin).
 > - 🟢 Google Play Billing: Subscription Prisma model + Play Developer API v3 server verify + RTDN webhook + Free 8/day quota gate + paywall UI. All wired; **Play Console product creation + Internal Testing track release are the operator's last steps.**
@@ -379,7 +379,7 @@ Live topology (RG `mathema-prod-cin`):
 
 | Layer | Resource | Notes |
 |---|---|---|
-| Frontend | Static Web App `mathema-swa` | `https://black-wave-093b02b00.7.azurestaticapps.net` |
+| Frontend | Custom domain (verastudy) | `https://app.matheo.verastudy.net` |
 | Backend | Container App `mathema-backend` | NestJS, system-assigned MI pulls from ACR |
 | Math-helper | Container App `mathema-math-helper` | Python LangGraph, internal ingress |
 | DB | Postgres Flexible Server `mathema-pg-*` | B1ms, 32GB, `publicNetworkAccess: Enabled` (see Status note) |
@@ -392,7 +392,7 @@ Live topology (RG `mathema-prod-cin`):
 
 1. Push to `main` — workflows auto-trigger by path:
    - `server/**` → `backend-deploy.yml` (Docker build → ACR push → Container App update → smoke test)
-   - `app/**` → `frontend-deploy.yml` (Vite build → SWA deploy)
+   - `app/**` → `frontend-deploy.yml` (Vite build → deploy to app.matheo.verastudy.net)
    - `services/math-helper/**` → `math-helper-deploy.yml`
    - tag `v*` or workflow_dispatch → `android-release.yml` (signed AAB artifact, 30-day retention)
 

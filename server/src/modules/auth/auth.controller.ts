@@ -7,6 +7,7 @@ import { GoogleSignInDto } from './dto/google-signin.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { GuestStartDto, GuestUpgradeDto } from './dto/guest.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -62,6 +63,39 @@ export class AuthController {
     return this.service.devLogin({
       ip: ip ?? undefined, ua: ua ?? undefined,
       deviceHash: deviceHash || undefined,
+    });
+  }
+
+  // Try-first guest account. Tighter than register (3/min/IP) — each call can
+  // mint a user row; deviceHash reuse in the service deduplicates retries.
+  @Throttle({ auth: { ttl: 60_000, limit: 3 } })
+  @Public() @Post('guest/start')
+  guestStart(
+    @Body() dto: GuestStartDto,
+    @Req() req: any,
+    @Headers('x-device-hash') deviceHash?: string,
+  ) {
+    const ip = (req?.ip ?? req?.headers?.['x-forwarded-for'] ?? null) as string | null;
+    const ua = (req?.headers?.['user-agent'] ?? null) as string | null;
+    return this.service.guestStart(dto, {
+      ip: ip ?? undefined, ua: ua ?? undefined,
+      deviceHash: deviceHash || undefined,
+    });
+  }
+
+  /** Guest → real account in place (progress preserved, same userId). */
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ auth: { ttl: 60_000, limit: 5 } })
+  @Post('guest/upgrade')
+  guestUpgrade(
+    @CurrentUser('id') userId: string,
+    @Body() dto: GuestUpgradeDto,
+    @Req() req: any,
+  ) {
+    const ip = (req?.ip ?? req?.headers?.['x-forwarded-for'] ?? null) as string | null;
+    const ua = (req?.headers?.['user-agent'] ?? null) as string | null;
+    return this.service.guestUpgrade(userId, dto, {
+      ip: ip ?? undefined, ua: ua ?? undefined,
     });
   }
 

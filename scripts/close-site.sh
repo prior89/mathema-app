@@ -77,5 +77,5 @@ npx -y @azure/static-web-apps-cli@latest deploy "$DIST" \
 step "4. Disable frontend-deploy.yml so app/** pushes don't auto-reopen"
 gh workflow disable frontend-deploy.yml -R prior89/mathema-app 2>&1 || true
 
-printf "\n\033[1;32m✓ Site closed.\033[0m https://black-wave-093b02b00.7.azurestaticapps.net/ now shows the maintenance page.\n"
+printf "\n\033[1;32m✓ Site closed.\033[0m https://app.matheo.verastudy.net/ now shows the maintenance page.\n"
 printf "  Reopen with: bash scripts/reopen-site.sh\n"

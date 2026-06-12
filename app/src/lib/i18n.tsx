@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { translations, TranslationKey } from './translations';
+import { detectOnboardingLang } from './onboarding-locale';
 
 // Future expansion: add 'es' (Latin America) when ready. Keep in sync with
 // `server/src/common/i18n/current-lang.decorator.ts` and `translations.ts`.
@@ -31,10 +32,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return 'en';
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'ko' || saved === 'en' || saved === 'hi') return saved;
-    // Browser language pick: ko / hi / en. KR users land on Korean from the
-    // login screen instead of being forced through English (previous default
-    // dropped ko-KR onto English and broke parity with the in-app country
-    // gate).
+    const path = window.location.pathname;
+    // Pre-auth onboarding/register: market locale (KR→ko, IN/ID/AE→en), no hi flash.
+    if (path.startsWith('/onboarding') || path.startsWith('/register')) {
+      return detectOnboardingLang();
+    }
+    // Logged-in surfaces: browser language pick.
     const nav = navigator.language.toLowerCase();
     if (nav.startsWith('ko')) return 'ko';
     if (nav.startsWith('hi')) return 'hi';

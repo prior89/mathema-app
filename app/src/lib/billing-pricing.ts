@@ -40,6 +40,21 @@ export function monthlyEquivalent(
   );
 }
 
+// India-market price anchoring ("just ₹X a day") — Doubtnut/PW style framing.
+export function perDayPrice(
+  yearlyMicros: string,
+  currencyCode: string,
+  locale: string,
+): string | null {
+  const yearlyAmount = microsToAmount(yearlyMicros);
+  if (yearlyAmount === null) return null;
+  return formatMicros(
+    String(Math.round((yearlyAmount / 365) * MICROS_PER_UNIT)),
+    currencyCode,
+    locale,
+  );
+}
+
 export function annualSavingsPercent(
   monthlyMicros: string,
   yearlyMicros: string,

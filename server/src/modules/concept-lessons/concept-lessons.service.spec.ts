@@ -32,6 +32,11 @@ function mockPrisma(over: any = {}) {
       findUnique: jest.fn().mockResolvedValue({ completedSteps: [], masteredAt: null }),
       ...over.conceptProgress,
     },
+    attempt: {
+      // Default: no prior attempts → first run, no retake substitution.
+      findMany: jest.fn().mockResolvedValue([]),
+      ...over.attempt,
+    },
   };
 }
 function mockLlm(): AnyMock {
@@ -147,6 +152,42 @@ describe('ConceptLessonsService.practiceProblems', () => {
     expect(out.map((p) => p.id)).toEqual(frozenIds); // order preserved
     expect(llm.generate).not.toHaveBeenCalled();
     expect(updateSpy).not.toHaveBeenCalled(); // no re-freeze
+  });
+
+  it('substitutes same-difficulty pool variants on retake (all 20 attempted)', async () => {
+    const frozenIds = Array.from({ length: 20 }, (_, i) => `frozen-${i}`);
+    const canonical = frozenIds.map((id) => makeProblem(id, Difficulty.MIDDLE));
+    const alternates = Array.from({ length: 5 }, (_, i) => makeProblem(`alt-${i}`, Difficulty.MIDDLE));
+    const prisma = mockPrisma({
+      conceptLesson: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'L1', ncertClass: 'CLASS_7', chapterNumber: 1, titleEn: 'X',
+          unitId: 'u1', subUnitId: 's1',
+          masterySetProblemIds: frozenIds,
+          masterySetCuratedAt: new Date('2026-05-22T00:00:00Z'),
+        }),
+      },
+      problem: {
+        findMany: jest.fn()
+          .mockResolvedValueOnce(canonical)   // Path-1 hydration
+          .mockResolvedValueOnce(alternates), // retake alternates pool
+      },
+      attempt: {
+        findMany: jest.fn()
+          // All 20 canonical problems have an ANSWER-step attempt → retake.
+          .mockResolvedValueOnce(frozenIds.map((id) => ({ problemId: id })))
+          // None of the alternates attempted yet.
+          .mockResolvedValueOnce([]),
+      },
+    });
+    const { svc } = build({ prisma });
+    const out = await svc.practiceProblems('CH-1', 'en', 'u1');
+    expect(out).toHaveLength(20);
+    // First 5 slots swapped for the 5 fresh same-difficulty alternates,
+    // the rest fall back to canonical (pool exhausted).
+    expect(out.slice(0, 5).map((p) => p.id)).toEqual(['alt-0', 'alt-1', 'alt-2', 'alt-3', 'alt-4']);
+    expect(out.slice(5).map((p) => p.id)).toEqual(frozenIds.slice(5));
+    expect(new Set(out.map((p) => p.id)).size).toBe(20);
   });
 });
 

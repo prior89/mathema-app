@@ -17,11 +17,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { post } from '../../lib/api';
+import { hapticResult, hapticSelect } from '../../lib/haptics';
 import { nextStudyProblem } from '../../lib/mutations';
-import { fetchProblemHint, fetchProblemHintWalkthrough } from '../../lib/queries';
+import { fetchProblemHint, fetchProblemHintWalkthrough, fetchStreak } from '../../lib/queries';
 import { useShuffledChoices } from '../../lib/shuffle';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
+import { AnswerFeedbackSheet } from './AnswerFeedbackSheet';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
@@ -60,6 +62,7 @@ export function StudyPracticeScreen() {
   const [current, setCurrent] = useState<StudyProblem | null>(null);
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [result, setResult] = useState<AttemptResponse | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [questionNum, setQuestionNum] = useState(0);
@@ -85,6 +88,15 @@ export function StudyPracticeScreen() {
     enabled: hintLevel >= 2 && !!current?.id,
     staleTime: Infinity,
   });
+  // Streak chip on correct answers — only fetched after the first correct
+  // result, so the value already reflects today's activity. Streak changes
+  // at most once per day; no per-problem refetch needed.
+  const streakQuery = useQuery({
+    queryKey: ['streak'],
+    queryFn: fetchStreak,
+    enabled: result?.isCorrect === true,
+    staleTime: Infinity,
+  });
 
   const fetchNext = useMutation({
     mutationFn: () => nextStudyProblem(chapterCode!),
@@ -97,6 +109,7 @@ export function StudyPracticeScreen() {
       setCurrent(problem as StudyProblem);
       setPickedId(null);
       setResult(null);
+      setSheetOpen(false);
       setHintLevel(0);
       startedAtRef.current = Date.now();
       canvasRef.current?.clear();
@@ -134,6 +147,8 @@ export function StudyPracticeScreen() {
     },
     onSuccess: (r) => {
       setResult(r);
+      setSheetOpen(true);
+      hapticResult(r.isCorrect);
       if (r.isCorrect) setCorrectCount((n) => n + 1);
       else setWrongCount((n) => n + 1);
       qc.invalidateQueries({ queryKey: ['wn-list'] });
@@ -142,7 +157,11 @@ export function StudyPracticeScreen() {
       qc.invalidateQueries({ queryKey: ['chapter-progress'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
-    onError: () => setResult({ isCorrect: false, selectedChoice: null, correctChoice: null }),
+    onError: () => {
+      setResult({ isCorrect: false, selectedChoice: null, correctChoice: null });
+      setSheetOpen(true);
+      hapticResult(false);
+    },
   });
 
   function onSubmit() {
@@ -152,6 +171,13 @@ export function StudyPracticeScreen() {
 
   function onNext() {
     fetchNext.mutate();
+  }
+
+  function onTryAgain() {
+    setResult(null);
+    setPickedId(null);
+    setSheetOpen(false);
+    startedAtRef.current = Date.now();
   }
 
   function onStop() {
@@ -370,6 +396,7 @@ export function StudyPracticeScreen() {
                   onClick={() => {
                     if (locked) return;
                     if (result && !result.isCorrect) setResult(null);
+                    hapticSelect();
                     setPickedId(c.id);
                   }}
                   style={isWrongPick ? { borderColor: 'var(--p-danger)' } : undefined}
@@ -382,30 +409,14 @@ export function StudyPracticeScreen() {
           </div>
         )}
 
-        {result && (
-          <div
-            className="card"
-            style={{
-              padding: 12, fontSize: 13,
-              background: result.isCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)',
-              color: result.isCorrect ? 'var(--p-success)' : 'var(--p-danger)',
-              borderColor: 'transparent', fontWeight: 600,
-            }}
-          >
-            {result.isCorrect ? t('practice.correct.msg') : t('practice.wrong.msg')}
-            {result.correctChoice && !result.isCorrect && (
-              <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)', fontWeight: 400 }}>
-                {t('practice.wrong.correctAnswer')} <MathText text={result.correctChoice.text} />
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Sticky footer — Check / Try Again / Next.
           User-spec 2026-05-23: Next is locked until the student answers
           correctly. Wrong answers route to Try Again, which clears the pick
-          + result (canvas stays, so working isn't lost). */}
+          + result (canvas stays, so working isn't lost). After a check the
+          verdict arrives in the feedback sheet; the footer doubles as the
+          fallback action row when the sheet is dismissed to review work. */}
       <div className="screen-foot" style={{ paddingTop: 6 }}>
         {!result ? (
           <button
@@ -422,19 +433,29 @@ export function StudyPracticeScreen() {
             <Glyph.ChevronR />
           </button>
         ) : (
-          <button
-            className="btn"
-            onClick={() => {
-              setResult(null);
-              setPickedId(null);
-              startedAtRef.current = Date.now();
-            }}
-          >
+          <button className="btn" onClick={onTryAgain}>
             {t('practice.tryAgain')}
           </button>
         )}
       </div>
       <TabBar />
+      {result && sheetOpen && (
+        <AnswerFeedbackSheet
+          correct={result.isCorrect}
+          correctAnswerText={!result.isCorrect ? (result.correctChoice?.text ?? null) : null}
+          streakDays={streakQuery.data?.days ?? null}
+          actionLabel={
+            result.isCorrect
+              ? fetchNext.isPending
+                ? t('practice.loading')
+                : t('practice.nextProblem')
+              : t('practice.tryAgain')
+          }
+          actionPending={fetchNext.isPending}
+          onAction={result.isCorrect ? onNext : onTryAgain}
+          onDismiss={() => setSheetOpen(false)}
+        />
+      )}
     </div>
   );
 }

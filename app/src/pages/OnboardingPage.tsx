@@ -2,7 +2,7 @@
  * Ported from `App onboarding/screens-a.jsx` + `screens-b.jsx`.
  * Phone Auth option hidden (no backend); Goal stored in localStorage; Diagnostic state in-memory.
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { post, patch, tokens, get } from '../lib/api';
 import { Glyph } from '../components/onboarding/Glyph';
@@ -24,7 +24,13 @@ import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
 import { isGoogleSignInConfigured } from '../lib/google-client-id';
-import { requiresGuardianConsent } from '../lib/guardian-consent';
+import {
+  birthDateFromAge,
+  requiresGuardianConsentFromAge,
+} from '../lib/guardian-consent';
+import { LAUNCH_STUDENT_ONLY } from '../lib/launch-config';
+import { detectOnboardingLang, langForCountry } from '../lib/onboarding-locale';
+import { AgeGate } from '../components/onboarding/AgeGate';
 import { fetchGuardianConsentStatus, requestGuardianConsent } from '../lib/queries';
 import '../styles/onboarding.css';
 
@@ -39,7 +45,9 @@ type ConsentMap = Record<ConsentKey, boolean>;
 // "Coming soon" until then.
 type CountryId = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG';
 
-const STEP_FLOW: StepKey[] = ['welcome', 'country', 'auth', 'role', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready'];
+const STEP_FLOW: StepKey[] = LAUNCH_STUDENT_ONLY
+  ? ['welcome', 'country', 'auth', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready']
+  : ['welcome', 'country', 'auth', 'role', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready'];
 
 // CLASS_X (UI) → GradeLevel (backend enum)
 const GRADE_MAP: Record<GradeId, string> = {
@@ -77,8 +85,18 @@ export default function OnboardingPage() {
 }
 
 function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
-  const { refreshUser } = useAuth();
+  const { refreshUser, startGuest } = useAuth();
+  const { setLang } = useT();
   const [step, setStep] = useState<StepKey>('welcome');
+  // Try-first guest session (feature-flagged). Guests skip every PII screen:
+  // no name, no AgeGate (zero PII → guardian gate inapplicable), no optional
+  // consents. They re-enter the standard funnel at account upgrade.
+  const [guest, setGuest] = useState(false);
+
+  // Welcome is shown before country pick — infer market locale from device.
+  useEffect(() => {
+    setLang(detectOnboardingLang(), { reload: false });
+  }, [setLang]);
   const [role, setRole] = useState<Role | ''>('STUDENT');
   // Empty initial — placeholder/label comes from the input's placeholder
   // attribute. Pre-filling a fake Indian name leaked into KR signups and
@@ -86,11 +104,9 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [grade, setGrade] = useState<GradeId | ''>('CLASS_11');
-  const [birthDate, setBirthDate] = useState('');
-  const [parentName, setParentName] = useState('');
+  const [grade, setGrade] = useState<GradeId | ''>('CLASS_7');
+  const [age, setAge] = useState<number | ''>('');
   const [parentEmail, setParentEmail] = useState('');
-  const [parentPhone, setParentPhone] = useState('');
   const [goal, setGoal] = useState<GoalId | ''>('BOARD');
   // Country defaults to IN. The country step (after welcome) lets the user
   // flip to KR — picking KR also calls i18n setLang('ko') immediately so the
@@ -100,20 +116,54 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
   const [notif, setNotif] = useState(true);
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
 
+  const needsGuardian = useCallback(
+    (a: number | '') => typeof a === 'number' && requiresGuardianConsentFromAge(a, country),
+    [country],
+  );
+
+  useEffect(() => {
+    if (needsGuardian(age)) {
+      setConsents((c) => ({ ...c, ANALYTICS: false, MARKETING: false }));
+    }
+  }, [age, country, needsGuardian]);
+
   const idx = STEP_FLOW.indexOf(step);
   const stepIndex = Math.max(0, idx - 1); // skip welcome from indicator
   const go = (key: StepKey) => setStep(key);
   const next = () => go(STEP_FLOW[Math.min(STEP_FLOW.length - 1, idx + 1)]);
   const back = () => go(STEP_FLOW[Math.max(0, idx - 1)]);
   const syncProfileThenDiagnostic = async () => {
-    if (!grade || !goal) throw new Error('missing onboarding profile');
+    if (!grade || !goal || (!guest && age === '')) throw new Error('missing onboarding profile');
+    // birthDate is saved when leaving Profile (before guardian). Re-sending it
+    // here hits birth_date_immutable for minors who already passed guardian.
     await patch<Me>('/users/me', {
-      name,
+      ...(guest ? {} : { name }),
       gradeLevel: GRADE_MAP[grade],
       studyGoal: goal,
     });
     await refreshUser().catch(() => {});
     next();
+  };
+
+  const saveProfileThenAdvance = async () => {
+    if (guest) {
+      // Guest profile = class pick only. No name/birthDate (zero-PII), so the
+      // guardian gate cannot apply.
+      if (!grade) return;
+      await patch<Me>('/users/me', { gradeLevel: GRADE_MAP[grade] });
+      await refreshUser().catch(() => {});
+      next();
+      return;
+    }
+    if (!name || !grade || age === '') return;
+    await patch<Me>('/users/me', {
+      name,
+      gradeLevel: GRADE_MAP[grade],
+      birthDate: birthDateFromAge(age),
+    });
+    await refreshUser().catch(() => {});
+    if (needsGuardian(age)) go('guardian');
+    else next();
   };
 
   switch (step) {
@@ -129,6 +179,11 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
           email={email} setEmail={setEmail}
           password={password} setPassword={setPassword}
           country={country}
+          onGuest={async () => {
+            await startGuest({ country });
+            setGuest(true);
+            next();
+          }}
         />
       );
     case 'role':
@@ -148,14 +203,12 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
       return (
         <ScreenProfile
           step={stepIndex} onBack={back}
-          onNext={() => {
-            if (birthDate && requiresGuardianConsent(birthDate)) go('guardian');
-            else next();
-          }}
+          onNext={saveProfileThenAdvance}
           name={name} setName={setName}
           grade={grade} setGrade={setGrade}
-          birthDate={birthDate} setBirthDate={setBirthDate}
+          age={age} setAge={setAge}
           country={country}
+          guest={guest}
         />
       );
     case 'guardian':
@@ -163,11 +216,10 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
         <ScreenGuardian
           step={stepIndex}
           onBack={() => go('profile')}
-          onNext={next}
-          birthDate={birthDate}
-          parentName={parentName} setParentName={setParentName}
+          onNext={() => go('goal')}
+          age={age}
+          country={country}
           parentEmail={parentEmail} setParentEmail={setParentEmail}
-          parentPhone={parentPhone} setParentPhone={setParentPhone}
           refreshUser={refreshUser}
         />
       );
@@ -176,7 +228,7 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
         <ScreenGoal
           step={stepIndex}
           onBack={() => {
-            if (birthDate && requiresGuardianConsent(birthDate)) go('guardian');
+            if (needsGuardian(age)) go('guardian');
             else back();
           }}
           onNext={syncProfileThenDiagnostic}
@@ -187,7 +239,15 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
     case 'diagnostic':
       return <ScreenDiagnostic step={stepIndex} onBack={back} onNext={next} onComplete={setDiagnosticResult} />;
     case 'results':
-      return <ScreenResults step={stepIndex} onBack={back} onNext={next} name={name} result={diagnosticResult} />;
+      // Guests granted no optional consents and must not self-grant any —
+      // skip the consents screen entirely.
+      return (
+        <ScreenResults
+          step={stepIndex} onBack={back}
+          onNext={() => (guest ? go('ready') : next())}
+          name={name} result={diagnosticResult}
+        />
+      );
     case 'consents':
       return (
         <ScreenConsents
@@ -210,6 +270,7 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
           goal={goal || 'BOARD'}
           consents={consents}
           notif={notif}
+          guest={guest}
           onFinish={onFinish}
         />
       );
@@ -310,8 +371,7 @@ function ScreenCountry({
     // resets to initial and the user lands back at welcome). The opts.reload
     // escape hatch keeps the language change visible (so the remaining
     // onboarding screens render in KR / EN) without nuking React state.
-    if (c === 'KR') setLang('ko', { reload: false });
-    else setLang('en', { reload: false });
+    setLang(langForCountry(c), { reload: false });
   };
   return (
     <div className="screen">
@@ -379,19 +439,44 @@ function ScreenCountry({
 
 // ─────────── 02 Auth — real email/password (+ optional Google) signup ───────────
 function ScreenAuth({
-  step, onBack, onNext, name, email, setEmail, password, setPassword, country,
+  step, onBack, onNext, name, email, setEmail, password, setPassword, country, onGuest,
 }: {
   step: number; onBack: () => void; onNext: () => void;
   name: string;
   email: string; setEmail: (v: string) => void;
   password: string; setPassword: (v: string) => void;
   country: CountryId;
+  onGuest?: () => Promise<void>;
 }) {
   const { t } = useT();
   const { refreshUser, loginWithGoogle } = useAuth();
+  const guestModeEnabled = useFeatureFlag('guest_mode');
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [guestBusy, setGuestBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  async function continueAsGuest() {
+    if (busy || guestBusy || !onGuest) return;
+    setErr(null);
+    setGuestBusy(true);
+    try {
+      await onGuest();
+    } catch (e: any) {
+      const status = e?.response?.status;
+      if (status === 429) {
+        setErr(country === 'KR'
+          ? '잠시 후 다시 시도해주세요. (요청이 너무 많아 1분간 제한됐어요.)'
+          : 'Please retry in a minute — too many requests.');
+      } else if (!status) {
+        setErr(country === 'KR'
+          ? '서버에 연결할 수 없어요. 인터넷 연결을 확인해주세요.'
+          : 'Cannot reach the server. Check your connection.');
+      } else {
+        setErr(e?.response?.data?.error?.message ?? t('onboarding.auth.guest.failed'));
+      }
+    } finally { setGuestBusy(false); }
+  }
 
   async function continueWithEmail() {
     if (busy) return;
@@ -586,6 +671,18 @@ function ScreenAuth({
           </>
         )}
 
+        {guestModeEnabled && onGuest && (
+          <button
+            className="btn ghost"
+            onClick={continueAsGuest}
+            disabled={busy || googleBusy || guestBusy}
+            style={{ opacity: guestBusy ? 0.6 : 1 }}
+          >
+            <span>{guestBusy ? t('onboarding.auth.busy') : t('onboarding.auth.guestCta')}</span>
+            <Glyph.ChevronR />
+          </button>
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
           <div style={{ flex: 1, height: 1, background: 'var(--p-border)' }} />
           <span className="caption" style={{ fontSize: 11 }}>{t('onboarding.auth.secure')}</span>
@@ -619,8 +716,10 @@ function ScreenRole({
   const { t } = useT();
   const roles: Array<{ id: Role; icon: typeof Glyph.Person; label: string; sub: string }> = [
     { id: 'STUDENT', icon: Glyph.Person, label: t('onboarding.role.student.label'), sub: t('onboarding.role.student.sub') },
-    { id: 'PARENT', icon: Glyph.Parent, label: t('onboarding.role.parent.label'), sub: t('onboarding.role.parent.sub') },
-    { id: 'TEACHER', icon: Glyph.Teacher, label: t('onboarding.role.teacher.label'), sub: t('onboarding.role.teacher.sub') },
+    ...(LAUNCH_STUDENT_ONLY ? [] : [
+      { id: 'PARENT' as Role, icon: Glyph.Parent, label: t('onboarding.role.parent.label'), sub: t('onboarding.role.parent.sub') },
+      { id: 'TEACHER' as Role, icon: Glyph.Teacher, label: t('onboarding.role.teacher.label'), sub: t('onboarding.role.teacher.sub') },
+    ]),
   ];
   return (
     <div className="screen">
@@ -679,15 +778,31 @@ function ScreenRole({
 
 // ─────────── 04 Profile (name + class) ───────────
 function ScreenProfile({
-  step, onBack, onNext, name, setName, grade, setGrade, birthDate, setBirthDate, country,
+  step, onBack, onNext, name, setName, grade, setGrade, age, setAge, country, guest = false,
 }: {
-  step: number; onBack: () => void; onNext: () => void;
+  step: number; onBack: () => void; onNext: () => void | Promise<void>;
   name: string; setName: (n: string) => void;
   grade: GradeId | ''; setGrade: (g: GradeId) => void;
-  birthDate: string; setBirthDate: (v: string) => void;
+  age: number | ''; setAge: (v: number) => void;
   country: CountryId;
+  /** Guest sessions collect zero PII — class pick only (no name, no AgeGate). */
+  guest?: boolean;
 }) {
   const { t } = useT();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const continueProfile = async () => {
+    if (busy) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      await onNext();
+    } catch (e: any) {
+      setErr(e?.response?.data?.error?.message ?? t('onboarding.diag.saving'));
+    } finally {
+      setBusy(false);
+    }
+  };
   // Grade chips re-label by country. Backend stores GradeLevel (CLASS_N), so
   // KR labels (중1~고3) map onto the same CLASS_7..CLASS_12 IDs the IN
   // pickers use. Mapping mirrors NCERT_TO_KR_GRADE in HomeScreen/LearnScreen:
@@ -717,10 +832,12 @@ function ScreenProfile({
           <span className="eyebrow">{t('onboarding.profile.eyebrow')}</span>
           <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.profile.title')}</h2>
         </div>
-        <div className="field">
-          <label>{t('onboarding.profile.nameLabel')}</label>
-          <input placeholder={t('onboarding.profile.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} />
-        </div>
+        {!guest && (
+          <div className="field">
+            <label>{t('onboarding.profile.nameLabel')}</label>
+            <input placeholder={t('onboarding.profile.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+        )}
         <div className="field">
           <label>{t('onboarding.profile.classQ')}</label>
           <div className="grade-grid">
@@ -732,11 +849,7 @@ function ScreenProfile({
             ))}
           </div>
         </div>
-        <div className="field">
-          <label>{t('reg.student.birthDate')}</label>
-          <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
-          <span className="caption" style={{ marginTop: 6 }}>{t('reg.student.birthDate.hint')}</span>
-        </div>
+        {!guest && <AgeGate age={age} onChange={setAge} country={country} />}
         <div className="card" style={{ display: 'flex', gap: 12, alignItems: 'flex-start', background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--p-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--p-primary-fg)' }}>
             <Glyph.Sparkle accent="var(--p-primary-fg)" size={14} />
@@ -749,10 +862,18 @@ function ScreenProfile({
           </div>
         </div>
         <div style={{ flex: 1 }} />
+        {err && (
+          <div role="alert" style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>
+        )}
       </div>
       <div className="screen-foot">
-        <button className="btn" onClick={onNext} disabled={!name || !grade || !birthDate} style={{ opacity: name && grade && birthDate ? 1 : 0.45 }}>
-          {t('onboarding.profile.continue')}
+        <button
+          className="btn"
+          onClick={continueProfile}
+          disabled={busy || !grade || (!guest && (!name || age === ''))}
+          style={{ opacity: grade && (guest || (name && age !== '')) && !busy ? 1 : 0.45 }}
+        >
+          {busy ? t('onboarding.diag.saving') : t('onboarding.profile.continue')}
           <Glyph.ChevronR />
         </button>
       </div>
@@ -762,18 +883,18 @@ function ScreenProfile({
 
 // ─────────── 04b Guardian (minor students) ───────────
 function ScreenGuardian({
-  step, onBack, onNext, birthDate,
-  parentName, setParentName, parentEmail, setParentEmail, parentPhone, setParentPhone,
+  step, onBack, onNext, age, country,
+  parentEmail, setParentEmail,
   refreshUser,
 }: {
   step: number; onBack: () => void; onNext: () => void;
-  birthDate: string;
-  parentName: string; setParentName: (v: string) => void;
+  age: number | '';
+  country: CountryId;
   parentEmail: string; setParentEmail: (v: string) => void;
-  parentPhone: string; setParentPhone: (v: string) => void;
   refreshUser: () => Promise<void>;
 }) {
   const { t } = useT();
+  const guardianSubKey = country === 'KR' ? 'reg.step3.guardian.sub.kr' : 'reg.step3.guardian.sub';
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [waiting, setWaiting] = useState(false);
@@ -795,15 +916,13 @@ function ScreenGuardian({
   }, [poll, onNext, refreshUser]);
 
   const submit = async () => {
-    if (!parentName.trim() || !parentEmail.trim() || !birthDate) return;
+    if (!parentEmail.trim() || typeof age !== 'number') return;
     setErr(null);
     setBusy(true);
     try {
-      await patch<Me>('/users/me', { birthDate: new Date(birthDate).toISOString() });
+      // birthDate already saved on Profile continue — only send parent email here.
       await requestGuardianConsent({
-        parentName: parentName.trim(),
         parentEmail: parentEmail.trim(),
-        parentPhone: parentPhone.trim() || undefined,
       });
       await refreshUser();
       setWaiting(true);
@@ -811,7 +930,12 @@ function ScreenGuardian({
       const st = await fetchGuardianConsentStatus();
       if (st.verified) onNext();
     } catch (e: any) {
-      setErr(e?.response?.data?.error?.message ?? t('guardianConsent.failed'));
+      const code = e?.response?.data?.error?.code;
+      if (code === 'parent_email_same_as_student') {
+        setErr(t('guardianConsent.parentEmailSameAsStudent'));
+      } else {
+        setErr(e?.response?.data?.error?.message ?? t('guardianConsent.failed'));
+      }
     } finally {
       setBusy(false);
     }
@@ -826,34 +950,31 @@ function ScreenGuardian({
           <h2 className="title" style={{ marginTop: 10 }}>
             {waiting ? t('guardianConsent.waiting.title') : t('reg.step3.guardian.title')}
           </h2>
-          <p className="subtitle">{t('reg.step3.guardian.sub')}</p>
+          <p className="subtitle">{t(guardianSubKey)}</p>
         </div>
         {waiting ? (
           <div className="alert success">
             {t('guardianConsent.sent', { email: parentEmail })}
           </div>
         ) : (
-          <>
-            <div className="field">
-              <label>{t('guardianConsent.parentName')}</label>
-              <input value={parentName} onChange={(e) => setParentName(e.target.value)} required minLength={2} />
-            </div>
-            <div className="field">
-              <label>{t('guardianConsent.parentEmail')}</label>
-              <input type="email" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} required />
-            </div>
-            <div className="field">
-              <label>{t('guardianConsent.parentPhone')}</label>
-              <input type="tel" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
-            </div>
-          </>
+          <div className="field">
+            <label>{t('guardianConsent.parentEmail')}</label>
+            <input
+              type="email"
+              value={parentEmail}
+              onChange={(e) => setParentEmail(e.target.value)}
+              placeholder={t('ageGate.parentEmail.placeholder')}
+              required
+            />
+            <span className="caption" style={{ marginTop: 6 }}>{t('ageGate.parentEmail.hint')}</span>
+          </div>
         )}
         {err && <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>}
         <div style={{ flex: 1 }} />
       </div>
       <div className="screen-foot">
         {!waiting && (
-          <button className="btn" onClick={submit} disabled={busy || parentName.trim().length < 2 || !parentEmail}>
+          <button className="btn" onClick={submit} disabled={busy || !isLikelyEmail(parentEmail)}>
             {busy ? t('guardianConsent.sending') : t('reg.finish.minor')}
             <Glyph.ChevronR />
           </button>
@@ -1315,10 +1436,10 @@ function ScreenConsents({
 
 // ─────────── 09 Ready / First lesson ───────────
 function ScreenReady({
-  step, name, role, grade, goal, consents, notif, onFinish,
+  step, name, role, grade, goal, consents, notif, guest = false, onFinish,
 }: {
   step: number; name: string; role: Role; grade: GradeId; goal: GoalId;
-  consents: ConsentMap; notif: boolean; onFinish: (role?: Role) => void;
+  consents: ConsentMap; notif: boolean; guest?: boolean; onFinish: (role?: Role) => void;
 }) {
   const { t } = useT();
   const [busy, setBusy] = useState(false);
@@ -1358,7 +1479,8 @@ function ScreenReady({
       // hit the bouncing case anyway.
       const resolvedRole = role || 'STUDENT';
       await patch<Me>('/users/me', {
-        name,
+        // Guests keep the server-side 'Guest' placeholder name (zero-PII).
+        ...(guest ? {} : { name }),
         role: resolvedRole,
         pushRemindersEnabled: notif,
         ...(resolvedRole === 'STUDENT'
@@ -1368,12 +1490,15 @@ function ScreenReady({
 
       // 선택 동의 3종을 백엔드 Consent 테이블에 저장 (DPDP 이력). 이건 여전히
       // best-effort — consent 저장 실패는 사용자가 onboarding 진입을 막을 만큼
-      // 치명적 X (재시도는 설정 페이지에서도 가능).
-      const consentKinds: ConsentKey[] = ['ANALYTICS', 'AI_TRAINING', 'MARKETING'];
-      for (const k of consentKinds) {
-        try {
-          if (consents[k]) await post(`/privacy/consents/${k.toLowerCase()}`, {});
-        } catch { /* ignore — best effort */ }
+      // 치명적 X (재시도는 설정 페이지에서도 가능). Guests skip the consents
+      // screen entirely and must not self-grant optional consents.
+      if (!guest) {
+        const consentKinds: ConsentKey[] = ['ANALYTICS', 'AI_TRAINING', 'MARKETING'];
+        for (const k of consentKinds) {
+          try {
+            if (consents[k]) await post(`/privacy/consents/${k.toLowerCase()}`, {});
+          } catch { /* ignore — best effort */ }
+        }
       }
       // localStorage 에 onboarding 결과 저장 (백엔드 미저장 항목: goal, notif 토글).
       localStorage.setItem('mathema.onboarding', JSON.stringify({

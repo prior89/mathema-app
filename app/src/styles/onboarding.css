@@ -63,7 +63,7 @@
   --radius-xl: 28px;
 
   --font-display: 'Lora', 'Source Serif 4', Georgia, serif;
-  --font-ui: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-ui: 'Inter', 'Noto Sans Devanagari', 'Noto Sans KR', system-ui, -apple-system, Segoe UI, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -285,6 +285,15 @@
 .mathema-app .grade-pill.selected { border-color: var(--p-primary); background: var(--p-primary-tint); }
 .mathema-app .grade-pill.selected .num, .mathema-app .grade-pill.selected .lbl { color: var(--p-primary); }
 
+/* Age picker (Duolingo-style self-reported age) */
+.mathema-app .age-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.mathema-app .age-chip {
+  height: 44px; border-radius: 12px; border: 1.5px solid var(--p-border); background: var(--p-surface);
+  font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--p-ink);
+  cursor: pointer; transition: all .15s ease;
+}
+.mathema-app .age-chip.selected { border-color: var(--p-primary); background: var(--p-primary-tint); color: var(--p-primary); }
+
 /* Choice (diagnostic / practice) */
 .mathema-app .choice {
   display: flex; align-items: center; gap: 12px; padding: 14px;
@@ -361,7 +370,7 @@
 /* TabBar pinned to the bottom of .screen — flex-shrink:0 stops it from being
    squeezed when scroll content overflows; sticky+z-index keeps it visually
    anchored above any descendant scroll layer. */
-.mathema-app .tabbar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); background: var(--p-surface); border-top: 1px solid var(--p-border); padding: 10px 4px calc(14px + env(safe-area-inset-bottom)); flex-shrink: 0; position: sticky; bottom: 0; z-index: 10; }
+.mathema-app .tabbar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--p-surface); border-top: 1px solid var(--p-border); padding: 12px 4px calc(14px + env(safe-area-inset-bottom)); flex-shrink: 0; position: sticky; bottom: 0; z-index: 10; }
 .mathema-app .tabbar .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; color: var(--p-muted); font-size: 11.5px; font-weight: 500; cursor: pointer; background: transparent; border: 0; font-family: inherit; line-height: inherit; }
 .mathema-app .tabbar .tab:focus-visible { outline: 2px solid var(--p-primary); outline-offset: -2px; border-radius: 6px; }
 .mathema-app .tabbar .tab .icon { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
@@ -413,19 +422,90 @@
 .mathema-app .bottom-sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--p-surface); border-radius: 24px 24px 0 0; padding: 12px 22px 18px; z-index: 11; box-shadow: 0 -8px 24px oklch(0 0 0 / 0.06); max-height: 72%; display: flex; flex-direction: column; }
 .mathema-app .bottom-sheet .grip { width: 36px; height: 4px; border-radius: 2px; background: var(--p-border-strong); margin: 0 auto 4px; }
 
+/* Answer feedback sheet — post-check verdict panel (Study practice).
+   Anchored inside .screen (position:relative), slides over the footer +
+   tab bar so the verdict and the next action arrive in one gesture zone. */
+.mathema-app .fb-backdrop { position: absolute; inset: 0; background: oklch(0.18 0.012 175 / 0.22); z-index: 10; animation: fb-fade 0.18s ease-out; }
+.mathema-app .fb-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 11;
+  background: var(--p-surface); border-radius: 24px 24px 0 0;
+  padding: 10px 22px calc(18px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 24px oklch(0 0 0 / 0.10);
+  display: flex; flex-direction: column; gap: 12px;
+  animation: fb-slide-up 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+  border-top: 3px solid var(--p-border);
+}
+.mathema-app .fb-sheet.correct { border-top-color: var(--p-success); }
+.mathema-app .fb-sheet.wrong { border-top-color: var(--p-danger); }
+.mathema-app .fb-sheet .grip { width: 36px; height: 4px; border-radius: 2px; background: var(--p-border-strong); margin: 0 auto; cursor: pointer; }
+.mathema-app .fb-row { display: flex; align-items: center; gap: 12px; }
+.mathema-app .fb-icon {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700;
+}
+.mathema-app .fb-sheet.correct .fb-icon { background: var(--p-success-tint); color: var(--p-success); animation: fb-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.mathema-app .fb-sheet.wrong .fb-icon { background: var(--p-danger-tint); color: var(--p-danger); animation: fb-shake 0.4s ease-in-out; }
+.mathema-app .fb-copy { min-width: 0; flex: 1; }
+.mathema-app .fb-title { font-size: 16px; font-weight: 700; line-height: 1.3; }
+.mathema-app .fb-sheet.correct .fb-title { color: var(--p-success); }
+.mathema-app .fb-sheet.wrong .fb-title { color: var(--p-danger); }
+.mathema-app .fb-sub { font-size: 12px; color: var(--p-ink-2); line-height: 1.45; margin-top: 1px; }
+.mathema-app .fb-streak {
+  flex-shrink: 0; align-self: flex-start;
+  padding: 4px 9px; border-radius: 999px;
+  background: var(--p-accent-tint); color: var(--p-accent-ink);
+  font-size: 10.5px; font-weight: 700; white-space: nowrap;
+  animation: fb-pop 0.45s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+.mathema-app .fb-answer {
+  font-size: 12.5px; color: var(--p-ink-2); line-height: 1.5;
+  background: var(--p-surface-2); border-radius: 10px; padding: 10px 12px;
+}
+.mathema-app .fb-confetti { position: absolute; inset: 0 0 auto 0; height: 0; pointer-events: none; overflow: visible; }
+.mathema-app .fb-confetti-bit {
+  position: absolute; top: -4px; width: 6px; height: 10px; border-radius: 2px;
+  opacity: 0; animation: fb-confetti-fall 0.9s ease-out forwards;
+}
+.mathema-app .fb-confetti-bit.b0 { left: 12%; background: var(--p-success); animation-delay: 0.05s; }
+.mathema-app .fb-confetti-bit.b1 { left: 28%; background: var(--p-accent); animation-delay: 0.15s; }
+.mathema-app .fb-confetti-bit.b2 { left: 46%; background: var(--p-primary); animation-delay: 0s; }
+.mathema-app .fb-confetti-bit.b3 { left: 62%; background: var(--p-accent); animation-delay: 0.1s; }
+.mathema-app .fb-confetti-bit.b4 { left: 78%; background: var(--p-success); animation-delay: 0.2s; }
+.mathema-app .fb-confetti-bit.b5 { left: 90%; background: var(--p-primary); animation-delay: 0.08s; }
+@keyframes fb-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes fb-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fb-pop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes fb-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 50% { transform: translateX(4px); } 75% { transform: translateX(-3px); } }
+@keyframes fb-confetti-fall {
+  0% { opacity: 0; transform: translateY(-10px) rotate(0deg); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-72px) rotate(220deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mathema-app .fb-sheet, .mathema-app .fb-backdrop, .mathema-app .fb-icon,
+  .mathema-app .fb-streak, .mathema-app .fb-confetti-bit { animation: none; }
+  .mathema-app .fb-confetti-bit { display: none; }
+  .mathema-app .fb-streak { opacity: 1; }
+}
+
 /* Two-column notes grid -- align-items: stretch keeps L/R cards the same height
    per row; min-width:0 on the card prevents MathText overflow from widening
    one column. height:100% with min-height baseline gives a guaranteed identical
    bounding box even when one card has shorter body text than its neighbour. */
 .mathema-app .notes-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
 .mathema-app .note-card { background: var(--p-surface); border: 1px solid var(--p-border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-height: 130px; min-width: 0; height: 100%; overflow: hidden; box-sizing: border-box; }
-.mathema-app .note-card .src { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em; color: var(--p-muted); }
+.mathema-app .note-card .src { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.05em; color: var(--p-muted); }
 .mathema-app .note-card .body { font-size: 12.5px; font-family: var(--font-mono); color: var(--p-ink); line-height: 1.4; max-height: 56px; overflow: hidden; word-break: break-word; overflow-wrap: anywhere; }
 .mathema-app .note-card .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
 .mathema-app .status-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; font-family: var(--font-mono); letter-spacing: 0.04em; }
 .mathema-app .status-chip.pending { background: var(--p-warning-tint); color: var(--p-warning); }
 .mathema-app .status-chip.analyzing { background: var(--p-primary-tint); color: var(--p-primary); }
 .mathema-app .status-chip.mastered { background: var(--p-success-tint); color: var(--p-success); }
+
+/* KaTeX display math — wide equations (matrices, long fractions) scroll
+   horizontally instead of widening the 428px viewport or clipping. */
+.mathema-app .katex-display { overflow-x: auto; overflow-y: hidden; max-width: 100%; padding-bottom: 2px; }
 
 /* Alerts & toasts */
 .mathema-app .alert {

@@ -19,6 +19,7 @@ import {
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { HeadAvatar } from './HeadAvatar';
 
 const GRADE_TO_CLASS: Record<string, NcertClass> = {
   CLASS_7: 'CLASS_7', CLASS_8: 'CLASS_8', CLASS_9: 'CLASS_9',
@@ -96,6 +97,7 @@ function KoreanLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
             {t('learn.tab.title')}
           </div>
         </div>
+        <HeadAvatar />
       </div>
       <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
         <div className="filter-row">
@@ -198,6 +200,7 @@ function NcertLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
           <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('learn.tab.label')}</div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, letterSpacing: '-0.01em' }}>{t('learn.tab.title')}</div>
         </div>
+        <HeadAvatar />
       </div>
       <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
         <div className="filter-row">

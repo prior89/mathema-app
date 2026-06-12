@@ -17,6 +17,7 @@ import { TestScreen } from '../components/main/TestScreen';
 import { ReviewQueueScreen } from '../components/main/ReviewQueueScreen';
 import { SoloProblemScreen } from '../components/main/SoloProblemScreen';
 import { MockExamPlayScreen } from '../components/main/MockExamPlayScreen';
+import { RealExamScreen } from '../components/main/RealExamScreen';
 import { MockResultDetailScreen } from '../components/main/MockResultDetailScreen';
 import { StudyPracticeScreen } from '../components/main/StudyPracticeScreen';
 import { MeScreen } from '../components/main/MeScreen';
@@ -61,6 +62,8 @@ export default function MainAppPage() {
             {/* Internal session routes — shared by Study + Test. Keep mocks/* path
                 stable so existing localStorage session keys keep working. */}
             <Route path="mocks/play/:resultId" element={<MockExamPlayScreen />} />
+            {/* Full-paper REAL mock exam (timed, JEE marking, batch submit). */}
+            <Route path="mocks/real/:resultId" element={<RealExamScreen />} />
             <Route path="mocks/result/:resultId" element={<MockResultDetailScreen />} />
             {/* Legacy tab redirects — old Solver / Mocks tabs were absorbed. */}
             <Route path="solve" element={<Navigate to="/app/notes" replace />} />

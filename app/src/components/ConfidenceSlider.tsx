@@ -1,58 +1,60 @@
-﻿import { useT } from '../lib/i18n';
+import { useT } from '../lib/i18n';
 
 type Props = {
-  value: number;
-  onChange: (v: number) => void;
+  value: number | null;
+  onChange: (v: number | null) => void;
   label?: string;
 };
 
-/**
- * 메타인지 자기평가 슬라이더 — 답 제출 직전 확신도 표시.
- *
- * 색상: 0~33% 빨강 / 34~66% 주황 / 67~100% 녹색
- * 5% 단위 스냅. 키보드(←/→), 드래그, 클릭 모두 지원.
- *
- * 캘리브레이션 분석에 사용 — Brier score 와 confidence-accuracy 산점도.
- */
+/* Pre-submit metacognition check — one-tap Low/Medium/High instead of the
+ * old 0-100 slider (2026-06-11 audit: no market leader uses a per-question
+ * slider; mandatory fine-grained input was friction without extra signal).
+ * Optional: tapping the selected level again deselects it, and submission
+ * proceeds with confidence omitted. Values 30/60/90 keep the stored 0-100
+ * scale so existing Brier/calibration analytics stay comparable. */
 export default function ConfidenceSlider({ value, onChange, label }: Props) {
   const { t } = useT();
-  const color = value < 34 ? '#C25E2E' : value < 67 ? '#C7791F' : '#5A8A45';
-  const labelText = value < 34 ? t('study.confidence.low') : value < 67 ? t('study.confidence.medium') : t('study.confidence.high');
+  const levels = [
+    { v: 30, text: t('study.confidence.low'), color: '#C25E2E' },
+    { v: 60, text: t('study.confidence.medium'), color: '#C7791F' },
+    { v: 90, text: t('study.confidence.high'), color: '#5A8A45' },
+  ];
   const displayLabel = label ?? t('study.confidence.label');
 
   return (
     <div style={{ marginTop: 12, marginBottom: 12 }}>
       <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        display: 'flex', alignItems: 'baseline', gap: 6,
         fontSize: 11, color: '#5C6B85', marginBottom: 6,
         letterSpacing: '0.1em', textTransform: 'uppercase',
       }}>
         <span>{displayLabel}</span>
-        <span style={{
-          color, fontWeight: 600,
-          fontFamily: 'JetBrains Mono, monospace',
-          textTransform: 'none', letterSpacing: 0,
-        }}>
-          {value}% · {labelText}
+        <span style={{ fontSize: 10, opacity: 0.7, textTransform: 'none', letterSpacing: 0 }}>
+          · {t('study.confidence.optional')}
         </span>
       </div>
-      <input
-        type="range"
-        min={0}
-        max={100}
-        step={5}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{
-          width: '100%', accentColor: color, cursor: 'pointer',
-        }}
-      />
-      <div style={{
-        display: 'flex', justifyContent: 'space-between',
-        fontSize: 10, color: '#AAB4C5', marginTop: 4,
-        fontFamily: 'JetBrains Mono, monospace',
-      }}>
-        <span>0</span><span>25</span><span>50</span><span>75</span><span>100</span>
+      <div role="group" aria-label={displayLabel} style={{ display: 'flex', gap: 8 }}>
+        {levels.map((lv) => {
+          const active = value === lv.v;
+          return (
+            <button
+              key={lv.v}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onChange(active ? null : lv.v)}
+              style={{
+                flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
+                fontSize: 12.5, fontWeight: 600, fontFamily: 'inherit',
+                border: `1.5px solid ${active ? lv.color : 'var(--p-border, #D7DCE5)'}`,
+                background: active ? `${lv.color}1A` : 'transparent',
+                color: active ? lv.color : 'var(--p-ink-2, #5C6B85)',
+                transition: 'border-color 0.12s, background 0.12s, color 0.12s',
+              }}
+            >
+              {lv.text}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

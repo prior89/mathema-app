@@ -1,5 +1,5 @@
 /* Home screen — features-a.jsx ScreenHome ported with real backend data. */
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,7 +14,10 @@ import { resolveBarColor } from '../../lib/palette';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { HeadAvatar } from './HeadAvatar';
 import { FirstAchievementModal } from './FirstAchievementModal';
+import { UploadProblemModal } from './UploadProblemModal';
+import { QuotaMeter } from '../QuotaMeter';
 
 const PLAN_BADGE: Record<string, { glyph: string; bg: string; fg: string }> = {
   concept: { glyph: '∫', bg: 'var(--p-primary-tint)', fg: 'var(--p-primary)' },
@@ -104,9 +107,42 @@ export function HomeScreen() {
           <div className="hello">{dateStr}</div>
           <div className="name">{t('home.greet', { name: userName.split(' ')[0] })}</div>
         </div>
+        <HeadAvatar />
       </div>
       <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
         <div style={{ padding: '0 22px' }}>
+
+          {/* Photo-solve hero — Doubtnut/PW norm puts the camera front and
+              center on Home; ours was buried in the Study tab (2026-06-11
+              UI/UX audit issue 4). Same hidden-input pattern as StudyScreen:
+              taps go straight to the camera / gallery, the modal opens only
+              after a file is chosen. */}
+          <PhotoSolveHero />
+
+          {/* Guest upsell — progress lives on a device-bound throwaway
+              account; converting keeps the same userId so nothing is lost. */}
+          {me.data?.isGuest && (
+            <div
+              className="card"
+              role="button"
+              tabIndex={0}
+              onClick={() => { track('guest.upgrade_banner.click'); nav('/register?upgrade=1'); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') nav('/register?upgrade=1'); }}
+              style={{
+                marginTop: 10, padding: '12px 14px', display: 'flex', gap: 12,
+                alignItems: 'center', cursor: 'pointer',
+                background: 'var(--p-primary-tint)', borderColor: 'var(--p-primary)',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--p-ink)' }}>{t('guest.banner.title')}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--p-muted)', marginTop: 2 }}>{t('guest.banner.sub')}</div>
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--p-primary)', whiteSpace: 'nowrap' }}>
+                {t('guest.banner.cta')}
+              </span>
+            </div>
+          )}
 
           {/* Cold-start hero — only when the user has zero study activity yet.
               The !today.isLoading guard prevents a flicker: when `summary`
@@ -512,6 +548,93 @@ function ColdStartHero({
           <Glyph.ChevronR />
         </button>
       )}
+    </div>
+  );
+}
+
+/** Camera-first AI Solver entry on Home. Same direct-to-camera hidden-input
+ *  pattern as StudyScreen: the tap goes straight to the OS camera/gallery and
+ *  UploadProblemModal opens only after a file is chosen (initialFile prop). */
+function PhotoSolveHero() {
+  const { t } = useT();
+  const [file, setFile] = useState<File | null>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
+
+  const onFileChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) setFile(f);
+    // Reset so picking the same file twice still fires onChange.
+    e.target.value = '';
+  };
+
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        borderRadius: 'var(--radius-lg)',
+        padding: '16px 16px 14px',
+        background: 'var(--p-primary-tint)',
+        border: '1px solid var(--p-border)',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <div style={{ fontSize: 15.5, fontWeight: 700 }}>{t('home.solver.title')}</div>
+        <QuotaMeter style={{ marginLeft: 'auto' }} />
+      </div>
+      <div style={{ fontSize: 12.5, color: 'var(--p-ink-2)', marginTop: 4, lineHeight: 1.5 }}>
+        {t('home.solver.desc')}
+      </div>
+      <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+        <button
+          className="btn"
+          type="button"
+          style={{ flex: 1.4 }}
+          onClick={() => {
+            track('home.solver.open', { source: 'camera' });
+            cameraRef.current?.click();
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M3 7h3l2-3h8l2 3h3v12H3z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          {t('home.solver.scan')}
+        </button>
+        <button
+          className="btn outline"
+          type="button"
+          style={{ flex: 1 }}
+          onClick={() => {
+            track('home.solver.open', { source: 'gallery' });
+            galleryRef.current?.click();
+          }}
+        >
+          {t('home.solver.upload')}
+        </button>
+      </div>
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={onFileChosen}
+        style={{ display: 'none' }}
+        aria-hidden
+      />
+      <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*,application/pdf"
+        onChange={onFileChosen}
+        style={{ display: 'none' }}
+        aria-hidden
+      />
+      <UploadProblemModal
+        open={!!file}
+        onClose={() => setFile(null)}
+        initialFile={file}
+      />
     </div>
   );
 }

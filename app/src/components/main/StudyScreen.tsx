@@ -19,6 +19,7 @@ import {
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { HeadAvatar } from './HeadAvatar';
 import { UploadProblemModal } from './UploadProblemModal';
 import { QuotaMeter } from '../QuotaMeter';
 
@@ -117,6 +118,7 @@ export function StudyScreen() {
             <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('study.tab.label')}</div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, letterSpacing: '-0.01em' }}>{t('study.tab.title')}</div>
           </div>
+          <HeadAvatar />
         </div>
 
         <div style={{ padding: '12px 22px 0' }}>

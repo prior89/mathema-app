@@ -125,6 +125,8 @@ export type CountryCode = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'GLOBAL';
 export type Me = {
   id: string; name: string; email: string;
   emailVerifiedAt?: string | null;
+  /** Try-first guest (zero-PII) — age/guardian gates skipped until upgrade. */
+  isGuest?: boolean;
   birthDate?: string | null;
   guardianConsentVerifiedAt?: string | null;
   examDate: string; targetGrade: number; dDay: number;
@@ -211,8 +213,8 @@ export const fetchMe = () => get<Me>('/users/me');
 export const fetchGuardianConsentStatus = () => get<GuardianConsentStatus>('/guardian-consent/status');
 
 export const requestGuardianConsent = (body: {
-  parentName: string;
   parentEmail: string;
+  parentName?: string;
   parentPhone?: string;
 }) => post<{ sent: boolean; method: string }>('/guardian-consent/request', body);
 

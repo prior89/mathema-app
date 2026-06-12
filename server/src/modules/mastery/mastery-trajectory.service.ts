@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MasteryTrend, MasteryUpdateSource, Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { applyMasteryDecay } from './mastery-decay.util';
 
 /**
  * MasteryTrajectoryService — 개념(Concept) 단위 숙련도 갱신.
@@ -55,7 +56,11 @@ export class MasteryTrajectoryService {
       where: { userId_conceptId: { userId: input.userId, conceptId: input.conceptId } },
     });
 
-    const prevScore = existing?.masteryScore ?? 50;       // 초기 사전확률 50 (Bayesian uninformative prior)
+    // Uninformative prior 50 for first attempt; otherwise the stored score
+    // decayed for idle time, so demotion becomes durable on the next write.
+    const prevScore = existing
+      ? applyMasteryDecay(existing.masteryScore, existing.lastAttemptAt)
+      : 50;
     let delta = 0;
 
     delta += input.isCorrect ? 5 : -6;
@@ -148,13 +153,18 @@ export class MasteryTrajectoryService {
     return { score: nextScore, delta };
   }
 
-  /** 학생의 모든 MasteryTrajectory 조회 (UI heatmap 용). */
+  /** 학생의 모든 MasteryTrajectory 조회 (UI heatmap 용). Scores are served
+   *  with idle-time decay applied, then re-sorted (decay is per-row so the
+   *  DB order can change). */
   async getAllForUser(userId: string) {
-    return this.prisma.masteryTrajectory.findMany({
+    const rows = await this.prisma.masteryTrajectory.findMany({
       where: { userId },
       include: { concept: { select: { id: true, code: true, name: true, gradeLevel: true } } },
       orderBy: { masteryScore: 'asc' },
     });
+    return rows
+      .map((r) => ({ ...r, masteryScore: applyMasteryDecay(r.masteryScore, r.lastAttemptAt) }))
+      .sort((a, b) => a.masteryScore - b.masteryScore);
   }
 
   /** 특정 concept 의 시계열 (그래프 용). */

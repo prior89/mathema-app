@@ -4,6 +4,7 @@ import {
   formatMicros,
   microsToAmount,
   monthlyEquivalent,
+  perDayPrice,
 } from './billing-pricing';
 
 describe('billing pricing helpers', () => {
@@ -18,6 +19,12 @@ describe('billing pricing helpers', () => {
 
   it('shows the monthly equivalent of an annual price', () => {
     expect(monthlyEquivalent('120000000', 'USD', 'en-US')).toBe('$10.00');
+  });
+
+  it('shows the per-day equivalent of an annual price', () => {
+    expect(perDayPrice('365000000', 'USD', 'en-US')).toBe('$1.00');
+    expect(perDayPrice('36500000000', 'KRW', 'ko-KR')).toContain('100');
+    expect(perDayPrice('garbage', 'USD', 'en-US')).toBeNull();
   });
 
   it('calculates savings against twelve monthly payments', () => {

@@ -1,11 +1,14 @@
 /* Bottom tab bar.
  *
  * Layout reflects the PDCA learning loop:
- *   Home (plan) → Mastery (learn) → Study (do) → Notes (check) → Test (act) → Me.
+ *   Home (plan) → Learn → Study (do) → Notes (check) → Test (act).
  *
- * Earlier iterations had separate Solver and Mocks tabs; both folded in:
+ * Earlier iterations had separate Solver / Mocks / Me tabs; all folded in:
  *   Solver  → absorbed by the Notes "+" button (photo / OCR / auto wrong-note).
  *   Mocks   → replaced by Test (weekly / monthly review of personal wrong notes).
+ *   Me      → moved to the .app-head avatar button (HeadAvatar) — Material 3
+ *             caps bottom nav at 5 destinations and every market leader keeps
+ *             profile in the top bar.
  */
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useT } from '../../lib/i18n';
@@ -26,14 +29,14 @@ const TABS: Array<{ id: TabId; labelKey: TranslationKey; path: string; icon: (c:
   { id: 'test', labelKey: 'tabbar.test', path: '/app/test',
     /* clipboard with check — "scheduled review" glyph */
     icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><rect x="5" y="4" width="14" height="17" rx="2" fill="none" stroke={c} strokeWidth="1.7"/><path d="M 9 3 H 15 V 6 H 9 Z" fill="none" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/><path d="M 9 13 L 11 15 L 15 11" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-  { id: 'me', labelKey: 'tabbar.me', path: '/app/me',
-    icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="8" r="3.5" fill="none" stroke={c} strokeWidth="1.7"/><path d="M 4 21 C 4 16, 8 14, 12 14 C 16 14, 20 16, 20 21" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg> },
 ];
 
 export function TabBar() {
   const nav = useNavigate();
   const loc = useLocation();
   const { t } = useT();
+  // '/app/me' yields active='me' which matches no tab — Me lives in the
+  // top-bar HeadAvatar, so no bottom tab highlights there.
   const active: TabId =
     loc.pathname.startsWith('/app/learn') ? 'learn' :
     loc.pathname.startsWith('/app/study') ? 'study' :

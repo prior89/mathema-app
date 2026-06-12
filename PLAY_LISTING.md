@@ -18,13 +18,13 @@ verbatim. Hindi locale (`hi-IN`) is intentionally omitted in v1.0; see
 | Category | Education |
 | Tags (≤ 5) | NCERT, CBSE, Class 7-12, Math practice, JEE foundation |
 | Contact email | `VeraStudy01@gmail.com` |
-| Website | `https://black-wave-093b02b00.7.azurestaticapps.net` *(replace once a custom domain is live)* |
-| Privacy Policy URL | `https://black-wave-093b02b00.7.azurestaticapps.net/privacy` |
-| Terms of Service URL | `https://black-wave-093b02b00.7.azurestaticapps.net/terms` |
-| Account deletion URL | `https://black-wave-093b02b00.7.azurestaticapps.net/legal/account-deletion.md` |
+| Website | `https://app.matheo.verastudy.net` |
+| Privacy Policy URL | `https://app.matheo.verastudy.net/privacy` |
+| Terms of Service URL | `https://app.matheo.verastudy.net/terms` |
+| Account deletion URL | `https://app.matheo.verastudy.net/legal/account-deletion.md` |
 
-> **Action item before submission:** swap the placeholder Azure subdomain for
-> the final custom domain once it's purchased (`mathema.app` candidate).
+> **Note:** Custom domain `https://app.matheo.verastudy.net` is live. Use this for all Store listing URLs.
+> Custom domain is now live at `https://app.matheo.verastudy.net` (was previously Azure SWA).
 > Updates after publish require version bumps for the Play listing, so lock
 > the URLs first.
 
@@ -108,8 +108,9 @@ exact gaps that keep tripping you up.
     independently from Settings → Privacy at any time.
   • Account deletion from inside the app or the web — every record is
     permanently removed within 30 days. No dark patterns, no retention.
-  • For students under 18, a parent role is provided so a parent or
-    guardian can sign in and supervise the account.
+  • Under-13 (India) / under-14 (Korea) accounts need a one-time parent
+    email confirmation. A PARENT role is also available for optional
+    supervision of teen accounts.
 
 — Made for Class 7 to Class 12 —
 
@@ -204,7 +205,7 @@ notes: This account starts at the onboarding flow. Pick any NCERT class to
 
 ## Open items before submission
 
-- [ ] Custom domain (mathema.app candidate) live with HTTPS — replace
+- [x] Custom domain live: https://app.matheo.verastudy.net (HTTPS enabled)
       every placeholder URL above.
 - [ ] Reviewer account created + password stored in the secrets vault.
 - [ ] Feature graphic 1024 × 500 and 8 phone screenshots in

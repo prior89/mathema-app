@@ -18,6 +18,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   annualSavingsPercent,
   monthlyEquivalent,
+  perDayPrice,
 } from '../lib/billing-pricing';
 import { useBillingUiEnabled } from '../lib/billing-flags';
 import {
@@ -151,6 +152,13 @@ export default function PaywallPage() {
           yearlyPlan.phase.priceAmountMicros,
         )
       : null;
+  const yearlyPerDay = yearlyPlan
+    ? perDayPrice(
+        yearlyPlan.phase.priceAmountMicros,
+        yearlyPlan.phase.currencyCode,
+        locale,
+      )
+    : null;
 
   const closePaywall = () => {
     if (window.history.length > 1) navigate(-1);
@@ -211,6 +219,7 @@ export default function PaywallPage() {
     const expiryTime = status.data?.subscription?.expiryTime;
     const productId = status.data?.subscription?.productId;
     const autoRenewing = status.data?.subscription?.autoRenewing === true;
+    const inGrace = status.data?.subscription?.status === 'GRACE';
     const planLabel =
       productId === 'premium_yearly' ? t('paywall.yearly') : t('paywall.monthly');
 
@@ -231,6 +240,15 @@ export default function PaywallPage() {
           <div className="paywall-status-chip">{t('paywall.member.active')}</div>
           <h1>{t('paywall.already')}</h1>
           <p>{t('paywall.member.plan', { plan: planLabel })}</p>
+
+          {inGrace && (
+            <div className="paywall-context-notice" role="alert">
+              <CircleAlert size={18} />
+              <div>
+                <strong>{t('me.billing.grace.banner')}</strong>
+              </div>
+            </div>
+          )}
 
           <dl className="paywall-subscription-summary">
             <div>
@@ -297,6 +315,26 @@ export default function PaywallPage() {
 
       <div className="paywall-scroll">
         <main className="paywall-content">
+          {status.data?.subscription?.status === 'ON_HOLD' && (
+            <div className="paywall-context-notice" role="alert">
+              <CircleAlert size={18} />
+              <div>
+                <strong>{t('me.billing.hold.banner')}</strong>
+                <button
+                  type="button"
+                  className="paywall-text-button"
+                  style={{ padding: 0, marginTop: 4 }}
+                  onClick={() =>
+                    openPlaySubscriptionManage(status.data?.subscription?.productId ?? null)
+                  }
+                >
+                  <ExternalLink size={14} />
+                  {t('me.billing.fixPayment')}
+                </button>
+              </div>
+            </div>
+          )}
+
           {reason === 'quota' && (
             <div className="paywall-context-notice" role="status">
               <CircleAlert size={18} />
@@ -421,62 +459,67 @@ export default function PaywallPage() {
               </div>
             )}
 
-            {isAndroidBilling && yearlyPlan && (
-              <button
-                type="button"
-                className={`paywall-plan-option ${
-                  selectedProductId === 'premium_yearly' ? 'selected' : ''
-                }`}
-                aria-pressed={selectedProductId === 'premium_yearly'}
-                onClick={() => setSelectedProductId('premium_yearly')}
-              >
-                <span className="paywall-plan-radio" aria-hidden="true">
-                  {selectedProductId === 'premium_yearly' && <Check size={13} />}
-                </span>
-                <span className="paywall-plan-copy">
-                  <span className="paywall-plan-name-row">
-                    <strong>{t('paywall.yearly')}</strong>
-                    <span className="paywall-recommended">{t('paywall.plan.recommended')}</span>
-                  </span>
-                  <span className="paywall-plan-detail">
-                    {t('paywall.plan.billedYearly', { price: yearlyPlan.phase.priceFormatted })}
-                  </span>
-                  {yearlySaving !== null && yearlySaving > 0 && (
-                    <span className="paywall-plan-saving">
-                      {t('paywall.plan.save', { percent: yearlySaving })}
+            {isAndroidBilling && (yearlyPlan || monthlyPlan) && (
+              <div className="paywall-plan-grid">
+                {yearlyPlan && (
+                  <button
+                    type="button"
+                    className={`paywall-plan-card ${
+                      selectedProductId === 'premium_yearly' ? 'selected' : ''
+                    }`}
+                    aria-pressed={selectedProductId === 'premium_yearly'}
+                    onClick={() => setSelectedProductId('premium_yearly')}
+                  >
+                    <span className="paywall-plan-card-badge">
+                      {t('paywall.plan.recommended')}
                     </span>
-                  )}
-                </span>
-                <span className="paywall-plan-price">
-                  <strong>{yearlyEquivalent}</strong>
-                  <span>/ {t('paywall.monthly.per')}</span>
-                </span>
-              </button>
-            )}
+                    <span className="paywall-plan-card-check" aria-hidden="true">
+                      {selectedProductId === 'premium_yearly' && <Check size={12} />}
+                    </span>
+                    <span className="paywall-plan-card-name">{t('paywall.yearly')}</span>
+                    <span className="paywall-plan-card-price">
+                      <strong>{yearlyEquivalent}</strong>
+                      <span>/ {t('paywall.monthly.per')}</span>
+                    </span>
+                    {yearlyPerDay && (
+                      <span className="paywall-plan-card-anchor">
+                        {t('paywall.plan.perDay', { price: yearlyPerDay })}
+                      </span>
+                    )}
+                    <span className="paywall-plan-card-detail">
+                      {t('paywall.plan.billedYearly', { price: yearlyPlan.phase.priceFormatted })}
+                    </span>
+                    {yearlySaving !== null && yearlySaving > 0 && (
+                      <span className="paywall-plan-card-saving">
+                        {t('paywall.plan.save', { percent: yearlySaving })}
+                      </span>
+                    )}
+                  </button>
+                )}
 
-            {isAndroidBilling && monthlyPlan && (
-              <button
-                type="button"
-                className={`paywall-plan-option ${
-                  selectedProductId === 'premium_monthly' ? 'selected' : ''
-                }`}
-                aria-pressed={selectedProductId === 'premium_monthly'}
-                onClick={() => setSelectedProductId('premium_monthly')}
-              >
-                <span className="paywall-plan-radio" aria-hidden="true">
-                  {selectedProductId === 'premium_monthly' && <Check size={13} />}
-                </span>
-                <span className="paywall-plan-copy">
-                  <span className="paywall-plan-name-row">
-                    <strong>{t('paywall.monthly')}</strong>
-                  </span>
-                  <span className="paywall-plan-detail">{t('paywall.plan.monthlyFlex')}</span>
-                </span>
-                <span className="paywall-plan-price">
-                  <strong>{monthlyPlan.phase.priceFormatted}</strong>
-                  <span>/ {t('paywall.monthly.per')}</span>
-                </span>
-              </button>
+                {monthlyPlan && (
+                  <button
+                    type="button"
+                    className={`paywall-plan-card ${
+                      selectedProductId === 'premium_monthly' ? 'selected' : ''
+                    }`}
+                    aria-pressed={selectedProductId === 'premium_monthly'}
+                    onClick={() => setSelectedProductId('premium_monthly')}
+                  >
+                    <span className="paywall-plan-card-check" aria-hidden="true">
+                      {selectedProductId === 'premium_monthly' && <Check size={12} />}
+                    </span>
+                    <span className="paywall-plan-card-name">{t('paywall.monthly')}</span>
+                    <span className="paywall-plan-card-price">
+                      <strong>{monthlyPlan.phase.priceFormatted}</strong>
+                      <span>/ {t('paywall.monthly.per')}</span>
+                    </span>
+                    <span className="paywall-plan-card-detail">
+                      {t('paywall.plan.monthlyFlex')}
+                    </span>
+                  </button>
+                )}
+              </div>
             )}
           </section>
 

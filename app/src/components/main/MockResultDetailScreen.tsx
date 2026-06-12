@@ -62,6 +62,9 @@ export function MockResultDetailScreen() {
   // from (Study for chapter tests, Test for weekly review).
   const loc = useLocation();
   const backTarget = ((loc.state as any)?.origin === 'test') ? '/app/test' : '/app/study';
+  // REAL full-paper exams carry raw JEE marks in nav state (not persisted).
+  const marks = (loc.state as any)?.marks as number | null | undefined;
+  const maxMarks = (loc.state as any)?.maxMarks as number | null | undefined;
 
   return (
     <div className="screen">
@@ -104,6 +107,9 @@ export function MockResultDetailScreen() {
               <Cell k={t('mockResult.cell.percentile')} v={`${detail.data.percentile}`} u="%" />
               <Cell k={t('mockResult.cell.correct')} v={`${correct}/${total}`} />
               <Cell k={t('mockResult.cell.duration')} v={t('mockResult.duration.suffix', { n: detail.data.durationMin })} sub={t('mockResult.duration.sub', { total: detail.data.totalMinutes })} />
+              {marks != null && maxMarks != null && (
+                <Cell k={t('mockResult.cell.marks')} v={`${marks}/${maxMarks}`} sub={t('mockResult.marks.sub')} />
+              )}
             </div>
 
             <div className="section-h">

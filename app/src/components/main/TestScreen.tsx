@@ -5,17 +5,41 @@
  * user there. Auto-scheduled weekly/monthly reviews (cron) are a follow-up;
  * for now reviews are user-triggered.
  */
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { fetchReviewQueueNext } from '../../lib/queries';
+import * as M from '../../lib/mutations';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { HeadAvatar } from './HeadAvatar';
 
 export function TestScreen() {
   const nav = useNavigate();
   const { t } = useT();
   const queue = useQuery({ queryKey: ['queue-next'], queryFn: fetchReviewQueueNext });
+  const [mockEmpty, setMockEmpty] = useState(false);
+
+  const startMock = useMutation({
+    mutationFn: () => M.startTypedExam('real'),
+    onSuccess: (exam) => {
+      if (!exam.resultId || exam.problems.length === 0) {
+        setMockEmpty(true);
+        return;
+      }
+      nav(`/app/mocks/real/${exam.resultId}`, {
+        state: {
+          resultId: exam.resultId,
+          name: exam.name,
+          totalMinutes: exam.totalMinutes,
+          problems: exam.problems,
+          origin: 'test',
+        },
+      });
+    },
+    onError: () => setMockEmpty(true),
+  });
 
   const ready = queue.data?.totalEligible ?? 0;
   const queueEmpty = queue.data && !queue.data.wrongNote;
@@ -39,6 +63,7 @@ export function TestScreen() {
             <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('test.tab.label')}</div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, letterSpacing: '-0.01em' }}>{t('test.tab.title')}</div>
           </div>
+          <HeadAvatar />
         </div>
 
         <div style={{ padding: '12px 22px 0' }}>
@@ -86,6 +111,33 @@ export function TestScreen() {
             {t('test.how.body.order')}
             <span className="chip" style={{ padding: '1px 6px', fontSize: 10.5 }}>{t('test.how.body.comingSoon')}</span>
             {t('test.how.body.tail')}
+          </div>
+
+          {/* Full-paper REAL mock exam — timed, JEE marking, batch submit. */}
+          <div className="section-h">
+            <span className="label">{t('test.mock.section')}</span>
+          </div>
+          <div className="card">
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
+              {t('test.mock.title')}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 4, lineHeight: 1.5 }}>
+              {t('test.mock.desc')}
+            </div>
+            {mockEmpty && (
+              <div style={{ fontSize: 12, color: 'var(--p-danger, #c0392b)', marginTop: 8 }}>
+                {t('test.mock.empty')}
+              </div>
+            )}
+            <button
+              className="btn"
+              disabled={startMock.isPending}
+              onClick={() => { setMockEmpty(false); startMock.mutate(); }}
+              style={{ marginTop: 12, height: 44, fontSize: 13 }}
+            >
+              {startMock.isPending ? t('test.mock.starting') : t('test.mock.start')}
+              <Glyph.ChevronR />
+            </button>
           </div>
 
           <div style={{ height: 16 }} />

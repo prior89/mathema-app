@@ -369,6 +369,9 @@ model User {
   totpEnabledAt   DateTime?
   /// Streak + review reminder pushes (distinct from DeviceToken.marketingEnabled).
   pushRemindersEnabled Boolean @default(true)
+  /// Try-first guest account — zero-PII (synthetic email, no real name/birthDate).
+  /// Exempt from the guardian-consent gate; cleared on /auth/guest/upgrade.
+  isGuest Boolean @default(false)
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 

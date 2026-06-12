@@ -43,7 +43,7 @@ export class GuardianConsentService {
     if (!user || user.role !== UserRole.STUDENT) {
       return { required: false, verified: true, method: null as GuardianConsentMethod | null };
     }
-    const required = requiresGuardianConsent(user.birthDate);
+    const required = requiresGuardianConsent(user.birthDate, user.country);
     const verified = !required || !!user.guardianConsentVerifiedAt;
     const req = required
       ? await this.prisma.guardianConsentRequest.findUnique({
@@ -76,9 +76,9 @@ export class GuardianConsentService {
   }) {
     const user = await this.prisma.user.findUnique({
       where: { id: opts.studentUserId },
-      select: { birthDate: true, guardianConsentVerifiedAt: true, role: true },
+      select: { birthDate: true, guardianConsentVerifiedAt: true, role: true, country: true },
     });
-    if (!user || user.role !== UserRole.STUDENT || !requiresGuardianConsent(user.birthDate)) {
+    if (!user || user.role !== UserRole.STUDENT || !requiresGuardianConsent(user.birthDate, user.country)) {
       return { required: false };
     }
     if (user.guardianConsentVerifiedAt) {
@@ -107,17 +107,24 @@ export class GuardianConsentService {
 
   async requestParentVerification(
     studentUserId: string,
-    dto: { parentName: string; parentEmail: string; parentPhone?: string },
+    dto: { parentName?: string; parentEmail: string; parentPhone?: string },
     ctx: { ip?: string; ua?: string } = {},
   ) {
     const user = await this.prisma.user.findUnique({
       where: { id: studentUserId },
-      select: { name: true, role: true, birthDate: true, guardianConsentVerifiedAt: true, country: true },
+      select: {
+        email: true,
+        name: true,
+        role: true,
+        birthDate: true,
+        guardianConsentVerifiedAt: true,
+        country: true,
+      },
     });
     if (!user || user.role !== UserRole.STUDENT) {
       throw new BadRequestException('guardian consent applies to student accounts only');
     }
-    if (!requiresGuardianConsent(user.birthDate)) {
+    if (!requiresGuardianConsent(user.birthDate, user.country)) {
       throw new BadRequestException('guardian consent not required for this account');
     }
     if (user.guardianConsentVerifiedAt) {
@@ -125,6 +132,13 @@ export class GuardianConsentService {
     }
 
     const parentEmail = dto.parentEmail.trim().toLowerCase();
+    if (parentEmail === user.email.trim().toLowerCase()) {
+      throw new BadRequestException({
+        code: 'parent_email_same_as_student',
+        message: 'Please enter a parent or guardian email — not your own student email.',
+      });
+    }
+    const parentName = (dto.parentName?.trim() || 'Parent/guardian');
     const method = resolveConsentMethod(user.country) as GuardianConsentMethod;
     if (method === GuardianConsentMethod.KR_PASS) {
       throw new BadRequestException({
@@ -140,7 +154,7 @@ export class GuardianConsentService {
         country: user.country,
         method,
         status: GuardianConsentStatus.PENDING,
-        parentName: dto.parentName.trim(),
+        parentName,
         parentEmail,
         parentPhone: dto.parentPhone?.trim() ?? null,
         policyVersion: CURRENT_GUARDIAN_POLICY_VERSION,
@@ -148,7 +162,7 @@ export class GuardianConsentService {
         requestUa: ctx.ua ?? null,
       },
       update: {
-        parentName: dto.parentName.trim(),
+        parentName,
         parentEmail,
         parentPhone: dto.parentPhone?.trim() ?? null,
         status: GuardianConsentStatus.PENDING,
@@ -159,7 +173,7 @@ export class GuardianConsentService {
 
     await this.issueConsentEmail(request.id, {
       parentEmail,
-      parentName: dto.parentName.trim(),
+      parentName,
       childName: user.name,
       country: user.country,
     });

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import type { UserRole } from '../lib/queries';
 import { homePathForRole } from '../lib/role-routes';
 import { onboardingCompletedLocally } from '../lib/post-auth-path';
-import { guardianConsentSatisfied } from '../lib/guardian-consent';
+import { guardianConsentSatisfied, requiresAgeProfile } from '../lib/guardian-consent';
 import { LoadingSplash } from './Brand';
 
 type ProtectedRouteProps = {
@@ -21,18 +21,43 @@ export default function ProtectedRoute({ children, roles }: ProtectedRouteProps)
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
   const userRole = user.role ?? 'STUDENT';
-  // Minors: verifiable guardian consent before email verification or learning data.
+  // Guests carry zero PII (no birthDate, synthetic verified email), so the
+  // age-profile and guardian gates don't apply — they re-engage at upgrade.
+  const isGuest = user.isGuest === true;
+  // Age profile (self-reported) required for all students — covers Google sign-in skips.
   if (
     userRole === 'STUDENT'
+    && !isGuest
+    && requiresAgeProfile(user.birthDate, userRole)
+    && !location.pathname.startsWith('/onboarding')
+  ) {
+    return <Navigate to="/onboarding" replace />;
+  }
+  // Under-threshold minors: parent email confirmation before learning data.
+  // IMPORTANT: This must be checked BEFORE email verification for new minor signups.
+  // A fresh minor registers with guardianConsentPending. We must let them reach
+  // /guardian-consent (and the parent verify link flow) even if email is not yet verified.
+  // See checklist G3-C 3.19 and backend JwtAuthGuard allowsUnverifiedEmail + assertGuardianGate.
+  if (
+    userRole === 'STUDENT'
+    && !isGuest
     && !guardianConsentSatisfied(user)
     && !location.pathname.startsWith('/guardian-consent')
+    && !location.pathname.startsWith('/onboarding')
   ) {
     return <Navigate to="/guardian-consent" replace />;
   }
+
   // Password sign-ups must prove they own the email before any learning or
   // billing surface is reachable. /users/me stays available server-side so
   // this guard can render the verification screen instead of logging out.
-  if (!user.emailVerifiedAt && !location.pathname.startsWith('/verify-required')) {
+  //
+  // Exception for guardian consent flow: minors who just registered may land here
+  // with guardianConsentPending=true while emailVerifiedAt is still null.
+  // The guardian consent page (and its verify sibling) are exempted so the parent
+  // email request + verification can complete before forcing email OTP.
+  const isGuardianFlow = location.pathname.startsWith('/guardian-consent');
+  if (!user.emailVerifiedAt && !location.pathname.startsWith('/verify-required') && !isGuardianFlow) {
     return <Navigate to="/verify-required" replace />;
   }
   // Google sign-up creates users without a class. Force them through the

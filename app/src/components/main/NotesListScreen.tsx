@@ -7,6 +7,7 @@ import { useT } from '../../lib/i18n';
 import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { HeadAvatar } from './HeadAvatar';
 import MathText from '../MathText';
 import { ActiveErrorPatternBanner } from '../mastery/ActiveErrorPatterns';
 
@@ -53,6 +54,7 @@ export function NotesListScreen() {
           <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('notes.tab.label')}</div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, marginTop: 2, letterSpacing: '-0.01em' }}>{t('notes.tab.title')}</div>
         </div>
+        <HeadAvatar />
       </div>
       <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
         {/* 4 stats compact — stays pinned alongside the header. */}

@@ -23,6 +23,12 @@ export function BillingPlanCard() {
   if (!billingUi) return null;
 
   const planSource = billing.data?.entitlement?.source;
+  const subStatus = billing.data?.subscription?.status;
+  // Play dunning states (India: failed UPI AutoPay lands here for ~5 days
+  // before ON_HOLD). GRACE keeps entitlement, ON_HOLD suspends it — both
+  // are fixed in Play's payment settings, not by re-purchasing.
+  const inGrace = subStatus === 'GRACE';
+  const onHold = subStatus === 'ON_HOLD';
   const expiryTime = billing.data?.subscription?.expiryTime;
   const expiryDate = expiryTime ? new Date(expiryTime).toLocaleDateString() : '';
   const solverQuota = billing.data?.quota?.solver;
@@ -93,6 +99,15 @@ export function BillingPlanCard() {
         <h3>{planTitle}</h3>
         <p>{planSub}</p>
 
+        {(inGrace || onHold) && (
+          <div className="billing-payment-issue" role="alert">
+            <AlertCircle size={15} />
+            <span>
+              {inGrace ? t('me.billing.grace.banner') : t('me.billing.hold.banner')}
+            </span>
+          </div>
+        )}
+
         {isFree && solverQuota?.limit != null && solverQuota.limit > 0 && (
           <div
             className="billing-plan-progress"
@@ -115,7 +130,7 @@ export function BillingPlanCard() {
               <RotateCw size={16} />
               {t('me.billing.retry')}
             </button>
-          ) : isPaid ? (
+          ) : isPaid || onHold ? (
             <button
               type="button"
               className="billing-plan-action secondary"
@@ -124,7 +139,7 @@ export function BillingPlanCard() {
               }
             >
               <ExternalLink size={16} />
-              {t('me.billing.manage')}
+              {inGrace || onHold ? t('me.billing.fixPayment') : t('me.billing.manage')}
             </button>
           ) : (
             <button

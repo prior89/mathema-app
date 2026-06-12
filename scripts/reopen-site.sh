@@ -21,4 +21,4 @@ RUN_ID=$(gh run list --workflow=frontend-deploy.yml -R prior89/mathema-app --lim
 printf "  run id=%s — tailing…\n" "$RUN_ID"
 gh run watch "$RUN_ID" --exit-status -R prior89/mathema-app || true
 
-printf "\n\033[1;32m✓ Site reopened.\033[0m Real SPA should be live at https://black-wave-093b02b00.7.azurestaticapps.net/ in ~30s.\n"
+printf "\n\033[1;32m✓ Site reopened.\033[0m Real SPA should be live at https://app.matheo.verastudy.net/ in ~30s.\n"

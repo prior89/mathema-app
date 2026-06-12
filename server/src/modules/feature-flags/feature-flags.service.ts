@@ -8,6 +8,10 @@ export const PUBLIC_FEATURE_FLAGS = [
   'first_session_achievement',
   'kr_cold_start',
   'student_efficacy_card',
+  // Try-first guest mode. Evaluated pre-auth (no userId), so the bucket is
+  // unavailable — effective values are 0 (off) or 100 (on); use it as a
+  // dark-ship kill switch rather than a %-ramp.
+  'guest_mode',
 ] as const;
 
 export type PublicFeatureFlag = (typeof PUBLIC_FEATURE_FLAGS)[number];
@@ -17,6 +21,7 @@ const ENV_KEY: Record<PublicFeatureFlag, string> = {
   first_session_achievement: 'FEATURE_FIRST_SESSION_ACHIEVEMENT_PCT',
   kr_cold_start: 'FEATURE_KR_COLD_START_PCT',
   student_efficacy_card: 'FEATURE_STUDENT_EFFICACY_CARD_PCT',
+  guest_mode: 'FEATURE_GUEST_MODE_PCT',
 };
 
 @Injectable()

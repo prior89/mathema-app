@@ -4,6 +4,7 @@ import { MockExamsRepository } from './mock-exams.repository';
 import { GradingService } from './services/grading.service';
 import { AiRecommendExamService } from './services/ai-recommend-exam.service';
 import { SubmitExamDto } from './dto/submit-exam.dto';
+import { SubmitPaperDto } from './dto/submit-paper.dto';
 import { pointsToNextGrade } from '../../common/utils/grade-calculator.util';
 import { AttemptsService } from '../attempts/attempts.service';
 import { SessionContext } from '../../common/enums/session-context.enum';
@@ -730,7 +731,7 @@ export class MockExamsService {
     problems: Array<{ id: string; source: string; difficulty: string }>;
   }, lang: Lang = 'en') {
     if (!p.problems || p.problems.length === 0) {
-      return { resultId: null, name: p.name, totalMinutes: p.totalMinutes, problems: [] };
+      return { resultId: null, name: p.name, type: p.type, totalMinutes: p.totalMinutes, problems: [] };
     }
     const { result } = await this.repo.createSession(userId, {
       name: p.name, type: p.type, totalProblems: p.problems.length, totalMinutes: p.totalMinutes,
@@ -739,6 +740,7 @@ export class MockExamsService {
     return {
       resultId: result.id,
       name: p.name,
+      type: p.type,
       totalMinutes: p.totalMinutes,
       problems: fullProblems,
     };
@@ -874,6 +876,70 @@ export class MockExamsService {
       }
     }));
     const graded = await this.grading.grade(userId, resultId, dto);
-    return this.repo.saveResult(resultId, graded);
+    // saveResult spreads into prisma update — pass only persisted columns.
+    return this.repo.saveResult(resultId, {
+      score: graded.score,
+      grade: graded.grade,
+      percentile: graded.percentile,
+      durationMin: graded.durationMin,
+    });
+  }
+
+  /**
+   * Full-paper submit (REAL exams) — the client collects one final choice per
+   * problem (palette navigation, answers changeable until submit) and sends
+   * them all at once. Each answer lands as an Attempt with the choice's real
+   * stepIndex so wrong-note / mastery listeners see consistent rows, then the
+   * paper is graded with JEE negative marking (grading.service REAL branch).
+   */
+  async submitPaper(userId: string, resultId: string, dto: SubmitPaperDto) {
+    await this.prisma.mockExamResult.findFirstOrThrow({
+      where: { id: resultId, userId },
+    });
+
+    const answers = dto.answers ?? [];
+    const choiceIds = answers.map((a) => a.choiceId);
+    const choices = choiceIds.length > 0
+      ? await this.prisma.problemChoice.findMany({
+          where: { id: { in: choiceIds } },
+          select: { id: true, step: { select: { stepIndex: true, problemId: true } } },
+        })
+      : [];
+    const choiceById = new Map(choices.map((c) => [c.id, c]));
+
+    await Promise.all(answers.map(async (a) => {
+      const choice = choiceById.get(a.choiceId);
+      // Drop answers whose choice doesn't belong to the claimed problem —
+      // a tampered payload must not be able to score one problem's choice
+      // against another problem.
+      if (!choice || choice.step.problemId !== a.problemId) return;
+      await this.attempts.create(userId, {
+        problemId: a.problemId,
+        answer: '',
+        durationSec: Math.max(1, Math.round(a.durationSec || 1)),
+        stepIndex: choice.step.stepIndex,
+        choiceId: a.choiceId,
+        context: SessionContext.EXAM,
+        mockExamResultId: resultId,
+      });
+    }));
+
+    const graded = await this.grading.grade(userId, resultId, {});
+    const saved = await this.repo.saveResult(resultId, {
+      score: graded.score,
+      grade: graded.grade,
+      percentile: graded.percentile,
+      durationMin: graded.durationMin,
+    });
+    return {
+      ...saved,
+      correctCount: graded.correctCount,
+      totalProblems: graded.totalProblems,
+      attemptedProblems: graded.attemptedProblems,
+      marks: graded.marks,
+      maxMarks: graded.maxMarks,
+      wrongCount: graded.wrongCount,
+      unattemptedCount: graded.unattemptedCount,
+    };
   }
 }

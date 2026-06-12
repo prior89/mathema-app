@@ -5,6 +5,7 @@ import { UNIT_NAME_EN } from '../../common/i18n/content-en';
 import { UNIT_NAME_HI } from '../../common/i18n/content-hi';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { aggregateKrGradeMastery } from './kr-grade-mastery.util';
+import { applyMasteryDecay } from './mastery-decay.util';
 
 function localizeUnit(name: string, lang: Lang): string {
   if (lang === 'hi') return UNIT_NAME_HI[name] ?? UNIT_NAME_EN[name] ?? name;
@@ -32,10 +33,17 @@ export class MasteryService {
         select: {
           masteryScore: true,
           evidenceCount: true,
+          lastAttemptAt: true,
           concept: { select: { gradeLevel: true } },
         },
       });
-      return aggregateKrGradeMastery(trajectories, lang);
+      return aggregateKrGradeMastery(
+        trajectories.map((t) => ({
+          ...t,
+          masteryScore: applyMasteryDecay(t.masteryScore, t.lastAttemptAt),
+        })),
+        lang,
+      );
     }
 
     const list = await this.repo.findAll(userId);

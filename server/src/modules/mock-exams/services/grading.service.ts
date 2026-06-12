@@ -16,6 +16,10 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
  *     prefers MockExam.totalProblems (intent at session start) but never goes
  *     below the count of distinct attempted problems, so partial sessions
  *     don't divide by a stale planned total.
+ *   - REAL exams use JEE-style negative marking instead: +4 per correct
+ *     problem, -1 per wrong, 0 per unattempted. The stored score stays on
+ *     the 0-100 scale (marks normalised against maxMarks, floored at 0) so
+ *     grade/percentile tables and trajectory charts keep working unchanged.
  *   - grade + percentile come from grade-calculator's table — earlier inline
  *     thresholds in finalize() drifted out of sync (e.g. 96 vs 92 for grade 1).
  */
@@ -28,7 +32,7 @@ export class GradingService {
       this.prisma.attempt.findMany({ where: { mockExamResultId: resultId } }),
       this.prisma.mockExamResult.findUnique({
         where: { id: resultId },
-        select: { mockExam: { select: { totalProblems: true } } },
+        select: { mockExam: { select: { totalProblems: true, type: true } } },
       }),
     ]);
 
@@ -53,7 +57,14 @@ export class GradingService {
     const intendedTotal = result?.mockExam?.totalProblems ?? 0;
     const totalProblems = Math.max(intendedTotal, attemptedTotal, 1);
 
-    let score = Math.round((correctCount / totalProblems) * 100);
+    const isReal = result?.mockExam?.type === 'REAL';
+    const wrongCount = attemptedTotal - correctCount;
+    const marks = isReal ? 4 * correctCount - wrongCount : null;
+    const maxMarks = isReal ? 4 * totalProblems : null;
+
+    let score = isReal
+      ? Math.round((Math.max(0, marks!) / maxMarks!) * 100)
+      : Math.round((correctCount / totalProblems) * 100);
     // Compat: when no attempts exist (the caller is the legacy batch /submit
     // and chose to pre-compute totalScore in the dto), fall back to it.
     if (attempts.length === 0 && typeof dto?.totalScore === 'number') {
@@ -71,6 +82,10 @@ export class GradingService {
       correctCount,
       totalProblems,
       attemptedProblems: attemptedTotal,
+      marks,
+      maxMarks,
+      wrongCount: isReal ? wrongCount : null,
+      unattemptedCount: isReal ? totalProblems - attemptedTotal : null,
     };
   }
 }

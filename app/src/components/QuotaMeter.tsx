@@ -25,6 +25,10 @@ export function QuotaMeter({ className, style }: Props) {
 
   const { used, limit, inGrace, graceEndsAt } = quota;
   const exhausted = used >= limit;
+  const left = Math.max(0, limit - used);
+  // Pre-warning at <=2 left: nudge to paywall BEFORE the hard 403 wall so the
+  // upgrade prompt arrives while the user still has agency, not as a punishment.
+  const low = !exhausted && left <= 2;
   const graceDaysLeft =
     inGrace && graceEndsAt
       ? Math.max(1, Math.ceil((new Date(graceEndsAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
@@ -61,6 +65,24 @@ export function QuotaMeter({ className, style }: Props) {
           }}
         >
           {t('quota.solver.exhausted', { used, limit })}
+        </button>
+      ) : low && billingUi ? (
+        <button
+          type="button"
+          onClick={() => nav('/app/paywall?reason=quota')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            color: 'var(--p-accent-ink)',
+            fontWeight: 600,
+            fontSize: 11.5,
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            fontFamily: 'inherit',
+          }}
+        >
+          {t('quota.solver.low', { left })}
         </button>
       ) : (
         <span style={exhausted ? { fontWeight: 600 } : undefined}>

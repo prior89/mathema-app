@@ -42,7 +42,7 @@ export default function ExamTakingScreen({ exam, onClose }: Props) {
   const [results, setResults] = useState<Record<string, Record<number, { correct: boolean; choiceId: string }>>>({});
   const [wrongChoiceIds, setWrongChoiceIds] = useState<Set<string>>(new Set());
   const [lastFeedback, setLastFeedback] = useState<Feedback | null>(null);
-  const [confidence, setConfidence] = useState(50);
+  const [confidence, setConfidence] = useState<number | null>(null);
 
   // 타이머
   const [seconds, setSeconds] = useState(0);
@@ -68,7 +68,7 @@ export default function ExamTakingScreen({ exam, onClose }: Props) {
     setSelectedChoiceId(null);
     setLastFeedback(null);
     setWrongChoiceIds(new Set());
-    setConfidence(50);
+    setConfidence(null);
     stepStartedAt.current = Date.now();
   }, [current?.id, problemStep]);
 
@@ -94,7 +94,7 @@ export default function ExamTakingScreen({ exam, onClose }: Props) {
       choiceId,
       stepIndex: problemStep,
       durationSec: Math.max(1, Math.round((Date.now() - stepStartedAt.current) / 1000)),
-      confidence: wrongChoiceIds.size === 0 ? confidence : undefined,
+      confidence: wrongChoiceIds.size === 0 && confidence != null ? confidence : undefined,
     }),
     onSuccess: (res) => {
       const c = res.choice;

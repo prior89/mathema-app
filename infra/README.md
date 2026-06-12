@@ -47,7 +47,7 @@ az deployment group create \
 
 출력값:
 - `backendUrl` — 백엔드 API base
-- `swaDefaultHostname` — 프론트 도메인
+- `swaDefaultHostname` — SWA 기본 호스트네임 (커스텀 도메인 app.matheo.verastudy.net 이 primary)
 - `acrLoginServer` — CI 가 푸시할 ACR 주소
 - `keyVaultName`, `appInsightsKey`
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../lib/i18n';
+import { isLikelyEmail } from '../lib/email';
 import { fetchGuardianConsentStatus, requestGuardianConsent, type Me } from '../lib/queries';
 import { get } from '../lib/api';
 import { postAuthPath } from '../lib/post-auth-path';
@@ -29,9 +30,7 @@ export default function GuardianConsentPage() {
     })();
   }, [statusQ.data?.verified, refreshUser, navigate]);
 
-  const [parentName, setParentName] = useState('');
   const [parentEmail, setParentEmail] = useState('');
-  const [parentPhone, setParentPhone] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
@@ -41,10 +40,11 @@ export default function GuardianConsentPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!isLikelyEmail(parentEmail)) return;
     setErr(null);
     setBusy(true);
     try {
-      await requestGuardianConsent({ parentName, parentEmail, parentPhone: parentPhone || undefined });
+      await requestGuardianConsent({ parentEmail: parentEmail.trim() });
       setSent(true);
       await qc.invalidateQueries({ queryKey: ['guardian-consent-status'] });
       await refreshUser();
@@ -52,6 +52,8 @@ export default function GuardianConsentPage() {
       const code = ex?.response?.data?.error?.code ?? ex?.response?.data?.code;
       if (code === 'pass_not_configured') {
         setErr(t('guardianConsent.passNotConfigured'));
+      } else if (code === 'parent_email_same_as_student') {
+        setErr(t('guardianConsent.parentEmailSameAsStudent'));
       } else {
         setErr(ex?.response?.data?.error?.message ?? t('guardianConsent.failed'));
       }
@@ -62,16 +64,11 @@ export default function GuardianConsentPage() {
 
   const resend = async () => {
     const email = status?.parentEmail ?? parentEmail;
-    const name = parentName || status?.parentEmail?.split('@')[0] || 'Parent';
     if (!email) return;
     setErr(null);
     setBusy(true);
     try {
-      await requestGuardianConsent({
-        parentName: name,
-        parentEmail: email,
-        parentPhone: parentPhone || undefined,
-      });
+      await requestGuardianConsent({ parentEmail: email.trim() });
       setSent(true);
       await qc.invalidateQueries({ queryKey: ['guardian-consent-status'] });
     } catch (ex: any) {
@@ -110,20 +107,18 @@ export default function GuardianConsentPage() {
               ) : (
                 <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   <div className="field">
-                    <label>{t('guardianConsent.parentName')}</label>
-                    <input value={parentName} onChange={(e) => setParentName(e.target.value)} required minLength={2} />
-                  </div>
-                  <div className="field">
                     <label>{t('guardianConsent.parentEmail')}</label>
-                    <input type="email" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} required />
-                  </div>
-                  <div className="field">
-                    <label>{t('guardianConsent.parentPhone')}</label>
-                    <input type="tel" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
-                    <span className="caption" style={{ marginTop: 6 }}>{t('guardianConsent.parentPhone.hint')}</span>
+                    <input
+                      type="email"
+                      value={parentEmail}
+                      onChange={(e) => setParentEmail(e.target.value)}
+                      placeholder={t('ageGate.parentEmail.placeholder')}
+                      required
+                    />
+                    <span className="caption" style={{ marginTop: 6 }}>{t('ageGate.parentEmail.hint')}</span>
                   </div>
                   {err && <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>}
-                  <button type="submit" className="btn" disabled={busy}>
+                  <button type="submit" className="btn" disabled={busy || !isLikelyEmail(parentEmail)}>
                     {busy ? t('guardianConsent.sending') : t('guardianConsent.send')}
                   </button>
                 </form>

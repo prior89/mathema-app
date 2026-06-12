@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { CountryCode, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from './users.repository';
 import { GuardianConsentService } from '../guardian-consent/guardian-consent.service';
@@ -24,6 +24,7 @@ export class UsersService {
     role?: string;
     pushRemindersEnabled?: boolean;
     birthDate?: string;
+    country?: string;
   }) {
     const user = await this.repo.findById(id);
     if (!user) throw new NotFoundException('User not found');
@@ -51,12 +52,18 @@ export class UsersService {
       data.role = dto.role;
     }
 
+    const countryChanging = dto.country !== undefined && dto.country !== user.country;
+    if (countryChanging) {
+      data.country = dto.country;
+    }
+
     if (Object.keys(data).length === 0) return this.findOne(id);
     await this.repo.update(id, data);
-    if (dto.birthDate && user.role === UserRole.STUDENT) {
+    const effectiveCountry = (dto.country ?? user.country) as CountryCode;
+    if (user.role === UserRole.STUDENT && (dto.birthDate || countryChanging)) {
       await this.guardianConsent.ensurePendingForStudent({
         studentUserId: id,
-        country: user.country,
+        country: effectiveCountry,
       });
     }
     return this.findOne(id);

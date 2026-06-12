@@ -20,6 +20,10 @@ node_modules/
 *.keystore
 # Signed AAB artifacts — built locally for Play upload, never source-controlled
 release/
+# Local accumulated release build outputs (run-*/aab-unpacked etc from prior Play
+# candidate builds). Distinct from the final signed "release/" artifacts above.
+# These are large (tens of MB) and should never be source-controlled.
+dist-releases/
 # OS / Editor
 .DS_Store
 .vscode/

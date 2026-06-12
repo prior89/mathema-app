@@ -14,6 +14,7 @@ const POLICY_SUMMARY: Record<Lang, { title: string; sections: Array<{ heading: s
       { heading: '이용 목적', body: '학습 진단·맞춤 추천 제공, 서비스 개선, 안내 알림(선택 동의 시)' },
       { heading: '보관 기간', body: '계정 활성 기간 + 삭제 요청 후 30일' },
       { heading: '귀하의 권리', body: '열람·정정·삭제 요청, 동의 철회 (DATA_PROCESSING 철회는 계정 삭제로 처리됨)' },
+      { heading: '아동·보호자', body: '만 14세 미만(KR)·13세 미만(IN)은 보호자 이메일 확인 필요. 청소년은 분석·마케팅 기본 OFF' },
     ],
   },
   en: {
@@ -23,6 +24,7 @@ const POLICY_SUMMARY: Record<Lang, { title: string; sections: Array<{ heading: s
       { heading: 'How we use it', body: 'Diagnostics, personalised recommendations, service improvement, notifications (with consent)' },
       { heading: 'Retention', body: 'Active account period + 30 days after deletion request' },
       { heading: 'Your rights', body: 'Access, rectify, erase data; withdraw consent. Withdrawing DATA_PROCESSING triggers account deletion.' },
+      { heading: 'Children & guardians', body: 'Under-14 (KR) / under-13 (IN): parent email confirmation. Teens: analytics/marketing off by default.' },
     ],
   },
   hi: {
@@ -32,6 +34,7 @@ const POLICY_SUMMARY: Record<Lang, { title: string; sections: Array<{ heading: s
       { heading: 'उपयोग का उद्देश्य', body: 'निदान, व्यक्तिगत सिफारिशें, सेवा सुधार, सूचनाएँ (सहमति पर)' },
       { heading: 'संरक्षण अवधि', body: 'सक्रिय खाता अवधि + विलोपन अनुरोध के 30 दिन बाद तक' },
       { heading: 'आपके अधिकार', body: 'देखना, सुधारना, मिटाना; सहमति वापस लेना। DATA_PROCESSING वापस लेने पर खाता हटा दिया जाता है।' },
+      { heading: 'बच्चे और अभिभावक', body: '13 से कम (IN) / 14 से कम (KR): अभिभावक ईमेल पुष्टि। किशोर: विश्लेषण/मार्केटिंग डिफ़ॉल्ट बंद।' },
     ],
   },
 };

@@ -9,6 +9,7 @@ import { trackPageView } from './lib/analytics';
 import { fetchMe } from './lib/queries';
 import { homePathForRole } from './lib/role-routes';
 import { useT } from './lib/i18n';
+import { resolveAppLang } from './lib/lang-preference';
 import { useBillingRecovery } from './hooks/useBillingRecovery';
 import { usePushSync } from './hooks/usePushSync';
 
@@ -54,16 +55,9 @@ function PageViewTracker() {
 }
 
 /**
- * Country → language sync (country-strict, both directions).
- *   - User.country === 'KR'  → lang='ko' (always)
- *   - User.country !== 'KR'  → lang='en' (always — IN default, no Hindi v1)
- *
- * User.country is the ground truth. Saved localStorage is *ignored* because
- * (a) v1 has no language picker UI (project_mathema_v1_scope.md: EN-only
- *     ship, KO is country-driven not user-driven), and
- * (b) the earlier "respect saved" branch let stale 'ko' from a KR test
- *     session leak into the next IN admin login — every page rendered
- *     Korean for an India user. Country-strict overwrite prevents that.
+ * Language sync when preference is "auto" (Settings → Language → Match country).
+ *   - KR account → ko, else → en
+ * Explicit ko/en/hi choice in Settings overrides until the user picks Auto again.
  *
  * Mounted once at app root. fetchMe 401s pre-auth (silent — me.data stays
  * undefined, effect no-ops). Once auth resolves the effect fires once per
@@ -84,7 +78,7 @@ function I18nCountrySync() {
     // Once onboarding completes and routes to /app, this effect runs and
     // does the country→lang flip exactly once.
     if (location.pathname.startsWith('/onboarding') || location.pathname.startsWith('/guardian-consent')) return;
-    const want: 'ko' | 'en' = me.data.country === 'KR' ? 'ko' : 'en';
+    const want = resolveAppLang(me.data.country);
     if (lang !== want) setLang(want);
   }, [me.data, lang, setLang, location.pathname]);
   return null;

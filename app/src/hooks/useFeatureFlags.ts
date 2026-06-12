@@ -6,6 +6,8 @@ export type FeatureFlags = {
   first_session_achievement: boolean;
   kr_cold_start: boolean;
   student_efficacy_card: boolean;
+  /** Try-first guest mode — pre-auth evaluation, effectively 0 or 100 only. */
+  guest_mode: boolean;
 };
 
 type FeaturesResponse = {

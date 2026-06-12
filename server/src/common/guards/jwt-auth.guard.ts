@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { guardianAccessSatisfied } from '../../modules/guardian-consent/guardian-consent.util';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -21,9 +22,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (!ok) return false;
 
     const req = context.switchToHttp().getRequest();
-    if (this.allowsUnverifiedEmail(req)) return true;
+    if (this.allowsUnverifiedEmail(req)) {
+      await this.assertGuardianGate(context, req);
+      return true;
+    }
 
-    if (req.user?.emailVerifiedAt || req.user?.role === 'ADMIN') return true;
+    if (req.user?.emailVerifiedAt || req.user?.role === 'ADMIN') {
+      await this.assertGuardianGate(context, req);
+      return true;
+    }
 
     const userId = req.user?.id;
     if (!userId) return true;
@@ -34,11 +41,70 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       where: { id: userId },
       select: { emailVerifiedAt: true, role: true },
     });
-    if (user?.emailVerifiedAt || user?.role === 'ADMIN') return true;
+    if (user?.emailVerifiedAt || user?.role === 'ADMIN') {
+      await this.assertGuardianGate(context, req);
+      return true;
+    }
     throw new ForbiddenException({
       code: 'email_not_verified',
       message: 'Please verify your email address before continuing.',
     });
+  }
+
+  private async assertGuardianGate(context: ExecutionContext, req: any): Promise<void> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(), context.getClass(),
+    ]);
+    if (isPublic) return;
+
+    const userId = req.user?.id;
+    if (!userId) return;
+
+    if (this.allowsGuardianExempt(req)) return;
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        role: true,
+        birthDate: true,
+        guardianConsentVerifiedAt: true,
+        country: true,
+        isGuest: true,
+      },
+    });
+    if (!user || user.role !== 'STUDENT') return;
+    // Guests carry zero PII (no name/birthDate, synthetic email) so the
+    // DPDP/PIPA guardian-consent requirement does not attach. The gate
+    // re-engages at /auth/guest/upgrade when a real profile is created.
+    if ((user as any).isGuest) return;
+
+    if (!guardianAccessSatisfied(user)) {
+      const needsAge = !user.birthDate;
+      throw new ForbiddenException({
+        code: needsAge ? 'age_profile_required' : 'guardian_consent_required',
+        message: needsAge
+          ? 'Please complete your age profile before using learning features.'
+          : 'Parent/guardian email confirmation is required before using learning features.',
+      });
+    }
+  }
+
+  private allowsGuardianExempt(req: any): boolean {
+    const method = String(req.method ?? '').toUpperCase();
+    const path = String(req.path ?? req.originalUrl?.split('?')[0] ?? '');
+    const normalized = path.replace(/^\/api\/v1/, '');
+    return (
+      (method === 'GET' && normalized === '/users/me')
+      || (method === 'PATCH' && normalized === '/users/me')
+      || (method === 'DELETE' && normalized === '/users/me')
+      || (method === 'GET' && normalized.startsWith('/guardian-consent'))
+      || (method === 'POST' && normalized.startsWith('/guardian-consent'))
+      || (method === 'POST' && normalized === '/auth/logout')
+      || (method === 'POST' && normalized === '/auth/resend-verification')
+      || (method === 'GET' && normalized.startsWith('/privacy/'))
+      || (method === 'POST' && normalized.startsWith('/privacy/consents/'))
+      || (method === 'DELETE' && normalized.startsWith('/privacy/consents/'))
+    );
   }
 
   private allowsUnverifiedEmail(req: any): boolean {
@@ -73,6 +139,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       || (method === 'POST' && normalized === '/diagnostic/start')
       || (method === 'POST' && normalized === '/diagnostic/answer')
       || (method === 'POST' && /^\/diagnostic\/[^/]+\/finish$/.test(normalized))
+      || (method === 'POST' && normalized === '/diagnostic/adaptive/start')
+      || (method === 'POST' && normalized === '/diagnostic/adaptive/answer')
+      || (method === 'POST' && /^\/diagnostic\/adaptive\/[^/]+\/finish$/.test(normalized))
     );
   }
 }

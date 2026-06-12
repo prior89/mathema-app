@@ -5,19 +5,27 @@
  *   STUDENT 성인·기타 역할: Step 2 = 개인정보 동의
  */
 
-import { FormEvent, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, RegisterRole } from '../context/AuthContext';
-import type { GradeLevel, NcertClass } from '../lib/queries';
+import { post, get } from '../lib/api';
+import { postAuthPath } from '../lib/post-auth-path';
+import type { GradeLevel, Me, NcertClass } from '../lib/queries';
 import { useT } from '../lib/i18n';
 import { isLikelyEmail } from '../lib/email';
-import { requiresGuardianConsent } from '../lib/guardian-consent';
+import {
+  birthDateFromAge,
+  requiresGuardianConsentFromAge,
+} from '../lib/guardian-consent';
+import { AgeGate } from '../components/onboarding/AgeGate';
 import { Glyph } from '../components/onboarding/Glyph';
 import { BrandLogo } from '../components/Brand';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
 import { isGoogleSignInConfigured } from '../lib/google-client-id';
+import { LAUNCH_STUDENT_ONLY } from '../lib/launch-config';
+import { detectOnboardingLang, langForCountry } from '../lib/onboarding-locale';
 import '../styles/onboarding.css';
 
 const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
@@ -30,8 +38,13 @@ const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
 };
 
 export default function RegisterPage() {
-  const { register, loginWithGoogle } = useAuth();
+  const { register, loginWithGoogle, user, refreshUser } = useAuth();
   const { t, lang, setLang } = useT();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Guest → real account upgrade (?upgrade=1). Same form, but submits to
+  // /auth/guest/upgrade so the existing userId (and all progress) is kept.
+  const upgradeMode = searchParams.get('upgrade') === '1' && user?.isGuest === true;
 
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [role, setRole] = useState<RegisterRole>('STUDENT');
@@ -39,8 +52,8 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
 
-  const [ncertClass, setNcertClass] = useState<NcertClass>('CLASS_11');
-  const [birthDate, setBirthDate] = useState('');
+  const [ncertClass, setNcertClass] = useState<NcertClass>('CLASS_7');
+  const [age, setAge] = useState<number | ''>('');
   const [examDate, setExamDate] = useState('2027-02-14');
   const [targetGrade, setTargetGrade] = useState('3');
 
@@ -48,9 +61,7 @@ export default function RegisterPage() {
   const [tenantCode, setTenantCode] = useState('');
   const [country, setCountry] = useState<'IN' | 'KR'>('IN');
 
-  const [parentName, setParentName] = useState('');
   const [parentEmail, setParentEmail] = useState('');
-  const [parentPhone, setParentPhone] = useState('');
 
   const [consentAnalytics, setConsentAnalytics] = useState(true);
   const [consentAiTraining, setConsentAiTraining] = useState(false);
@@ -60,20 +71,27 @@ export default function RegisterPage() {
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
 
+  useEffect(() => {
+    setLang(detectOnboardingLang(), { reload: false });
+  }, [setLang]);
+
   const isMinorStudent = useMemo(
-    () => role === 'STUDENT' && !!birthDate && requiresGuardianConsent(birthDate),
-    [role, birthDate],
+    () => role === 'STUDENT' && typeof age === 'number' && requiresGuardianConsentFromAge(age, country),
+    [role, age, country],
   );
 
   const canStep1Next = isLikelyEmail(email) && password.length >= 8 && !!name.trim() && !!role;
   const canStep2Next = (
     role === 'STUDENT'
-      ? (!!ncertClass && !!birthDate && !!examDate && !!targetGrade)
+      ? (
+        !!ncertClass && age !== ''
+        && (country === 'KR' || (!!examDate && !!targetGrade))
+      )
       : role === 'PARENT'
         ? !!childEmail
         : true
   );
-  const canFinishMinor = parentName.trim().length >= 2 && isLikelyEmail(parentEmail);
+  const canFinishMinor = isLikelyEmail(parentEmail);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -81,22 +99,44 @@ export default function RegisterPage() {
     setErr(null);
     setBusy(true);
     try {
+      if (upgradeMode) {
+        await post('/auth/guest/upgrade', {
+          email: email.trim().toLowerCase(),
+          password,
+          name,
+          country,
+          gradeLevel: NCERT_TO_GRADE[ncertClass],
+          ...(age !== '' ? { birthDate: birthDateFromAge(age as number) } : {}),
+          ...(isMinorStudent ? {
+            parentEmail: parentEmail.trim(),
+            consentAnalytics: false,
+            consentAiTraining: false,
+            consentMarketing: false,
+          } : {
+            consentAnalytics, consentAiTraining, consentMarketing,
+          }),
+        });
+        await refreshUser().catch(() => {});
+        const me = await get<Me>('/users/me');
+        navigate(postAuthPath(me));
+        return;
+      }
       await register({
         email, password, name,
         role,
         country,
         ...(role === 'STUDENT' ? {
-          birthDate: new Date(birthDate).toISOString(),
-          examDate: new Date(examDate).toISOString(),
-          targetGrade: Number(targetGrade),
+          birthDate: birthDateFromAge(age as number),
           gradeLevel: NCERT_TO_GRADE[ncertClass],
+          ...(country !== 'KR' ? {
+            examDate: new Date(examDate).toISOString(),
+            targetGrade: Number(targetGrade),
+          } : {}),
         } : {}),
         ...(role === 'PARENT' ? { childEmail } : {}),
         ...(role === 'TEACHER' ? (tenantCode ? { tenantCode } : {}) : {}),
         ...(isMinorStudent ? {
-          parentName: parentName.trim(),
           parentEmail: parentEmail.trim(),
-          parentPhone: parentPhone.trim() || undefined,
           consentAnalytics: false,
           consentAiTraining: false,
           consentMarketing: false,
@@ -105,7 +145,12 @@ export default function RegisterPage() {
         }),
       });
     } catch (e: any) {
-      setErr(e?.response?.data?.error?.message ?? t('auth.register.failed'));
+      const code = e?.response?.data?.error?.code;
+      if (code === 'parent_email_same_as_student') {
+        setErr(t('guardianConsent.parentEmailSameAsStudent'));
+      } else {
+        setErr(e?.response?.data?.error?.message ?? t('auth.register.failed'));
+      }
     } finally { setBusy(false); }
   };
 
@@ -139,6 +184,14 @@ export default function RegisterPage() {
 
             <div className="screen-body" style={{ gap: 18, paddingTop: 16 }}>
               <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {step === 0 && upgradeMode && (
+                  <div
+                    className="card"
+                    style={{ padding: '10px 14px', background: 'var(--p-primary-tint)', borderColor: 'var(--p-primary)', fontSize: 13, lineHeight: 1.45 }}
+                  >
+                    {t('reg.upgrade.note')}
+                  </div>
+                )}
                 {step === 0 && (
                   <StepRoleAndCredentials
                     role={role} setRole={setRole}
@@ -150,13 +203,15 @@ export default function RegisterPage() {
                     googleBusy={googleBusy}
                     onGoogleSignIn={handleGoogleSignIn}
                     formBusy={busy}
+                    hideGoogle={upgradeMode}
                     t={t}
                   />
                 )}
                 {step === 1 && role === 'STUDENT' && (
                   <StepStudent
                     ncertClass={ncertClass} setNcertClass={setNcertClass}
-                    birthDate={birthDate} setBirthDate={setBirthDate}
+                    age={age} setAge={setAge}
+                    country={country}
                     examDate={examDate} setExamDate={setExamDate}
                     targetGrade={targetGrade} setTargetGrade={setTargetGrade}
                     t={t}
@@ -170,9 +225,8 @@ export default function RegisterPage() {
                 )}
                 {step === 2 && isMinorStudent && (
                   <StepGuardianMinor
-                    parentName={parentName} setParentName={setParentName}
                     parentEmail={parentEmail} setParentEmail={setParentEmail}
-                    parentPhone={parentPhone} setParentPhone={setParentPhone}
+                    country={country}
                     t={t}
                   />
                 )}
@@ -241,7 +295,7 @@ export default function RegisterPage() {
 
 function StepRoleAndCredentials({
   role, setRole, email, setEmail, password, setPassword, name, setName,
-  country, setCountry, setLang, googleBusy, onGoogleSignIn, formBusy, t,
+  country, setCountry, setLang, googleBusy, onGoogleSignIn, formBusy, hideGoogle, t,
 }: any) {
   const COUNTRIES: Array<{ id: 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG'; flag: string; name: string; active: boolean }> = [
     { id: 'IN', flag: '🇮🇳', name: 'India', active: true },
@@ -253,13 +307,14 @@ function StepRoleAndCredentials({
   ];
   const pickCountry = (c: typeof COUNTRIES[number]['id']) => {
     setCountry(c);
-    if (c === 'KR') setLang('ko');
-    else setLang('en');
+    setLang(langForCountry(c), { reload: false });
   };
   const roles: { id: RegisterRole; Icon: any; label: string; sub: string; popular?: boolean; comingSoon?: boolean }[] = [
     { id: 'STUDENT', Icon: Glyph.Person, label: t('reg.role.student'), sub: t('reg.role.student.sub'), popular: true },
-    { id: 'PARENT', Icon: Glyph.Parent, label: t('reg.role.parent'), sub: t('reg.role.parent.sub') },
-    { id: 'TEACHER', Icon: Glyph.Teacher, label: t('reg.role.teacher'), sub: t('reg.role.teacher.sub') },
+    ...(LAUNCH_STUDENT_ONLY ? [] : [
+      { id: 'PARENT' as RegisterRole, Icon: Glyph.Parent, label: t('reg.role.parent'), sub: t('reg.role.parent.sub') },
+      { id: 'TEACHER' as RegisterRole, Icon: Glyph.Teacher, label: t('reg.role.teacher'), sub: t('reg.role.teacher.sub') },
+    ]),
   ];
   return (
     <>
@@ -268,42 +323,44 @@ function StepRoleAndCredentials({
         <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step1.title')}</h2>
         <p className="subtitle">{t('reg.step1.sub')}</p>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {roles.map((r) => {
-          const selected = role === r.id;
-          return (
-            <div
-              key={r.id}
-              className={`option-card ${selected ? 'selected' : ''}`}
-              onClick={() => !r.comingSoon && setRole(r.id)}
-              role="button" tabIndex={r.comingSoon ? -1 : 0}
-              aria-disabled={r.comingSoon || undefined}
-              onKeyDown={(e) => { if (!r.comingSoon && (e.key === 'Enter' || e.key === ' ')) setRole(r.id); }}
-              style={r.comingSoon ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
-            >
-              <div style={{
-                width: 44, height: 44, borderRadius: 12, padding: 10,
-                background: selected ? 'var(--p-surface)' : 'var(--p-surface-2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: selected ? 'var(--p-primary)' : 'var(--p-ink-2)',
-                border: selected ? '1.5px solid var(--p-primary)' : '1px solid var(--p-border)',
-                flexShrink: 0,
-              }}>
-                <r.Icon accent="currentColor" />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--p-ink)' }}>{r.label}</span>
-                  {r.popular && <span className="chip primary">{t('reg.role.popular')}</span>}
-                  {r.comingSoon && <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('reg.role.comingSoon')}</span>}
+      {!LAUNCH_STUDENT_ONLY && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {roles.map((r) => {
+            const selected = role === r.id;
+            return (
+              <div
+                key={r.id}
+                className={`option-card ${selected ? 'selected' : ''}`}
+                onClick={() => !r.comingSoon && setRole(r.id)}
+                role="button" tabIndex={r.comingSoon ? -1 : 0}
+                aria-disabled={r.comingSoon || undefined}
+                onKeyDown={(e) => { if (!r.comingSoon && (e.key === 'Enter' || e.key === ' ')) setRole(r.id); }}
+                style={r.comingSoon ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
+              >
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12, padding: 10,
+                  background: selected ? 'var(--p-surface)' : 'var(--p-surface-2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: selected ? 'var(--p-primary)' : 'var(--p-ink-2)',
+                  border: selected ? '1.5px solid var(--p-primary)' : '1px solid var(--p-border)',
+                  flexShrink: 0,
+                }}>
+                  <r.Icon accent="currentColor" />
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--p-ink)' }}>{r.label}</span>
+                    {r.popular && <span className="chip primary">{t('reg.role.popular')}</span>}
+                    {r.comingSoon && <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('reg.role.comingSoon')}</span>}
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
+                </div>
+                <div className="check">{selected && <Glyph.Check size={12} />}</div>
               </div>
-              <div className="check">{selected && <Glyph.Check size={12} />}</div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
       <div className="field">
         <label>{t('auth.email')}</label>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" autoComplete="email" />
@@ -343,7 +400,7 @@ function StepRoleAndCredentials({
           })}
         </div>
       </div>
-      {isGoogleSignInConfigured() && (
+      {!hideGoogle && isGoogleSignInConfigured() && (
         <>
           <AuthDivider labelKey="reg.or" />
           <GoogleSignInButton mode="signup" onCredential={onGoogleSignIn} busy={googleBusy} disabled={formBusy} />
@@ -353,15 +410,24 @@ function StepRoleAndCredentials({
   );
 }
 
-function StepStudent({ ncertClass, setNcertClass, birthDate, setBirthDate, examDate, setExamDate, targetGrade, setTargetGrade, t }: any) {
-  const grades: { id: NcertClass; num: string; lbl: string }[] = [
-    { id: 'CLASS_7', num: '7', lbl: t('reg.student.classCaption') },
-    { id: 'CLASS_8', num: '8', lbl: t('reg.student.classCaption') },
-    { id: 'CLASS_9', num: '9', lbl: t('reg.student.classCaption') },
-    { id: 'CLASS_10', num: '10', lbl: t('reg.student.classBoard') },
-    { id: 'CLASS_11', num: '11', lbl: t('reg.student.classCaption') },
-    { id: 'CLASS_12', num: '12', lbl: t('reg.student.classBoard') },
-  ];
+function StepStudent({ ncertClass, setNcertClass, age, setAge, examDate, setExamDate, targetGrade, setTargetGrade, country, t }: any) {
+  const grades: { id: NcertClass; num: string; lbl: string }[] = country === 'KR'
+    ? [
+        { id: 'CLASS_7', num: '중1', lbl: '중학교 1학년' },
+        { id: 'CLASS_8', num: '중2', lbl: '중학교 2학년' },
+        { id: 'CLASS_9', num: '중3', lbl: '중학교 3학년' },
+        { id: 'CLASS_10', num: '고1', lbl: '공통수학' },
+        { id: 'CLASS_11', num: '고2', lbl: '선택과목' },
+        { id: 'CLASS_12', num: '고3', lbl: '수능 준비' },
+      ]
+    : [
+        { id: 'CLASS_7', num: '7', lbl: t('reg.student.classCaption') },
+        { id: 'CLASS_8', num: '8', lbl: t('reg.student.classCaption') },
+        { id: 'CLASS_9', num: '9', lbl: t('reg.student.classCaption') },
+        { id: 'CLASS_10', num: '10', lbl: t('reg.student.classBoard') },
+        { id: 'CLASS_11', num: '11', lbl: t('reg.student.classCaption') },
+        { id: 'CLASS_12', num: '12', lbl: t('reg.student.classBoard') },
+      ];
   return (
     <>
       <div>
@@ -385,19 +451,19 @@ function StepStudent({ ncertClass, setNcertClass, birthDate, setBirthDate, examD
           ))}
         </div>
       </div>
-      <div className="field">
-        <label>{t('reg.student.birthDate')}</label>
-        <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
-        <span className="caption" style={{ marginTop: 6 }}>{t('reg.student.birthDate.hint')}</span>
-      </div>
-      <div className="field">
-        <label>{t('reg.student.examDate')}</label>
-        <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
-      </div>
-      <div className="field">
-        <label>{t('reg.student.targetGrade')}</label>
-        <input type="number" min={1} max={9} value={targetGrade} onChange={(e) => setTargetGrade(e.target.value)} />
-      </div>
+      <AgeGate age={age} onChange={setAge} country={country} />
+      {country !== 'KR' && (
+        <>
+          <div className="field">
+            <label>{t('reg.student.examDate')}</label>
+            <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>{t('reg.student.targetGrade')}</label>
+            <input type="number" min={1} max={9} value={targetGrade} onChange={(e) => setTargetGrade(e.target.value)} />
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -435,27 +501,26 @@ function StepTeacher({ tenantCode, setTenantCode, t }: any) {
 }
 
 function StepGuardianMinor({
-  parentName, setParentName, parentEmail, setParentEmail, parentPhone, setParentPhone, t,
+  parentEmail, setParentEmail, country, t,
 }: any) {
+  const subKey = country === 'KR' ? 'reg.step3.guardian.sub.kr' : 'reg.step3.guardian.sub';
   return (
     <>
       <div>
         <span className="eyebrow">{t('reg.step3.guardian.eyebrow')}</span>
         <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step3.guardian.title')}</h2>
-        <p className="subtitle">{t('reg.step3.guardian.sub')}</p>
-      </div>
-      <div className="field">
-        <label>{t('guardianConsent.parentName')}</label>
-        <input value={parentName} onChange={(e) => setParentName(e.target.value)} required minLength={2} />
+        <p className="subtitle">{t(subKey)}</p>
       </div>
       <div className="field">
         <label>{t('guardianConsent.parentEmail')}</label>
-        <input type="email" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} required />
-      </div>
-      <div className="field">
-        <label>{t('guardianConsent.parentPhone')}</label>
-        <input type="tel" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
-        <span className="caption" style={{ marginTop: 6 }}>{t('guardianConsent.parentPhone.hint')}</span>
+        <input
+          type="email"
+          value={parentEmail}
+          onChange={(e) => setParentEmail(e.target.value)}
+          placeholder={t('ageGate.parentEmail.placeholder')}
+          required
+        />
+        <span className="caption" style={{ marginTop: 6 }}>{t('ageGate.parentEmail.hint')}</span>
       </div>
       <div className="consent-row">
         <div className="ck checked" style={{ opacity: 0.85, cursor: 'default' }}>

@@ -217,8 +217,8 @@ ${this.ctaButton(link, 'Confirm my email')}
   ): Promise<void> {
     const verifyLink = `${this.appUrl()}/guardian-consent/verify?token=${encodeURIComponent(token)}`;
     const regionNote = opts.country === 'KR'
-      ? '대한민국 개인정보보호법에 따라 미성년자 계정은 보호자의 확인이 필요합니다.'
-      : 'Under India\'s DPDP Act 2023, verifiable parental consent is required for minor accounts.';
+      ? 'Under Korea\'s Personal Information Protection Act (PIPA), accounts for users under 14 require parent/guardian confirmation.'
+      : 'Under India\'s DPDP Act 2023 and COPPA-aligned practice, accounts for users under 13 require verifiable parental consent.';
     const bodyHtml = `
 <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 16px 0;line-height:1.35;">Parent/guardian consent required</h1>
 <p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">Hello <strong>${opts.parentName}</strong>,</p>

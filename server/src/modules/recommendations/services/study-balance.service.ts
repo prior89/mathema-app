@@ -4,6 +4,7 @@ import { Lang } from '../../../common/i18n/current-lang.decorator';
 import { UNIT_NAME_EN } from '../../../common/i18n/content-en';
 import { UNIT_NAME_HI } from '../../../common/i18n/content-hi';
 import { krGradeLabel, krGradeSortOrder } from '../../mastery/kr-grade-mastery.util';
+import { applyMasteryDecay } from '../../mastery/mastery-decay.util';
 
 /**
  * 단원별 공부 시간 균형 분석 — Phase 2 핵심.
@@ -152,6 +153,7 @@ export class StudyBalanceService {
       select: {
         masteryScore: true,
         evidenceCount: true,
+        lastAttemptAt: true,
         concept: { select: { gradeLevel: true } },
       },
     });
@@ -167,7 +169,7 @@ export class StudyBalanceService {
       const grade = t.concept.gradeLevel;
       const key = grade ?? 'OTHER';
       const bucket = buckets.get(key) ?? { grade, scoreSum: 0, count: 0, evidence: 0 };
-      bucket.scoreSum += t.masteryScore;
+      bucket.scoreSum += applyMasteryDecay(t.masteryScore, t.lastAttemptAt);
       bucket.count += 1;
       bucket.evidence += t.evidenceCount;
       buckets.set(key, bucket);

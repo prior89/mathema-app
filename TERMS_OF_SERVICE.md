@@ -19,10 +19,14 @@ reference.
 The Service is offered to students preparing for the Indian NCERT curriculum
 (Class 7 through Class 12) and their parents and teachers.
 
-- You must be at least **13 years old** to use the Service.
-- If you are between **13 and 18 years old**, you may use the Service only
-  with the verifiable consent of a parent or legal guardian. Your parent
-  may exercise any of your rights on your behalf.
+- You must provide a truthful **self-reported age** at signup.
+- **India (IN):** if you are **under 13**, a parent or legal guardian must
+  confirm via email before you can use learning features (DPDP §9).
+- **Korea (KR):** if you are **under 14**, the same applies (PIPA).
+- **Teens (13–17 in IN; 14–17 in KR)** may use the Service without the
+  email gate; analytics and marketing default to off unless you opt in.
+  A parent may supervise via the optional **PARENT** role.
+- Your parent or guardian may exercise any of your rights on your behalf.
 - You must provide truthful information at signup, including your real name
   and your current NCERT class.
 

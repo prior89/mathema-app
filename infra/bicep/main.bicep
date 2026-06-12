@@ -357,7 +357,7 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
         targetPort: 4000
         transport: 'auto'
         corsPolicy: {
-          allowedOrigins: [ 'https://*.azurestaticapps.net', 'http://localhost:5173' ]
+          allowedOrigins: [ 'https://app.matheo.verastudy.net', 'https://*.azurestaticapps.net', 'http://localhost:5173' ]
           allowedMethods: [ 'GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS' ]
           allowedHeaders: [ '*' ]
           allowCredentials: true
@@ -433,10 +433,10 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'STORAGE_DRIVER',      value: 'local' }
             { name: 'LLM_DRAFT_CONCURRENCY', value: '5' }
             // SPA origins for the backend's CORS allowlist. Both point at the
-            // SWA's default hostname for now; if you ever split admin into its
-            // own SWA, change ADMIN_ORIGIN to that hostname.
-            { name: 'WEB_ORIGIN',          value: 'https://${swa.properties.defaultHostname}' }
-            { name: 'ADMIN_ORIGIN',        value: 'https://${swa.properties.defaultHostname}' }
+            // Primary origin is the custom domain (app.matheo.verastudy.net).
+// SWA default hostname is kept in allowedOrigins for fallback / internal use.
+            { name: 'WEB_ORIGIN',          value: 'https://app.matheo.verastudy.net' }
+            { name: 'ADMIN_ORIGIN',        value: 'https://app.matheo.verastudy.net' }
             // Math-helper Python sidecar (internal ingress, same Container Apps Environment).
             // https:// 필수 — http 로 가면 ACA ingress 가 301 redirect 하고 Node fetch 가
             // redirect 시 POST→GET 으로 메서드 변환해 Python /solve 가 405 반환. ACA 내부

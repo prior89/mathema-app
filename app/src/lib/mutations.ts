@@ -106,8 +106,19 @@ export type ExamProblem = {
   }>;
 };
 export type ExamPackage = {
-  resultId: string | null; name: string; totalMinutes: number; problems: ExamProblem[];
+  resultId: string | null; name: string; type?: string; totalMinutes: number; problems: ExamProblem[];
 };
+
+/** Full-paper submit (REAL exams) — one final choice per problem. */
+export type PaperAnswer = { problemId: string; choiceId: string; durationSec: number };
+export type PaperResult = {
+  id: string; score: number; grade: number; percentile: number; durationMin: number;
+  correctCount: number; totalProblems: number; attemptedProblems: number;
+  marks: number | null; maxMarks: number | null;
+  wrongCount: number | null; unattemptedCount: number | null;
+};
+export const submitExamPaper = (resultId: string, answers: PaperAnswer[]) =>
+  post<PaperResult>(`/mock-exams/results/${resultId}/submit-paper`, { answers });
 
 export const startRecommendedExam = () =>
   post<ExamPackage>('/mock-exams/recommended/start');

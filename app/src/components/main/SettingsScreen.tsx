@@ -6,7 +6,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { get, post, patch, del, downloadExport } from '../../lib/api';
 import { fetchMe, type Me } from '../../lib/queries';
-import { useT } from '../../lib/i18n';
+import { useT, type Lang } from '../../lib/i18n';
+import {
+  getLangPreference,
+  setLangPreference,
+  resolveAppLang,
+  type LangPreference,
+} from '../../lib/lang-preference';
 import { useTheme, type ThemeMode } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { Glyph } from '../onboarding/Glyph';
@@ -24,7 +30,11 @@ type Consent = {
 export function SettingsScreen() {
   const nav = useNavigate();
   const qc = useQueryClient();
-  const { t } = useT();
+  const { t, lang, setLang } = useT();
+  const [langPref, setLangPrefState] = useState<SettingsLangPref>(() => {
+    const p = getLangPreference();
+    return p === 'ko' || p === 'en' ? p : 'auto';
+  });
   const { refreshUser, logout, completeAccountDeletion } = useAuth();
   const { mode: themeMode, setMode: setThemeMode } = useTheme();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
@@ -49,6 +59,27 @@ export function SettingsScreen() {
       qc.invalidateQueries({ queryKey: ['me'] });
     },
   });
+
+  const changeCountry = useMutation({
+    mutationFn: (country: 'IN' | 'KR') => patch<Me>('/users/me', { country }),
+    onSuccess: async () => {
+      await refreshUser();
+      await qc.invalidateQueries({ queryKey: ['me'] });
+      if (getLangPreference() === 'auto') {
+        const meFresh = await fetchMe();
+        setLang(resolveAppLang(meFresh.country));
+      } else {
+        await qc.invalidateQueries();
+      }
+    },
+  });
+
+  const applyLangPreference = (pref: SettingsLangPref) => {
+    setLangPreference(pref);
+    setLangPrefState(pref);
+    const next: Lang = pref === 'auto' ? resolveAppLang(me.data?.country) : pref;
+    if (lang !== next) setLang(next);
+  };
 
   const [deletingConfirm, setDeletingConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState('');
@@ -92,6 +123,62 @@ export function SettingsScreen() {
             CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
             CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
           } as Record<string, string>)[me.data?.gradeLevel ?? ''] ?? me.data?.gradeLevel ?? '—'} last />
+        </div>
+
+        {/* Region · curriculum */}
+        <div className="section-h">
+          <span className="label">{t('settingsScreen.region.section')}</span>
+        </div>
+        <div className="card" style={{ padding: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--p-muted)', marginBottom: 10, lineHeight: 1.45 }}>
+            {t('settingsScreen.region.hint')}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {(['IN', 'KR'] as const).map((c) => {
+              const selected = (me.data?.country ?? 'IN') === c;
+              const busy = changeCountry.isPending;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  disabled={busy || selected}
+                  onClick={() => changeCountry.mutate(c)}
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    border: `1px solid ${selected ? 'var(--p-primary)' : 'var(--p-border)'}`,
+                    background: selected ? 'var(--p-primary-tint)' : 'var(--p-surface)',
+                    color: 'var(--p-ink)',
+                    fontSize: 13,
+                    fontWeight: selected ? 600 : 500,
+                    cursor: busy || selected ? 'default' : 'pointer',
+                    opacity: busy && !selected ? 0.6 : 1,
+                  }}
+                >
+                  {c === 'KR' ? '🇰🇷 ' : '🇮🇳 '}{t(`settingsScreen.country.${c}`)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Language */}
+        <div className="section-h">
+          <span className="label">{t('settingsScreen.lang.section')}</span>
+        </div>
+        <div className="card" style={{ padding: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--p-muted)', marginBottom: 10, lineHeight: 1.45 }}>
+            {t('settingsScreen.lang.hint')}
+          </div>
+          <LangPreferencePicker
+            value={langPref}
+            onChange={applyLangPreference}
+            labels={{
+              auto: t('settingsScreen.lang.auto'),
+              ko: t('settingsScreen.lang.ko'),
+              en: t('settingsScreen.lang.en'),
+            }}
+          />
         </div>
 
         {/* Appearance */}
@@ -260,6 +347,49 @@ function ThemeModePicker({ mode, onChange }: { mode: ThemeMode; onChange: (m: Th
     <div style={{ display: 'flex', gap: 6 }}>
       {THEME_OPTIONS.map((opt) => {
         const active = mode === opt;
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            aria-pressed={active}
+            style={{
+              flex: 1,
+              padding: '10px 8px',
+              borderRadius: 10,
+              border: `1px solid ${active ? 'var(--p-primary)' : 'var(--p-border)'}`,
+              background: active ? 'var(--p-primary-tint)' : 'var(--p-surface)',
+              color: active ? 'var(--p-primary)' : 'var(--p-ink-2)',
+              fontSize: 12.5,
+              fontWeight: active ? 600 : 500,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            {labels[opt]}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const LANG_PREF_OPTIONS = ['auto', 'ko', 'en'] as const;
+type SettingsLangPref = (typeof LANG_PREF_OPTIONS)[number];
+
+function LangPreferencePicker({
+  value,
+  onChange,
+  labels,
+}: {
+  value: SettingsLangPref;
+  onChange: (p: SettingsLangPref) => void;
+  labels: Record<SettingsLangPref, string>;
+}) {
+  return (
+    <div style={{ display: 'flex', gap: 6 }}>
+      {LANG_PREF_OPTIONS.map((opt) => {
+        const active = value === opt;
         return (
           <button
             key={opt}

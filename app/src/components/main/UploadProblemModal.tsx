@@ -14,6 +14,7 @@ import {
   UploadAnalysisResult,
 } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
+import { useBillingUiEnabled } from '../../lib/billing-flags';
 import MathText from '../MathText';
 import { Glyph } from '../onboarding/Glyph';
 
@@ -46,7 +47,9 @@ function normalizeOcrConfidence(raw: number | null | undefined): number | null {
 export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   const nav = useNavigate();
   const { t } = useT();
+  const billingUi = useBillingUiEnabled();
   const [phase, setPhase] = useState<Phase>('pick');
+  const [quotaBlocked, setQuotaBlocked] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
@@ -69,6 +72,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       setEditedOcrText('');
       setResult(null);
       setError(null);
+      setQuotaBlocked(false);
       setStudentAnswer('');
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
@@ -175,8 +179,14 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       setPhase('result');
     } catch (e) {
       if (requestSeq !== requestSeqRef.current) return;
-      const msg = extractErrorMessage(e, t) ?? t('upload.error.failed');
-      setError(msg);
+      if (isQuotaExceededError(e)) {
+        // Contextual paywall trigger: the hard 403 is the highest-intent
+        // moment, so surface the upgrade CTA right here instead of a raw error.
+        setQuotaBlocked(true);
+        setError(t('upload.error.quota'));
+      } else {
+        setError(extractErrorMessage(e, t) ?? t('upload.error.failed'));
+      }
       setPhase('error');
     }
   };
@@ -192,9 +202,15 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     requestSeqRef.current += 1;
     setPhase('pick');
     setError(null);
+    setQuotaBlocked(false);
     setOcrResult(null);
     setEditedOcrText('');
     setResult(null);
+  };
+
+  const goUpgrade = () => {
+    onClose();
+    nav('/app/paywall?reason=quota');
   };
 
   /** Return to picker — cancels any in-flight OCR/solve via requestSeq bump. */
@@ -287,7 +303,12 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
         )}
 
         {phase === 'error' && (
-          <ErrorPhase error={error ?? t('upload.error.unknown')} onRetry={retry} onClose={onClose} />
+          <ErrorPhase
+            error={error ?? t('upload.error.unknown')}
+            onRetry={retry}
+            onClose={onClose}
+            onUpgrade={quotaBlocked && billingUi ? goUpgrade : undefined}
+          />
         )}
       </div>
     </div>
@@ -374,6 +395,11 @@ function SolutionStepsList({
       })}
     </ol>
   );
+}
+
+function isQuotaExceededError(e: unknown): boolean {
+  const data = (e as { response?: { data?: any } })?.response?.data;
+  return data?.error === 'QuotaExceeded';
 }
 
 function extractErrorMessage(e: unknown, t: Translate): string | null {
@@ -1004,7 +1030,12 @@ function ResultPhase({
 const fieldLabel: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 5, fontSize: 10.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' };
 const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 11px', borderRadius: 8, border: '1px solid var(--p-border)', background: 'var(--p-surface)', color: 'var(--p-ink)', font: 'inherit', fontSize: 12.5 };
 
-function ErrorPhase({ error, onRetry, onClose }: { error: string; onRetry: () => void; onClose: () => void }) {
+function ErrorPhase({ error, onRetry, onClose, onUpgrade }: {
+  error: string;
+  onRetry: () => void;
+  onClose: () => void;
+  onUpgrade?: () => void;
+}) {
   const { t } = useT();
   return (
     <div>
@@ -1022,13 +1053,23 @@ function ErrorPhase({ error, onRetry, onClose }: { error: string; onRetry: () =>
             padding: '9px 14px', borderRadius: 10, cursor: 'pointer', fontSize: 13,
           }}
         >{t('upload.error.close')}</button>
-        <button
-          onClick={onRetry}
-          style={{
-            background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
-            padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-          }}
-        >{t('upload.error.retry')}</button>
+        {onUpgrade ? (
+          <button
+            onClick={onUpgrade}
+            style={{
+              background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
+              padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            }}
+          >{t('upload.error.quotaCta')}</button>
+        ) : (
+          <button
+            onClick={onRetry}
+            style={{
+              background: 'var(--p-primary)', color: 'var(--p-primary-fg)', border: 'none',
+              padding: '10px 18px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            }}
+          >{t('upload.error.retry')}</button>
+        )}
       </div>
     </div>
   );

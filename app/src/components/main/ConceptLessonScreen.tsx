@@ -21,6 +21,10 @@ import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { DEFAULT_STEP_TONE, STEP_TONE } from '../../lib/step-tone';
 
+/** Problems after this many in a lesson drop the CONCEPT/PROCESS scaffold
+ *  and serve the ANSWER step directly (MC fading). */
+const FADE_AFTER_PROBLEMS = 3;
+
 export function ConceptLessonScreen() {
   const { code } = useParams<{ code: string }>();
   // Korean curriculum chapters use the K- prefix (e.g. K-G10-CS1-CH01-...)
@@ -52,7 +56,12 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
   // at the next problem instead of replaying the concept phase.
   const [phase, setPhase] = useState<'concept' | 'practice' | 'done' | null>(null);
   const [practiceProblemIdx, setPracticeProblemIdx] = useState(0); // index into problemList
-  const [practiceStepIdx, setPracticeStepIdx] = useState(1);       // 1..3 within current problem
+  const [practiceStepIdx, setPracticeStepIdx] = useState(1);       // 1..N within effective steps
+  // MC fading (2026-06-11 audit, expertise-reversal effect): only the first
+  // FADE_AFTER_PROBLEMS problems get the full CONCEPT→PROCESS→ANSWER scaffold;
+  // later problems serve the ANSWER step only. A wrong faded answer offers
+  // "Break it into steps", which restores the scaffold for that problem.
+  const [decomposed, setDecomposed] = useState(false);
 
   const conceptSteps = useMemo(
     () => (lesson.data?.steps ?? []).filter((s) => s.kind !== 'RETRIEVAL'),
@@ -100,7 +109,14 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
     enabled: !!currentProblemId,
   });
   const hasProblems = totalProblems > 0;
-  const currentSteps = problem.data?.steps ?? [];
+  const allSteps = problem.data?.steps ?? [];
+  const answerSteps = allSteps.filter((s) => s.stepType === 'ANSWER');
+  const faded =
+    practiceProblemIdx >= FADE_AFTER_PROBLEMS
+    && !decomposed
+    && allSteps.length > 1
+    && answerSteps.length > 0;
+  const currentSteps = faded ? answerSteps : allSteps;
 
   // Single atomic call that marks every non-RETRIEVAL step done and stamps
   // masteredAt. Replaces the previous pattern of firing N concurrent /step
@@ -141,6 +157,7 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
     if (hasProblems) {
       setPracticeProblemIdx(0);
       setPracticeStepIdx(1);
+      setDecomposed(false);
       setPhase('practice');
     } else {
       // Chapter has no practice problems at all — nothing to gate on, stamp.
@@ -164,6 +181,7 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
     if (practiceProblemIdx + 1 < totalProblems) {
       setPracticeProblemIdx(practiceProblemIdx + 1);
       setPracticeStepIdx(1);
+      setDecomposed(false);
       return;
     }
     // all problems done — deep-link entry (Notes ?problemId=) skips
@@ -187,7 +205,7 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
       )}
       {phase === 'practice' && problem.data && currentSteps[practiceStepIdx - 1] && (
         <PracticePhase
-          key={`p${practiceProblemIdx}-s${practiceStepIdx}`}
+          key={`p${practiceProblemIdx}-s${practiceStepIdx}-${faded ? 'f' : 'x'}`}
           problem={problem.data}
           step={currentSteps[practiceStepIdx - 1]}
           stepIdx={practiceStepIdx}
@@ -195,6 +213,14 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
           problemIdx={practiceProblemIdx + 1}
           problemTotal={totalProblems}
           onNext={goAfterStep}
+          onDecompose={
+            faded
+              ? () => {
+                  setDecomposed(true);
+                  setPracticeStepIdx(1);
+                }
+              : undefined
+          }
         />
       )}
       {phase === 'practice' && (!problem.data || problem.isLoading) && (
@@ -428,9 +454,12 @@ type StepResult = {
   error?: boolean;
 };
 
-function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemTotal, onNext }: {
+function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemTotal, onNext, onDecompose }: {
   problem: Problem; step: ProblemStepData; stepIdx: number; stepTotal: number;
   problemIdx: number; problemTotal: number; onNext: () => void;
+  /** Present only in faded (ANSWER-only) mode — restores the full
+   *  CONCEPT→PROCESS→ANSWER scaffold after a wrong answer. */
+  onDecompose?: () => void;
 }) {
   const qc = useQueryClient();
   const { t } = useT();
@@ -545,9 +574,17 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
               <Glyph.ChevronR />
             </button>
           ) : (
-            <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
-              {t('solo.tryAgain')}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {onDecompose && (
+                <button className="btn" onClick={onDecompose}>
+                  {t('lesson.practice.breakDown')}
+                  <Glyph.ChevronR />
+                </button>
+              )}
+              <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
+                {t('solo.tryAgain')}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -829,6 +866,8 @@ function KoreanPracticePhase({
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [result, setResult] = useState<StepResult | null>(null);
   const [startedAt, setStartedAt] = useState(() => Date.now());
+  // MC fading — same policy as the NCERT PracticePhase above.
+  const [decomposed, setDecomposed] = useState(false);
   const qc = useQueryClient();
 
   if (isLoading) {
@@ -845,10 +884,18 @@ function KoreanPracticePhase({
   }
 
   const problem = problems[problemIdx];
-  const step = problem.steps[stepIdx];
+  const allSteps = problem.steps;
+  const answerSteps = allSteps.filter((s) => s.stepType === 'ANSWER');
+  const faded =
+    problemIdx >= FADE_AFTER_PROBLEMS
+    && !decomposed
+    && allSteps.length > 1
+    && answerSteps.length > 0;
+  const effectiveSteps = faded ? answerSteps : allSteps;
+  const step = effectiveSteps[stepIdx];
   // 보기 셔플: step 이 바뀔 때 자동 재셔플 (choice id 집합 변경 감지).
   const shuffledChoices = useShuffledChoices(step?.choices ?? []);
-  const stepTotal = problem.steps.length;
+  const stepTotal = effectiveSteps.length;
   const problemTotal = problems.length;
   // Reference chapterCode so the prop isn't flagged as unused — future
   // analytics will key per-chapter attempt logs on it.
@@ -918,9 +965,18 @@ function KoreanPracticePhase({
     } else if (problemIdx + 1 < problemTotal) {
       setProblemIdx(problemIdx + 1);
       setStepIdx(0);
+      setDecomposed(false);
     } else {
       onDone();
     }
+  };
+
+  const decompose = () => {
+    setDecomposed(true);
+    setStepIdx(0);
+    setResult(null);
+    setPickedId(null);
+    setStartedAt(Date.now());
   };
 
   const stepLabel = step.stepType; // 'CONCEPT' | 'PROCESS' | 'ANSWER'
@@ -1001,9 +1057,17 @@ function KoreanPracticePhase({
                 <Glyph.ChevronR />
               </button>
             ) : (
-              <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
-                다시 시도
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {faded && (
+                  <button className="btn" onClick={decompose}>
+                    단계별로 풀어보기
+                    <Glyph.ChevronR />
+                  </button>
+                )}
+                <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
+                  다시 시도
+                </button>
+              </div>
             )}
           </div>
         </div>

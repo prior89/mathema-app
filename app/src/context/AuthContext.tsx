@@ -22,6 +22,8 @@ type AuthState = {
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (idToken: string, opts?: { skipNavigate?: boolean }) => Promise<Me>;
   register: (input: RegisterInput) => Promise<void>;
+  /** Try-first guest session — zero-PII account, no navigation (caller decides). */
+  startGuest: (input?: GuestStartInput) => Promise<Me>;
   logout: () => Promise<void>;
   completeAccountDeletion: () => Promise<void>;
   /** Re-fetch /users/me and replace the cached user. Onboarding calls this
@@ -56,6 +58,11 @@ export type RegisterInput = {
   parentPhone?: string;
   // DPDP/GDPR (adults only — minors must not self-grant optional consents)
   consentAnalytics?: boolean; consentMarketing?: boolean; consentAiTraining?: boolean;
+};
+
+export type GuestStartInput = {
+  country?: RegisterInput['country'];
+  gradeLevel?: GradeLevel;
 };
 
 const Ctx = createContext<AuthState | null>(null);
@@ -123,9 +130,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   useEffect(() => {
-    if (user) tagSentryUser({ id: user.id, email: user.email });
+    if (user) tagSentryUser({ id: user.id });
     else clearSentryUser();
-  }, [user?.id, user?.email]);
+  }, [user?.id]);
 
   useEffect(() => {
     const init = async () => {
@@ -210,6 +217,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     navigate(postAuthPath(me));
   };
 
+  const startGuest = async (input: GuestStartInput = {}) => {
+    const t = await post<{ accessToken: string; refreshToken: string }>('/auth/guest/start', input);
+    tokens.set(t.accessToken, t.refreshToken);
+    const me = await get<Me>('/users/me');
+    setUser(me);
+    track('auth.guest_start', { country: input.country });
+    return me;
+  };
+
   const logout = async () => {
     track('auth.logout');
     const refreshToken = tokens.getRefresh();
@@ -253,6 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginWithGoogle,
       register,
+      startGuest,
       logout,
       completeAccountDeletion,
       refreshUser,

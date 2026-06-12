@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CurrentLang, Lang } from '../../common/i18n/current-lang.decorator';
 import { SubmitExamDto } from './dto/submit-exam.dto';
+import { SubmitPaperDto } from './dto/submit-paper.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('mock-exams')
@@ -70,6 +71,12 @@ export class MockExamsController {
   @Post('results/:id/submit')
   submit(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: SubmitExamDto) {
     return this.service.submit(userId, id, dto);
+  }
+
+  /** Full-paper batch submit (REAL exams) — one final choice per problem, JEE marking. */
+  @Post('results/:id/submit-paper')
+  submitPaper(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: SubmitPaperDto) {
+    return this.service.submitPaper(userId, id, dto);
   }
 
   /** Per-step 답안 제출 — 학습과 동일한 흐름으로 즉시 피드백 반환 */

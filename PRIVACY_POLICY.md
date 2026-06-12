@@ -20,8 +20,9 @@ If you do not agree, do not use the Service.
 > name, email, class level, and how you answer practice questions. We never
 > sell your data. You can delete your account at any time from
 > **Settings → Privacy → Delete account**, which permanently erases every
-> record we hold about you. Students under 18 must use the Service with a
-> parent or legal guardian's consent.
+> record we hold about you. Users below the age gate (under 13 in India,
+> under 14 in Korea) need a one-time parent email confirmation; teens
+> receive privacy-enhanced defaults (analytics/marketing off unless opted in).
 
 ---
 
@@ -197,28 +198,33 @@ We respond to verified requests within **30 days**.
 
 ## 8. Children and parental consent
 
-**Primary target audience: 13 years and older.** The Service is designed
-for students preparing for the Indian school curriculum (NCERT Class 7-12),
-so a substantial fraction of users are **under 18 years old**.
+**Primary target audience: middle- and high-school students (typically
+ages 11–18).** The Service is designed for NCERT Class 7–12 and the
+Korean middle/high-school curriculum, so many users are minors under
+local law.
 
-- Students **under 13** may use the Service only under direct parental
-  supervision and where local law permits. We do not knowingly accept new
-  accounts from anyone under 13 acting without that supervision.
-- Users **under 18** are minors. We collect date of birth at student
-  registration and require **verifiable parent/guardian consent** before
-  full access:
-  - **India (IN):** parent/guardian email confirmation link (DPDP Act 2023
-    §9 and Rule 10).
-  - **Korea (KR):** parent/guardian email confirmation link at launch;
-    mobile identity verification (PASS) when `GUARDIAN_PASS_ENABLED` is
-    turned on in production.
+**Verifiable parent/guardian gate (country-specific thresholds):**
+
+- **India (IN) and other markets:** students **under 13** must complete a
+  one-time **parent/guardian email confirmation** before learning features
+  unlock (COPPA-aligned; DPDP Act 2023 §9 verifiable consent).
+- **Korea (KR):** students **under 14** must complete the same email
+  confirmation (PIPA). Mobile identity verification (PASS) may replace
+  email when `GUARDIAN_PASS_ENABLED` is on in production.
+
+**Teen privacy (13–17 in IN; 14–17 in KR):** these users may register
+without the email gate. DPDP defines a "child" as under 18; we apply
+enhanced defaults instead of a blanket guardian block: **analytics and
+marketing are off unless explicitly opted in**, we do not serve targeted
+advertising, and optional consents can be changed in Settings → Privacy.
+
+- We collect a **self-reported age** (approximate date of birth) at student
+  signup — not government ID verification.
 - Consent records (method, policy version, timestamps, request IP/UA) are
   stored in `GuardianConsentRequest` for audit.
-- A **PARENT role** is provided so that a parent can register, link to
-  their child's account by email, and supervise progress (separate from the
-  minor-consent gate above).
-- Parents may exercise all of the rights listed in Section 7 on behalf of
-  their child.
+- A **PARENT role** lets a parent register, link to their child's account
+  by email, and supervise progress (separate from the under-threshold gate).
+- Parents may exercise all rights in Section 7 on behalf of their child.
 - We do not target advertising to any user and do not collect more
   information from a minor than from an adult.
 

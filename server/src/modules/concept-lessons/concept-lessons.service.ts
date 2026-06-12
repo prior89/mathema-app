@@ -522,7 +522,10 @@ export class ConceptLessonsService {
       // If even one frozen Problem has been deleted from the pool we fall
       // through to re-curation — a 19-problem set defeats the purpose.
       if (ordered.length === target) {
-        return this.applyMasterySetLimit(userId, ordered);
+        const served = userId
+          ? await this.substituteVariantsForRetake(userId, lesson.id, ordered)
+          : ordered;
+        return this.applyMasterySetLimit(userId, served);
       }
     }
 
@@ -581,6 +584,89 @@ export class ConceptLessonsService {
     }
 
     return this.applyMasterySetLimit(userId, picked);
+  }
+
+  /**
+   * Retake variant re-serve (2026-06-11 audit, verdict 5).
+   *
+   * Once a student has submitted an ANSWER-step attempt on every canonical
+   * problem, replaying the identical 20 measures answer memory, not skill.
+   * For retakes each slot is swapped for an unattempted same-difficulty
+   * problem from the chapter's multi-step pool. Pool-first only — no
+   * on-demand LLM here; pool enrichment stays on the existing curated /
+   * prewarm / top-up paths.
+   *
+   * Invariants preserved:
+   *   - The frozen masterySetProblemIds row is never touched, so cohort
+   *     statistics and admin re-curation keep their shared baseline.
+   *   - Slots keep their canonical position and difficulty, preserving the
+   *     set's difficulty arc. No same-difficulty alternative → canonical
+   *     problem is kept (memorisation risk accepted over arc distortion).
+   *   - The mastery unlock gate (ANSWER-step on all 20 canonical) has
+   *     already fired by definition of retake, so substitution can never
+   *     strand a first run.
+   *   - 2nd+ retakes keep rotating: previously served variants are now
+   *     attempted and excluded, until the pool runs dry.
+   */
+  private async substituteVariantsForRetake(
+    userId: string,
+    lessonId: string,
+    canonical: Array<{ id: string; source: string; unitId: string | null; subUnitId: string | null; difficulty: Difficulty; difficultyLevel: number | null; body: string }>,
+  ) {
+    const attempted = await this.prisma.attempt.findMany({
+      where: {
+        userId,
+        problemId: { in: canonical.map((p) => p.id) },
+        stepIndex: 3,
+        context: { in: ['STUDY' as const, 'PRACTICE' as const] },
+      },
+      distinct: ['problemId'],
+      select: { problemId: true },
+    });
+    // First run still in progress — serve the canonical set untouched.
+    if (attempted.length < canonical.length) return canonical;
+
+    const alternates = await this.prisma.problem.findMany({
+      where: {
+        conceptLessonId: lessonId,
+        id: { notIn: canonical.map((p) => p.id) },
+        steps: { some: { stepIndex: 1 } },
+        AND: [
+          { steps: { some: { stepIndex: 2 } } },
+          { steps: { some: { stepIndex: 3 } } },
+        ],
+        conceptMismatch: { not: true },
+        OR: [
+          { qualityStatus: null },
+          { qualityStatus: { in: ['APPROVED', 'USABLE'] } },
+        ],
+      },
+      orderBy: { source: 'asc' },
+      select: {
+        id: true, source: true, unitId: true, subUnitId: true,
+        difficulty: true, difficultyLevel: true, body: true,
+      },
+    });
+    if (alternates.length === 0) return canonical;
+
+    const altAttempted = await this.prisma.attempt.findMany({
+      where: {
+        userId,
+        problemId: { in: alternates.map((p) => p.id) },
+        stepIndex: 3,
+        context: { in: ['STUDY' as const, 'PRACTICE' as const] },
+      },
+      distinct: ['problemId'],
+      select: { problemId: true },
+    });
+    const used = new Set(altAttempted.map((a) => a.problemId));
+    const remaining = alternates.filter((p) => !used.has(p.id));
+
+    return canonical.map((slot) => {
+      const idx = remaining.findIndex((p) => p.difficulty === slot.difficulty);
+      if (idx === -1) return slot;
+      return remaining.splice(idx, 1)[0];
+    });
   }
 
   /**

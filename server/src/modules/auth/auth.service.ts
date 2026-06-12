@@ -140,11 +140,11 @@ export class AuthService {
         ua: ctx.ua,
       });
       guardianConsentPending = !!gc.required && !gc.verified;
-      if (guardianConsentPending && dto.parentEmail && dto.parentName) {
+      if (guardianConsentPending && dto.parentEmail) {
         await this.guardianConsent.requestParentVerification(
           user.id,
           {
-            parentName: dto.parentName,
+            parentName: dto.parentName ?? 'Parent/guardian',
             parentEmail: dto.parentEmail,
             parentPhone: dto.parentPhone,
           },
@@ -370,6 +370,158 @@ export class AuthService {
       userId: verifiedUser.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
     });
     return this.issueTokens(verifiedUser.id, ctx.deviceHash);
+  }
+
+  // ---------- Guest (try-first) ----------
+
+  /**
+   * Try-first guest account — zero-PII by construction: synthetic email,
+   * placeholder name, no birthDate. With no personal data collected, the
+   * DPDP/PIPA guardian-consent gates are inapplicable (JwtAuthGuard exempts
+   * isGuest users), and emailVerifiedAt is stamped so the email gate passes.
+   *
+   * Device reuse: if this deviceHash already owns a live guest account,
+   * re-issue tokens for it instead of minting a new user — otherwise the
+   * free-tier daily quota could be farmed by restarting the app.
+   */
+  async guestStart(
+    dto: { country?: string; gradeLevel?: string } = {},
+    ctx: { ip?: string; ua?: string; deviceHash?: string } = {},
+  ) {
+    if (ctx.deviceHash) {
+      const bound = await (this.prisma as any).authDevice.findFirst({
+        where: { deviceHash: ctx.deviceHash },
+        orderBy: { lastSeenAt: 'desc' },
+        select: { userId: true },
+      });
+      if (bound) {
+        const existing = await this.prisma.user.findUnique({
+          where: { id: bound.userId },
+          select: { id: true, isGuest: true, deletedAt: true },
+        });
+        if (existing && (existing as any).isGuest && !existing.deletedAt) {
+          await this.bindAndDisplace({
+            userId: existing.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
+          });
+          return { ...this.issueTokens(existing.id, ctx.deviceHash), isGuest: true };
+        }
+      }
+    }
+
+    const user = await this.users.create({
+      email: `guest-${randomUUID()}@guest.matheo.invalid`,
+      // Random unguessable hash — guests cannot password-login; they either
+      // hold a valid token or upgrade to a real account.
+      passwordHash: await bcrypt.hash(randomBytes(32).toString('hex'), BCRYPT_COST),
+      name: 'Guest',
+      role: 'STUDENT' as any,
+      examDate: new Date('2027-02-14'),
+      targetGrade: 3,
+      country: (dto.country ?? 'IN') as any,
+      gradeLevel: (dto.gradeLevel ?? null) as any,
+      emailVerifiedAt: new Date(),
+      isGuest: true,
+    });
+    await this.privacy.grantInitial(user.id, {
+      analytics: false, marketing: false, aiTraining: false,
+      ipAddress: ctx.ip, userAgent: ctx.ua,
+    });
+    this.events.record('LOGIN_SUCCESS' as any, {
+      userId: user.id, ip: ctx.ip, userAgent: ctx.ua, metadata: { guest: true },
+    });
+    await this.bindAndDisplace({
+      userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
+    });
+    return { ...this.issueTokens(user.id, ctx.deviceHash), isGuest: true };
+  }
+
+  /**
+   * Guest → real account, in place (same userId, so all progress rows stay).
+   * Re-enters the standard funnel: emailVerifiedAt is reset so the email
+   * verification gate applies, and a guardian-consent flow starts if a minor
+   * birthDate is provided. The current JWT stays valid (payload is {sub}).
+   */
+  async guestUpgrade(
+    userId: string,
+    dto: {
+      email: string;
+      password: string;
+      name: string;
+      gradeLevel?: string;
+      birthDate?: string;
+      country?: string;
+      parentName?: string;
+      parentEmail?: string;
+      parentPhone?: string;
+      consentAnalytics?: boolean;
+      consentMarketing?: boolean;
+      consentAiTraining?: boolean;
+    },
+    ctx: { ip?: string; ua?: string } = {},
+  ) {
+    const me = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, isGuest: true, deletedAt: true, country: true },
+    });
+    if (!me || me.deletedAt) throw new UnauthorizedException('User not found');
+    if (!(me as any).isGuest) throw new BadRequestException('account is not a guest');
+
+    const email = dto.email.trim().toLowerCase();
+    const exists = await this.users.findByEmail(email);
+    if (exists) throw new BadRequestException('email already used');
+
+    await assertPasswordNotBreached(dto.password);
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        email,
+        passwordHash,
+        name: dto.name,
+        isGuest: false,
+        // Real email is unproven — back into the verification funnel.
+        emailVerifiedAt: null,
+        ...(dto.gradeLevel ? { gradeLevel: dto.gradeLevel as any } : {}),
+        ...(dto.birthDate ? { birthDate: new Date(dto.birthDate) } : {}),
+        ...(dto.country ? { country: dto.country as any } : {}),
+      },
+    });
+
+    // grant() is idempotent; grantInitial would duplicate the DATA_PROCESSING
+    // row the guest already received at guestStart.
+    if (dto.consentAnalytics)  await this.privacy.grant(userId, 'ANALYTICS' as any, { ip: ctx.ip, ua: ctx.ua });
+    if (dto.consentMarketing)  await this.privacy.grant(userId, 'MARKETING' as any, { ip: ctx.ip, ua: ctx.ua });
+    if (dto.consentAiTraining) await this.privacy.grant(userId, 'AI_TRAINING' as any, { ip: ctx.ip, ua: ctx.ua });
+
+    let guardianConsentPending = false;
+    if (dto.birthDate) {
+      const gc = await this.guardianConsent.ensurePendingForStudent({
+        studentUserId: userId,
+        country: (dto.country ?? me.country ?? 'IN') as any,
+        ip: ctx.ip,
+        ua: ctx.ua,
+      });
+      guardianConsentPending = !!gc.required && !gc.verified;
+      if (guardianConsentPending && dto.parentEmail) {
+        await this.guardianConsent.requestParentVerification(
+          userId,
+          {
+            parentName: dto.parentName ?? 'Parent/guardian',
+            parentEmail: dto.parentEmail,
+            parentPhone: dto.parentPhone,
+          },
+          { ip: ctx.ip, ua: ctx.ua },
+        );
+      }
+    }
+
+    this.issueVerificationToken(userId, email).catch((e) =>
+      this.logger.error(`verification token issue failed: ${e?.message}`),
+    );
+    this.events.record('LOGIN_SUCCESS' as any, {
+      userId, ip: ctx.ip, userAgent: ctx.ua, metadata: { guestUpgrade: true },
+    });
+    return { ok: true, guardianConsentPending };
   }
 
   // ---------- 비밀번호 재설정 ----------
