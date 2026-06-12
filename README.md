@@ -2,6 +2,16 @@
 
 AI-powered NCERT math learning app — India-first, expanding to KR / ID / VN / AE.
 Class 7-12 (NCF-SE 2023). CBSE / JEE / NEET prep.
+
+> **Naming convention (locked 2026-05-21, do not "fix")**: the brand / display name
+> everywhere a user can see is **Matheo** (Play Store, launcher, `<title>`, in-app UI,
+> store docs). The internal handle **mathema** survives in identifiers that are
+> expensive or impossible to rename — repo name, Azure resources (`mathema-prod-cin`,
+> `mathema-backend`, `mathema-kv-*`), npm workspace, ACR images, OIDC federated
+> credential subject. These are intentional; renaming them breaks deploys for zero
+> user value. "Mathēma" (with macron) is retired — replace with Matheo wherever found
+> in user-facing surfaces.
+
 Monorepo:
 
 - **`server/`** — NestJS + Prisma + PostgreSQL + Redis + BullMQ backend (REST `/api/v1/*`)

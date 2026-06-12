@@ -26,7 +26,7 @@ cat > "$DIST/index.html" << 'HTML'
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mathēma — Service Paused</title>
+<title>Matheo — Service Paused</title>
 <style>
   body { margin: 0; min-height: 100vh; display: grid; place-items: center;
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -40,7 +40,7 @@ cat > "$DIST/index.html" << 'HTML'
 </head>
 <body>
   <main>
-    <h1>Mathēma</h1>
+    <h1>Matheo</h1>
     <p>This service is currently paused. Please check back later.</p>
   </main>
 </body>
