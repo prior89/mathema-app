@@ -244,10 +244,11 @@ test.describe('billing — 403 paywall redirect', () => {
     await expect(page.getByText('Premium에서 달라지는 점')).toBeVisible();
     await expect(page.getByText('먼저 3일 무료로 써볼까요?')).toBeVisible();
 
-    const plans = page.locator('.paywall-plan-option');
+    const plans = page.locator('.paywall-plan-card');
     await expect(plans).toHaveCount(2);
     await expect(page.getByText('월간 결제 대비 34% 절약')).toBeVisible();
 
+    // Yearly is pre-selected, so the purchase dock CTA starts as the yearly one.
     const yearlyCta = page.getByRole('button', { name: '연간 구독 시작' });
     await expect(yearlyCta).toHaveCount(1);
 
