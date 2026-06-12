@@ -420,15 +420,11 @@ export class ConceptLessonsService {
       ? Math.round((passedRetrievals / retrievalIndexes.length) * 100)
       : 0;
 
-    // masteredAt stays sticky — only stamp on the FIRST time retrieval hits 100.
-    const shouldStamp = newScore === 100 && !refreshed?.masteredAt;
-
+    // masteredAt is NOT stamped here — chapter mastery unlocks only after the
+    // full 20-problem practice set, not on retrieval-check completion.
     const updated = await this.prisma.conceptProgress.update({
       where: { userId_lessonId: { userId, lessonId: lesson.id } },
-      data: {
-        retrievalScore: newScore,
-        ...(shouldStamp ? { masteredAt: new Date() } : {}),
-      },
+      data: { retrievalScore: newScore },
     });
 
     return {

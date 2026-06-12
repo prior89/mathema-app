@@ -248,6 +248,35 @@ describe('ConceptLessonsService.checkRetrieval', () => {
     }));
   });
 
+  it('never stamps masteredAt even when retrievalScore hits 100', async () => {
+    // Chapter mastery unlocks only via the 20-problem practice set, not here.
+    const step = {
+      stepIndex: 2,
+      kind: ConceptStepKind.RETRIEVAL,
+      retrievalCheck: {
+        choices: [
+          { choiceIndex: 1, isCorrect: false },
+          { choiceIndex: 2, isCorrect: true },
+        ],
+      },
+    };
+    const updateSpy = jest.fn().mockResolvedValue({ retrievalScore: 100 });
+    const prisma = mockPrisma({
+      conceptLesson: { findUnique: jest.fn().mockResolvedValue(lesson(step)) },
+      conceptProgress: {
+        upsert: jest.fn().mockResolvedValue(undefined),
+        update: updateSpy,
+        findUnique: jest.fn().mockResolvedValue({ completedSteps: [2], masteredAt: null }),
+      },
+    });
+    const { svc } = build({ prisma });
+    const r = await svc.checkRetrieval('u1', 'CH-1', 2, '2');
+    expect(r.score).toBe(100);
+    for (const call of updateSpy.mock.calls) {
+      expect(call[0].data).not.toHaveProperty('masteredAt');
+    }
+  });
+
   it('grades MCQ wrong (passed=false, hint returned, no push)', async () => {
     const step = {
       stepIndex: 2,
