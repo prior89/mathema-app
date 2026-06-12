@@ -48,7 +48,9 @@ function shuffle<T>(arr: T[]): T[] {
 
 function sanitizeForExam(p: any, lang: Lang = 'en'): any {
   if (!p) return p;
-  const { answer, ...rest } = p;
+  // expectedSolutionSteps carries the full worked solution — serving it in
+  // the exam-start payload lets a devtools user read answers mid-exam.
+  const { answer, expectedSolutionSteps, ...rest } = p;
   if (lang !== 'ko') {
     const en = PROBLEM_EN[p.source];
     if (en) rest.body = en.body;
