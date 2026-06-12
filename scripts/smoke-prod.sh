@@ -100,6 +100,18 @@ json_field() {
     | sed -E "s/\"$key\":\\s*\"([^\"]*)\".*/\\1/"
 }
 
+# Guest fallback — prod has no SMTP, so learner accounts can sit unverified
+# and 403 (email_not_verified) on read paths even though login succeeds.
+# /auth/guest/start is @Public and zero-PII; token is short-lived, so it is
+# issued fresh per run.
+acquire_guest() {
+  local res body
+  res=$(curl_json POST "$API/auth/guest/start" '{"country":"IN"}')
+  body="${res#*|}"
+  printf '%s' "$body" | grep -oE '"accessToken":\s*"[^"]+"' | head -1 \
+    | sed -E 's/.*"accessToken":\s*"([^"]+)".*/\1/'
+}
+
 echo "Matheo prod smoke — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "Backend: $BACKEND_URL"
 echo "User:    $EMAIL"
@@ -156,6 +168,15 @@ else
   step 4 "/curriculum/catalog"
   res=$(curl_json GET "$API/curriculum/catalog?country=IN" "" "$access")
   code="${res%%|*}"; body="${res#*|}"
+  if [ "$code" = "403" ] && printf '%s' "$body" | grep -q 'email_not_verified'; then
+    guest_tok=$(acquire_guest)
+    if [ -n "$guest_tok" ]; then
+      echo "  ${Y}NOTE${D} learner account unverified (no prod SMTP) — switching steps 4-7 to a guest token"
+      access="$guest_tok"
+      res=$(curl_json GET "$API/curriculum/catalog?country=IN" "" "$access")
+      code="${res%%|*}"; body="${res#*|}"
+    fi
+  fi
   # Project envelope: data is wrapped. We just check the response is JSON
   # array-ish and ≥1 row.
   if [ "$code" = "200" ] && printf '%s' "$body" | grep -qE '"(id|code)":'; then
