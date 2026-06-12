@@ -81,6 +81,10 @@ export class VisionProvider {
           content:
             'You are a math OCR. Extract the problem text from the image. ' +
             'Output strict JSON: { "body": string, "answer": string|null, "source": string|null, "confidence": number }. ' +
+            'Wrap ALL mathematical expressions with delimiters our frontend MathText renderer supports: ' +
+            'inline as \\( ... \\), display as \\[ ... \\] (or $...$ / $$...$$). ' +
+            'Example: "If \\( a + b = 5 \\) then find \\[ x = \\frac{1}{2} \\]." ' +
+            'Never leave bare LaTeX commands (\\frac, \\left, etc.) without delimiters. ' +
             'Use LaTeX-friendly symbols (∫, π, √, ²). Do not solve the problem — just transcribe.',
         },
         {

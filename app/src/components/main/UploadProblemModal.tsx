@@ -722,6 +722,31 @@ function OcrReviewPhase({
         </div>
       )}
 
+      {/* Live rendered preview of the OCR'd / recognised problem text.
+          This is the key "문제인식확인" (recognition confirmation) moment.
+          User can visually verify that formulas render correctly (via MathText + KaTeX)
+          before committing to the quota-gated solve. If it looks broken they can edit the source below. */}
+      <div style={{ marginTop: 12 }}>
+        <div style={{ fontSize: 10, color: 'var(--p-muted)', marginBottom: 4 }}>
+          {t('upload.ocrReview.previewLabel') || 'Recognized problem (preview — check that formulas look right)'}
+        </div>
+        <div
+          className="math-big"
+          style={{
+            fontSize: 15,
+            padding: '8px 10px',
+            background: 'var(--p-bg)',
+            border: '1px solid var(--p-border)',
+            borderRadius: 8,
+            whiteSpace: 'pre-wrap',
+            lineHeight: 1.5,
+            minHeight: 48,
+          }}
+        >
+          <MathText text={editedText} />
+        </div>
+      </div>
+
       <label style={{ ...fieldLabel, marginTop: 12 }}>
         {t('upload.ocrReview.editLabel')}
         <textarea

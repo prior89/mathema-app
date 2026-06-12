@@ -39,7 +39,8 @@ class SolveResponse(BaseModel):
     explanation: str
     # Step-by-step worked derivation. Each entry should be one Step
     # (e.g. "Step 1. ..."). Rendered as a numbered list in the UI; LaTeX
-    # inline math ($...$) is preserved by the MathText component.
+    # inline math ($...$ or \( ... \)) and display \[ ... \] are preserved
+    # (and auto-wrapped when bare) by the frontend MathText component.
     steps: List[str] = []
     # One short "why this step" per entry in `steps` (Socratic pedagogy layer).
     stepRationales: List[str] = []
