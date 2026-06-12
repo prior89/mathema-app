@@ -18,6 +18,7 @@ on:
         type: choice
         options:
           - all
+          - migrate-deploy
           - backfill-wrong-note
           - backfill-diagnostic-gap
           - backfill-lesson-problem-set
@@ -114,6 +115,11 @@ jobs:
           }
           run_fix_no_correct() { npm run fix:no-correct-option; }
           run_verify_no_correct() { npm run verify:no-correct-option; }
+          run_migrate_deploy() {
+            npx prisma migrate status || true
+            npx prisma migrate deploy
+            npx prisma migrate status
+          }
 
           case "$task" in
             all)
@@ -123,6 +129,7 @@ jobs:
               run_insight_json
               run_verify
               ;;
+            migrate-deploy)            run_migrate_deploy ;;
             backfill-wrong-note)       run_wrong_note ;;
             backfill-diagnostic-gap)    run_diagnostic_gap ;;
             backfill-lesson-problem-set) run_lesson_set ;;
