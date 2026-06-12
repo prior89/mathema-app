@@ -1,0 +1,107 @@
+name: Gemini cleanup — remove residual ACA env var + secret
+
+# One-off housekeeping. Gemini was dropped 2026-06-12 (its API terms prohibit
+# clients directed at under-18 users) and backend-deploy.yml no longer sets
+# GEMINI_API_KEY, but the Container App still carries the env var and the
+# gemini-api-key secret from older revisions. This removes both.
+#
+# The Key Vault copy (gemini-api-key) cannot be deleted here: the OIDC SP has
+# RG Contributor but no KV data-plane role (Key Vault Secrets User), so the
+# delete is attempted best-effort and reported for manual follow-up.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  RESOURCE_GROUP: mathema-prod-cin
+  CONTAINER_APP: mathema-backend
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install containerapp extension
+        run: az extension add --name containerapp --upgrade -y
+
+      # Env var must go first — a secret cannot be removed while a template
+      # env var still references it.
+      - name: Remove GEMINI_API_KEY env var
+        run: |
+          HAS_ENV=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.template.containers[0].env[?name=='GEMINI_API_KEY'] | length(@)" -o tsv)
+          if [ "$HAS_ENV" = "0" ]; then
+            echo "GEMINI_API_KEY env var not present — nothing to remove"
+          else
+            az containerapp update \
+              --name ${{ env.CONTAINER_APP }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --remove-env-vars GEMINI_API_KEY
+          fi
+
+      - name: Remove gemini-api-key ACA secret
+        run: |
+          HAS_SECRET=$(az containerapp secret list \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "[?name=='gemini-api-key'] | length(@)" -o tsv)
+          if [ "$HAS_SECRET" = "0" ]; then
+            echo "gemini-api-key ACA secret not present — nothing to remove"
+          else
+            az containerapp secret remove \
+              --name ${{ env.CONTAINER_APP }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --secret-names gemini-api-key
+          fi
+
+      - name: Attempt KV secret delete (best-effort)
+        run: |
+          KV_NAME=$(az keyvault list \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "[?starts_with(name, 'mathema-kv')].name | [0]" -o tsv)
+          if [ -z "$KV_NAME" ]; then
+            echo "::notice::No Key Vault found in RG — skipping"
+            exit 0
+          fi
+          if az keyvault secret delete --vault-name "$KV_NAME" --name gemini-api-key; then
+            echo "KV secret gemini-api-key deleted"
+          else
+            echo "::warning::Could not delete KV secret gemini-api-key (SP lacks data-plane role) — delete manually in the portal: $KV_NAME"
+          fi
+
+      - name: Verify + health check
+        run: |
+          echo "Remaining env vars:"
+          az containerapp show \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.template.containers[0].env[].name" -o tsv
+          echo "Remaining secret names:"
+          az containerapp secret list \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "[].name" -o tsv
+          FQDN=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          ok=0
+          for i in $(seq 1 12); do
+            sleep 10
+            code=$(curl -s -o /dev/null --max-time 8 -w "%{http_code}" "https://$FQDN/api/v1/health/live" || echo "000")
+            echo "warm-up attempt $i -> HTTP $code"
+            if [ "$code" = "200" ]; then ok=1; break; fi
+          done
+          test "$ok" = "1"
