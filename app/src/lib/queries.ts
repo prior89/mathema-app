@@ -544,7 +544,7 @@ export const fetchReviewQueueNext = () =>
   get<ReviewQueueNext>('/wrong-notes/queue/next');
 export const fetchProblem = (id: string) => get<Problem>(`/problems/${id}`);
 export const fetchProblemHint = (id: string) => get<Hint>(`/problems/${id}/hint`);
-/** Hint Lv2 — AI walkthrough generated on demand (Gemini 2.5 Flash, ≤6 short steps). */
+/** Hint Lv2 — AI walkthrough generated on demand (OpenAI gpt-4o-mini, ≤6 short steps). */
 export const fetchProblemHintWalkthrough = (id: string) =>
   get<{ steps: string[] }>(`/problems/${id}/hint-walkthrough`);
 export const fetchStudySession = (id: string) => get<StudySession>(`/study-sessions/${id}`);
@@ -815,7 +815,7 @@ export type OcrResult = {
   text: string;
   latex?: string | null;
   confidence?: number | null;
-  source: 'gemini';
+  source: 'openai';
 };
 export type SolveResult = import('./mathHelper').MathHelperSolveResponse & {
   problemId?: string | null;

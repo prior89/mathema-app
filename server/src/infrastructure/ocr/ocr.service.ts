@@ -5,12 +5,22 @@ export type OcrResult = {
   text: string;
   latex?: string | null;
   confidence?: number | null;
-  source: 'gemini';
+  source: 'openai';
 };
 
-type GeminiOcrCallResult =
+type OpenAiOcrCallResult =
   | { ok: true; model: string; json: any }
   | { ok: false; model: string; status: number; errorText: string };
+
+const OCR_PROMPT =
+  'Extract every piece of mathematical content from this image as clean ' +
+  "LaTeX (or plain text where math notation isn't appropriate). " +
+  'Wrap ALL math expressions with delimiters our renderer understands: ' +
+  'inline math as \\( ... \\), display math as \\[ ... \\]. ' +
+  'Example good output: "Solve \\( x + \\frac{1}{2} = 3 \\) for x. Options: \\( a \\) 1, \\( b \\) 2." ' +
+  'Never emit bare commands like \\frac or \\left without the surrounding delimiters. ' +
+  'Preserve line breaks, Korean word spacing, labels, and multiple-choice options exactly. ' +
+  'Return ONLY the extracted content - no preamble, no commentary, no code fences.';
 
 @Injectable()
 export class OcrService {
@@ -24,7 +34,7 @@ export class OcrService {
       if (!isPdf && !file.mimetype.startsWith('image/')) {
         throw new BadRequestException('Only image/* or PDF files are supported');
       }
-      return await this.extractGemini(file);
+      return await this.extractOpenAi(file, isPdf);
     } catch (err) {
       if (err instanceof HttpException) throw err;
       const message = this.formatError(err);
@@ -32,40 +42,52 @@ export class OcrService {
     }
   }
 
-  private async extractGemini(file: Express.Multer.File): Promise<OcrResult> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new ServiceUnavailableException('Gemini OCR is not configured (GEMINI_API_KEY missing).');
+  private async extractOpenAi(file: Express.Multer.File, isPdf: boolean): Promise<OcrResult> {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new ServiceUnavailableException('OCR is not configured (OPENAI_API_KEY missing).');
 
-    const imageBase64 = file.buffer.toString('base64');
-    let lastFailure: Extract<GeminiOcrCallResult, { ok: false }> | null = null;
+    const base64 = file.buffer.toString('base64');
+    let lastFailure: Extract<OpenAiOcrCallResult, { ok: false }> | null = null;
 
-    for (const model of this.geminiOcrModels()) {
-      const result = await this.callGeminiOcr(model, apiKey, file, imageBase64);
+    for (const model of this.ocrModels()) {
+      const result = await this.callOpenAiOcr(model, apiKey, file, base64, isPdf);
       if (result.ok) {
-        const text = String(result.json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '').trim();
+        const text = String(result.json?.choices?.[0]?.message?.content ?? '').trim();
         if (!text) throw new BadRequestException('Could not read this image clearly. Try a sharper photo.');
-        return { text, latex: text, confidence: null, source: 'gemini' };
+        return { text, latex: text, confidence: null, source: 'openai' };
       }
 
       lastFailure = result;
-      if (!this.shouldTryNextGeminiModel(result.status)) break;
+      if (!this.shouldTryNextModel(result.status)) break;
     }
 
     throw new ServiceUnavailableException(
-      `Gemini OCR failed (${lastFailure?.status ?? 'unknown'}) on ${lastFailure?.model ?? 'unknown'}: ${(lastFailure?.errorText ?? '').slice(0, 300)}`,
+      `OCR failed (${lastFailure?.status ?? 'unknown'}) on ${lastFailure?.model ?? 'unknown'}: ${(lastFailure?.errorText ?? '').slice(0, 300)}`,
     );
   }
 
-  private async callGeminiOcr(
+  private async callOpenAiOcr(
     model: string,
     apiKey: string,
     file: Express.Multer.File,
-    imageBase64: string,
-  ): Promise<GeminiOcrCallResult> {
-    const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}` +
-      `:generateContent?key=${encodeURIComponent(apiKey)}`;
-    let lastFailure: Extract<GeminiOcrCallResult, { ok: false }> | null = null;
+    base64: string,
+    isPdf: boolean,
+  ): Promise<OpenAiOcrCallResult> {
+    const url = 'https://api.openai.com/v1/chat/completions';
+    const filePart = isPdf
+      ? {
+          type: 'file',
+          file: {
+            filename: file.originalname || 'upload.pdf',
+            file_data: `data:application/pdf;base64,${base64}`,
+          },
+        }
+      : {
+          type: 'image_url',
+          image_url: { url: `data:${file.mimetype};base64,${base64}` },
+        };
+
+    let lastFailure: Extract<OpenAiOcrCallResult, { ok: false }> | null = null;
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const controller = new AbortController();
@@ -73,27 +95,22 @@ export class OcrService {
       try {
         const res = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
           signal: controller.signal,
           body: JSON.stringify({
-            contents: [{
-              parts: [
-                { inline_data: { mime_type: file.mimetype, data: imageBase64 } },
-                {
-                  text:
-                    'Extract every piece of mathematical content from this image as clean ' +
-                    "LaTeX (or plain text where math notation isn't appropriate). " +
-                    'Preserve line breaks, Korean word spacing, labels, and multiple-choice options. ' +
-                    'Return ONLY the extracted content - no preamble, ' +
-                    'no commentary, no code fences.',
-                },
-              ],
-            }],
-            generationConfig: {
-              temperature: 0,
-              maxOutputTokens: 8192,
-              thinkingConfig: this.geminiThinkingConfig(model),
-            },
+            model,
+            temperature: 0,
+            max_tokens: 4096,
+            messages: [
+              { role: 'system', content: OCR_PROMPT },
+              {
+                role: 'user',
+                content: [filePart, { type: 'text', text: 'Extract the content now.' }],
+              },
+            ],
           }),
         });
 
@@ -104,7 +121,7 @@ export class OcrService {
           status: res.status,
           errorText: await res.text().catch(() => ''),
         };
-        if (!this.shouldRetryGeminiStatus(res.status)) return lastFailure;
+        if (!this.shouldRetryStatus(res.status)) return lastFailure;
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
           throw new GatewayTimeoutException(
@@ -119,31 +136,24 @@ export class OcrService {
       await this.sleep(500 * 2 ** attempt);
     }
 
-    return lastFailure ?? { ok: false, model, status: 503, errorText: 'Gemini OCR request did not complete.' };
+    return lastFailure ?? { ok: false, model, status: 503, errorText: 'OCR request did not complete.' };
   }
 
   private timeoutMs(): number {
     return this.config.get<number>('ocr.timeoutMs') ?? 180000;
   }
 
-  private geminiOcrModels(): string[] {
-    const primary = process.env.GEMINI_OCR_MODEL ?? 'gemini-3.5-flash';
-    return Array.from(new Set([primary, 'gemini-2.5-flash']));
+  private ocrModels(): string[] {
+    const primary = process.env.AI_OCR_MODEL ?? 'gpt-4o-mini';
+    return Array.from(new Set([primary, 'gpt-4o']));
   }
 
-  private shouldRetryGeminiStatus(status: number): boolean {
+  private shouldRetryStatus(status: number): boolean {
     return status === 429 || status === 500 || status === 503;
   }
 
-  private shouldTryNextGeminiModel(status: number): boolean {
-    return status === 400 || this.shouldRetryGeminiStatus(status);
-  }
-
-  private geminiThinkingConfig(model: string): Record<string, unknown> {
-    if (model.startsWith('gemini-3')) {
-      return { thinkingLevel: model.includes('flash') ? 'minimal' : 'low' };
-    }
-    return { thinkingBudget: 0 };
+  private shouldTryNextModel(status: number): boolean {
+    return status === 400 || status === 404 || this.shouldRetryStatus(status);
   }
 
   private sleep(ms: number): Promise<void> {

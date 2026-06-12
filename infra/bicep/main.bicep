@@ -76,10 +76,6 @@ param provisionAzureOpenAi bool = false
 @secure()
 param openaiApiKey string
 
-@description('Gemini API key used by backend OCR and math-helper Gemini fallback. Leave empty on redeploy if already seeded in Key Vault.')
-@secure()
-param geminiApiKey string = ''
-
 @description('Anthropic API key (optional — fallback LLM provider).')
 @secure()
 param anthropicApiKey string = ''
@@ -282,12 +278,6 @@ resource kvOpenai 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   properties: { value: openaiApiKey }
 }
 
-resource kvGemini 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(geminiApiKey)) {
-  parent: keyVault
-  name: 'gemini-api-key'
-  properties: { value: geminiApiKey }
-}
-
 resource kvAnthropic 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(anthropicApiKey)) {
   parent: keyVault
   name: 'anthropic-api-key'
@@ -375,8 +365,6 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
         { name: 'jwt-access-secret',    keyVaultUrl: kvJwtAccess.properties.secretUri,     identity: 'system' }
         { name: 'jwt-refresh-secret',   keyVaultUrl: kvJwtRefresh.properties.secretUri,    identity: 'system' }
         { name: 'openai-api-key',       keyVaultUrl: kvOpenai.properties.secretUri,        identity: 'system' }
-        // Versionless URI so Container Apps reads the latest Key Vault secret version.
-        { name: 'gemini-api-key',       keyVaultUrl: '${keyVault.properties.vaultUri}secrets/gemini-api-key', identity: 'system' }
         { name: 'admin-emails',         keyVaultUrl: kvAdminEmails.properties.secretUri,   identity: 'system' }
         // Play Developer API service-account JSON (seeded out-of-band)
         { name: 'play-service-account-json', keyVaultUrl: '${keyVault.properties.vaultUri}secrets/play-service-account-json', identity: 'system' }
@@ -403,7 +391,10 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AI_LLM_PROVIDER',     value: 'openai' }
             { name: 'AI_LLM_MODEL',        value: 'gpt-4o-mini' }
             { name: 'AI_LLM_API_KEY',      secretRef: 'openai-api-key' }
-            { name: 'GEMINI_API_KEY',      secretRef: 'gemini-api-key' }
+            // OCR (ocr.service.ts) + hint walkthrough (problems.service.ts)
+            // read OPENAI_API_KEY directly. Gemini API was removed 2026-06-12:
+            // its terms prohibit API clients directed at under-18 users.
+            { name: 'OPENAI_API_KEY',      secretRef: 'openai-api-key' }
             { name: 'AI_VISION_PROVIDER',  value: 'openai' }
             { name: 'AI_VISION_MODEL',     value: 'gpt-4o-mini' }
             { name: 'AI_VISION_API_KEY',   secretRef: 'openai-api-key' }
@@ -525,7 +516,6 @@ resource mathHelperApp 'Microsoft.App/containerApps@2024-03-01' = {
       ]
       secrets: [
         { name: 'openai-api-key', keyVaultUrl: kvOpenai.properties.secretUri, identity: 'system' }
-        { name: 'gemini-api-key', keyVaultUrl: '${keyVault.properties.vaultUri}secrets/gemini-api-key', identity: 'system' }
       ]
     }
     template: {
@@ -538,7 +528,6 @@ resource mathHelperApp 'Microsoft.App/containerApps@2024-03-01' = {
           resources: { cpu: json('0.5'), memory: '1.0Gi' }
           env: [
             { name: 'OPENAI_API_KEY',   secretRef: 'openai-api-key' }
-            { name: 'GEMINI_API_KEY',   secretRef: 'gemini-api-key' }
             { name: 'PYTHONUNBUFFERED', value: '1' }
           ]
           probes: [

@@ -22,9 +22,9 @@ _logger = logging.getLogger(__name__)
 # wrong sign on the integral, the same failure mode that pushed an earlier
 # revision off gpt-4o (commit eb8ff43).
 #
-# This file covers the math-helper reasoning model only. OCR is still served
-# by the NestJS OcrService, which currently reports source='gemini'; keep those
-# layers separate when evaluating compliance or provider migration work.
+# This file covers the math-helper reasoning model only. OCR is served by the
+# NestJS OcrService (OpenAI gpt-4o-mini, source='openai'); keep those layers
+# separate when evaluating compliance or provider migration work.
 _primary = ChatOpenAI(
     model="gpt-5-mini",
     max_completion_tokens=8192,

@@ -68,7 +68,7 @@ export function StudyPracticeScreen() {
   const [questionNum, setQuestionNum] = useState(0);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** 0 = not shown, 1 = formula (cached, instant), 2 = AI walkthrough (Gemini call). */
+  /** 0 = not shown, 1 = formula (cached, instant), 2 = AI walkthrough (LLM call). */
   const [hintLevel, setHintLevel] = useState<0 | 1 | 2>(0);
   const startedAtRef = useRef(Date.now());
   const canvasRef = useRef<HandwritingCanvasHandle>(null);
@@ -79,7 +79,7 @@ export function StudyPracticeScreen() {
     queryFn: () => fetchProblemHint(current!.id),
     enabled: hintLevel >= 1 && !!current?.id,
   });
-  // Hint Lv2 — Gemini-generated step-by-step walkthrough. Only fired when
+  // Hint Lv2 — LLM-generated step-by-step walkthrough. Only fired when
   // the student taps Hint a second time. Cached per problem id so re-opening
   // the hint doesn't re-bill another LLM call.
   const walkQuery = useQuery({

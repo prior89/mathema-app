@@ -77,12 +77,11 @@ jobs:
       - name: Install containerapp extension
         run: az extension add --name containerapp --upgrade -y
 
-      # Legacy OCR secret-sync steps removed 2026-05-22: OCR stack was migrated
-      # OCR now uses the shared Gemini Key Vault secret. Legacy OCR vendor
-      # secret-sync steps were removed so deploys do not depend on unused
-      # Key Vault writes.
+      # OCR + hint walkthrough call OpenAI directly (OPENAI_API_KEY). Gemini
+      # was removed 2026-06-12: its API terms prohibit clients directed at
+      # under-18 users, which covers our student-facing OCR/hints.
 
-      - name: Ensure Gemini secret reference
+      - name: Ensure OpenAI secret reference
         run: |
           KV_NAME=$(az keyvault list \
             --resource-group ${{ env.RESOURCE_GROUP }} \
@@ -95,7 +94,7 @@ jobs:
           az containerapp secret set \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --secrets "gemini-api-key=keyvaultref:${KV_URI}secrets/gemini-api-key,identityref:system"
+            --secrets "openai-api-key=keyvaultref:${KV_URI}secrets/openai-api-key,identityref:system"
 
       # FCM push — GitHub secrets → Container App secrets (no-op when unset).
       - name: Ensure Firebase secret references
@@ -118,7 +117,7 @@ jobs:
 
       - name: Container App revision update
         run: |
-          ENV_VARS="GEMINI_API_KEY=secretref:gemini-api-key"
+          ENV_VARS="OPENAI_API_KEY=secretref:openai-api-key"
           ENV_VARS="$ENV_VARS FEATURE_ADAPTIVE_DIAGNOSTIC_PCT=100"
           ENV_VARS="$ENV_VARS FEATURE_FIRST_SESSION_ACHIEVEMENT_PCT=100"
           ENV_VARS="$ENV_VARS FEATURE_KR_COLD_START_PCT=100"

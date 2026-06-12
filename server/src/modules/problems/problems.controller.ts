@@ -26,7 +26,7 @@ export class ProblemsController {
   @Get(':id') one(@Param('id') id: string, @CurrentLang() lang: Lang) { return this.service.one(id, lang); }
   @Get(':id/hint') hint(@Param('id') id: string) { return this.service.hint(id); }
 
-  /** Hint Lv2 — Gemini step-by-step walkthrough. LLM-billed per call; the
+  /** Hint Lv2 — OpenAI step-by-step walkthrough. LLM-billed per call; the
    *  frontend caches per problem id so re-opening the hint doesn't re-bill. */
   @Get(':id/hint-walkthrough')
   hintWalkthrough(@Param('id') id: string) { return this.service.hintWalkthrough(id); }

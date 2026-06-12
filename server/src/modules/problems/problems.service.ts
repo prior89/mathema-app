@@ -19,10 +19,11 @@ export class ProblemsService {
 
   /**
    * Hint Lv2 — AI walks the student through the solution step-by-step.
-   * Calls Gemini 2.5 Flash with a short structured prompt; returns ≤6
-   * lines of natural-language solution with math expressions wrapped in
-   * inline LaTeX. Frontend renders this as an overlay card on top of the
-   * handwriting canvas so it visually reads as "AI wrote on your notebook."
+   * Calls OpenAI (gpt-4o-mini by default) with a short structured prompt;
+   * returns ≤6 lines of natural-language solution with math expressions
+   * wrapped in inline LaTeX. Frontend renders this as an overlay card on
+   * top of the handwriting canvas so it visually reads as "AI wrote on
+   * your notebook."
    *
    * Lv1 (cached formula + concept) goes through hint() above — no LLM call,
    * instant response. Lv2 is the deliberate cost step the student has to
@@ -34,13 +35,15 @@ export class ProblemsService {
       select: { body: true, formula: true, concept: true, answer: true },
     });
     if (!p) throw new NotFoundException('problem not found');
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new ServiceUnavailableException('Gemini OCR is not configured (GEMINI_API_KEY missing).');
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new ServiceUnavailableException('AI hints are not configured (OPENAI_API_KEY missing).');
 
     const prompt =
       'You are tutoring an Indian Class 7-12 student through a math problem.\n' +
       'Walk them through the solution step by step in plain English.\n' +
-      'Wrap every math expression in inline LaTeX delimiters $...$.\n' +
+      'Wrap EVERY math expression in inline LaTeX delimiters $...$ — even single variables ' +
+      'like $x$ and standalone numbers used as math. Convert unicode math symbols ' +
+      '(∫, π, √, ²) to LaTeX commands inside the delimiters.\n' +
       'Output JSON: {"steps": ["...", "..."]} — at most 6 short steps, each ≤200 chars.\n' +
       'Do not include the final boxed answer — the student picks the multiple-choice option themselves.\n\n' +
       `Problem: ${p.body}\n` +
@@ -48,23 +51,20 @@ export class ProblemsService {
       (p.concept ? `Concept: ${p.concept}\n` : '') +
       `Correct answer (reference): ${p.answer}`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const body = {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 1024,
-        responseMimeType: 'application/json',
-        thinkingConfig: { thinkingBudget: 0 },
-      },
+      model: process.env.AI_HINT_MODEL ?? 'gpt-4o-mini',
+      temperature: 0.2,
+      max_tokens: 1024,
+      response_format: { type: 'json_object' },
+      messages: [{ role: 'user', content: prompt }],
     };
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30_000);
     let res: Response;
     try {
-      res = await fetch(url, {
+      res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify(body),
         signal: controller.signal,
       });
@@ -73,10 +73,10 @@ export class ProblemsService {
     }
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
-      throw new ServiceUnavailableException(`Gemini hint failed (${res.status}): ${errText.slice(0, 200)}`);
+      throw new ServiceUnavailableException(`AI hint failed (${res.status}): ${errText.slice(0, 200)}`);
     }
     const json: any = await res.json();
-    const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    const text: string = json?.choices?.[0]?.message?.content ?? '';
     if (!text) return { steps: [] };
     try {
       const parsed = JSON.parse(text);

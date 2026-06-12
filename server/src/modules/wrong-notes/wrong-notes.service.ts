@@ -177,7 +177,7 @@ export class WrongNotesService {
   }
   create(userId: string, dto: CreateWrongNoteDto) { return this.repo.create(userId, dto); }
 
-  // Photo + PDF upload now goes through /math-helper/ocr-solve (Gemini OCR →
+  // Photo + PDF upload now goes through /math-helper/ocr-solve (OpenAI OCR →
   // math-helper solve → recordSolveAttempt creates the Problem + Attempt +
   // WrongNote in one shot). The old /wrong-notes/upload-photo and
   // /wrong-notes/upload-pdf endpoints were stubs that ignored the file and

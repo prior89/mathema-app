@@ -23,16 +23,16 @@ function pdfFile(): Express.Multer.File {
   } as Express.Multer.File;
 }
 
-describe('OcrService Gemini OCR', () => {
+describe('OcrService OpenAI OCR', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     jest.restoreAllMocks();
-    process.env = { ...originalEnv, GEMINI_API_KEY: 'test-key' };
-    delete process.env.GEMINI_OCR_MODEL;
+    process.env = { ...originalEnv, OPENAI_API_KEY: 'test-key' };
+    delete process.env.AI_OCR_MODEL;
     jest.spyOn(global, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({
-        candidates: [{ content: { parts: [{ text: '2x + 7 = 15' }] } }],
+        choices: [{ message: { content: '2x + 7 = 15' } }],
       }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
     );
   });
@@ -41,39 +41,45 @@ describe('OcrService Gemini OCR', () => {
     process.env = originalEnv;
   });
 
-  it('uses the stable Gemini OCR model with Gemini 3 thinkingLevel by default', async () => {
+  it('uses gpt-4o-mini by default and sends the image as a data URL', async () => {
     const service = new OcrService(makeConfig({ 'ocr.timeoutMs': 1000 }));
 
     const result = await service.extract(imageFile());
 
-    expect(result).toMatchObject({ text: '2x + 7 = 15', source: 'gemini' });
+    expect(result).toMatchObject({ text: '2x + 7 = 15', source: 'openai' });
     const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
-    expect(String(url)).toContain('/models/gemini-3.5-flash:generateContent');
+    expect(String(url)).toBe('https://api.openai.com/v1/chat/completions');
+    expect(init.headers.Authorization).toBe('Bearer test-key');
     const body = JSON.parse(String(init.body));
-    expect(body.generationConfig.thinkingConfig).toEqual({ thinkingLevel: 'minimal' });
-    expect(body.contents[0].parts[0].inline_data.mime_type).toBe('image/png');
+    expect(body.model).toBe('gpt-4o-mini');
+    expect(body.temperature).toBe(0);
+    const imagePart = body.messages[1].content[0];
+    expect(imagePart.type).toBe('image_url');
+    expect(imagePart.image_url.url).toMatch(/^data:image\/png;base64,/);
   });
 
-  it('allows production to override OCR back to Gemini 2.5 Flash', async () => {
-    process.env.GEMINI_OCR_MODEL = 'gemini-2.5-flash';
+  it('allows production to override the OCR model via AI_OCR_MODEL', async () => {
+    process.env.AI_OCR_MODEL = 'gpt-4o';
     const service = new OcrService(makeConfig({ 'ocr.timeoutMs': 1000 }));
 
     await service.extract(imageFile());
 
-    const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
-    expect(String(url)).toContain('/models/gemini-2.5-flash:generateContent');
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0];
     const body = JSON.parse(String(init.body));
-    expect(body.generationConfig.thinkingConfig).toEqual({ thinkingBudget: 0 });
+    expect(body.model).toBe('gpt-4o');
   });
 
-  it('routes PDFs through Gemini OCR instead of a separate OCR vendor', async () => {
+  it('routes PDFs through the chat completions file content part', async () => {
     const service = new OcrService(makeConfig({ 'ocr.timeoutMs': 1000 }));
 
     const result = await service.extract(pdfFile());
 
-    expect(result).toMatchObject({ text: '2x + 7 = 15', source: 'gemini' });
+    expect(result).toMatchObject({ text: '2x + 7 = 15', source: 'openai' });
     const [, init] = (global.fetch as jest.Mock).mock.calls[0];
     const body = JSON.parse(String(init.body));
-    expect(body.contents[0].parts[0].inline_data.mime_type).toBe('application/pdf');
+    const filePart = body.messages[1].content[0];
+    expect(filePart.type).toBe('file');
+    expect(filePart.file.filename).toBe('problem.pdf');
+    expect(filePart.file.file_data).toMatch(/^data:application\/pdf;base64,/);
   });
 });
