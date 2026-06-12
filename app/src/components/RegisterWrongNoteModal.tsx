@@ -4,7 +4,6 @@ import { Camera, FileText, Image as ImageIcon, Upload } from 'lucide-react';
 import Modal from './Modal';
 import { toast } from './Toast';
 import { get } from '../lib/api';
-import type { Problem } from '../lib/queries';
 import { createWrongNote, uploadWrongNotePhoto, uploadWrongNotePdf } from '../lib/mutations';
 import { useT } from '../lib/i18n';
 
@@ -36,9 +35,11 @@ export default function RegisterWrongNoteModal({ open, initialMode = 'text', onC
   ];
   const [errorType, setErrorType] = useState(ERROR_TYPES[0].key);
 
+  // GET /problems returns a slim picker shape (no body/steps) — see
+  // problems.repository.ts list().
   const problemsQ = useQuery({
     queryKey: ['problems-pick'],
-    queryFn: () => get<Problem[]>('/problems'),
+    queryFn: () => get<Array<{ id: string; source: string; difficulty: string }>>('/problems'),
     enabled: open && mode === 'text',
   });
 

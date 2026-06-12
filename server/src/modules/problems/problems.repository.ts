@@ -54,17 +54,32 @@ const sanitizeForClient = (p: any, lang: Lang = 'en') => {
   return rest;
 };
 
+const PAGE_SIZE_DEFAULT = 100;
+const PAGE_SIZE_MAX = 200;
+
 @Injectable()
 export class ProblemsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Slim picker shape on purpose: the old include pulled every step + choice
+  // for the whole pool (~17.6MB). Full content stays behind /problems/:id.
   async list(q: any, lang: Lang = 'en') {
     const rows = await this.prisma.problem.findMany({
       where: this.buildWhere(q),
-      include: { steps: { orderBy: { stepIndex: 'asc' }, include: { choices: { orderBy: { choiceIndex: 'asc' } } } } },
+      select: { id: true, source: true, difficulty: true, unitId: true },
       orderBy: { createdAt: 'asc' },
+      ...this.buildPage(q),
     });
-    return rows.map((p) => sanitizeForClient(p, lang));
+    if (lang === 'ko') return rows;
+    return rows.map((p) => (SOURCE_EN[p.source] ? { ...p, source: SOURCE_EN[p.source] } : p));
+  }
+
+  private buildPage(q: any): { skip?: number; take?: number } {
+    if (q?.page === undefined || q.page === null || q.page === '') return {};
+    const page = Math.max(1, Math.floor(Number(q.page)) || 1);
+    const sizeRaw = Math.floor(Number(q.pageSize));
+    const take = Number.isFinite(sizeRaw) && sizeRaw > 0 ? Math.min(sizeRaw, PAGE_SIZE_MAX) : PAGE_SIZE_DEFAULT;
+    return { skip: (page - 1) * take, take };
   }
 
   async findById(id: string, lang: Lang = 'en') {

@@ -6,4 +6,5 @@ export class QueryProblemsDto {
   @IsOptional() @IsEnum(Difficulty) difficulty?: Difficulty;
   @IsOptional() @IsString() source?: string;
   @IsOptional() page?: number;
+  @IsOptional() pageSize?: number;
 }
