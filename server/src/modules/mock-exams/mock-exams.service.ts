@@ -13,6 +13,7 @@ import { Lang } from '../../common/i18n/current-lang.decorator';
 import { PROBLEM_EN, STEP_PROMPT_EN, CHOICE_EN, SOURCE_EN, HINT_EN, CONCEPT_EN, FORMULA_EN } from '../../common/i18n/content-en';
 import { LlmDraftService, DraftPayload } from '../content-ingest/llm-draft.service';
 import { DeterministicCheckService } from '../../infrastructure/math/deterministic-check.service';
+import { choiceErrorCode } from '../../common/learning/distractor-error-codes';
 
 /**
  * MockExam name → English short label.
@@ -539,7 +540,7 @@ export class MockExamsService {
         commonErrorCodes: true,
         steps: {
           select: {
-            choices: { select: { isCorrect: true, distractorErrorCode: true } },
+            choices: { select: { isCorrect: true, distractorErrorCode: true, distractorType: true } },
           },
         },
       },
@@ -552,16 +553,54 @@ export class MockExamsService {
     });
     if (valid.length === 0) return null;
 
+    // Concept-mastery weighting — problems testing the user's weakest concepts
+    // surface first. Concepts without attempt evidence stay neutral (boost 0)
+    // so the operator-curated set order is preserved for cold-start users.
+    const conceptLinks = await this.prisma.problemConcept.findMany({
+      where: { problemId: { in: valid.map((p) => p.id) } },
+      select: { problemId: true, conceptId: true, weight: true },
+    });
+    const boostByProblem = new Map<string, number>();
+    if (conceptLinks.length > 0) {
+      const trajectories = await this.prisma.masteryTrajectory.findMany({
+        where: {
+          userId: args.userId,
+          conceptId: { in: [...new Set(conceptLinks.map((l) => l.conceptId))] },
+          evidenceCount: { gt: 0 },
+        },
+        select: { conceptId: true, masteryScore: true },
+      });
+      const masteryByConcept = new Map(trajectories.map((t) => [t.conceptId, t.masteryScore]));
+      for (const link of conceptLinks) {
+        const mastery = masteryByConcept.get(link.conceptId);
+        if (mastery === undefined) continue;
+        const boost = ((100 - mastery) / 100) * link.weight;
+        boostByProblem.set(link.problemId, Math.max(boostByProblem.get(link.problemId) ?? 0, boost));
+      }
+    }
+
     const weaknessScore = (p: typeof valid[number]) => {
       if (p.commonErrorCodes.some((c) => weaknessCodes.has(c))) return 2;
-      if (p.steps.some((s) => s.choices.some((c) => c.distractorErrorCode && weaknessCodes.has(c.distractorErrorCode as ErrorCode)))) {
-        return 1;
-      }
-      return 0;
+      // commonErrorCodes has no writer yet, so in practice the distractor
+      // metadata on wrong choices (IN distractorType / KR distractorErrorCode)
+      // is the only per-problem error signal available for matching.
+      const matchesChoice = p.steps.some((s) =>
+        s.choices.some((c) => {
+          if (c.isCorrect) return false;
+          const code = choiceErrorCode(c);
+          return code !== null && weaknessCodes.has(code);
+        }),
+      );
+      return matchesChoice ? 1 : 0;
     };
 
+    // weaknessScore dominates (0|1|2) and masteryBoost (0..1) breaks ties
+    // within the same weakness tier without ever overriding it.
+    const totalScore = (p: typeof valid[number]) =>
+      weaknessScore(p) + (boostByProblem.get(p.id) ?? 0);
+
     valid.sort((a, b) => {
-      const weakDiff = weaknessScore(b) - weaknessScore(a);
+      const weakDiff = totalScore(b) - totalScore(a);
       if (weakDiff !== 0) return weakDiff;
       if (setOrder.size > 0) {
         return (setOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (setOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER);

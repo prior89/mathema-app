@@ -36,6 +36,14 @@ function mockPrisma(over: any = {}) {
       findFirst: jest.fn().mockResolvedValue(null),
       ...over.lessonProblemSet,
     },
+    problemConcept: {
+      findMany: jest.fn().mockResolvedValue([]),
+      ...over.problemConcept,
+    },
+    masteryTrajectory: {
+      findMany: jest.fn().mockResolvedValue([]),
+      ...over.masteryTrajectory,
+    },
     problem: { findMany: jest.fn().mockResolvedValue([]), ...over.problem },
     $queryRawUnsafe: jest.fn().mockResolvedValue([]),
     ...over.rest,
@@ -85,5 +93,103 @@ describe('MockExamsService.nextChapterProblem', () => {
     const { svc } = build({ prisma, llmDraft });
     const r = await svc.nextChapterProblem('u1', 'CH-1');
     expect(r).toBeNull();
+  });
+});
+
+// ── pickStudyProblemId scoring (weakness match + concept-mastery boost) ──
+
+/** 5-choice single-step candidate. wrongMeta lands on the first wrong choice. */
+function candidate(
+  id: string,
+  over: Partial<{ difficultyLevel: number; createdAt: Date; commonErrorCodes: string[] }> = {},
+  wrongMeta: Partial<{ distractorType: string; distractorErrorCode: string }> = {},
+) {
+  const wrong = (meta: typeof wrongMeta = {}) => ({
+    isCorrect: false,
+    distractorErrorCode: meta.distractorErrorCode ?? null,
+    distractorType: meta.distractorType ?? null,
+  });
+  return {
+    id,
+    difficultyLevel: over.difficultyLevel ?? 1,
+    createdAt: over.createdAt ?? new Date('2026-01-01'),
+    commonErrorCodes: over.commonErrorCodes ?? [],
+    steps: [{
+      choices: [
+        { isCorrect: true, distractorErrorCode: null, distractorType: null },
+        wrong(wrongMeta), wrong(), wrong(), wrong(),
+      ],
+    }],
+  };
+}
+
+function pickArgs() {
+  return {
+    userId: 'u1',
+    country: 'IN',
+    chapterCode: 'CH-1',
+    lessonId: 'L1',
+    lessonFk: 'conceptLessonId' as const,
+  };
+}
+
+describe('MockExamsService.pickStudyProblemId scoring', () => {
+  it('prefers a problem whose IN distractorType maps to an ACTIVE weakness code', async () => {
+    const prisma = mockPrisma({
+      errorPatternProfile: { findMany: jest.fn().mockResolvedValue([{ errorCode: 'CALC' }]) },
+      problem: { findMany: jest.fn().mockResolvedValue([
+        candidate('p-easy', { difficultyLevel: 1 }),
+        candidate('p-calc', { difficultyLevel: 3 }, { distractorType: 'CALC_ERROR' }),
+      ]) },
+    });
+    const { svc } = build({ prisma });
+    const picked = await (svc as any).pickStudyProblemId(pickArgs());
+    expect(picked).toBe('p-calc');
+  });
+
+  it('maps KR distractorErrorCode strings to enum before matching', async () => {
+    const prisma = mockPrisma({
+      errorPatternProfile: { findMany: jest.fn().mockResolvedValue([{ errorCode: 'SIGN' }]) },
+      problem: { findMany: jest.fn().mockResolvedValue([
+        candidate('p-plain', { difficultyLevel: 1 }),
+        candidate('p-sign', { difficultyLevel: 3 }, { distractorErrorCode: 'SIGN_ERROR' }),
+      ]) },
+    });
+    const { svc } = build({ prisma });
+    const picked = await (svc as any).pickStudyProblemId({ ...pickArgs(), country: 'KR', lessonFk: 'koreanConceptLessonId' as const });
+    expect(picked).toBe('p-sign');
+  });
+
+  it('falls back to concept-mastery boost when no weakness code matches', async () => {
+    const prisma = mockPrisma({
+      problem: { findMany: jest.fn().mockResolvedValue([
+        candidate('p-strong', { difficultyLevel: 1 }),
+        candidate('p-weak', { difficultyLevel: 3 }),
+      ]) },
+      problemConcept: { findMany: jest.fn().mockResolvedValue([
+        { problemId: 'p-strong', conceptId: 'c-high', weight: 1 },
+        { problemId: 'p-weak', conceptId: 'c-low', weight: 1 },
+      ]) },
+      masteryTrajectory: { findMany: jest.fn().mockResolvedValue([
+        { conceptId: 'c-high', masteryScore: 90 },
+        { conceptId: 'c-low', masteryScore: 20 },
+      ]) },
+    });
+    const { svc } = build({ prisma });
+    const picked = await (svc as any).pickStudyProblemId(pickArgs());
+    expect(picked).toBe('p-weak');
+  });
+
+  it('preserves operator set order for cold-start users (no signals)', async () => {
+    const prisma = mockPrisma({
+      lessonProblemSet: { findFirst: jest.fn().mockResolvedValue({ problemIds: ['p-2', 'p-1'] }) },
+      problem: { findMany: jest.fn().mockResolvedValue([
+        candidate('p-1', { difficultyLevel: 1 }),
+        candidate('p-2', { difficultyLevel: 3 }),
+      ]) },
+    });
+    const { svc } = build({ prisma });
+    const picked = await (svc as any).pickStudyProblemId(pickArgs());
+    expect(picked).toBe('p-2');
   });
 });
