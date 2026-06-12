@@ -361,6 +361,7 @@ export class ConceptLessonsService {
     chapterCode: string,
     stepIndex: number,
     answer: string,
+    lang: Lang = 'en',
   ) {
     const lesson = await this.prisma.conceptLesson.findUnique({
       where: { chapterCode },
@@ -427,11 +428,22 @@ export class ConceptLessonsService {
       data: { retrievalScore: newScore },
     });
 
+    // explain/hint are stored as multilingual objects ({ko,en,hi}) like the
+    // rest of retrievalCheck — flatten to the request language. explain ships
+    // only on pass: it walks through the solution, so returning it on a wrong
+    // answer would leak the answer to a devtools reader mid-gate.
+    const localize = (v: any): string | null => {
+      if (v == null) return null;
+      if (typeof v === 'string') return v;
+      return lang === 'hi' ? (v.hi ?? v.en ?? null)
+        : lang === 'en' ? (v.en ?? null)
+        : (v.ko ?? v.en ?? null);
+    };
     return {
       passed,
       score: updated.retrievalScore,
-      explain: check.explain ?? null,
-      hint: !passed ? check.hint ?? null : null,
+      explain: passed ? localize(check.explain) : null,
+      hint: !passed ? localize(check.hint) : null,
     };
   }
 

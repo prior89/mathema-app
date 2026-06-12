@@ -97,10 +97,11 @@ export class ConceptLessonsController {
   @Post(':code/check')
   check(
     @CurrentUser('id') userId: string,
+    @CurrentLang() lang: Lang,
     @Param('code') code: string,
     @Body() body: CheckRetrievalDto,
   ) {
-    return this.service.checkRetrieval(userId, code, body.stepIndex, body.answer);
+    return this.service.checkRetrieval(userId, code, body.stepIndex, body.answer, lang);
   }
 
   // POST /concept-lessons/:code/finalize-concept — atomic "concept phase done"

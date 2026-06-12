@@ -330,4 +330,36 @@ describe('ConceptLessonsService.checkRetrieval', () => {
     const r = await svc.checkRetrieval('u1', 'CH-1', 2, ' X² + 1 ');
     expect(r.passed).toBe(true);
   });
+
+  it('localizes multilingual explain/hint and withholds explain on a wrong answer', async () => {
+    const step = {
+      stepIndex: 2,
+      kind: ConceptStepKind.RETRIEVAL,
+      retrievalCheck: {
+        choices: [
+          { choiceIndex: 1, isCorrect: false },
+          { choiceIndex: 2, isCorrect: true },
+        ],
+        explain: { ko: '설명', en: 'because', hi: 'kyonki' },
+        hint: { ko: '힌트', en: 'a hint', hi: 'sanket' },
+      },
+    };
+    const make = () => mockPrisma({
+      conceptLesson: { findUnique: jest.fn().mockResolvedValue(lesson(step)) },
+      conceptProgress: {
+        upsert: jest.fn().mockResolvedValue(undefined),
+        update: jest.fn().mockResolvedValue({ retrievalScore: 100 }),
+        findUnique: jest.fn().mockResolvedValue({ completedSteps: [2], masteredAt: null }),
+      },
+    });
+    const { svc } = build({ prisma: make() });
+    // Wrong answer: explain stays hidden (it walks through the solution), hint localized.
+    const wrong = await svc.checkRetrieval('u1', 'CH-1', 2, '1', 'hi');
+    expect(wrong.explain).toBeNull();
+    expect(wrong.hint).toBe('sanket');
+    // Correct answer: explain localized to request lang, hint suppressed.
+    const right = await svc.checkRetrieval('u1', 'CH-1', 2, '2', 'ko');
+    expect(right.explain).toBe('설명');
+    expect(right.hint).toBeNull();
+  });
 });
