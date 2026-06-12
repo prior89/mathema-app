@@ -76,7 +76,12 @@ jobs:
             URL=$(az keyvault secret show \
               --vault-name ${{ env.KEY_VAULT }} \
               --name database-url \
-              --query value -o tsv 2>/dev/null) || true
+              --query value -o tsv 2>kv_err.txt) || true
+            if [ -z "$URL" ]; then
+              echo "Key Vault read failed:"
+              cat kv_err.txt
+            fi
+            rm -f kv_err.txt
           fi
           test -n "$URL" || {
             echo "::error::Could not read database-url from Key Vault and PROD_DATABASE_URL repo secret is unset"
