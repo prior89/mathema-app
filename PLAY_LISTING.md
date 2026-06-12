@@ -94,7 +94,7 @@ exact gaps that keep tripping you up.
 — AI maths helper —
 
   • Upload a photo of a problem from a textbook, your homework, or the
-    blackboard. Gemini OCR pulls out the math, our deterministic solver
+    blackboard. AI-powered OCR pulls out the math, our deterministic solver
     handles the routine algebra, and the LLM only fills in the
     reasoning when the deterministic chain runs out.
   • The solution is added to your problem library so you can practise it

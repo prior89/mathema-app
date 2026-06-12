@@ -95,8 +95,8 @@ its own data-processing addendum (DPA) and listed in the Privacy Policy.
 
 | Recipient | Purpose | Data sent | Consent gate |
 |---|---|---|---|
-| **OpenAI (gpt-4o-mini)** | LLM analysis (wrong-note diagnostic), math-helper solver | Problem body, student step-by-step input, student answer, wrong-note context | `AI_TRAINING` (analysis) — fallback to rule-based when absent; math-helper `/solve` always uses OpenAI when enabled |
-| **Google Gemini API OCR** | OCR for photo / PDF problem upload | Photo / PDF image bytes | Per-use (the upload action is the consent surface) |
+| **OpenAI (gpt-4o-mini)** | LLM analysis (wrong-note diagnostic), math-helper solver, AI hint walkthrough | Problem body, student step-by-step input, student answer, wrong-note context | `AI_TRAINING` (analysis) — fallback to rule-based when absent; math-helper `/solve` always uses OpenAI when enabled |
+| **OpenAI (gpt-4o-mini) OCR** | OCR for photo / PDF problem upload | Photo / PDF image bytes | Per-use (the upload action is the consent surface) |
 | **Google OAuth 2.0** | Sign-in flow | Email, name, Google `sub` id | User-initiated sign-in |
 | **Firebase Cloud Messaging** | Push notification delivery | `DeviceToken.token`, message payload | `MARKETING` consent + OS-level permission |
 | **Sentry** | Crash + error capture | Stack trace, user id, breadcrumb, environment | `ANALYTICS` recommended; engineering-only viewers |
@@ -146,6 +146,6 @@ Use these exact answers when filling the Data Safety wizard:
 
 - [ ] **Privacy Policy URL** (task A2) and Terms of Service URL — Play Console requires the URL to be public when the listing goes live.
 - [ ] **Confirm Sentry / App Insights opt-out** is reachable from Settings → Privacy. Right now `SettingsScreen` toggles `Consent.kind` rows but the wiring to Sentry's `Sentry.setUser(null)` on revocation needs checking.
-- [ ] **Google Gemini API + OpenAI DPA** copies on file (no PII redaction guarantees from OpenAI on the gpt-4o-mini tier — flag as a known risk in the Privacy Policy).
+- [ ] **OpenAI DPA** copy on file + request Zero Data Retention (ZDR) for the API org — required for child personal data under OpenAI's under-18 guidance (India DPDP treats under-18 as children). Gemini API was removed 2026-06-12 (its terms prohibit under-18-directed API clients).
 - [ ] **FCM project + service account** finalised (task C1).
 - [ ] **NCERT attribution** flow surfaced in-app (Phase 2 — listed but not required for v1.0 since raw NCERT extracts were already removed in commit `1c841b1`).

@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+- **AI provider swap: Gemini → OpenAI for all student-facing paths** (2026-06-12). Gemini API Additional Terms prohibit API clients directed at under-18 users, which covers our OCR and hint features. Math OCR (`ocr.service.ts`) and Hint Lv2 walkthrough (`problems.service.ts`) now call OpenAI `gpt-4o-mini` (override via `AI_OCR_MODEL` / `AI_HINT_MODEL`); `LlmProvider` gemini branch removed (`anthropic | openai` only). In-house fidelity experiment showed gpt-4o-mini at parity on OCR (math-error-free on all 8 NCERT-style test images) and hints, with lower latency and ~10x lower cost than gemini-3.5-flash.
+- Infra: `GEMINI_API_KEY` secret wiring removed from backend + math-helper Container Apps (Bicep + deploy workflows); backend now receives `OPENAI_API_KEY` via `openai-api-key` Key Vault secret. `GEMINI_API_KEY` survives only as a GitHub Actions secret for operator-run db-ops scripts (not student-facing).
+- Privacy Policy / Play Data Safety / listing docs updated: OpenAI is the sole OCR + hint processor; added OpenAI ZDR (zero data retention) action item for child personal data under DPDP.
 
 ## [0.1.0-rc3] — 2026-05-22
 
