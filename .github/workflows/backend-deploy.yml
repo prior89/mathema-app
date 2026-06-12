@@ -81,20 +81,33 @@ jobs:
       # was removed 2026-06-12: its API terms prohibit clients directed at
       # under-18 users, which covers our student-facing OCR/hints.
 
+      # Repo secret takes precedence: the KV copy of openai-api-key went
+      # stale (prod served 401s on 2026-06-12) and the SP cannot write KV
+      # data plane to fix it. Falls back to the KV reference when the repo
+      # secret is unset.
       - name: Ensure OpenAI secret reference
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          KV_NAME=$(az keyvault list \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --query "[?starts_with(name, 'mathema-kv')].name | [0]" -o tsv)
-          test -n "$KV_NAME"
-          KV_URI=$(az keyvault show \
-            --name "$KV_NAME" \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --query properties.vaultUri -o tsv)
-          az containerapp secret set \
-            --name ${{ env.CONTAINER_APP }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --secrets "openai-api-key=keyvaultref:${KV_URI}secrets/openai-api-key,identityref:system"
+          if [ -n "$OPENAI_API_KEY" ]; then
+            az containerapp secret set \
+              --name ${{ env.CONTAINER_APP }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --secrets "openai-api-key=$OPENAI_API_KEY"
+          else
+            KV_NAME=$(az keyvault list \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --query "[?starts_with(name, 'mathema-kv')].name | [0]" -o tsv)
+            test -n "$KV_NAME"
+            KV_URI=$(az keyvault show \
+              --name "$KV_NAME" \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --query properties.vaultUri -o tsv)
+            az containerapp secret set \
+              --name ${{ env.CONTAINER_APP }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --secrets "openai-api-key=keyvaultref:${KV_URI}secrets/openai-api-key,identityref:system"
+          fi
 
       # FCM push — GitHub secrets → Container App secrets (no-op when unset).
       - name: Ensure Firebase secret references
