@@ -65,18 +65,25 @@ jobs:
             --start-ip-address "$RUNNER_IP" \
             --end-ip-address "$RUNNER_IP"
 
-      # GitHub OIDC SP lacks Key Vault secrets/get — store the prod URL once:
-      #   gh secret set PROD_DATABASE_URL -R prior89/mathema-app
+      # Prefer Key Vault via the OIDC SP; fall back to repo secret
+      # PROD_DATABASE_URL when the SP lacks secrets/get on the vault.
       - name: Load DATABASE_URL
         env:
           PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
         run: |
-          test -n "$PROD_DATABASE_URL" || {
-            echo "::error::Set repo secret PROD_DATABASE_URL (full postgresql://… string from Key Vault database-url)"
+          URL="$PROD_DATABASE_URL"
+          if [ -z "$URL" ]; then
+            URL=$(az keyvault secret show \
+              --vault-name ${{ env.KEY_VAULT }} \
+              --name database-url \
+              --query value -o tsv 2>/dev/null) || true
+          fi
+          test -n "$URL" || {
+            echo "::error::Could not read database-url from Key Vault and PROD_DATABASE_URL repo secret is unset"
             exit 1
           }
-          echo "::add-mask::$PROD_DATABASE_URL"
-          echo "DATABASE_URL=$PROD_DATABASE_URL" >> "$GITHUB_ENV"
+          echo "::add-mask::$URL"
+          echo "DATABASE_URL=$URL" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:
