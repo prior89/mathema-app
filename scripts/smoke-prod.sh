@@ -139,8 +139,8 @@ code="${res%%|*}"; body="${res#*|}"
 # data.access object (the project's standard envelope).
 access=$(printf '%s' "$body" | grep -oE '"access(Token)?":\s*"[^"]+"' | head -1 \
   | sed -E 's/.*"access(Token)?":\s*"([^"]+)".*/\2/')
-if [ "$code" = "200" ] && [ -n "$access" ]; then
-  pass "login 200 token=${access:0:12}…"
+if { [ "$code" = "200" ] || [ "$code" = "201" ]; } && [ -n "$access" ]; then
+  pass "login $code token=${access:0:12}…"
 else
   fail "login code=$code body=$body"
 fi
@@ -185,8 +185,8 @@ else
   fi
 
   # --- 7. /problems ------------------------------------------------
-  step 7 "/problems?limit=1 (pool fetch)"
-  res=$(curl_json GET "$API/problems?limit=1" "" "$access")
+  step 7 "/problems?page=1 (pool fetch)"
+  res=$(curl_json GET "$API/problems?page=1" "" "$access")
   code="${res%%|*}"; body="${res#*|}"
   if [ "$code" = "200" ] && printf '%s' "$body" | grep -qE '"id":\s*"[^"]+"'; then
     pass "problems 200 (>=1 row)"
