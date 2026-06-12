@@ -74,6 +74,7 @@ export class FirstSessionPlanService {
         unit: c.label,
         title: isKo ? `${c.label} 개념부터` : `Start with ${c.label}`,
         reason: isKo ? '진단 결과를 바탕으로 추천했어요.' : 'Recommended from your diagnostic.',
+        tone: 'info' as const,
         time: '~15 min',
         type: isKo ? '개념 학습' : 'Concept lesson',
         icon: 'BookOpen',

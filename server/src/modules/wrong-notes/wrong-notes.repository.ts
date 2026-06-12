@@ -8,7 +8,7 @@ import { computeEffectiveDueAt, ReviewSchedulerService } from './review-schedule
 import { UNIT_NAME_EN, SUB_UNIT_NAME_EN, DIFFICULTY_EN, ERROR_TYPE_EN, SOURCE_EN, INSIGHT_EN, PROBLEM_EN, CONCEPT_EN, FORMULA_EN } from '../../common/i18n/content-en';
 import { UNIT_NAME_HI, SUB_UNIT_NAME_HI, DIFFICULTY_HI, ERROR_TYPE_HI } from '../../common/i18n/content-hi';
 
-function pickUnit(name: string, lang: Lang): string {
+export function pickUnit(name: string, lang: Lang): string {
   if (lang === 'hi') return UNIT_NAME_HI[name] ?? UNIT_NAME_EN[name] ?? name;
   if (lang === 'en') return UNIT_NAME_EN[name] ?? name;
   return name;
@@ -18,7 +18,7 @@ function pickSub(name: string, lang: Lang): string {
   if (lang === 'en') return SUB_UNIT_NAME_EN[name] ?? name;
   return name;
 }
-function pickDifficulty(key: string, lang: Lang): string {
+export function pickDifficulty(key: string, lang: Lang): string {
   if (lang === 'hi') return DIFFICULTY_HI[key] ?? DIFFICULTY_EN[key] ?? key;
   if (lang === 'en') return DIFFICULTY_EN[key] ?? key;
   return DIFFICULTY_LABEL_KO[key as keyof typeof DIFFICULTY_LABEL_KO] ?? key;

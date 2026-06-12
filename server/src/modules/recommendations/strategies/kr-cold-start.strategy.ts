@@ -45,6 +45,7 @@ export class KrColdStartStrategy {
         reason: isKo
           ? '학년에 맞는 단원으로 첫 학습을 시작해 보세요.'
           : 'Start your first lesson for your grade.',
+        tone: 'info' as const,
         time: '~15 min',
         type: isKo ? '개념 학습' : 'Concept lesson',
         icon: 'BookOpen',

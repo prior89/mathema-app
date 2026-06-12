@@ -59,6 +59,7 @@ export class FocusOnMistakesStrategy {
         unit: D.focusUnit(unitLocal, subLocal),
         title: top.subUnitName ? D.focusTitleSub(subLocal) : D.focusTitleUnit(unitLocal),
         reason: D.focusReason(top.occurrences, totalNotes),
+        tone: 'info' as const,
         time: this.estimateTime(top.occurrences, lang),
         type: lang === 'hi' ? 'इंटरैक्टिव अभ्यास' : 'Interactive practice',
         icon: 'Layers',
@@ -70,7 +71,10 @@ export class FocusOnMistakesStrategy {
       unitId: top.unitId,
       unit: `${top.unitName} · ${top.subUnitName || '핵심 영역'}`,
       title: top.subUnitName ? `${top.subUnitName} 한 번에 끝내기` : `${top.unitName} 약점 보강`,
-      reason: `누적 오답 ${top.occurrences}회 (${totalNotes}문제) — 즉시 보강 필요`,
+      // Gain-framed (2026-06-12 audit): loss-framed "즉시 보강 필요" copy
+      // pushed avoidance goals and math anxiety.
+      reason: `오답 ${top.occurrences}회 (${totalNotes}문제) — 여기를 풀면 가장 크게 올라요`,
+      tone: 'info' as const,
       time: this.estimateTime(top.occurrences, lang),
       type: '인터랙티브 학습',
       icon: 'Layers',

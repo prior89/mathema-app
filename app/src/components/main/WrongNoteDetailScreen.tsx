@@ -213,8 +213,12 @@ export function WrongNoteDetailScreen() {
                       style={{ padding: 12, textAlign: 'left', cursor: 'pointer', width: '100%' }}
                       onClick={() => nav(`/app/practice/${s.id}`)}
                     >
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{s.source}</div>
-                      <div style={{ fontSize: 11, color: 'var(--p-muted)' }}>{s.difficulty}</div>
+                      <div style={{ fontSize: 13, lineHeight: 1.55 }}>
+                        <MathText text={s.preview} />
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 4 }}>
+                        {s.chapter} · {s.difficulty}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -225,10 +229,9 @@ export function WrongNoteDetailScreen() {
               <Section title={t('wn.detail.review.label')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, fontSize: 11, color: 'var(--p-muted)' }}>
                   <Clock size={10} />
+                  {/* No rep/EF readout (2026-06-12 audit): SM-2 internals mean
+                      nothing to students — dueIn already says when it's back. */}
                   <span>{note.dueIn ?? t('wn.detail.review.unreviewed')}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)' }}>
-                    rep {note.repetitionCount} · EF {note.easinessFactor}
-                  </span>
                 </div>
                 <Sm2ReviewButtons
                   disabled={reviewMut.isPending}

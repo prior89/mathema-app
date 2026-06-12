@@ -67,6 +67,10 @@ export function StudyPracticeScreen() {
   const [wrongCount, setWrongCount] = useState(0);
   const [questionNum, setQuestionNum] = useState(0);
   const [done, setDone] = useState(false);
+  /** Wrong checks on the current problem. The correct answer stays hidden
+      until the 3rd wrong attempt (retrieval practice — revealing it on the
+      first miss turns Try Again into "click the shown answer"). */
+  const [wrongAttempts, setWrongAttempts] = useState(0);
   const [error, setError] = useState<string | null>(null);
   /** 0 = not shown, 1 = formula (cached, instant), 2 = AI walkthrough (LLM call). */
   const [hintLevel, setHintLevel] = useState<0 | 1 | 2>(0);
@@ -111,6 +115,7 @@ export function StudyPracticeScreen() {
       setResult(null);
       setSheetOpen(false);
       setHintLevel(0);
+      setWrongAttempts(0);
       startedAtRef.current = Date.now();
       canvasRef.current?.clear();
       setError(null);
@@ -149,8 +154,12 @@ export function StudyPracticeScreen() {
       setResult(r);
       setSheetOpen(true);
       hapticResult(r.isCorrect);
-      if (r.isCorrect) setCorrectCount((n) => n + 1);
-      else setWrongCount((n) => n + 1);
+      if (r.isCorrect) {
+        setCorrectCount((n) => n + 1);
+      } else {
+        setWrongCount((n) => n + 1);
+        setWrongAttempts((n) => n + 1);
+      }
       qc.invalidateQueries({ queryKey: ['wn-list'] });
       qc.invalidateQueries({ queryKey: ['wn-stats'] });
       qc.invalidateQueries({ queryKey: ['wn-recent'] });
@@ -388,7 +397,7 @@ export function StudyPracticeScreen() {
               const isPicked = pickedId === c.id;
               const isRevealedCorrect = result?.isCorrect && isPicked;
               const isWrongPick = result && !result.isCorrect && isPicked;
-              const cls = isRevealedCorrect ? 'choice correct' : isPicked ? 'choice selected' : 'choice';
+              const cls = isRevealedCorrect ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
               return (
                 <div
                   key={c.id}
@@ -399,7 +408,6 @@ export function StudyPracticeScreen() {
                     hapticSelect();
                     setPickedId(c.id);
                   }}
-                  style={isWrongPick ? { borderColor: 'var(--p-danger)' } : undefined}
                 >
                   <div className="letter">{LETTERS[i] ?? c.choiceIndex}</div>
                   <span className="text"><MathText text={c.text} /></span>
@@ -438,11 +446,25 @@ export function StudyPracticeScreen() {
           </button>
         )}
       </div>
-      <TabBar />
+      {/* Fullscreen focus mode (2026-06-12 audit): no TabBar while solving —
+          it clipped the Check CTA and invited mid-problem tab-switching.
+          The summary / empty states above keep it for navigation. */}
       {result && sheetOpen && (
         <AnswerFeedbackSheet
           correct={result.isCorrect}
-          correctAnswerText={!result.isCorrect ? (result.correctChoice?.text ?? null) : null}
+          subText={
+            result.isCorrect
+              ? t('practice.feedback.correctSub')
+              : wrongAttempts >= 3
+                ? t('practice.feedback.wrongSub3')
+                : wrongAttempts === 2
+                  ? t('practice.feedback.wrongSub2')
+                  : t('practice.feedback.wrongSub1')
+          }
+          rationale={!result.isCorrect ? (result.selectedChoice?.rationale ?? null) : null}
+          correctAnswerText={
+            !result.isCorrect && wrongAttempts >= 3 ? (result.correctChoice?.text ?? null) : null
+          }
           streakDays={streakQuery.data?.days ?? null}
           actionLabel={
             result.isCorrect

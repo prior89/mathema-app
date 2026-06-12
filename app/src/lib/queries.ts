@@ -10,6 +10,9 @@ export type Mastery = { subject: string; value: number; unitId: string };
 export type RecommendCard = {
   tag: string; tagColor: string; unit: string; title: string;
   reason: string; time: string; type: string; icon: string;
+  /** Semantic urgency of `reason` — server-set, drives the line's color.
+      Optional: older backends omit it (render neutral). */
+  tone?: 'urgent' | 'info' | 'positive';
   unitId: string | null;
   /** First-session plan direct route (PR-07). */
   chapterCode?: string | null;
@@ -460,7 +463,11 @@ export const fetchStudentPatterns = (studentId: string) => get<ErrorPatternRow[]
 export const fetchStudentWeekly   = (studentId: string) => get<WeeklyReportListItem[]>(`/students/${studentId}/weekly-reports`);
 
 // ===== 단건 조회 =====
-export type WrongNoteDetail = WrongNoteCard & { similar: Array<{ id: string; source: string; difficulty: string }> };
+export type WrongNoteDetail = WrongNoteCard & {
+  // similar cards carry user-facing fields only (2026-06-12 audit): a body
+  // preview + localized chapter/difficulty labels, never raw enum values.
+  similar: Array<{ id: string; preview: string; chapter: string; difficulty: string }>;
+};
 export type ProblemChoice = {
   id: string; choiceIndex: number; text: string;
   // isCorrect/distractorType/rationale은 클라이언트에 노출되지 않음

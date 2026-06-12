@@ -7,6 +7,31 @@ import {
   PROBLEM_EN, SOURCE_EN, CONCEPT_EN, FORMULA_EN, STEP_PROMPT_EN, CHOICE_EN,
 } from '../../common/i18n/content-en';
 
+/**
+ * Drop walkthrough steps that state the final answer. The prompt forbids it,
+ * but small models still close with "Thus, ... = 40" (seen in prod
+ * 2026-06-12), so a deterministic filter is the only reliable guard.
+ * Comparison ignores whitespace and LaTeX `$` delimiters; pure-numeric
+ * answers require non-digit boundaries so e.g. answer "40" doesn't false-match
+ * an intermediate "140".
+ */
+export function stripAnswerLeak(steps: string[], answer: string | null): string[] {
+  if (!answer) return steps;
+  const norm = (s: string) => s.replace(/[\s$]/g, '');
+  const target = norm(answer);
+  if (!target) return steps;
+  const isNumeric = /^-?\d+(\.\d+)?$/.test(target);
+  // Boundaries: not inside a larger number ("140", "40.5", "1.40") but a
+  // trailing sentence period ("= 40.") still counts as a match.
+  const boundary = isNumeric
+    ? new RegExp(`(?<![\\d.])${target.replace(/[.-]/g, '\\$&')}(?!\\d|\\.\\d)`)
+    : null;
+  return steps.filter((step) => {
+    const s = norm(step);
+    return boundary ? !boundary.test(s) : !s.includes(target);
+  });
+}
+
 @Injectable()
 export class ProblemsService {
   constructor(
@@ -45,11 +70,13 @@ export class ProblemsService {
       'like $x$ and standalone numbers used as math. Convert unicode math symbols ' +
       '(∫, π, √, ²) to LaTeX commands inside the delimiters.\n' +
       'Output JSON: {"steps": ["...", "..."]} — at most 6 short steps, each ≤200 chars.\n' +
-      'Do not include the final boxed answer — the student picks the multiple-choice option themselves.\n\n' +
+      'NEVER state the final answer or its value in any step — not as a result, a check, ' +
+      'or a paraphrase. End at the setup of the last computation and tell the student to ' +
+      'finish it; they must pick the multiple-choice option themselves.\n\n' +
       `Problem: ${p.body}\n` +
       (p.formula ? `Key formula: ${p.formula}\n` : '') +
       (p.concept ? `Concept: ${p.concept}\n` : '') +
-      `Correct answer (reference): ${p.answer}`;
+      `Correct answer (for your reasoning only — do NOT reveal it): ${p.answer}`;
 
     const body = {
       model: process.env.AI_HINT_MODEL ?? 'gpt-4o-mini',
@@ -83,7 +110,7 @@ export class ProblemsService {
       const steps: string[] = Array.isArray(parsed?.steps)
         ? parsed.steps.filter((s: any) => typeof s === 'string').slice(0, 6)
         : [];
-      return { steps };
+      return { steps: stripAnswerLeak(steps, p.answer) };
     } catch {
       // Fallback — split by newlines, take non-empty lines.
       const steps = text
@@ -91,7 +118,7 @@ export class ProblemsService {
         .map((s) => s.trim())
         .filter((s) => s.length > 0)
         .slice(0, 6);
-      return { steps };
+      return { steps: stripAnswerLeak(steps, p.answer) };
     }
   }
 

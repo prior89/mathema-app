@@ -234,7 +234,7 @@ export default function WrongNoteDetailModal({ noteId, onClose, onPracticeSimila
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {detail.data.similar.map((s) => (
                   <SimilarProblemRow
-                    key={s.id} id={s.id} source={s.source} difficulty={s.difficulty}
+                    key={s.id} id={s.id} source={s.preview} difficulty={s.difficulty}
                     onPractice={onPracticeSimilar ? () => onPracticeSimilar(s.id) : undefined}
                   />
                 ))}

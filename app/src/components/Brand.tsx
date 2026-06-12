@@ -60,9 +60,10 @@ export function LoadingSplash() {
         background: 'var(--p-primary-tint, oklch(0.95 0.022 175))',
       }}
     >
-      <div style={{ animation: 'mathema-fade 1.4s ease-in-out infinite' }}>
-        <BrandLogo size="splash" />
-      </div>
+      {/* Animation must live on the <img> itself: animated opacity on a
+          wrapper creates an isolated stacking context, which voids the
+          child's mix-blend-mode and exposes the PNG's white box. */}
+      <BrandLogo size="splash" style={{ animation: 'mathema-fade 1.4s ease-in-out infinite' }} />
       <style>{`
         @keyframes mathema-fade {
           0%, 100% { opacity: 0.45; }

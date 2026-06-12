@@ -6,6 +6,10 @@ export type KrRecommendCard = {
   unit: string;
   title: string;
   reason: string;
+  /** Semantic urgency of `reason` — drives its text color on the Home card.
+      The reason copy is server-generated free text, so the client cannot
+      infer urgency from the string itself. */
+  tone: 'urgent' | 'info' | 'positive';
   time: string;
   type: string;
   icon: string;
@@ -40,7 +44,10 @@ export function buildKrCard(
         tagColor: '#8B3A1F',
         unit: label,
         title: `${label} 오답 복습`,
-        reason: `누적 오답 ${occ}회 (${notes}문제) — 즉시 보강 필요`,
+        // Gain-framed (2026-06-12 audit): loss-framed "즉시 보강 필요" copy
+        // pushed avoidance goals and math anxiety.
+        reason: `오답 ${occ}회 (${notes}문제) — 여기를 풀면 가장 크게 올라요`,
+        tone: 'info',
         time: `${min}분`,
         type: '인터랙티브 학습',
         icon: 'Layers',
@@ -54,7 +61,8 @@ export function buildKrCard(
       tagColor: '#8B3A1F',
       unit: label,
       title: `Review mistakes in ${label}`,
-      reason: `${occ} missed attempts across ${notes} problems — reinforce now`,
+      reason: `${occ} misses across ${notes} problems — your biggest quick win`,
+      tone: 'info',
       time: `${min} min`,
       type: 'Interactive practice',
       icon: 'Layers',
@@ -77,8 +85,9 @@ export function buildKrCard(
         unit: `${label} · 핵심 개념`,
         title: `${label} 이어서 학습`,
         reason: gap > 0
-          ? `진도 ${score}% — 목표 대비 ${gap}%p 부족`
+          ? `진도 ${score}% — 오늘 한 세션이면 ${score + gap}% 목표에 한 걸음 더`
           : `진도 ${score}% — 안정 단계로 끌어올리기`,
+        tone: 'info',
         time,
         type: '개념 학습',
         icon: 'Eye',
@@ -93,8 +102,9 @@ export function buildKrCard(
       unit: `${label} · core concepts`,
       title: `Continue ${label}`,
       reason: gap > 0
-        ? `Progress ${score}% — ${gap}%p below target`
+        ? `Progress ${score}% — a session closer to the ${score + gap}% goal`
         : `Progress ${score}% — build a stable foundation`,
+      tone: 'info',
       time,
       type: 'Concept lesson',
       icon: 'Eye',
@@ -112,6 +122,7 @@ export function buildKrCard(
       unit: `${label} · 실전 응용`,
       title: `${label} 심화 도전`,
       reason: `진도 ${score}% 유지·심화를 위해`,
+      tone: 'positive',
       time: '45분',
       type: '실전 문제',
       icon: 'Zap',
@@ -126,6 +137,7 @@ export function buildKrCard(
     unit: `${label} · advanced practice`,
     title: `Challenge yourself in ${label}`,
     reason: `Keep momentum at ${score}% progress`,
+    tone: 'positive',
     time: '45 min',
     type: 'Practice',
     icon: 'Zap',

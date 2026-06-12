@@ -1131,13 +1131,14 @@ export const RECOMMENDATION_EN = {
     sub ? `${unit} · ${sub}` : `${unit} · core area`,
   focusTitleSub: (sub: string) => `${sub} — finish in one session`,
   focusTitleUnit: (unit: string) => `${unit} weakness reinforcement`,
+  // Gain-framed (2026-06-12 audit): avoid loss/deficit copy in reasons.
   focusReason: (occ: number, n: number) =>
-    `${occ} cumulative wrong attempts (${n} problems) — needs immediate work`,
+    `${occ} misses across ${n} problems — your biggest quick win`,
   // Reinforce weakness
   weakUnit: (unit: string) => `${unit} · core concepts`,
   weakTitle: (unit: string) => `Intuitive understanding of ${unit}`,
   weakReasonGap: (score: number, gap: number) =>
-    `Mastery ${score}% — ${gap}%p below peer average`,
+    `Mastery ${score}% — your fastest ${gap}%p gain is here`,
   weakReasonStable: (score: number) =>
     `Mastery ${score}% — push to a stable zone`,
   // Maintain strength

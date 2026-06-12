@@ -9,6 +9,8 @@ const CONFETTI = [0, 1, 2, 3, 4, 5];
 
 export function AnswerFeedbackSheet({
   correct,
+  subText,
+  rationale,
   correctAnswerText,
   streakDays,
   actionLabel,
@@ -17,6 +19,11 @@ export function AnswerFeedbackSheet({
   onDismiss,
 }: {
   correct: boolean;
+  /** Verdict subline — parent escalates the copy across retry attempts. */
+  subText: string;
+  /** Distractor rationale for the picked wrong choice — diagnostic feedback
+      that doesn't give the answer away (retrieval practice). */
+  rationale: string | null;
   correctAnswerText: string | null;
   streakDays: number | null;
   actionLabel: string;
@@ -47,14 +54,17 @@ export function AnswerFeedbackSheet({
             <div className="fb-title">
               {correct ? t('practice.feedback.correct') : t('practice.feedback.wrong')}
             </div>
-            <div className="fb-sub">
-              {correct ? t('practice.feedback.correctSub') : t('practice.feedback.wrongSub')}
-            </div>
+            <div className="fb-sub">{subText}</div>
           </div>
           {correct && streakDays != null && streakDays >= 2 && (
             <div className="fb-streak">🔥 {t('practice.streak.chip', { n: streakDays })}</div>
           )}
         </div>
+        {!correct && rationale && (
+          <div className="fb-answer">
+            {t('practice.wrong.rationale')} <MathText text={rationale} />
+          </div>
+        )}
         {!correct && correctAnswerText && (
           <div className="fb-answer">
             {t('practice.wrong.correctAnswer')} <MathText text={correctAnswerText} />

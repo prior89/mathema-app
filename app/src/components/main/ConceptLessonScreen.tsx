@@ -16,14 +16,17 @@ import { post } from '../../lib/api';
 import { track } from '../../lib/analytics';
 import { useShuffledChoices } from '../../lib/shuffle';
 import { useT } from '../../lib/i18n';
+import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
-import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { DEFAULT_STEP_TONE, STEP_TONE } from '../../lib/step-tone';
 
-/** Problems after this many in a lesson drop the CONCEPT/PROCESS scaffold
- *  and serve the ANSWER step directly (MC fading). */
-const FADE_AFTER_PROBLEMS = 3;
+/* Scaffold policy (2026-06-12 audit, expertise-reversal effect): every
+ * practice problem serves the ANSWER step directly. The CONCEPT→PROCESS
+ * scaffold is entered only on demand — a wrong answer offers "Break it
+ * into steps", and an opt-in button is available before answering.
+ * (Previously the first 3 problems were force-scaffolded; that punished
+ * students who could already solve them.) */
 
 export function ConceptLessonScreen() {
   const { code } = useParams<{ code: string }>();
@@ -57,10 +60,8 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
   const [phase, setPhase] = useState<'concept' | 'practice' | 'done' | null>(null);
   const [practiceProblemIdx, setPracticeProblemIdx] = useState(0); // index into problemList
   const [practiceStepIdx, setPracticeStepIdx] = useState(1);       // 1..N within effective steps
-  // MC fading (2026-06-11 audit, expertise-reversal effect): only the first
-  // FADE_AFTER_PROBLEMS problems get the full CONCEPT→PROCESS→ANSWER scaffold;
-  // later problems serve the ANSWER step only. A wrong faded answer offers
-  // "Break it into steps", which restores the scaffold for that problem.
+  // True once the student enters the CONCEPT→PROCESS→ANSWER scaffold for the
+  // current problem (wrong answer or opt-in). Resets on problem advance.
   const [decomposed, setDecomposed] = useState(false);
 
   const conceptSteps = useMemo(
@@ -112,8 +113,7 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
   const allSteps = problem.data?.steps ?? [];
   const answerSteps = allSteps.filter((s) => s.stepType === 'ANSWER');
   const faded =
-    practiceProblemIdx >= FADE_AFTER_PROBLEMS
-    && !decomposed
+    !decomposed
     && allSteps.length > 1
     && answerSteps.length > 0;
   const currentSteps = faded ? answerSteps : allSteps;
@@ -250,8 +250,10 @@ function Shell({ children, back, title, pill }: {
         </div>
         {pill && <span className="step-pill" style={{ whiteSpace: 'nowrap' }}>{pill}</span>}
       </div>
+      {/* Fullscreen focus mode (2026-06-12 audit): no TabBar during a lesson
+          session — the header back button is the only exit, so the CTA is
+          never clipped and mid-session tab-switching isn't invited. */}
       {children}
-      <TabBar />
     </div>
   );
 }
@@ -400,7 +402,7 @@ function Misconception({ data }: { data: ConceptStep['misconception'] }) {
       {wrong && <div style={{ marginTop: 6, fontSize: 14, color: 'var(--p-ink)' }}><MathText text={wrong} /></div>}
       {why && <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-muted)' }}>{t('lesson.misconception.whyWrong')} <MathText text={why} /></div>}
       {correct && (
-        <div style={{ marginTop: 8, padding: 10, background: 'var(--p-success-tint)', borderRadius: 8, fontSize: 13, color: 'var(--p-success)' }}>
+        <div style={{ marginTop: 8, padding: 10, background: 'var(--p-success-tint)', borderRadius: 8, fontSize: 13, color: 'var(--p-success-ink)' }}>
           {t('lesson.misconception.correct')} <MathText text={correct} />
         </div>
       )}
@@ -440,8 +442,21 @@ function ReflectPrompts({ prompts }: { prompts: string[] }) {
 }
 
 // ───────── Phase 1: Problem 3-step MC (CONCEPT → PROCESS → ANSWER) ─────────
-const STEP_TYPE_LABEL: Record<string, string> = {
-  CONCEPT: 'CONCEPT', PROCESS: 'PROCESS', ANSWER: 'ANSWER',
+// Localized step labels (2026-06-12 audit): raw CONCEPT/PROCESS/ANSWER enum
+// values were leaking into the question header.
+const STEP_TYPE_LABEL_KEY: Record<string, TranslationKey> = {
+  CONCEPT: 'study.step.concept', PROCESS: 'study.step.process', ANSWER: 'study.step.answer',
+};
+const DISTRACTOR_CHIP_KEY: Record<string, TranslationKey> = {
+  CONCEPT_CONFUSION: 'study.feedback.distractor.concept',
+  CALC_ERROR: 'study.feedback.distractor.calc',
+  PROCESS_SKIP: 'study.feedback.distractor.process',
+  TIME_PRESSURE_GUESS: 'study.feedback.distractor.time',
+};
+// KoreanPracticePhase renders hardcoded ko copy, so its step label maps here
+// instead of going through t().
+const KO_STEP_LABEL: Record<string, string> = {
+  CONCEPT: '개념', PROCESS: '풀이 과정', ANSWER: '정답',
 };
 
 type StepResult = {
@@ -457,8 +472,8 @@ type StepResult = {
 function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemTotal, onNext, onDecompose }: {
   problem: Problem; step: ProblemStepData; stepIdx: number; stepTotal: number;
   problemIdx: number; problemTotal: number; onNext: () => void;
-  /** Present only in faded (ANSWER-only) mode — restores the full
-   *  CONCEPT→PROCESS→ANSWER scaffold after a wrong answer. */
+  /** Present only in faded (ANSWER-only) mode — enters the full
+   *  CONCEPT→PROCESS→ANSWER scaffold (opt-in or after a wrong answer). */
   onDecompose?: () => void;
 }) {
   const qc = useQueryClient();
@@ -517,7 +532,7 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
             of the practice screen — no longer sticky-pinned at the top. */}
         <div style={{ paddingBottom: 4 }}>
           <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>
-            {t('lesson.practice.questionHeader', { idx: problemIdx, total: problemTotal, step: stepIdx, steps: stepTotal, label: STEP_TYPE_LABEL[step.stepType] ?? step.stepType })}
+            {t('lesson.practice.questionHeader', { idx: problemIdx, total: problemTotal, step: stepIdx, steps: stepTotal, label: STEP_TYPE_LABEL_KEY[step.stepType] ? t(STEP_TYPE_LABEL_KEY[step.stepType]) : step.stepType })}
           </span>
           <h3 className="title" style={{ fontSize: 20, marginTop: 6, lineHeight: 1.25 }}>
             <MathText text={step.prompt} />
@@ -540,13 +555,12 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
             // 정답일 때만 내가 고른 보기를 초록으로. 오답일 때는 정답 보기 노출 X.
             const isRevealedCorrect = result?.isCorrect && isPicked;
             const isWrongPick = result && !result.isCorrect && isPicked;
-            const cls = isRevealedCorrect ? 'choice correct' : isPicked ? 'choice selected' : 'choice';
+            const cls = isRevealedCorrect ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
             return (
               <div
                 key={c.id}
                 className={cls}
                 onClick={() => pickChoice(c.id)}
-                style={isWrongPick ? { borderColor: 'var(--p-danger)' } : undefined}
               >
                 <div className="letter">{letters[i] ?? c.choiceIndex}</div>
                 <span className="text"><MathText text={c.text} /></span>
@@ -556,37 +570,45 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
         </div>
 
         {result && <FeedbackCard result={result} />}
+      </div>
 
-        {/* Action button lives inside the scroll area — no sticky footer. */}
-        <div style={{ marginTop: 16 }}>
-          {!result ? (
+      {/* Pinned footer (2026-06-12 audit): the Check CTA was scrolling out of
+          view with no affordance that it existed below the fold. */}
+      <div className="screen-foot" style={{ paddingTop: 6 }}>
+        {!result ? (
+          <>
             <button className="btn" disabled={!pickedId || submit.isPending} onClick={() => submit.mutate()}>
               {submit.isPending ? t('solo.checking') : t('solo.checkAnswer')}
               <Glyph.ChevronR />
             </button>
-          ) : result.isCorrect ? (
-            <button className="btn" onClick={onNext}>
-              {stepIdx < stepTotal
-                ? t('lesson.practice.continueStep', { n: stepIdx + 1 })
-                : problemIdx < problemTotal
-                  ? t('lesson.practice.nextQuestion', { next: problemIdx + 1, total: problemTotal })
-                  : t('lesson.practice.finishChapter')}
-              <Glyph.ChevronR />
-            </button>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {onDecompose && (
-                <button className="btn" onClick={onDecompose}>
-                  {t('lesson.practice.breakDown')}
-                  <Glyph.ChevronR />
-                </button>
-              )}
-              <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
-                {t('solo.tryAgain')}
+            {onDecompose && (
+              <button className="btn outline" onClick={onDecompose}>
+                {t('lesson.practice.breakDown')}
               </button>
-            </div>
-          )}
-        </div>
+            )}
+          </>
+        ) : result.isCorrect ? (
+          <button className="btn" onClick={onNext}>
+            {stepIdx < stepTotal
+              ? t('lesson.practice.continueStep', { n: stepIdx + 1 })
+              : problemIdx < problemTotal
+                ? t('lesson.practice.nextQuestion', { next: problemIdx + 1, total: problemTotal })
+                : t('lesson.practice.finishChapter')}
+            <Glyph.ChevronR />
+          </button>
+        ) : (
+          <>
+            {onDecompose && (
+              <button className="btn" onClick={onDecompose}>
+                {t('lesson.practice.breakDown')}
+                <Glyph.ChevronR />
+              </button>
+            )}
+            <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
+              {t('solo.tryAgain')}
+            </button>
+          </>
+        )}
       </div>
     </>
   );
@@ -597,7 +619,9 @@ function FeedbackCard({ result }: { result: StepResult }) {
   const correct = result.isCorrect;
   const sel = result.selectedChoice;
   // 정답은 절대 노출하지 않음 — retry 학습.
-  const distractorTypeText = sel?.distractorType ? sel.distractorType.replace(/_/g, ' ') : null;
+  const distractorTypeText = sel?.distractorType
+    ? t(DISTRACTOR_CHIP_KEY[sel.distractorType] ?? 'study.feedback.distractor.other')
+    : null;
   const distractorHint: Record<string, string> = {
     CONCEPT_CONFUSION: t('lesson.feedback.distractor.concept'),
     CALC_ERROR: t('lesson.feedback.distractor.calc'),
@@ -632,7 +656,7 @@ function FeedbackCard({ result }: { result: StepResult }) {
       )}
       {!correct && distractorTypeText && (
         <div style={{ marginTop: 8 }}>
-          <span className="chip" style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)' }}>{distractorTypeText}</span>
+          <span className="chip" style={{ fontSize: 10.5 }}>{distractorTypeText}</span>
         </div>
       )}
     </div>
@@ -866,7 +890,7 @@ function KoreanPracticePhase({
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [result, setResult] = useState<StepResult | null>(null);
   const [startedAt, setStartedAt] = useState(() => Date.now());
-  // MC fading — same policy as the NCERT PracticePhase above.
+  // Scaffold entered (wrong answer or opt-in) — same policy as NCERT above.
   const [decomposed, setDecomposed] = useState(false);
   const qc = useQueryClient();
 
@@ -887,8 +911,7 @@ function KoreanPracticePhase({
   const allSteps = problem.steps;
   const answerSteps = allSteps.filter((s) => s.stepType === 'ANSWER');
   const faded =
-    problemIdx >= FADE_AFTER_PROBLEMS
-    && !decomposed
+    !decomposed
     && allSteps.length > 1
     && answerSteps.length > 0;
   const effectiveSteps = faded ? answerSteps : allSteps;
@@ -979,7 +1002,9 @@ function KoreanPracticePhase({
     setStartedAt(Date.now());
   };
 
-  const stepLabel = step.stepType; // 'CONCEPT' | 'PROCESS' | 'ANSWER'
+  // KR-only phase, hardcoded ko copy — map the raw stepType enum to a label
+  // the student understands (2026-06-12 audit).
+  const stepLabel = KO_STEP_LABEL[step.stepType] ?? step.stepType;
   const letters = ['A', 'B', 'C', 'D', 'E'];
 
   return (
@@ -1005,13 +1030,12 @@ function KoreanPracticePhase({
               const isPicked = pickedId === c.id;
               const isRevealedCorrect = result?.isCorrect && isPicked;
               const isWrongPick = result && !result.isCorrect && isPicked;
-              const cls = isRevealedCorrect ? 'choice correct' : isPicked ? 'choice selected' : 'choice';
+              const cls = isRevealedCorrect ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
               return (
                 <div
                   key={c.id}
                   className={cls}
                   onClick={() => pickChoice(c.id)}
-                  style={isWrongPick ? { borderColor: 'var(--p-danger)' } : undefined}
                 >
                   <div className="letter">{letters[i] ?? c.choiceIndex}</div>
                   <span className="text"><MathText text={c.text} /></span>
@@ -1023,7 +1047,7 @@ function KoreanPracticePhase({
           {result && result.error ? (
             <div role="alert" style={{
               background: 'var(--p-danger-tint)',
-              color: 'var(--p-danger)',
+              color: 'var(--p-danger-ink)',
               border: '1px solid var(--p-danger)',
               borderRadius: 8,
               padding: '10px 12px',
@@ -1036,41 +1060,50 @@ function KoreanPracticePhase({
               (네트워크 또는 일시적인 서버 오류입니다 — 정답/오답 판정이 아닙니다.)
             </div>
           ) : result ? <FeedbackCard result={result} /> : null}
-
-          <div style={{ marginTop: 12 }}>
-            {!result ? (
-              <button className="btn" disabled={!pickedId || submit.isPending} onClick={() => submit.mutate()}>
-                {submit.isPending ? '확인 중…' : '답 확인'}
-                <Glyph.ChevronR />
-              </button>
-            ) : result.error ? (
-              <button className="btn outline" onClick={() => setResult(null)}>
-                다시 시도
-              </button>
-            ) : result.isCorrect ? (
-              <button className="btn" onClick={advance}>
-                {stepIdx + 1 < stepTotal
-                  ? `다음 단계 (${stepIdx + 2} / ${stepTotal})`
-                  : problemIdx + 1 < problemTotal
-                    ? `다음 문제 (${problemIdx + 2} / ${problemTotal})`
-                    : '학습 완료'}
-                <Glyph.ChevronR />
-              </button>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {faded && (
-                  <button className="btn" onClick={decompose}>
-                    단계별로 풀어보기
-                    <Glyph.ChevronR />
-                  </button>
-                )}
-                <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
-                  다시 시도
-                </button>
-              </div>
-            )}
-          </div>
         </div>
+      </div>
+
+      {/* Pinned footer (2026-06-12 audit): keeps the Check CTA on screen
+          instead of letting it scroll below the fold. */}
+      <div className="screen-foot" style={{ paddingTop: 6 }}>
+        {!result ? (
+          <>
+            <button className="btn" disabled={!pickedId || submit.isPending} onClick={() => submit.mutate()}>
+              {submit.isPending ? '확인 중…' : '답 확인'}
+              <Glyph.ChevronR />
+            </button>
+            {faded && (
+              <button className="btn outline" onClick={decompose}>
+                단계별로 풀어보기
+              </button>
+            )}
+          </>
+        ) : result.error ? (
+          <button className="btn outline" onClick={() => setResult(null)}>
+            다시 시도
+          </button>
+        ) : result.isCorrect ? (
+          <button className="btn" onClick={advance}>
+            {stepIdx + 1 < stepTotal
+              ? `다음 단계 (${stepIdx + 2} / ${stepTotal})`
+              : problemIdx + 1 < problemTotal
+                ? `다음 문제 (${problemIdx + 2} / ${problemTotal})`
+                : '학습 완료'}
+            <Glyph.ChevronR />
+          </button>
+        ) : (
+          <>
+            {faded && (
+              <button className="btn" onClick={decompose}>
+                단계별로 풀어보기
+                <Glyph.ChevronR />
+              </button>
+            )}
+            <button className="btn outline" onClick={() => { setResult(null); setPickedId(null); }}>
+              다시 시도
+            </button>
+          </>
+        )}
       </div>
     </Shell>
   );

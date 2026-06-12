@@ -208,9 +208,18 @@ export function HomeScreen() {
                   <div className="info">
                     <div className="ttl">{c.title}</div>
                     <div className="sub">{c.unit} · {c.time}</div>
-                    {/* Rationale — why this card is recommended right now. */}
+                    {/* Rationale — why this card is recommended right now.
+                        Urgent reasons ("immediate review needed") must not
+                        render in green: green reads as success. */}
                     {c.reason && (
-                      <div style={{ fontSize: 11.5, color: 'var(--p-primary)', marginTop: 4, lineHeight: 1.4 }}>
+                      <div
+                        style={{
+                          fontSize: 11.5,
+                          color: c.tone === 'urgent' ? 'var(--p-danger-ink)' : 'var(--p-ink-2)',
+                          marginTop: 4,
+                          lineHeight: 1.4,
+                        }}
+                      >
                         {c.reason}
                       </div>
                     )}
@@ -232,8 +241,11 @@ export function HomeScreen() {
             })}
           </div>
 
-          {/* Where you slip — top error patterns */}
-          {errorDna.data && errorDna.data.distribution.length > 0 && (
+          {/* Where you slip — top error patterns.
+              Requires ≥2 categories (2026-06-12 audit): a single category
+              always renders as a 100% red bar, which reads as catastrophe
+              when it may be one mistake. */}
+          {errorDna.data && errorDna.data.distribution.length >= 2 && (
             <>
               <div className="section-h">
                 <span className="label">{t('home.errorDna.section')}</span>
@@ -402,16 +414,23 @@ function ErrorBar({ name, value, color }: { name: string; value: number; color: 
  * weak parts directly.
  */
 function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClick: () => void }) {
+  const { t } = useT();
   const progressPct = Math.round(row.progress * 100);
   const accuracyPct = Math.round(row.accuracy * 100);
-  // Colour the accuracy pill by band so eyes catch the weak chapters first.
+  // Small-n suppression (2026-06-12 audit): 1 attempt out of 20 problems was
+  // rendering a red "50% acc" badge — a meaningless % that reads as failure.
+  // Show the accuracy pill only once there's a minimally stable sample.
+  const showAccuracy = row.problemsAttempted >= 5;
+  // Colour the accuracy pill by band. Red is reserved for genuinely low
+  // accuracy (<50) — mid-band chapters get the neutral accent instead, so
+  // the list isn't dominated by red badges.
   const accColor =
     accuracyPct >= 80 ? 'var(--p-success)' :
-    accuracyPct >= 60 ? 'var(--p-accent)' :
+    accuracyPct >= 50 ? 'var(--p-accent)' :
     'var(--p-danger)';
   const accBg =
     accuracyPct >= 80 ? 'var(--p-success-tint)' :
-    accuracyPct >= 60 ? 'var(--p-accent-tint)' :
+    accuracyPct >= 50 ? 'var(--p-accent-tint)' :
     'var(--p-danger-tint)';
 
   return (
@@ -431,18 +450,20 @@ function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClic
             {row.titleEn}
           </div>
         </div>
-        <span
-          className="status-chip"
-          style={{ background: accBg, color: accColor, flexShrink: 0 }}
-        >
-          {accuracyPct}% acc
-        </span>
+        {showAccuracy && (
+          <span
+            className="status-chip"
+            style={{ background: accBg, color: accColor, flexShrink: 0 }}
+          >
+            {t('home.chapter.accuracy', { pct: accuracyPct })}
+          </span>
+        )}
       </div>
       <div style={{ marginTop: 8, height: 6, borderRadius: 3, background: 'var(--p-surface-2)', overflow: 'hidden' }}>
         <div style={{ width: `${progressPct}%`, height: '100%', background: 'var(--p-primary)', borderRadius: 3 }} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 10.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>
-        <span>{row.problemsAttempted} / {row.problemsTotal} problems</span>
+        <span>{t('home.chapter.progress', { done: row.problemsAttempted, total: row.problemsTotal })}</span>
         <span>{progressPct}%</span>
       </div>
     </div>

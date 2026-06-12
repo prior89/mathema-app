@@ -171,7 +171,7 @@ export class WrongNotesService {
   }
   async getOne(userId: string, id: string, lang: Lang = 'en') {
     const note = await this.repo.findOne(userId, id, lang);
-    const similar = await this.similar.findSimilar(note.problemId, 5);
+    const similar = await this.similar.findSimilar(note.problemId, 5, lang);
     const redacted = await this.premiumAccess.redactInsightJson(userId, note);
     return { ...redacted, similar };
   }

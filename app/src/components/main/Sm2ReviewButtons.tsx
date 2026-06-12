@@ -21,11 +21,14 @@ export function Sm2ReviewButtons({
   compact?: boolean;
 }) {
   const { t } = useT();
-  const buttons: Array<{ key: ReviewQuality; label: string; sub: string }> = [
-    { key: 'AGAIN', label: t('wn.detail.review.again'), sub: '~1d' },
-    { key: 'HARD', label: t('wn.detail.review.hard'), sub: '~1d' },
-    { key: 'GOOD', label: t('wn.detail.review.good'), sub: '~6d' },
-    { key: 'EASY', label: t('wn.detail.review.easy'), sub: '~6d×EF' },
+  // No interval hints on the buttons (2026-06-12 audit): showing "~6d×EF"
+  // per button let students game the schedule (pick the rating that delays
+  // the review) and leaked SM-2 internals. Rate honestly; the system decides.
+  const buttons: Array<{ key: ReviewQuality; label: string }> = [
+    { key: 'AGAIN', label: t('wn.detail.review.again') },
+    { key: 'HARD', label: t('wn.detail.review.hard') },
+    { key: 'GOOD', label: t('wn.detail.review.good') },
+    { key: 'EASY', label: t('wn.detail.review.easy') },
   ];
 
   return (
@@ -39,7 +42,7 @@ export function Sm2ReviewButtons({
             onClick={() => onSelect(b.key)}
             className="card"
             style={{
-              padding: compact ? '8px 4px' : '10px 6px',
+              padding: compact ? '7px 4px' : '8px 6px',
               cursor: disabled ? 'not-allowed' : 'pointer',
               borderColor: `${QUALITY_COLORS[b.key]}40`,
               opacity: disabled ? 0.5 : 1,
@@ -48,7 +51,6 @@ export function Sm2ReviewButtons({
             <div style={{ fontSize: compact ? 12 : 13, fontWeight: 600, color: QUALITY_COLORS[b.key] }}>
               {b.label}
             </div>
-            <div style={{ fontSize: 10, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>{b.sub}</div>
           </button>
         ))}
       </div>

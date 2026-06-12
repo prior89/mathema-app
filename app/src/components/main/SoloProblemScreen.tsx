@@ -13,14 +13,22 @@ import { masterWrongNoteByProblem } from '../../lib/mutations';
 import { post } from '../../lib/api';
 import { useShuffledChoices } from '../../lib/shuffle';
 import { useT } from '../../lib/i18n';
+import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
-import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { MathInput } from '../MathInput';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
 
-const STEP_TYPE_LABEL: Record<string, string> = {
-  CONCEPT: 'CONCEPT', PROCESS: 'PROCESS', ANSWER: 'ANSWER',
+// Localized step labels (2026-06-12 audit): raw CONCEPT/PROCESS/ANSWER enum
+// values were leaking into the step pill.
+const STEP_TYPE_LABEL_KEY: Record<string, TranslationKey> = {
+  CONCEPT: 'study.step.concept', PROCESS: 'study.step.process', ANSWER: 'study.step.answer',
+};
+const DISTRACTOR_CHIP_KEY: Record<string, TranslationKey> = {
+  CONCEPT_CONFUSION: 'study.feedback.distractor.concept',
+  CALC_ERROR: 'study.feedback.distractor.calc',
+  PROCESS_SKIP: 'study.feedback.distractor.process',
+  TIME_PRESSURE_GUESS: 'study.feedback.distractor.time',
 };
 
 type StepResult = {
@@ -227,7 +235,7 @@ export function SoloProblemScreen() {
         </div>
         {steps.length > 1 && !done && (
           <span className="step-pill">
-            {t('solo.stepPill', { n: stepIdx + 1, total: steps.length, label: STEP_TYPE_LABEL[step?.stepType ?? ''] ?? '' })}
+            {t('solo.stepPill', { n: stepIdx + 1, total: steps.length, label: STEP_TYPE_LABEL_KEY[step?.stepType ?? ''] ? t(STEP_TYPE_LABEL_KEY[step!.stepType]) : '' })}
           </span>
         )}
         {/* Sprint 3 A13: small text-link "신고" — kept low-prominence so it
@@ -318,7 +326,7 @@ export function SoloProblemScreen() {
               const isPicked = pickedId === c.id;
               const isRevealedCorrect = result?.isCorrect && isPicked;
               const isWrongPick = result && !result.isCorrect && isPicked;
-              const cls = isRevealedCorrect ? 'choice correct' : isPicked ? 'choice selected' : 'choice';
+              const cls = isRevealedCorrect ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
               return (
                 <div
                   key={c.id}
@@ -328,7 +336,6 @@ export function SoloProblemScreen() {
                     if (result && !result.isCorrect) setResult(null);
                     setPickedId(c.id);
                   }}
-                  style={isWrongPick ? { borderColor: 'var(--p-danger)' } : undefined}
                 >
                   <div className="letter">{letters[i] ?? c.choiceIndex}</div>
                   <span className="text"><MathText text={c.text} /></span>
@@ -400,7 +407,8 @@ export function SoloProblemScreen() {
           </button>
         )}
       </div>
-      <TabBar />
+      {/* Fullscreen focus mode (2026-06-12 audit): no TabBar during a solving
+          session — the header back button is the only exit. */}
     </div>
   );
 }
@@ -540,7 +548,9 @@ function FeedbackCard({ result }: { result: StepResult }) {
   const { t } = useT();
   const correct = result.isCorrect;
   const sel = result.selectedChoice;
-  const distractorTypeText = sel?.distractorType ? sel.distractorType.replace(/_/g, ' ') : null;
+  const distractorTypeText = sel?.distractorType
+    ? t(DISTRACTOR_CHIP_KEY[sel.distractorType] ?? 'study.feedback.distractor.other')
+    : null;
   const distractorHint: Record<string, string> = {
     CONCEPT_CONFUSION: t('solo.feedback.distractor.concept'),
     CALC_ERROR: t('solo.feedback.distractor.calc'),
@@ -574,7 +584,7 @@ function FeedbackCard({ result }: { result: StepResult }) {
       )}
       {!correct && distractorTypeText && (
         <div style={{ marginTop: 8 }}>
-          <span className="chip" style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)' }}>{distractorTypeText}</span>
+          <span className="chip" style={{ fontSize: 10.5 }}>{distractorTypeText}</span>
         </div>
       )}
     </div>

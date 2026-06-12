@@ -3,7 +3,9 @@
  * Sage palette is the default (was indigo in prototype).
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Fonts (Inter / Lora / JetBrains Mono) are loaded once in index.html.
+   The prototype's Instrument Serif + Plus Jakarta Sans import was removed —
+   no token references them. */
 
 :root {
   /* Palette — Sage (default) */
@@ -29,6 +31,9 @@
 
   /* Semantic helpers — readable text on tinted surfaces (WCAG AA) */
   --p-accent-ink: oklch(0.40 0.11 65);
+  --p-success-ink: oklch(0.40 0.10 155);
+  --p-danger-ink: oklch(0.44 0.15 25);
+  --p-warning-ink: oklch(0.45 0.12 70);
   --p-on-accent: oklch(0.22 0.04 70);
   --p-overlay: oklch(0.18 0.012 175 / 0.55);
   --p-shadow-lg: 0 20px 60px oklch(0 0 0 / 0.18);
@@ -43,13 +48,13 @@
   --p-heatmap-0-bg: var(--p-surface-2);
   --p-heatmap-0-fg: var(--p-muted);
   --p-heatmap-1-bg: var(--p-danger-tint);
-  --p-heatmap-1-fg: var(--p-danger);
+  --p-heatmap-1-fg: var(--p-danger-ink);
   --p-heatmap-2-bg: var(--p-warning-tint);
-  --p-heatmap-2-fg: var(--p-warning);
+  --p-heatmap-2-fg: var(--p-warning-ink);
   --p-heatmap-3-bg: var(--p-accent-tint);
   --p-heatmap-3-fg: var(--p-accent-ink);
   --p-heatmap-4-bg: var(--p-success-tint);
-  --p-heatmap-4-fg: var(--p-success);
+  --p-heatmap-4-fg: var(--p-success-ink);
 
   /* Error DNA bar fills (Home "자주 틀리는 부분") */
   --p-dna-concept: oklch(0.48 0.12 35);
@@ -108,6 +113,9 @@
   --p-danger-tint: oklch(0.28 0.05 25);
   --p-warning: oklch(0.78 0.12 70);
   --p-warning-tint: oklch(0.30 0.04 70);
+  --p-success-ink: oklch(0.84 0.10 155);
+  --p-danger-ink: oklch(0.84 0.10 25);
+  --p-warning-ink: oklch(0.86 0.10 70);
   --p-hint: oklch(0.78 0.12 85);
   --p-step-pictorial-bg: oklch(0.28 0.03 200);
   --p-step-pictorial-fg: oklch(0.82 0.04 200);
@@ -309,8 +317,12 @@
 .mathema-app .choice .text { font-size: 15px; font-family: var(--font-mono); color: var(--p-ink); }
 .mathema-app .choice.selected { border-color: var(--p-primary); background: var(--p-primary-tint); }
 .mathema-app .choice.selected .letter { background: var(--p-primary); border-color: var(--p-primary); color: var(--p-primary-fg); }
-.mathema-app .choice.correct { border-color: var(--p-success); background: oklch(0.96 0.04 155); }
+.mathema-app .choice.correct { border-color: var(--p-success); background: var(--p-success-tint); }
 .mathema-app .choice.correct .letter { background: var(--p-success); border-color: var(--p-success); color: var(--p-primary-fg); }
+/* Wrong pick — full danger treatment. Never reuse .selected (green tint)
+   with a red border: mixed correct/wrong color signals confuse students. */
+.mathema-app .choice.wrong { border-color: var(--p-danger); background: var(--p-danger-tint); }
+.mathema-app .choice.wrong .letter { background: var(--p-danger); border-color: var(--p-danger); color: var(--p-primary-fg); }
 
 /* Hero glyph */
 .mathema-app .hero-glyph {
@@ -444,12 +456,12 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 20px; font-weight: 700;
 }
-.mathema-app .fb-sheet.correct .fb-icon { background: var(--p-success-tint); color: var(--p-success); animation: fb-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.mathema-app .fb-sheet.wrong .fb-icon { background: var(--p-danger-tint); color: var(--p-danger); animation: fb-shake 0.4s ease-in-out; }
+.mathema-app .fb-sheet.correct .fb-icon { background: var(--p-success-tint); color: var(--p-success-ink); animation: fb-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.mathema-app .fb-sheet.wrong .fb-icon { background: var(--p-danger-tint); color: var(--p-danger-ink); animation: fb-shake 0.4s ease-in-out; }
 .mathema-app .fb-copy { min-width: 0; flex: 1; }
 .mathema-app .fb-title { font-size: 16px; font-weight: 700; line-height: 1.3; }
-.mathema-app .fb-sheet.correct .fb-title { color: var(--p-success); }
-.mathema-app .fb-sheet.wrong .fb-title { color: var(--p-danger); }
+.mathema-app .fb-sheet.correct .fb-title { color: var(--p-success-ink); }
+.mathema-app .fb-sheet.wrong .fb-title { color: var(--p-danger-ink); }
 .mathema-app .fb-sub { font-size: 12px; color: var(--p-ink-2); line-height: 1.45; margin-top: 1px; }
 .mathema-app .fb-streak {
   flex-shrink: 0; align-self: flex-start;
@@ -499,9 +511,9 @@
 .mathema-app .note-card .body { font-size: 12.5px; font-family: var(--font-mono); color: var(--p-ink); line-height: 1.4; max-height: 56px; overflow: hidden; word-break: break-word; overflow-wrap: anywhere; }
 .mathema-app .note-card .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
 .mathema-app .status-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 600; font-family: var(--font-mono); letter-spacing: 0.04em; }
-.mathema-app .status-chip.pending { background: var(--p-warning-tint); color: var(--p-warning); }
+.mathema-app .status-chip.pending { background: var(--p-warning-tint); color: var(--p-warning-ink); }
 .mathema-app .status-chip.analyzing { background: var(--p-primary-tint); color: var(--p-primary); }
-.mathema-app .status-chip.mastered { background: var(--p-success-tint); color: var(--p-success); }
+.mathema-app .status-chip.mastered { background: var(--p-success-tint); color: var(--p-success-ink); }
 
 /* KaTeX display math — wide equations (matrices, long fractions) scroll
    horizontally instead of widening the 428px viewport or clipping. */
@@ -513,8 +525,8 @@
   border: 1px solid var(--p-border);
 }
 .mathema-app .alert.info { background: var(--p-surface-2); color: var(--p-ink-2); }
-.mathema-app .alert.success { background: var(--p-success-tint); color: var(--p-success); border-color: transparent; }
-.mathema-app .alert.error { background: var(--p-danger-tint); color: var(--p-danger); border-color: transparent; }
+.mathema-app .alert.success { background: var(--p-success-tint); color: var(--p-success-ink); border-color: transparent; }
+.mathema-app .alert.error { background: var(--p-danger-tint); color: var(--p-danger-ink); border-color: transparent; }
 .mathema-app .alert.pending { background: var(--p-primary-tint); color: var(--p-primary); border-color: transparent; }
 
 .mathema-toast-host {

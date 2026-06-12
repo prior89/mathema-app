@@ -37,6 +37,7 @@ export class ReinforceWeaknessStrategy {
         unit: D.weakUnit(unitLocal),
         title: D.weakTitle(unitLocal),
         reason: gap > 0 ? D.weakReasonGap(score, gap) : D.weakReasonStable(score),
+        tone: 'info' as const,
         time: this.estimateTime(score, lang),
         type: lang === 'hi' ? 'दृश्यांकन' : 'Visualization',
         icon: 'Eye',
@@ -48,9 +49,12 @@ export class ReinforceWeaknessStrategy {
       unitId: weakest.unitId,
       unit: `${weakest.unit.name} · 핵심 개념`,
       title: `${weakest.unit.name} 직관적 이해`,
+      // Gain-framed (2026-06-12 audit): peer-comparison deficit copy fed
+      // math anxiety; frame the same gap as headroom instead.
       reason: gap > 0
-        ? `숙련도 ${score}% — 또래 평균 대비 ${gap}%p 낮음`
+        ? `숙련도 ${score}% — 지금 가장 빠르게 ${gap}%p 올릴 수 있는 단원`
         : `숙련도 ${score}% — 안정 단계로 끌어올리기`,
+      tone: 'info' as const,
       time: this.estimateTime(score, lang),
       type: '시각화 영상',
       icon: 'Eye',

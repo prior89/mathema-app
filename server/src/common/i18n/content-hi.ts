@@ -186,10 +186,11 @@ export const RECOMMENDATION_HI = {
   focusUnit: (unitEn: string, subEn: string) => subEn ? `${unitEn} · ${subEn}` : `${unitEn} · मुख्य अवधारणा`,
   focusTitleSub: (subEn: string) => `${subEn} एक सत्र में पूरा करें`,
   focusTitleUnit: (unitEn: string) => `${unitEn} की कमज़ोरियों को मज़बूत करें`,
-  focusReason: (occ: number, total: number) => `कुल ${occ} बार गलत (${total} प्रश्न में) — तत्काल अभ्यास की आवश्यकता`,
+  // Gain-framed (2026-06-12 audit): avoid loss/deficit copy in reasons.
+  focusReason: (occ: number, total: number) => `${occ} बार गलत (${total} प्रश्न) — यहीं सबसे बड़ा सुधार मिलेगा`,
   weakUnit: (unitEn: string) => `${unitEn} · मुख्य अवधारणाएँ`,
   weakTitle: (unitEn: string) => `${unitEn} की सहज समझ`,
-  weakReasonGap: (score: number, gap: number) => `दक्षता ${score}% — सहपाठियों से ${gap}%p कम`,
+  weakReasonGap: (score: number, gap: number) => `दक्षता ${score}% — यहाँ सबसे तेज़ ${gap}%p की बढ़त संभव`,
   weakReasonStable: (score: number) => `दक्षता ${score}% — स्थिर स्तर पर ले जाएँ`,
   strongUnit: (unitEn: string) => `${unitEn} · व्यावहारिक अभ्यास`,
   strongTitle: (unitEn: string) => `${unitEn} पूर्ण-मॉक चुनौती`,

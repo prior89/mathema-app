@@ -451,7 +451,8 @@ export function RealExamScreen() {
         </div>
       )}
 
-      <TabBar />
+      {/* Fullscreen focus mode (2026-06-12 audit): no TabBar during a timed
+          paper. The session-missing and intro states above keep it. */}
     </div>
   );
 }

@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
           padding: 24,
           textAlign: 'center',
           background: 'var(--p-primary-tint, oklch(0.95 0.022 175))',
-          color: 'var(--p-text, #1a2e2a)',
+          color: 'var(--p-ink, #1a2e2a)',
         }}
       >
         <BrandLogo size="md" />

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { get } from '../../lib/api';
 import { useT } from '../../lib/i18n';
+import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
@@ -44,7 +45,11 @@ function gradeBand(n: number): string {
   return n <= 7 ? 'D' : 'E';
 }
 
-const STEP_LABEL: Record<number, string> = { 1: 'CONCEPT', 2: 'PROCESS', 3: 'ANSWER' };
+// Localized step labels (2026-06-12 audit): raw CONCEPT/PROCESS/ANSWER enum
+// values were leaking into the per-step result rows.
+const STEP_LABEL_KEY: Record<number, TranslationKey> = {
+  1: 'study.step.concept', 2: 'study.step.process', 3: 'study.step.answer',
+};
 
 export function MockResultDetailScreen() {
   const { resultId } = useParams<{ resultId: string }>();
@@ -138,8 +143,8 @@ export function MockResultDetailScreen() {
                     {p.steps.map((s) => (
                       <div key={s.stepIndex} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12 }}>
                         <span className="chip" style={{ fontSize: 9.5, padding: '1px 6px', minWidth: 60, textAlign: 'center' }}>
-                          {STEP_LABEL[s.stepIndex]
-                            ? t('mockResult.step.pill', { n: s.stepIndex, label: STEP_LABEL[s.stepIndex] })
+                          {STEP_LABEL_KEY[s.stepIndex]
+                            ? t('mockResult.step.pill', { n: s.stepIndex, label: t(STEP_LABEL_KEY[s.stepIndex]) })
                             : t('mockResult.step.pillNoLabel', { n: s.stepIndex })}
                         </span>
                         <span style={{ color: s.isCorrect ? 'var(--p-success)' : 'var(--p-danger)', fontWeight: 600 }}>

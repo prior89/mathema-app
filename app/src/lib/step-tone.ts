@@ -46,13 +46,13 @@ export const STEP_TONE: Record<string, StepTone> = {
   RETRIEVAL: {
     eyebrow: 'RETRIEVAL',
     chipBg: 'var(--p-success-tint)',
-    chipColor: 'var(--p-success)',
+    chipColor: 'var(--p-success-ink)',
     accent: 'var(--p-success)',
   },
   MISCONCEPTION: {
     eyebrow: 'COMMON MISTAKE',
     chipBg: 'var(--p-danger-tint)',
-    chipColor: 'var(--p-danger)',
+    chipColor: 'var(--p-danger-ink)',
     accent: 'var(--p-danger)',
   },
   REFLECT: {

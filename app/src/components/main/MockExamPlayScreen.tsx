@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { post } from '../../lib/api';
 import { useShuffledChoices } from '../../lib/shuffle';
 import { useT } from '../../lib/i18n';
+import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
@@ -27,7 +28,17 @@ type FinalizeResult = {
   correctCount: number; totalProblems: number; attemptedProblems?: number;
 };
 
-const STEP_LABEL: Record<string, string> = { CONCEPT: 'CONCEPT', PROCESS: 'PROCESS', ANSWER: 'ANSWER' };
+// Localized step labels (2026-06-12 audit): raw CONCEPT/PROCESS/ANSWER enum
+// values were leaking into the step pill.
+const STEP_LABEL_KEY: Record<string, TranslationKey> = {
+  CONCEPT: 'study.step.concept', PROCESS: 'study.step.process', ANSWER: 'study.step.answer',
+};
+const DISTRACTOR_CHIP_KEY: Record<string, TranslationKey> = {
+  CONCEPT_CONFUSION: 'study.feedback.distractor.concept',
+  CALC_ERROR: 'study.feedback.distractor.calc',
+  PROCESS_SKIP: 'study.feedback.distractor.process',
+  TIME_PRESSURE_GUESS: 'study.feedback.distractor.time',
+};
 
 function gradeBand(n: number): string {
   if (n <= 1) return 'A1';
@@ -222,7 +233,7 @@ export function MockExamPlayScreen() {
           </div>
         </div>
         <span className="step-pill">
-          {curStep ? t('mockPlay.stepPill', { label: STEP_LABEL[curStep.stepType] ?? 'STEP', step: stepIdx + 1, total: cur?.steps.length ?? 0 }) : '—'}
+          {curStep ? t('mockPlay.stepPill', { label: STEP_LABEL_KEY[curStep.stepType] ? t(STEP_LABEL_KEY[curStep.stepType]) : curStep.stepType, step: stepIdx + 1, total: cur?.steps.length ?? 0 }) : '—'}
         </span>
       </div>
       <div className="steps" style={{ marginTop: 0, paddingTop: 4 }}>
@@ -252,7 +263,7 @@ export function MockExamPlayScreen() {
                 const sel = pickedId === c.id;
                 const revealedCorrect = feedback?.isCorrect && sel;
                 const wrongPick = feedback && !feedback.isCorrect && sel;
-                const cls = revealedCorrect ? 'choice correct' : sel ? 'choice selected' : 'choice';
+                const cls = revealedCorrect ? 'choice correct' : wrongPick ? 'choice wrong' : sel ? 'choice selected' : 'choice';
                 // Exam = one-shot: after submit (feedback set) all choices lock.
                 const lockedNow = busy || feedback !== null;
                 return (
@@ -260,7 +271,6 @@ export function MockExamPlayScreen() {
                     key={c.id}
                     className={cls}
                     onClick={() => !lockedNow && setPickedId(c.id)}
-                    style={wrongPick ? { borderColor: 'var(--p-danger)' } : undefined}
                   >
                     <div className="letter">{letters[i] ?? c.choiceIndex}</div>
                     <span className="text"><MathText text={c.text} /></span>
@@ -271,7 +281,7 @@ export function MockExamPlayScreen() {
 
             {feedback && (
               <div className="card" style={{ marginTop: 12, padding: 14, background: feedback.isCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)', borderColor: 'transparent' }}>
-                <div style={{ fontWeight: 700, color: feedback.isCorrect ? 'var(--p-success)' : 'var(--p-danger)', fontSize: 14 }}>
+                <div style={{ fontWeight: 700, color: feedback.isCorrect ? 'var(--p-success-ink)' : 'var(--p-danger-ink)', fontSize: 14 }}>
                   {feedback.isCorrect ? t('mockPlay.correct') : t('mockPlay.wrong')}
                 </div>
                 {feedback.choice?.rationale && (
@@ -284,7 +294,9 @@ export function MockExamPlayScreen() {
                 )}
                 {!feedback.isCorrect && feedback.choice?.distractorType && (
                   <div style={{ marginTop: 8 }}>
-                    <span className="chip" style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)' }}>{feedback.choice.distractorType.replace(/_/g, ' ')}</span>
+                    <span className="chip" style={{ fontSize: 10.5 }}>
+                      {t(DISTRACTOR_CHIP_KEY[feedback.choice.distractorType] ?? 'study.feedback.distractor.other')}
+                    </span>
                   </div>
                 )}
               </div>
@@ -312,7 +324,9 @@ export function MockExamPlayScreen() {
           </button>
         )}
       </div>
-      <TabBar />
+      {/* Fullscreen focus mode (2026-06-12 audit): no TabBar during an exam —
+          the header back button is the only exit. The session-missing state
+          above keeps it for navigation. */}
     </div>
   );
 }
