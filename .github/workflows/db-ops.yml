@@ -65,8 +65,9 @@ jobs:
             --start-ip-address "$RUNNER_IP" \
             --end-ip-address "$RUNNER_IP"
 
-      # Prefer Key Vault via the OIDC SP; fall back to repo secret
-      # PROD_DATABASE_URL when the SP lacks secrets/get on the vault.
+      # Source order: repo secret PROD_DATABASE_URL -> Key Vault (needs
+      # Key Vault Secrets User on the SP) -> Container App secret value
+      # (works only when stored as a direct value, not a keyvaultref).
       - name: Load DATABASE_URL
         env:
           PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
@@ -83,8 +84,25 @@ jobs:
             fi
             rm -f kv_err.txt
           fi
+          if [ -z "$URL" ]; then
+            az extension add --name containerapp --upgrade -y 2>/dev/null
+            URL=$(az containerapp secret list \
+              --name mathema-backend \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --show-values \
+              --query "[?name=='database-url'].value | [0]" -o tsv 2>aca_err.txt) || true
+            if [ -z "$URL" ]; then
+              echo "Container App secret read failed or secret is a keyvaultref:"
+              cat aca_err.txt
+              az containerapp secret list \
+                --name mathema-backend \
+                --resource-group ${{ env.RESOURCE_GROUP }} \
+                --query "[].name" -o tsv 2>/dev/null || true
+            fi
+            rm -f aca_err.txt
+          fi
           test -n "$URL" || {
-            echo "::error::Could not read database-url from Key Vault and PROD_DATABASE_URL repo secret is unset"
+            echo "::error::Could not load DATABASE_URL. Fix one of: (a) grant the OIDC SP 'Key Vault Secrets User' on ${{ env.KEY_VAULT }}, or (b) set repo secret PROD_DATABASE_URL"
             exit 1
           }
           echo "::add-mask::$URL"
