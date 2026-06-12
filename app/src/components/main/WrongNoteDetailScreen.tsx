@@ -3,6 +3,7 @@
  *   SM-2 self-rating via POST /wrong-notes/:id/review (not check).
  *   ReviewQueueScreen keeps POST /wrong-notes/:id/check for forced queue.
  */
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, Clock, Lightbulb, Sparkles } from 'lucide-react';
@@ -38,10 +39,17 @@ export function WrongNoteDetailScreen() {
     enabled: !!detail.data?.problemId,
   });
 
+  /* Retry-first (user verdict 2026-06-13): showing the answer up front made
+     "solve it again" meaningless. Answer + solution stay hidden behind an
+     explicit reveal; mastered notes show them right away. */
+  const [revealed, setRevealed] = useState(false);
+  const isMastered = (detail.data?.status ?? '').toLowerCase() === 'mastered';
+  const showSolution = revealed || isMastered;
+
   const solution = useQuery({
     queryKey: ['problem-solution', detail.data?.problemId],
     queryFn: () => fetchProblemSolution(detail.data!.problemId),
-    enabled: !!detail.data?.problemId,
+    enabled: !!detail.data?.problemId && showSolution,
   });
 
   const invalidate = () => {
@@ -78,7 +86,6 @@ export function WrongNoteDetailScreen() {
   });
 
   const note = detail.data;
-  const isMastered = (note?.status ?? '').toLowerCase() === 'mastered';
 
   return (
     <div className="screen">
@@ -166,34 +173,47 @@ export function WrongNoteDetailScreen() {
               </Section>
             )}
 
-            {solution.data && solution.data.steps.length > 0 && (
-              <Section title={t('wn.detail.solution')}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {solution.data.steps.map((s) => (
-                    <div key={s.stepIndex} className="card" style={{ padding: 12 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--p-muted)', marginBottom: 6 }}>
-                        {s.stepIndex}/{solution.data!.steps.length}
-                      </div>
-                      <MathText text={s.prompt} />
+            {!showSolution ? (
+              <button
+                type="button"
+                className="btn outline"
+                style={{ width: '100%' }}
+                onClick={() => setRevealed(true)}
+              >
+                {t('wn.detail.reveal')}
+              </button>
+            ) : (
+              <>
+                {solution.data && solution.data.steps.length > 0 && (
+                  <Section title={t('wn.detail.solution')}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {solution.data.steps.map((s) => (
+                        <div key={s.stepIndex} className="card" style={{ padding: 12 }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--p-muted)', marginBottom: 6 }}>
+                            {s.stepIndex}/{solution.data!.steps.length}
+                          </div>
+                          <MathText text={s.prompt} />
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </Section>
-            )}
+                  </Section>
+                )}
 
-            {note.problemAnswer && (
-              <div className="card" style={{
-                padding: 14, display: 'flex', alignItems: 'center', gap: 10,
-                background: 'var(--p-success-tint)', borderColor: 'transparent',
-              }}>
-                <CheckCircle2 size={16} color="var(--p-success)" />
-                <div>
-                  <div style={{ fontSize: 10, color: 'var(--p-success)', fontWeight: 700 }}>{t('wn.detail.answer')}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 600 }}>
-                    <MathText text={note.problemAnswer} />
+                {note.problemAnswer && (
+                  <div className="card" style={{
+                    padding: 14, display: 'flex', alignItems: 'center', gap: 10,
+                    background: 'var(--p-success-tint)', borderColor: 'transparent',
+                  }}>
+                    <CheckCircle2 size={16} color="var(--p-success)" />
+                    <div>
+                      <div style={{ fontSize: 10, color: 'var(--p-success)', fontWeight: 700 }}>{t('wn.detail.answer')}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 600 }}>
+                        <MathText text={note.problemAnswer} />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                )}
+              </>
             )}
 
             {hint.data?.hint && (

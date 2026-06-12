@@ -20,6 +20,7 @@ import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
 
 const SESSION_PREFIX = 'mathema.realexam.';
 const PROGRESS_PREFIX = 'mathema.realexam.progress.';
@@ -84,6 +85,7 @@ export function RealExamScreen() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [timedOut, setTimedOut] = useState(false);
+  const canvasRef = useRef<HandwritingCanvasHandle>(null);
 
   // Per-question active time — accumulate ms whenever the question changes.
   const timeSpentMs = useRef<Record<string, number>>({});
@@ -331,6 +333,32 @@ export function RealExamScreen() {
               )}
             </div>
 
+            {/* Scratch pad (user request 2026-06-13): one-step answers still
+                need written working. Keyed by problem id — clears on
+                navigation, like turning to a fresh sheet. */}
+            <div key={cur.id} style={{ marginTop: 14 }}>
+              <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('practice.workingsEyebrow')}</div>
+              <HandwritingCanvas ref={canvasRef} height={240} extendable />
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => canvasRef.current?.undo()}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
+                >
+                  {t('practice.undo')}
+                </button>
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => canvasRef.current?.clear()}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
+                >
+                  {t('practice.clear')}
+                </button>
+              </div>
+            </div>
+
             {err && (
               <div style={{ marginTop: 10, padding: 10, borderRadius: 10, background: 'var(--p-danger-tint)', color: 'var(--p-danger)', fontSize: 12 }}>{err}</div>
             )}
@@ -451,8 +479,7 @@ export function RealExamScreen() {
         </div>
       )}
 
-      {/* Fullscreen focus mode (2026-06-12 audit): no TabBar during a timed
-          paper. The session-missing and intro states above keep it. */}
+      <TabBar />
     </div>
   );
 }

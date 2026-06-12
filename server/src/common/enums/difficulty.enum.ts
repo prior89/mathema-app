@@ -1,17 +1,18 @@
 /**
- * 문제 난이도 — UI 라벨과 1:1 매핑.
- * MathLearningApp.jsx 의 diff 필드("중", "중상", "준킬러", "킬러") 와 정확히 대응.
+ * Problem difficulty. KO labels are neutral terms mirroring DIFFICULTY_EN
+ * (Easy/Medium/Hard/Challenging) — Korean exam slang ("준킬러"/"킬러") was
+ * removed per user feedback 2026-06-13.
  */
 export enum Difficulty {
-  MIDDLE = 'MIDDLE',                // 중
-  UPPER_MIDDLE = 'UPPER_MIDDLE',    // 중상
-  SEMI_KILLER = 'SEMI_KILLER',      // 준킬러
-  KILLER = 'KILLER',                // 킬러
+  MIDDLE = 'MIDDLE',
+  UPPER_MIDDLE = 'UPPER_MIDDLE',
+  SEMI_KILLER = 'SEMI_KILLER',
+  KILLER = 'KILLER',
 }
 
 export const DIFFICULTY_LABEL_KO: Record<Difficulty, string> = {
-  [Difficulty.MIDDLE]: '중',
-  [Difficulty.UPPER_MIDDLE]: '중상',
-  [Difficulty.SEMI_KILLER]: '준킬러',
-  [Difficulty.KILLER]: '킬러',
+  [Difficulty.MIDDLE]: '쉬움',
+  [Difficulty.UPPER_MIDDLE]: '보통',
+  [Difficulty.SEMI_KILLER]: '어려움',
+  [Difficulty.KILLER]: '도전',
 };

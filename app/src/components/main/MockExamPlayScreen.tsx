@@ -12,6 +12,7 @@ import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
 
 const STORAGE_PREFIX = 'mathema.mock.';
 
@@ -87,6 +88,7 @@ export function MockExamPlayScreen() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<StepFeedback | null>(null);
+  const canvasRef = useRef<HandwritingCanvasHandle>(null);
 
   // Visibility-aware timer — pauses when tab is hidden.
   const stepActiveMs = useRef(0);
@@ -279,6 +281,32 @@ export function MockExamPlayScreen() {
               })}
             </div>
 
+            {/* Scratch pad (user request 2026-06-13): math can't be solved
+                mentally — keyed by problem id so working carries across the
+                3 steps and resets on the next question. */}
+            <div key={cur.id} style={{ marginTop: 14 }}>
+              <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('practice.workingsEyebrow')}</div>
+              <HandwritingCanvas ref={canvasRef} height={240} extendable />
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => canvasRef.current?.undo()}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
+                >
+                  {t('practice.undo')}
+                </button>
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => canvasRef.current?.clear()}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
+                >
+                  {t('practice.clear')}
+                </button>
+              </div>
+            </div>
+
             {feedback && (
               <div className="card" style={{ marginTop: 12, padding: 14, background: feedback.isCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)', borderColor: 'transparent' }}>
                 <div style={{ fontWeight: 700, color: feedback.isCorrect ? 'var(--p-success-ink)' : 'var(--p-danger-ink)', fontSize: 14 }}>
@@ -324,9 +352,7 @@ export function MockExamPlayScreen() {
           </button>
         )}
       </div>
-      {/* Fullscreen focus mode (2026-06-12 audit): no TabBar during an exam —
-          the header back button is the only exit. The session-missing state
-          above keeps it for navigation. */}
+      <TabBar />
     </div>
   );
 }

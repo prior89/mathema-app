@@ -1,8 +1,10 @@
 /* ConceptLessonScreen — sage-themed lesson view.
  * 2-phase flow:
- *   Phase 0 (concept) — all steps stacked on one scrollable screen; RETRIEVAL
- *     steps render as interactive checks that gate the practice CTA.
+ *   Phase 0 (concept) — all non-RETRIEVAL steps stacked on one scrollable screen.
  *   Phase 1+ (practice) — linked Problems as multi-step multiple-choice.
+ * RETRIEVAL steps are excluded everywhere (user verdict 2026-06-13): solving
+ * math mentally without writing space doesn't work — retrieval happens in the
+ * practice problems instead.
  */
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -19,6 +21,7 @@ import { useShuffledChoices } from '../../lib/shuffle';
 import { useT } from '../../lib/i18n';
 import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
+import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { DEFAULT_STEP_TONE, STEP_TONE } from '../../lib/step-tone';
 
@@ -65,9 +68,10 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
   // current problem (wrong answer or opt-in). Resets on problem advance.
   const [decomposed, setDecomposed] = useState(false);
 
-  // RETRIEVAL steps are included — they render as interactive checks that
-  // gate the practice CTA (retrieval-practice effect; 2026-06-13 review #1).
-  const conceptSteps = useMemo(() => lesson.data?.steps ?? [], [lesson.data]);
+  const conceptSteps = useMemo(
+    () => (lesson.data?.steps ?? []).filter((s) => s.kind !== 'RETRIEVAL'),
+    [lesson.data],
+  );
 
   const problemList = useQuery({
     queryKey: ['practice-problems', code],
@@ -197,10 +201,8 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
       <SegmentIndicator total={segments} active={activeSeg} />
       {phase === 'concept' && (
         <ConceptPhase
-          code={code!}
           steps={conceptSteps}
           bigIdea={lesson.data.bigIdea}
-          initiallyPassed={lesson.data.progress?.completedSteps ?? []}
           onContinue={goFromConcept}
           ctaLabel={hasProblems ? t('lesson.cta.continue', { n: totalProblems }) : t('lesson.cta.finishChapter')}
         />
@@ -252,10 +254,8 @@ function Shell({ children, back, title, pill }: {
         </div>
         {pill && <span className="step-pill" style={{ whiteSpace: 'nowrap' }}>{pill}</span>}
       </div>
-      {/* Fullscreen focus mode (2026-06-12 audit): no TabBar during a lesson
-          session — the header back button is the only exit, so the CTA is
-          never clipped and mid-session tab-switching isn't invited. */}
       {children}
+      <TabBar />
     </div>
   );
 }
@@ -271,24 +271,10 @@ function SegmentIndicator({ total, active }: { total: number; active: number }) 
 }
 
 // ───────── Phase 0: all concept steps stacked ─────────
-function ConceptPhase({ code, steps, bigIdea, initiallyPassed, onContinue, ctaLabel }: {
-  code: string; steps: ConceptStep[]; bigIdea: string;
-  initiallyPassed: number[]; onContinue: () => void; ctaLabel: string;
+function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
+  steps: ConceptStep[]; bigIdea: string; onContinue: () => void; ctaLabel: string;
 }) {
   const { t } = useT();
-  // Retrieval gate: every RETRIEVAL step with a gradeable MCQ must be passed
-  // before the practice CTA unlocks. Server-passed steps (completedSteps)
-  // pre-fill so returning users aren't re-quizzed.
-  const checkableIdxs = useMemo(
-    () => steps
-      .filter((s) => s.kind === 'RETRIEVAL' && (s.retrievalCheck?.choices?.length ?? 0) > 0)
-      .map((s) => s.stepIndex),
-    [steps],
-  );
-  const [passedIdxs, setPassedIdxs] = useState<number[]>(initiallyPassed);
-  const gated = checkableIdxs.some((i) => !passedIdxs.includes(i));
-  const markPassed = (stepIndex: number) =>
-    setPassedIdxs((prev) => (prev.includes(stepIndex) ? prev : [...prev, stepIndex]));
   return (
     <>
       <div style={{ flex: 1, overflow: 'auto', padding: '12px 22px 16px', minHeight: 0 }}>
@@ -303,142 +289,14 @@ function ConceptPhase({ code, steps, bigIdea, initiallyPassed, onContinue, ctaLa
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {steps.map((s) => (
-            s.kind === 'RETRIEVAL' && checkableIdxs.includes(s.stepIndex)
-              ? (
-                <RetrievalCheckCard
-                  key={s.id}
-                  code={code}
-                  step={s}
-                  alreadyPassed={initiallyPassed.includes(s.stepIndex)}
-                  onPassed={markPassed}
-                />
-              )
-              : <ConceptStepBlock key={s.id} step={s} />
-          ))}
+          {steps.map((s) => <ConceptStepBlock key={s.id} step={s} />)}
         </div>
-        {gated && (
-          <div style={{ marginTop: 16, fontSize: 12.5, color: 'var(--p-muted)', textAlign: 'center' }}>
-            {t('lesson.retrieval.gateHint')}
-          </div>
-        )}
-        <button className="btn" disabled={gated} onClick={onContinue} style={{ marginTop: gated ? 8 : 20 }}>
+        <button className="btn" onClick={onContinue} style={{ marginTop: 20 }}>
           {ctaLabel}
           <Glyph.ChevronR />
         </button>
       </div>
     </>
-  );
-}
-
-// Interactive RETRIEVAL check — answers never reach the client; grading goes
-// through POST /concept-lessons/:code/check (MCQ choiceIndex as the answer).
-function RetrievalCheckCard({ code, step, alreadyPassed, onPassed }: {
-  code: string; step: ConceptStep; alreadyPassed: boolean;
-  onPassed: (stepIndex: number) => void;
-}) {
-  const { t } = useT();
-  const tone = STEP_TONE['RETRIEVAL'] ?? DEFAULT_STEP_TONE;
-  const check = step.retrievalCheck!;
-  const [picked, setPicked] = useState<number | null>(null);
-  const [result, setResult] = useState<{ passed: boolean; explain: string | null; hint: string | null } | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const solved = alreadyPassed || result?.passed === true;
-  const letters = ['A', 'B', 'C', 'D', 'E'];
-
-  const pick = (choiceIndex: number) => {
-    if (solved || submitting) return;
-    if (result && !result.passed) setResult(null);
-    setPicked(choiceIndex);
-  };
-
-  const submit = async () => {
-    if (picked == null || solved || submitting) return;
-    setSubmitting(true);
-    try {
-      const r = await post<{ passed: boolean; score: number; explain: string | null; hint: string | null }>(
-        `/concept-lessons/${code}/check`,
-        { stepIndex: step.stepIndex, answer: String(picked) },
-      );
-      setResult(r);
-      track('chapter.retrieval.check', { chapterCode: code, stepIndex: step.stepIndex, passed: r.passed });
-      if (r.passed) onPassed(step.stepIndex);
-    } catch {
-      // Grading failed (network/5xx) — keep the card answerable, no hint burn.
-      setResult(null);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="concept-step">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-        <span
-          className="chip concept-step-chip"
-          style={{
-            fontSize: 10.5,
-            fontFamily: 'var(--font-mono)',
-            letterSpacing: '0.08em',
-            background: tone.chipBg,
-            color: tone.chipColor,
-            borderColor: 'transparent',
-          }}
-        >
-          {t('step.eyebrow.RETRIEVAL')}
-        </span>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{step.title}</span>
-      </div>
-      <div className="card" style={{ padding: 14, borderLeft: `3px solid ${tone.accent}` }}>
-        {step.body && (
-          <div style={{ whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.6, color: 'var(--p-ink)', marginBottom: 10 }}>
-            <BulletizedMathText text={step.body} />
-          </div>
-        )}
-        <div style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.45 }}><MathText text={check.prompt} /></div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-          {check.choices.map((c, i) => {
-            const isPicked = picked === c.choiceIndex;
-            const cls = solved && isPicked
-              ? 'choice correct'
-              : result && !result.passed && isPicked
-                ? 'choice wrong'
-                : isPicked ? 'choice selected' : 'choice';
-            return (
-              <div key={c.choiceIndex} className={cls} onClick={() => pick(c.choiceIndex)}>
-                <div className="letter">{letters[i] ?? c.choiceIndex}</div>
-                <span className="text"><MathText text={c.text} /></span>
-              </div>
-            );
-          })}
-        </div>
-        {solved ? (
-          <div style={{ marginTop: 12, padding: 10, background: 'var(--p-success-tint)', borderRadius: 8, fontSize: 13, color: 'var(--p-success-ink)' }}>
-            <strong>{t('lesson.retrieval.correct')}</strong>
-            {result?.explain && <span style={{ marginLeft: 6 }}><MathText text={result.explain} /></span>}
-          </div>
-        ) : result && !result.passed ? (
-          <div style={{ marginTop: 12, padding: 10, background: 'var(--p-danger-tint)', borderRadius: 8, fontSize: 13, color: 'var(--p-ink)' }}>
-            <strong style={{ color: 'var(--p-danger)' }}>{t('lesson.retrieval.wrong')}</strong>
-            {result.hint && (
-              <span style={{ marginLeft: 6, color: 'var(--p-ink-2)' }}>
-                {t('lesson.retrieval.hintLabel')} <MathText text={result.hint} />
-              </span>
-            )}
-          </div>
-        ) : null}
-        {!solved && (
-          <button
-            className="btn"
-            disabled={picked == null || submitting}
-            onClick={submit}
-            style={{ marginTop: 12 }}
-          >
-            {submitting ? t('solo.checking') : t('solo.checkAnswer')}
-          </button>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -858,9 +716,6 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
   const [phase, setPhase] = useState<'concept' | 'practice' | 'done'>(
     deepProblemId ? 'practice' : 'concept',
   );
-  // Retrieval gate (session-local): KR has no per-step server progress, so
-  // passed checks live in component state. Mastered users skip the gate.
-  const [passedRetrieval, setPassedRetrieval] = useState<number[]>([]);
   const lesson = useQuery({ queryKey: ['ko-lesson', code], queryFn: () => fetchKoreanConceptLesson(code) });
   const practice = useQuery({
     queryKey: ['ko-practice', code],
@@ -921,15 +776,11 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
     );
   }
 
-  const { titleKo, bigIdeaKo, steps, mastered } = lesson.data;
+  const { titleKo, bigIdeaKo, steps } = lesson.data;
   const problemCount = practice.data?.length ?? 0;
-  const checkableRetrievalIdxs = steps
-    .filter((s) => s.kind === 'RETRIEVAL' && (s.retrievalCheck?.accept?.length ?? 0) > 0)
-    .map((s) => s.stepIndex);
-  // Per-visit gate for non-mastered users — intentional spaced retrieval,
-  // not a bug: re-entering the concept page re-asks the quick checks.
-  const retrievalGated = !mastered
-    && checkableRetrievalIdxs.some((i) => !passedRetrieval.includes(i));
+  // RETRIEVAL cards excluded (user verdict 2026-06-13): a recall question with
+  // no working space is unanswerable, and revealing the answer defeats it.
+  const visibleSteps = steps.filter((s) => s.kind !== 'RETRIEVAL');
 
   return (
     <Shell back={() => nav('/app/learn')}>
@@ -964,20 +815,14 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
             </div>
           )}
 
-          {steps.length === 0 && (
+          {visibleSteps.length === 0 && (
             <div className="card" style={{ padding: 16, color: 'var(--p-muted)', fontSize: 13 }}>
               이 챕터의 학습 콘텐츠가 아직 준비되지 않았어요.
             </div>
           )}
 
-          {steps.map((s) => (
-            <KoreanStepCard
-              key={s.id}
-              step={s}
-              retrievalPassed={mastered || passedRetrieval.includes(s.stepIndex)}
-              onRetrievalPassed={(i) =>
-                setPassedRetrieval((prev) => (prev.includes(i) ? prev : [...prev, i]))}
-            />
+          {visibleSteps.map((s) => (
+            <KoreanStepCard key={s.id} step={s} />
           ))}
 
           {/* CTA — concept 끝나면 practice phase 로 진입. 문제 풀이 없으면
@@ -992,21 +837,13 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
               불러오는 중…
             </button>
           ) : problemCount > 0 ? (
-            <>
-              {retrievalGated && (
-                <div style={{ fontSize: 12.5, color: 'var(--p-muted)', textAlign: 'center', marginTop: 8 }}>
-                  {t('lesson.retrieval.gateHint')}
-                </div>
-              )}
-              <button
-                className="btn"
-                disabled={retrievalGated}
-                onClick={() => setPhase('practice')}
-                style={{ marginTop: retrievalGated ? 4 : 8, maxWidth: 320, alignSelf: 'center' }}
-              >
-                연습 문제 풀기 ({problemCount}문제)<Glyph.ChevronR />
-              </button>
-            </>
+            <button
+              className="btn"
+              onClick={() => setPhase('practice')}
+              style={{ marginTop: 8, maxWidth: 320, alignSelf: 'center' }}
+            >
+              연습 문제 풀기 ({problemCount}문제)<Glyph.ChevronR />
+            </button>
           ) : (
             <>
               <div style={{ fontSize: 12.5, color: 'var(--p-muted)', textAlign: 'center', marginTop: 8 }}>
@@ -1278,11 +1115,7 @@ function KoreanPracticePhase({
 }
 
 
-function KoreanStepCard({ step, retrievalPassed, onRetrievalPassed }: {
-  step: KoreanConceptStep;
-  retrievalPassed?: boolean;
-  onRetrievalPassed?: (stepIndex: number) => void;
-}) {
+function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
   const { t } = useT();
   const tone = STEP_TONE[step.kind] ?? DEFAULT_STEP_TONE;
   return (
@@ -1343,138 +1176,10 @@ function KoreanStepCard({ step, retrievalPassed, onRetrievalPassed }: {
         </div>
       )}
 
-      {step.kind === 'RETRIEVAL' && step.retrievalCheck && (step.retrievalCheck.accept?.length ?? 0) > 0 && (
-        // Interactive check replaced the old "예시 정답" reveal (2026-06-13
-        // review #1) — showing the answer up front defeated retrieval practice.
-        <KoreanRetrievalCheck
-          check={step.retrievalCheck}
-          alreadyPassed={!!retrievalPassed}
-          onPassed={() => onRetrievalPassed?.(step.stepIndex)}
-        />
-      )}
-
       {step.kind === 'REFLECT' && step.reflectPrompts && Array.isArray(step.reflectPrompts.prompts) && (
         <ul style={{ marginTop: 10, paddingLeft: 18, fontSize: 13, color: 'var(--p-ink-2)' }}>
           {step.reflectPrompts.prompts.map((p, i) => <li key={i} style={{ marginBottom: 4 }}>{p}</li>)}
         </ul>
-      )}
-    </div>
-  );
-}
-
-// KR retrieval check — graded client-side (the KO seed ships accept[] /
-// distractors in the payload, unlike NCERT where answers stay server-side).
-// MC mode when distractors exist; otherwise a free-text input vs accept[].
-function KoreanRetrievalCheck({ check, alreadyPassed, onPassed }: {
-  check: NonNullable<KoreanConceptStep['retrievalCheck']>;
-  alreadyPassed: boolean;
-  onPassed: () => void;
-}) {
-  const [picked, setPicked] = useState<number | null>(null);
-  const [text, setText] = useState('');
-  const [wrong, setWrong] = useState(false);
-  const [solvedNow, setSolvedNow] = useState(false);
-  const solved = alreadyPassed || solvedNow;
-  const letters = ['A', 'B', 'C', 'D', 'E'];
-
-  // Stable per-mount shuffle: correct answer (accept[0]) mixed with distractors.
-  const options = useMemo(() => {
-    const ds = check.distractors ?? [];
-    if (ds.length === 0) return null;
-    const all = [
-      { text: check.accept[0] ?? '', correct: true, rationale: undefined as string | undefined },
-      ...ds.map((d) => ({ text: d.text, correct: false, rationale: d.rationale })),
-    ];
-    return all
-      .map((o) => ({ ...o, r: Math.random() }))
-      .sort((a, b) => a.r - b.r);
-  }, [check]);
-
-  // accept[] stores raw LaTeX-source text ("x^2-25", "2^3·3^2") — normalise
-  // both sides: strip $/whitespace, lowercase, unicode superscripts → ^n.
-  const norm = (s: string) => s
-    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, (ch) => `^${'⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(ch)}`)
-    .replace(/[·×]/g, '*')
-    .replace(/[$\s]/g, '')
-    .toLowerCase();
-
-  const submit = () => {
-    if (solved) return;
-    const ok = options
-      ? picked != null && options[picked].correct
-      : (check.accept ?? []).some((a) => norm(a) === norm(text)) && norm(text) !== '';
-    if (ok) {
-      setSolvedNow(true);
-      setWrong(false);
-      onPassed();
-    } else {
-      setWrong(true);
-    }
-  };
-
-  const wrongRationale = options && wrong && picked != null ? options[picked].rationale : undefined;
-
-  return (
-    <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: 'var(--p-surface)', border: '1px solid var(--p-border)', fontSize: 13.5, lineHeight: 1.65 }}>
-      <div style={{ fontWeight: 600, color: 'var(--p-ink)' }}><MathText text={check.prompt} /></div>
-      {options ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-          {options.map((o, i) => {
-            const isPicked = picked === i;
-            const cls = solved && o.correct && (isPicked || alreadyPassed)
-              ? 'choice correct'
-              : wrong && isPicked
-                ? 'choice wrong'
-                : isPicked ? 'choice selected' : 'choice';
-            return (
-              <div
-                key={i}
-                className={cls}
-                onClick={() => {
-                  if (solved) return;
-                  setWrong(false);
-                  setPicked(i);
-                }}
-              >
-                <div className="letter">{letters[i] ?? i + 1}</div>
-                <span className="text"><MathText text={`$${o.text}$`} /></span>
-              </div>
-            );
-          })}
-        </div>
-      ) : !solved ? (
-        <input
-          value={text}
-          onChange={(e) => { setWrong(false); setText(e.target.value); }}
-          onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
-          placeholder="답을 입력하세요"
-          style={{
-            marginTop: 10, width: '100%', boxSizing: 'border-box', padding: '10px 12px',
-            borderRadius: 8, border: '1px solid var(--p-border)', fontSize: 14,
-            fontFamily: 'var(--font-mono)', background: 'var(--p-surface-2)', color: 'var(--p-ink)',
-          }}
-        />
-      ) : null}
-      {solved ? (
-        <div style={{ marginTop: 10, padding: 10, borderRadius: 8, background: 'var(--p-success-tint)', color: 'var(--p-success-ink)' }}>
-          <strong>정답이에요!</strong>
-          {check.explainKo && <span style={{ marginLeft: 6 }}><MathText text={check.explainKo} /></span>}
-        </div>
-      ) : wrong ? (
-        <div style={{ marginTop: 10, padding: 10, borderRadius: 8, background: 'var(--p-danger-tint)' }}>
-          <strong style={{ color: 'var(--p-danger)' }}>다시 한번 생각해보세요.</strong>
-          {wrongRationale && <span style={{ marginLeft: 6, color: 'var(--p-ink-2)' }}><MathText text={wrongRationale} /></span>}
-        </div>
-      ) : null}
-      {!solved && (
-        <button
-          className="btn"
-          disabled={options ? picked == null : text.trim() === ''}
-          onClick={submit}
-          style={{ marginTop: 10 }}
-        >
-          정답 확인
-        </button>
       )}
     </div>
   );

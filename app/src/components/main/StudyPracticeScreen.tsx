@@ -446,9 +446,7 @@ export function StudyPracticeScreen() {
           </button>
         )}
       </div>
-      {/* Fullscreen focus mode (2026-06-12 audit): no TabBar while solving —
-          it clipped the Check CTA and invited mid-problem tab-switching.
-          The summary / empty states above keep it for navigation. */}
+      <TabBar />
       {result && sheetOpen && (
         <AnswerFeedbackSheet
           correct={result.isCorrect}
