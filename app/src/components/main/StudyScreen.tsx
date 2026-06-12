@@ -12,7 +12,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ReactNode, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   fetchConceptLessons, fetchKoreanConceptLessons, fetchMe,
 } from '../../lib/queries';
@@ -20,8 +20,6 @@ import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import { HeadAvatar } from './HeadAvatar';
-import { UploadProblemModal } from './UploadProblemModal';
-import { QuotaMeter } from '../QuotaMeter';
 
 const CLASS_SHORT: Record<string, string> = {
   CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
@@ -32,20 +30,6 @@ export function StudyScreen() {
   const nav = useNavigate();
   const { t } = useT();
   const [chapter, setChapter] = useState('');
-  // AI Solver -- each button owns its own native <input type="file"> so the
-  // taps go DIRECTLY to the camera or to the gallery (no intermediate modal
-  // picker). The modal opens only AFTER a file is chosen, with that file
-  // already loaded via the initialFile prop.
-  const [solverFile, setSolverFile] = useState<File | null>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-
-  const onFileChosen = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) setSolverFile(f);
-    // Reset so picking the same file twice still fires onChange.
-    e.target.value = '';
-  };
 
   // Country-aware chapter fetch (2026-05-24 user spec: KR mastered chapters
   // also surface in Study). NCERT side: practice-set route → StudyPracticeScreen
@@ -187,70 +171,8 @@ export function StudyScreen() {
             </button>
           </div>
 
-          {/* AI Solver -- snap a problem from a textbook or photo and the
-              math-helper pipeline (OpenAI OCR -> LangGraph solver) returns a
-              step-by-step solution + lifts the problem into the user's pool. */}
-          <div className="section-h">
-            <span className="label">{t('study.solver.section')}</span>
-            {/* QuotaMeter renders nothing for premium / loading — it slots
-                here precisely so the free-tier user sees their remaining
-                calls before tapping a Solver button (Phase 5 quota UX). */}
-            <QuotaMeter style={{ marginLeft: 'auto' }} />
-          </div>
-          <div className="card" style={{ padding: 14, background: 'var(--p-primary-tint)', borderColor: 'transparent' }}>
-            <div style={{ fontSize: 12.5, color: 'var(--p-ink-2)', marginBottom: 12, lineHeight: 1.5 }}>
-              {t('study.solver.desc')}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <SolverButton
-                label={t('study.solver.camera.label')}
-                hint={t('study.solver.camera.hint')}
-                onClick={() => cameraInputRef.current?.click()}
-                icon={
-                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M3 7h3l2-3h8l2 3h3v12H3z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
-                }
-              />
-              <SolverButton
-                label={t('study.solver.upload.label')}
-                hint={t('study.solver.upload.hint')}
-                onClick={() => galleryInputRef.current?.click()}
-                icon={
-                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M12 4v12" />
-                    <path d="M7 9l5-5 5 5" />
-                    <path d="M5 20h14" />
-                  </svg>
-                }
-              />
-            </div>
-            {/* Hidden native inputs -- each button triggers its specific
-                intent. `capture="environment"` makes Android/iOS open the
-                rear camera instead of the gallery picker; omitting it on
-                the second input gives the gallery (with PDFs too). */}
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={onFileChosen}
-              style={{ display: 'none' }}
-              aria-hidden
-            />
-            <input
-              ref={galleryInputRef}
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={onFileChosen}
-              style={{ display: 'none' }}
-              aria-hidden
-            />
-          </div>
-
-          {/* How this works moved below the AI Solver so the heading reads as
-              "you've seen the two paths -- here's the contract behind them". */}
+          {/* AI Solver lives on the Home hero only — Study stays a pure
+              practice picker. */}
           <div className="section-h">
             <span className="label">{t('study.howThis.section')}</span>
           </div>
@@ -266,50 +188,7 @@ export function StudyScreen() {
           <div style={{ height: 16 }} />
         </div>
       </div>
-      <UploadProblemModal
-        open={!!solverFile}
-        onClose={() => setSolverFile(null)}
-        initialFile={solverFile}
-      />
       <TabBar />
     </div>
-  );
-}
-
-function SolverButton({ label, hint, icon, onClick }: {
-  label: string; hint: string; icon: ReactNode; onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        background: 'var(--p-surface)',
-        border: '1px solid var(--p-border)',
-        borderRadius: 12,
-        padding: '14px 12px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: 6,
-        cursor: 'pointer',
-        textAlign: 'left',
-        color: 'var(--p-ink)',
-        transition: 'border-color 120ms ease',
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--p-primary)'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--p-border)'; }}
-    >
-      <div style={{
-        width: 36, height: 36, borderRadius: 9,
-        background: 'var(--p-primary)',
-        color: 'var(--p-primary-fg)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {icon}
-      </div>
-      <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4 }}>{label}</div>
-      <div style={{ fontSize: 11.5, color: 'var(--p-muted)' }}>{hint}</div>
-    </button>
   );
 }

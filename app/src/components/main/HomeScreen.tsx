@@ -278,7 +278,11 @@ export function HomeScreen() {
             const all = (chapterProgress.data ?? []);
             const inProgress = all.filter((row) => row.progress < 1);
             const mastered = all.filter((row) => row.progress >= 1);
-            const active = all;
+            // In-progress chapters claim the 5 visible slots first; mastered
+            // ones only fill whatever is left, so a wall of 100% rows can't
+            // crowd out active work (mastered chapters still stay reachable
+            // per the 2026-05-28 decision).
+            const active = [...inProgress, ...mastered];
             // Section header always present once user data loaded. Empty
             // state vs card-list both render under the same "Chapter progress"
             // label so KR cold-start users (no attempts yet) get the EmptyCta
@@ -292,10 +296,10 @@ export function HomeScreen() {
                   {active.length > 0 && (
                     <span className="more">
                       {inProgress.length > 0 && mastered.length > 0
-                        ? `진행 중 ${inProgress.length} · 마스터 ${mastered.length}`
+                        ? t('home.chapterProgress.mixed', { n: inProgress.length, m: mastered.length })
                         : inProgress.length > 0
                           ? t('home.chapterProgress.inProgress', { n: inProgress.length })
-                          : `마스터 ${mastered.length}`}
+                          : t('home.chapterProgress.mastered', { m: mastered.length })}
                     </span>
                   )}
                 </div>
