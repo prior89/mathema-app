@@ -192,6 +192,7 @@
 .mathema-app .btn {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   width: 100%; height: 54px; border-radius: 14px; border: 1px solid transparent;
+  flex-shrink: 0;
   background: var(--p-primary); color: var(--p-primary-fg);
   font-family: inherit; font-size: 16px; font-weight: 600; letter-spacing: -0.005em;
   cursor: pointer; transition: transform .12s ease, opacity .12s ease;

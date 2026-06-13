@@ -217,13 +217,16 @@ ${this.ctaButton(link, 'Confirm my email')}
   ): Promise<void> {
     const verifyLink = `${this.appUrl()}/guardian-consent/verify?token=${encodeURIComponent(token)}`;
     const regionNote = opts.country === 'KR'
-      ? 'Under Korea\'s Personal Information Protection Act (PIPA), accounts for users under 14 require parent/guardian confirmation.'
-      : 'Under India\'s DPDP Act 2023 and COPPA-aligned practice, accounts for users under 13 require verifiable parental consent.';
+      ? 'Matheo requires parent/guardian approval for students under 14 in Korea.'
+      : opts.country === 'IN'
+        ? 'Matheo requires parent/guardian approval for students under 18 in India.'
+        : 'Matheo requires parent/guardian approval for this student based on their age and country.';
     const bodyHtml = `
 <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 16px 0;line-height:1.35;">Parent/guardian consent required</h1>
 <p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">Hello <strong>${opts.parentName}</strong>,</p>
-<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;"><strong>${opts.childName}</strong> created a Matheo student account. ${regionNote}</p>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;"><strong>${opts.childName}</strong> started setting up a Matheo student account. ${regionNote}</p>
 <p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">By confirming below, you verify that you are the parent or legal guardian and consent to Matheo processing your child's learning data as described in our Privacy Policy.</p>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">After approval, the student will continue automatically. This does not create a parent account or sign you into the student app.</p>
 ${this.ctaButton(verifyLink, 'Confirm as parent/guardian')}
 <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:24px 0 0 0;">Or copy and paste this link into your browser:</p>
 <p style="font-size:13px;line-height:1.5;word-break:break-all;margin:6px 0 0 0;"><a href="${verifyLink}" style="color:#4f46e5;text-decoration:underline;">${verifyLink}</a></p>
@@ -233,8 +236,11 @@ ${this.ctaButton(verifyLink, 'Confirm as parent/guardian')}
       '',
       `Hello ${opts.parentName},`,
       '',
-      `${opts.childName} created a Matheo student account.`,
+      `${opts.childName} started setting up a Matheo student account.`,
       regionNote,
+      '',
+      'After approval, the student will continue automatically.',
+      'This does not create a parent account or sign you into the student app.',
       '',
       'Confirm as parent/guardian:',
       verifyLink,

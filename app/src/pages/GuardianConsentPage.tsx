@@ -21,34 +21,32 @@ export default function GuardianConsentPage() {
     refetchInterval: (q) => (q.state.data?.verified ? false : 5_000),
   });
 
-  // Advance to /app once the parent verifies. Earlier this fired once and
-  // trusted whatever /users/me returned — if React Query handed back a stale
-  // me snapshot (guardianConsentVerifiedAt still null), postAuthPath kept us
-  // on /guardian-consent and polling had already stopped: silent deadlock.
-  // Now we hard-invalidate the me query, retry briefly while the route is
-  // still /guardian-consent, and re-arm status polling if we give up.
+  // Guardian approval ends on the guardian's page. Only this student session
+  // advances, and it keeps retrying through short cache or network delays so
+  // a successful approval cannot leave the student stranded.
   useEffect(() => {
     if (!statusQ.data?.verified) return;
     let cancelled = false;
-    const advance = async (attempt = 0): Promise<void> => {
-      if (cancelled) return;
-      await qc.invalidateQueries({ queryKey: ['me'] });
-      await refreshUser();
-      const me = await get<Me>('/users/me');
-      if (cancelled) return;
-      const target = postAuthPath(me);
-      if (target.startsWith('/guardian-consent') && attempt < 3) {
-        await new Promise((r) => setTimeout(r, 700));
-        return advance(attempt + 1);
+    const advance = async (): Promise<void> => {
+      let retryDelayMs = 700;
+      while (!cancelled) {
+        try {
+          await qc.invalidateQueries({ queryKey: ['me'] });
+          const me = await get<Me>('/users/me');
+          if (cancelled) return;
+          const target = postAuthPath(me);
+          if (!target.startsWith('/guardian-consent')) {
+            await refreshUser();
+            if (!cancelled) navigate(target, { replace: true });
+            return;
+          }
+        } catch {
+          // Consent is verified. Stay on this restricted screen and retry
+          // automatically after temporary network or cache failures.
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+        retryDelayMs = Math.min(retryDelayMs * 2, 5_000);
       }
-      if (target.startsWith('/guardian-consent')) {
-        // Give up gracefully — invalidating the status query re-arms the 5s
-        // poll so the next tick re-checks rather than leaving the student
-        // stranded on this screen.
-        await qc.invalidateQueries({ queryKey: ['guardian-consent-status'] });
-        return;
-      }
-      navigate(target, { replace: true });
     };
     void advance();
     return () => { cancelled = true; };

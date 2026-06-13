@@ -244,9 +244,16 @@ export class GuardianConsentService {
     const raw = randomBytes(32).toString('base64url');
     const tokenHash = createHash('sha256').update(raw).digest('hex');
     const expiresAt = new Date(Date.now() + TOKEN_TTL_DAYS * 86400000);
-    await this.prisma.guardianConsentToken.create({
-      data: { requestId, tokenHash, expiresAt },
-    });
+    const invalidatedAt = new Date();
+    const [, issuedToken] = await this.prisma.$transaction([
+      this.prisma.guardianConsentToken.updateMany({
+        where: { requestId, usedAt: null },
+        data: { usedAt: invalidatedAt },
+      }),
+      this.prisma.guardianConsentToken.create({
+        data: { requestId, tokenHash, expiresAt },
+      }),
+    ]);
     try {
       await this.mail.sendGuardianConsent(
         opts.parentEmail,
@@ -258,6 +265,10 @@ export class GuardianConsentService {
         },
       );
     } catch (e) {
+      await this.prisma.guardianConsentToken.update({
+        where: { id: issuedToken.id },
+        data: { usedAt: new Date() },
+      });
       this.logger.error(`guardian consent mail failed: ${(e as Error).message}`);
       throw new BadRequestException('could not send parent consent email');
     }
