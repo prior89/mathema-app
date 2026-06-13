@@ -67,6 +67,7 @@ jobs:
           name: server-coverage
           path: server/coverage
           if-no-files-found: ignore
+          retention-days: 14
 
       # Content-quality validator (CONTENT_QUALITY_RUBRIC.md gate). Runs in
       # --warn-only mode so the gradual chapter-by-chapter upgrade can land
@@ -76,7 +77,6 @@ jobs:
       - name: Content rubric validator (warn-only)
         working-directory: server
         run: npx ts-node scripts/validate-content-rubric.ts --warn-only
-          retention-days: 14
 
   app:
     name: app (tsc + vite build)
