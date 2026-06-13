@@ -15,11 +15,13 @@ describe('guardian-consent.util', () => {
     expect(ageFromBirthDate(new Date('2014-12-01'), now)).toBe(11);
   });
 
-  it('requires consent under 13 for IN/default (COPPA / Duolingo-style)', () => {
+  it('requires consent under 18 for IN/default (DPDP Act §9 + Rule 10)', () => {
     expect(requiresGuardianConsent(new Date('2014-06-01'), 'IN', now)).toBe(true); // 12
-    expect(requiresGuardianConsent(new Date('2013-06-01'), 'IN', now)).toBe(false); // 13
-    expect(requiresGuardianConsentFromAge(12, 'IN')).toBe(true);
-    expect(requiresGuardianConsentFromAge(13, 'IN')).toBe(false);
+    expect(requiresGuardianConsent(new Date('2009-06-01'), 'IN', now)).toBe(true); // 17
+    expect(requiresGuardianConsent(new Date('2008-06-01'), 'IN', now)).toBe(false); // 18
+    expect(requiresGuardianConsentFromAge(17, 'IN')).toBe(true);
+    expect(requiresGuardianConsentFromAge(18, 'IN')).toBe(false);
+    expect(GUARDIAN_CONSENT_AGE_THRESHOLD_DEFAULT).toBe(18);
     expect(ageFromBirthDate(new Date('2014-01-01'), now)).toBeLessThan(GUARDIAN_CONSENT_AGE_THRESHOLD_DEFAULT);
   });
 
@@ -31,9 +33,9 @@ describe('guardian-consent.util', () => {
     expect(GUARDIAN_CONSENT_AGE_THRESHOLD_KR).toBe(14);
   });
 
-  it('does not require consent for teens/adults or missing birthDate', () => {
-    expect(requiresGuardianConsent(new Date('2010-01-01'), 'IN', now)).toBe(false);
-    expect(requiresGuardianConsent(new Date('2000-01-01'), 'KR', now)).toBe(false);
+  it('does not require consent for adults or missing birthDate', () => {
+    expect(requiresGuardianConsent(new Date('2005-01-01'), 'IN', now)).toBe(false); // 21
+    expect(requiresGuardianConsent(new Date('2000-01-01'), 'KR', now)).toBe(false); // 26
     expect(requiresGuardianConsent(null, 'IN', now)).toBe(false);
     expect(requiresGuardianConsent(undefined, 'KR', now)).toBe(false);
   });
@@ -55,8 +57,8 @@ describe('guardian-consent.util', () => {
     }
     expect(requiresGuardianConsent(birthDateFromAge(14, now), 'KR', now)).toBe(false);
     expect(requiresGuardianConsent(birthDateFromAge(13, now), 'KR', now)).toBe(true);
-    expect(requiresGuardianConsent(birthDateFromAge(13, now), 'IN', now)).toBe(false);
-    expect(requiresGuardianConsent(birthDateFromAge(12, now), 'IN', now)).toBe(true);
+    expect(requiresGuardianConsent(birthDateFromAge(18, now), 'IN', now)).toBe(false);
+    expect(requiresGuardianConsent(birthDateFromAge(17, now), 'IN', now)).toBe(true);
   });
 
   it('resolves KR email OTP by default', () => {

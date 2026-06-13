@@ -1,14 +1,19 @@
 import { CountryCode } from '@prisma/client';
 
 /**
- * Country-aware guardian gate (industry + statute aligned):
- *   KR — PIPA: consent required for users under 14
- *   IN / default — COPPA / Duolingo-style edtech: under 13 → parent email
- *   (DPDP defines "child" as under 18; users 13–17 get enhanced teen defaults
- *    — no targeted ads, analytics opt-in only — documented in Privacy Policy)
+ * Country-aware guardian gate (statute-aligned):
+ *   KR — PIPA Article 22-2: verifiable consent required for users under 14.
+ *   IN — DPDP Act 2023 §9 + DPDP Rules 2025 Rule 10: verifiable parental
+ *        consent required for users under 18. The Act gives the government
+ *        the power to lower this to 16 or 13 by notification, but no such
+ *        notification has been issued; the statutory default is 18.
+ *        Enforcement deadline May 2027 — we comply ahead of that date so
+ *        the existing user base does not face a forced re-consent flow.
+ *   Default — mirrors IN (18); the next-strictest threshold is the safe
+ *   default for any unknown country.
  */
 export const GUARDIAN_CONSENT_AGE_THRESHOLD_KR = 14;
-export const GUARDIAN_CONSENT_AGE_THRESHOLD_DEFAULT = 13;
+export const GUARDIAN_CONSENT_AGE_THRESHOLD_DEFAULT = 18;
 
 /** @deprecated Use guardianConsentAgeThreshold(country) */
 export const GUARDIAN_CONSENT_AGE_THRESHOLD = GUARDIAN_CONSENT_AGE_THRESHOLD_DEFAULT;

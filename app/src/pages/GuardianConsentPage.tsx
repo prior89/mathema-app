@@ -11,7 +11,7 @@ import { BrandLogo } from '../components/Brand';
 import '../styles/onboarding.css';
 
 export default function GuardianConsentPage() {
-  const { refreshUser, logout } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useT();
   const qc = useQueryClient();
@@ -21,14 +21,38 @@ export default function GuardianConsentPage() {
     refetchInterval: (q) => (q.state.data?.verified ? false : 5_000),
   });
 
+  // Advance to /app once the parent verifies. Earlier this fired once and
+  // trusted whatever /users/me returned — if React Query handed back a stale
+  // me snapshot (guardianConsentVerifiedAt still null), postAuthPath kept us
+  // on /guardian-consent and polling had already stopped: silent deadlock.
+  // Now we hard-invalidate the me query, retry briefly while the route is
+  // still /guardian-consent, and re-arm status polling if we give up.
   useEffect(() => {
     if (!statusQ.data?.verified) return;
-    void (async () => {
+    let cancelled = false;
+    const advance = async (attempt = 0): Promise<void> => {
+      if (cancelled) return;
+      await qc.invalidateQueries({ queryKey: ['me'] });
       await refreshUser();
       const me = await get<Me>('/users/me');
-      navigate(postAuthPath(me), { replace: true });
-    })();
-  }, [statusQ.data?.verified, refreshUser, navigate]);
+      if (cancelled) return;
+      const target = postAuthPath(me);
+      if (target.startsWith('/guardian-consent') && attempt < 3) {
+        await new Promise((r) => setTimeout(r, 700));
+        return advance(attempt + 1);
+      }
+      if (target.startsWith('/guardian-consent')) {
+        // Give up gracefully — invalidating the status query re-arms the 5s
+        // poll so the next tick re-checks rather than leaving the student
+        // stranded on this screen.
+        await qc.invalidateQueries({ queryKey: ['guardian-consent-status'] });
+        return;
+      }
+      navigate(target, { replace: true });
+    };
+    void advance();
+    return () => { cancelled = true; };
+  }, [statusQ.data?.verified, refreshUser, navigate, qc]);
 
   const [parentEmail, setParentEmail] = useState('');
   const [err, setErr] = useState<string | null>(null);
@@ -97,7 +121,7 @@ export default function GuardianConsentPage() {
                 <h2 className="title" style={{ marginTop: 8 }}>
                   {waiting ? t('guardianConsent.waiting.title') : t('guardianConsent.title')}
                 </h2>
-                <p className="subtitle">{t('guardianConsent.sub')}</p>
+                <p className="subtitle">{t(user?.country === 'KR' ? 'guardianConsent.sub.kr' : 'guardianConsent.sub')}</p>
               </div>
 
               {waiting ? (

@@ -6,7 +6,7 @@
  * Now: dedicated layout, explicit approve button, close-this-window end. */
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { post, get } from '../lib/api';
+import { post, get, tokens } from '../lib/api';
 import { useT } from '../lib/i18n';
 import { BrandLogo } from '../components/Brand';
 import '../styles/onboarding.css';
@@ -25,6 +25,16 @@ export default function GuardianConsentVerifyPage() {
   const token = params.get('token') ?? '';
   const [preview, setPreview] = useState<Preview | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'working' | 'success' | 'failed'>('loading');
+  // Detect a student session already signed in on this device. A student
+  // approving their own guardian consent defeats the entire purpose of the
+  // gate, so we surface a dedicated screen rather than the approve button.
+  // The check runs once on mount; the logout CTA reloads the page so the
+  // user re-enters this route in an anonymous state.
+  const [sameDevice, setSameDevice] = useState(false);
+
+  useEffect(() => {
+    if (tokens.get()) setSameDevice(true);
+  }, []);
 
   useEffect(() => {
     if (!token) { setStatus('failed'); return; }
@@ -34,11 +44,19 @@ export default function GuardianConsentVerifyPage() {
   }, [token]);
 
   const approve = () => {
-    if (status !== 'ready') return;
+    if (status !== 'ready' || sameDevice) return;
     setStatus('working');
     post('/guardian-consent/verify', { token })
       .then(() => setStatus('success'))
       .catch(() => setStatus('failed'));
+  };
+
+  const signOutAndContinue = () => {
+    tokens.clear();
+    setSameDevice(false);
+    // Hard reload so any in-memory React Query / AuthContext state tied to
+    // the old session is wiped before the parent taps Approve.
+    window.location.reload();
   };
 
   return (
@@ -58,11 +76,25 @@ export default function GuardianConsentVerifyPage() {
                 )}
               </div>
 
-              {status === 'loading' && (
+              {status === 'loading' && !sameDevice && (
                 <div className="alert info">{t('common.loading')}</div>
               )}
 
-              {(status === 'ready' || status === 'working') && (
+              {sameDevice && status !== 'failed' && (
+                <>
+                  <div className="alert" style={{ background: 'var(--p-warn-tint, #fff4d6)', color: 'var(--p-ink)', border: '1px solid var(--p-warn, #d39517)' }}>
+                    <strong>{t('guardianConsent.verify.alreadyLoggedIn.title')}</strong>
+                  </div>
+                  <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--p-ink-2)' }}>
+                    {t('guardianConsent.verify.alreadyLoggedIn.body')}
+                  </p>
+                  <button type="button" className="btn text" onClick={signOutAndContinue}>
+                    {t('guardianConsent.verify.alreadyLoggedIn.logout')}
+                  </button>
+                </>
+              )}
+
+              {!sameDevice && (status === 'ready' || status === 'working') && (
                 <>
                   <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--p-ink-2)' }}>
                     {t('guardianConsent.verify.intro')}
