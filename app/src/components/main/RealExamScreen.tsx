@@ -293,7 +293,32 @@ export function RealExamScreen() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+            {/* Scratch pad / 연습장 — moved before choices for consistency with other problem-solving screens
+                (problem → 연습장 → 5지선다). Keyed per question. */}
+            <div key={cur.id} style={{ marginTop: 12 }}>
+              <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('practice.workingsEyebrow')}</div>
+              <HandwritingCanvas ref={canvasRef} height={240} extendable />
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => canvasRef.current?.undo()}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
+                >
+                  {t('practice.undo')}
+                </button>
+                <button
+                  type="button"
+                  className="btn outline"
+                  onClick={() => canvasRef.current?.clear()}
+                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
+                >
+                  {t('practice.clear')}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
               {step.choices.map((c, i) => {
                 const sel = pickedId === c.id;
                 return (
@@ -309,7 +334,7 @@ export function RealExamScreen() {
               })}
             </div>
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <button
                 className="chip"
                 onClick={() => toggleMark(cur.id)}
@@ -331,32 +356,6 @@ export function RealExamScreen() {
                   {t('realExam.clear')}
                 </button>
               )}
-            </div>
-
-            {/* Scratch pad (user request 2026-06-13): one-step answers still
-                need written working. Keyed by problem id — clears on
-                navigation, like turning to a fresh sheet. */}
-            <div key={cur.id} style={{ marginTop: 14 }}>
-              <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('practice.workingsEyebrow')}</div>
-              <HandwritingCanvas ref={canvasRef} height={240} extendable />
-              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                <button
-                  type="button"
-                  className="btn outline"
-                  onClick={() => canvasRef.current?.undo()}
-                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
-                >
-                  {t('practice.undo')}
-                </button>
-                <button
-                  type="button"
-                  className="btn outline"
-                  onClick={() => canvasRef.current?.clear()}
-                  style={{ height: 32, padding: '0 12px', fontSize: 12, width: 'auto' }}
-                >
-                  {t('practice.clear')}
-                </button>
-              </div>
             </div>
 
             {err && (

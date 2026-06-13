@@ -260,31 +260,9 @@ export function MockExamPlayScreen() {
               <MathText text={curStep.prompt} />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-              {shuffledChoices.map((c, i) => {
-                const sel = pickedId === c.id;
-                const revealedCorrect = feedback?.isCorrect && sel;
-                const wrongPick = feedback && !feedback.isCorrect && sel;
-                const cls = revealedCorrect ? 'choice correct' : wrongPick ? 'choice wrong' : sel ? 'choice selected' : 'choice';
-                // Exam = one-shot: after submit (feedback set) all choices lock.
-                const lockedNow = busy || feedback !== null;
-                return (
-                  <div
-                    key={c.id}
-                    className={cls}
-                    onClick={() => !lockedNow && setPickedId(c.id)}
-                  >
-                    <div className="letter">{letters[i] ?? c.choiceIndex}</div>
-                    <span className="text"><MathText text={c.text} /></span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Scratch pad (user request 2026-06-13): math can't be solved
-                mentally — keyed by problem id so working carries across the
-                3 steps and resets on the next question. */}
-            <div key={cur.id} style={{ marginTop: 14 }}>
+            {/* Scratch pad / 연습장 — now before choices to match other problem-solving screens
+                (body + prompt + canvas + 5지선다). Keyed by problem id so working carries across the 3 steps. */}
+            <div key={cur.id} style={{ marginTop: 12 }}>
               <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('practice.workingsEyebrow')}</div>
               <HandwritingCanvas ref={canvasRef} height={240} extendable />
               <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
@@ -305,6 +283,27 @@ export function MockExamPlayScreen() {
                   {t('practice.clear')}
                 </button>
               </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+              {shuffledChoices.map((c, i) => {
+                const sel = pickedId === c.id;
+                const revealedCorrect = feedback?.isCorrect && sel;
+                const wrongPick = feedback && !feedback.isCorrect && sel;
+                const cls = revealedCorrect ? 'choice correct' : wrongPick ? 'choice wrong' : sel ? 'choice selected' : 'choice';
+                // Exam = one-shot: after submit (feedback set) all choices lock.
+                const lockedNow = busy || feedback !== null;
+                return (
+                  <div
+                    key={c.id}
+                    className={cls}
+                    onClick={() => !lockedNow && setPickedId(c.id)}
+                  >
+                    <div className="letter">{letters[i] ?? c.choiceIndex}</div>
+                    <span className="text"><MathText text={c.text} /></span>
+                  </div>
+                );
+              })}
             </div>
 
             {feedback && (
