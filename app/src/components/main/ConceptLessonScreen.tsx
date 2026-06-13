@@ -23,6 +23,7 @@ import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { GraphRenderer } from '../GraphRenderer';
 import { DEFAULT_STEP_TONE, STEP_TONE } from '../../lib/step-tone';
 
 /* Scaffold policy (2026-06-12 audit, expertise-reversal effect): every
@@ -311,8 +312,9 @@ function ConceptStepBlock({ step }: { step: ConceptStep }) {
   const reflectList = Array.isArray(step.reflectPrompts) ? step.reflectPrompts as string[] : [];
   const hasReflect = reflectList.length > 0;
 
+  const hasVisual = !!step.visualData;
   // 의미 있는 콘텐츠가 하나도 없으면 통째로 숨김 (빈 껍데기 카드 방지).
-  if (!step.body && !hasMisconception && !hasWorked && !hasReflect) return null;
+  if (!step.body && !hasMisconception && !hasWorked && !hasReflect && !hasVisual) return null;
 
   return (
     <div className="concept-step">
@@ -338,6 +340,11 @@ function ConceptStepBlock({ step }: { step: ConceptStep }) {
           style={{ padding: 14, borderLeft: `3px solid ${tone.accent}`, whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.6, color: 'var(--p-ink)' }}
         >
           <BulletizedMathText text={step.body} />
+        </div>
+      )}
+      {hasVisual && (
+        <div style={{ marginTop: 10, textAlign: 'center' }}>
+          <GraphRenderer data={step.visualData} />
         </div>
       )}
       {step.kind === 'MISCONCEPTION' && hasMisconception && <Misconception data={step.misconception} />}
@@ -1138,6 +1145,12 @@ function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
       <div style={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--p-ink)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
         <MathText text={step.body} />
       </div>
+
+      {step.visualData && (
+        <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <GraphRenderer data={step.visualData} />
+        </div>
+      )}
 
       {step.kind === 'WORKED_EXAMPLE' && step.workedSteps && step.workedSteps.length > 0 && (
         <ol style={{ marginTop: 12, paddingLeft: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
