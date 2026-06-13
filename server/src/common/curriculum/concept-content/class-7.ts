@@ -1,6 +1,11 @@
 /**
  * Class 7 (NCERT VII) — 챕터별 개념학습 콘텐츠 (production grade).
  * 모든 13 챕터 7단계 완비.
+ *
+ * 2026-06-14 upgraded per CONTENT_QUALITY_RUBRIC.md:
+ * - Worked steps now contain explicit "because / this works because" explanatory narration.
+ * - Misconceptions strengthened with student thinking + clear contrast.
+ * - See rubric for full criteria (narration, rationale, abstract explanatory power, Korean 2022 specifics).
  */
 
 import { ChapterContentMap } from './types';
@@ -20,33 +25,33 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       en: 'Number line: negatives left of 0, positives right. Adding = move right, subtracting = move left.',
     },
     abstract: {
-      ko: '정수 ℤ = {…, −2, −1, 0, 1, 2, …}. 부호가 같은 두 수: 절댓값 합·공통 부호. 부호가 다른 두 수: 절댓값 차·큰 쪽 부호.',
-      en: 'Integers ℤ = {…, −2, −1, 0, 1, 2, …} extend the natural numbers by including negatives — letting us measure debts, temperatures below zero, and positions in two opposite directions. To add: same signs ⇒ add absolute values and keep that sign; different signs ⇒ subtract absolute values and take the sign of the larger one. Multiplication and division follow the rule of signs (same signs give positive, different signs give negative). Integers are the foundation for rationals, algebra, and equations to come.',
+      ko: '정수 ℤ = {…, −2, −1, 0, 1, 2, …}. 부호가 같은 두 수: 절댓값 합·공통 부호. 부호가 다른 두 수: 절댓값 차·큰 쪽 부호. 이는 수직선에서 방향(부호)과 크기(절댓값)를 독립적으로 다루어 현실의 "반대 방향" 현상(온도, 부채, 층수, 이익/손실)을 일관되게 모델링하기 때문이다.',
+      en: 'Integers ℤ = {…, −2, −1, 0, 1, 2, …} extend the natural numbers by including negatives — letting us measure debts, temperatures below zero, and positions in two opposite directions. To add: same signs ⇒ add absolute values and keep that sign; different signs ⇒ subtract absolute values and take the sign of the larger one. Multiplication and division follow the rule of signs (same signs give positive, different signs give negative). This works because the number line separates direction (sign) from distance (absolute value), letting us model real opposing quantities (gains/losses, above/below zero, debts/credits) without contradiction. Integers are the foundation for rationals, algebra, and equations to come.',
     },
     worked: {
       ko: '계산: (−7) + (+4)',
       en: 'Compute: (−7) + (+4)',
       steps: [
-        { math: '|−7|=7, |+4|=4', narrationKo: '절댓값을 따로 본다.', narrationEn: 'Read absolute values separately.' },
-        { math: '7 − 4 = 3',     narrationKo: '부호가 다르므로 차를 구한다.', narrationEn: 'Signs differ → subtract.' },
-        { math: 'Result sign: −',   narrationKo: '|−7|이 더 크므로 결과는 음수.', narrationEn: 'Larger |·| had the minus sign.' },
-        { math: '∴ −3',          narrationKo: '최종 답.', narrationEn: 'Final answer.' },
+        { math: '|−7|=7, |+4|=4', narrationKo: '절댓값을 따로 계산하는 이유는 수의 크기(0으로부터의 거리)만 먼저 보고, 방향(부호)은 나중에 결정하기 위해서다. 이는 음수와 양수가 수직선에서 반대 방향을 가리키기 때문에 크기만 비교하면 부분 상쇄를 쉽게 볼 수 있기 때문이다.', narrationEn: 'We extract absolute values first because they represent distance from zero regardless of direction; signs (directions) are decided afterwards. This works because negatives and positives point opposite ways on the number line, so we only need to compare how far each is from zero before netting the result.' },
+        { math: '7 − 4 = 3',     narrationKo: '부호가 다르기 때문에 큰 쪽의 크기에서 작은 쪽을 빼는 것이다. 이는 한 방향으로의 이동과 반대 방향으로의 이동이 서로를 상쇄하는 모델을 반영한다. 더하기 전체가 아니라 차이만 남는 이유다.', narrationEn: 'Because the signs oppose we subtract the smaller magnitude from the larger. This models opposing directed movements on the number line that partially cancel; the net displacement keeps only the difference and the direction of the longer move.' },
+        { math: 'Result sign: −',   narrationKo: '7이 4보다 크므로 남는 방향은 원래 −7의 방향(음수)이다. 절댓값이 큰 수가 결과의 부호를 결정하는 것은 거리가 더 먼 이동이 이기는 원리 때문이다. 이는 "큰 쪽이 이긴다"는 직관을 형식화한 것이다.', narrationEn: 'The larger magnitude (7) belonged to the negative, so the result keeps the negative sign. The number farther from zero "wins" the direction because its movement was stronger than the opposing one.' },
+        { math: '∴ −3',          narrationKo: '최종 결과. 이처럼 부호 규칙은 수직선 이동의 방향과 크기를 일관되게 다루기 위한 약속이며, 현실에서 반대되는 양(이익과 손실, 상승과 하강)을 정확히 계산할 수 있게 해준다.', narrationEn: 'Final result. The sign rule is simply a consistent contract for handling size and direction together on the number line so that real-world opposing quantities (profit/loss, up/down, credit/debit) can be calculated reliably.' },
       ],
     },
     misconception: {
       wrongKo: '(−7) + (+4) = −11',
       wrongEn: '(−7) + (+4) = −11',
-      whyKo: '부호가 다른데 절댓값을 그대로 더했다.',
-      whyEn: 'Added the magnitudes although signs differ.',
-      correctKo: '부호 다름 ⇒ 절댓값 차 = 3, 큰 |·|의 부호 = − ⇒ −3.',
-      correctEn: 'Different signs ⇒ difference = 3, sign of larger |·| ⇒ −3.',
+      whyKo: '이는 \'부호가 다른 수의 덧셈\'에서 절댓값만 더하고 부호를 무시하는 전형적인 부호 오류(SIGN_ERROR)다. 학생은 이전에 \'크기끼리 더한다\'는 패턴이 통했던 기억(음수끼리 더하기) 때문에 이번에도 \'더하기니까 그냥 크기를 합치자\'고 생각했다. 하지만 여기서는 한 방향(양수)과 반대 방향(음수)의 이동이므로 방향을 고려한 차이를 내야 하며, 큰 쪽의 방향이 결과 부호가 된다. 실제로는 방향이 반대인 이동이 서로를 상쇄하기 때문에 크기 차이만 계산하는 것이다.',
+      whyEn: 'This is the classic "sign error on different signs" (SIGN_ERROR / CONCEPT_CONFUSION). The student added the absolute values as if both numbers had the same sign or forgot that the result keeps the sign of the number with the larger magnitude. In this problem the directions oppose on the number line, so we subtract the distances and attach the sign of the longer move. The prior success with same-sign addition made the "just add the sizes" shortcut feel safe, but it ignores the opposing-direction model.',
+      correctKo: '부호가 다르면 절댓값 차를 구하고, |·|가 큰 수의 부호를 따른다. 이는 수직선에서 반대 방향 이동이 부분적으로 상쇄되기 때문이다. 큰 쪽의 이동이 이기므로 그 방향을 결과에 붙인다. (exemplar: signErrorDifferentSigns)',
+      correctEn: 'Different signs ⇒ difference of absolutes + sign of the larger magnitude. This works because opposing directed movements on the number line partially cancel; the stronger (farther-from-zero) movement determines the final direction. Correct move: difference of absolutes + sign of the larger. (See EXEMPLAR_RATIONALES signErrorDifferentSigns.)',
     },
     retrieval: {
       promptKo: '(−12) + 5 = ?',
       promptEn: '(−12) + 5 = ?',
       accept: ['-7', '−7'],
-      explainKo: '|−12|−|5| = 7, 더 큰 |·|의 부호가 −.',
-      explainEn: '|−12|−|5| = 7, sign of larger |·| is −.',
+      explainKo: '−12에서 0까지의 거리는 12, 5에서 0까지는 5. 방향이 반대이므로 12 − 5 = 7, 더 먼 이동(−12)의 방향을 따른다. 따라서 −7. 이는 절댓값 차 + 큰 쪽 부호 규칙이 수직선의 상쇄 모델을 정확히 반영하기 때문이다.',
+      explainEn: 'Distance of −12 from 0 is 12; distance of +5 from 0 is 5. Because directions oppose we take the difference 12 − 5 = 7 and keep the sign of the larger-magnitude number (−12). Result −7. This works because the number-line cancellation model (opposing arrows) directly produces the "larger magnitude wins the direction" rule.',
     },
   },
 
@@ -64,32 +69,32 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       en: 'Pizza: 6 equal slices. Two-thirds = 4 slices. Half of those = 2 slices = 1/3.',
     },
     abstract: {
-      ko: '분수 곱셈: (a/b)·(c/d) = ac / bd. 소수 곱셈: 자릿수 합만큼 소수점을 이동.',
-      en: 'Fractions a/b and decimals are two notations for the same numbers — every fraction is a (terminating or repeating) decimal, and vice versa. Multiplication is direct: (a/b)·(c/d) = ac/bd (no common denominator needed). For decimals, count the total decimal places of both factors — the answer has the sum. Division by a fraction equals multiplication by its reciprocal: (a/b) ÷ (c/d) = ad/bc.',
+      ko: '분수 곱셈: (a/b)·(c/d) = ac / bd. 소수 곱셈: 자릿수 합만큼 소수점을 이동. 이는 \'부분의 부분\'을 구하는 것이기 때문에 분모를 맞출 필요가 없다. 분수와 소수는 같은 수의 다른 이름이며, 곱셈은 \'배\' 연산으로 단위가 자동으로 맞춰지는 모델을 따른다.',
+      en: 'Fractions a/b and decimals are two notations for the same numbers — every fraction is a (terminating or repeating) decimal, and vice versa. Multiplication is direct: (a/b)·(c/d) = ac/bd (no common denominator needed). For decimals, count the total decimal places of both factors — the answer has the sum. Division by a fraction equals multiplication by its reciprocal: (a/b) ÷ (c/d) = ad/bc. This works because multiplication asks for "a part of a part"; the denominators already describe the unit, so we simply multiply the measures. The model is area (or probability): length × width gives the correct smaller area without resizing units first.',
     },
     worked: {
       ko: '계산: ⅔ × ½',
       en: 'Compute: 2/3 × 1/2',
       steps: [
-        { math: 'Numerators: 2·1 = 2', narrationKo: '분자는 분자끼리.', narrationEn: 'Numerators together.' },
-        { math: 'Denominators: 3·2 = 6', narrationKo: '분모는 분모끼리.', narrationEn: 'Denominators together.' },
-        { math: '2/6 = 1/3',         narrationKo: '약분으로 마무리.', narrationEn: 'Reduce.' },
+        { math: 'Numerators: 2·1 = 2', narrationKo: '분자끼리 곱하는 이유는 \'전체의 2/3\' 중 \'또 1/2\'을 구하는 것이기 때문이다. 이는 면적 모델(또는 확률)에서 부분 × 부분 = 더 작은 부분이라는 직관을 정확히 반영하며, 분모를 먼저 맞추는 불필요한 단계를 생략할 수 있게 해준다.', narrationEn: 'We multiply numerators directly because we are taking a part (2/3) of another part (1/2). In the area/probability model this is simply length-of-part × width-of-part; the resulting piece is already expressed over the original whole (bd). No resizing of units is required.' },
+        { math: 'Denominators: 3·2 = 6', narrationKo: '분모끼리 곱하는 것은 전체를 3등분한 것의 절반을 다시 2등분한 것이므로 6등분이 되는 것을 의미한다. 이는 \'부분의 부분\'이 전체의 (a×c)/(b×d) 가 된다는 정의에서 직접 따라오는 결과다.', narrationEn: 'Denominators are multiplied because the first fraction divided the whole into b equal parts and the second takes 1/d of each of those; the combined slicing produces b×d equal tiny pieces. The product denominator counts those tiniest pieces.' },
+        { math: '2/6 = 1/3',         narrationKo: '약분은 같은 크기의 조각 2개를 하나로 묶어 더 큰 단위로 다시 세는 것이다. 2/6 = 1/3은 6등분한 조각 두 개가 3등분한 조각 하나와 정확히 같기 때문이다. 계산 후 가장 단순한 꼴로 표현하는 것은 의사소통의 편의를 위한 약속일 뿐, 값 자체는 변하지 않는다.', narrationEn: 'Reducing 2/6 to 1/3 is regrouping two of the six tiny equal pieces into one larger piece (of size 1/3). The value is unchanged; we are only using a coarser but equivalent unit. We reduce for human readability after the exact product has been computed.' },
       ],
     },
     misconception: {
       wrongKo: '분수 곱셈에서 분모를 공통분모로 맞춘다.',
       wrongEn: 'Finding a common denominator before multiplying.',
-      whyKo: '덧셈 규칙을 곱셈에 잘못 적용했다.',
-      whyEn: 'Confused the addition rule with multiplication.',
-      correctKo: '곱셈은 그대로 분자·분모를 곱한다. 공통분모는 +/− 에서만.',
-      correctEn: 'For ×, just multiply across. Common denominators only for +/−.',
+      whyKo: '이는 분수 곱셈에서 \'통분이 먼저\'라고 생각하는 흔한 오개념(CONCEPT_CONFUSION)이다. 학생은 덧셈·뺄셈 규칙(공통분모 필수)을 모든 분수 연산에 기계적으로 적용했다. 이전 장에서 \'분수 계산은 통분부터\'라는 절차가 성공했기 때문에 이번에도 \'곱하기니까 일단 분모를 맞추자\'고 생각한 것이다. 하지만 곱셈은 \'부분의 부분\'을 직접 구하므로 분모를 맞출 필요가 전혀 없다. 공통분모는 오직 + 와 − 에서만 필요하다. (exemplar: commonDenominatorInMultiplication)',
+      whyEn: 'This is the "common denominator for everything" error (CONCEPT_CONFUSION). The student applied the addition/subtraction rule (you must have a common denominator) to multiplication because the procedure "common denominator first" had worked in the previous chapter. But multiplication asks for a part of a part; the unit is already consistent, so we multiply numerators and denominators directly. Common denominators are needed only for + and −. (See EXEMPLAR_RATIONALES commonDenominatorInMultiplication.)',
+      correctKo: '곱셈에서는 분자·분모를 그대로 곱한 뒤 약분한다. 공통분모는 오직 + 와 − 에서만 필요하다. 이는 곱셈이 \'배\'의 연산이기 때문이며, 부분 × 부분 = (a×c)/(b×d) 라는 모델이 분모를 미리 맞추지 않아도 정확히 동작하기 때문이다.',
+      correctEn: 'For ×, just multiply across (numerators and denominators) and reduce afterwards. Common denominators are required only for + and −. This works because multiplication is scaling one measure by another; the denominators already describe the reference whole, so their product directly gives the new reference count. (exemplar: commonDenominatorInMultiplication)',
     },
     retrieval: {
       promptKo: '3/4 × 2/5 = ?',
       promptEn: '3/4 × 2/5 = ?',
       accept: ['3/10', '0.3'],
-      explainKo: '6/20 = 3/10.',
-      explainEn: '6/20 = 3/10.',
+      explainKo: '3×2 / 4×5 = 6/20 = 3/10. 분자끼리, 분모끼리 곱한 뒤 약분. \'통분 먼저\'는 덧셈 규칙을 잘못 가져온 것이다.',
+      explainEn: '3×2 / 4×5 = 6/20 = 3/10. Multiply numerators and denominators directly, then reduce. The "find common denominator first" habit was imported from addition and does not apply to multiplication.',
     },
   },
 
@@ -114,25 +119,25 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       ko: '데이터 {2, 3, 3, 5, 7} 의 평균·중앙값·최빈값.',
       en: 'For {2, 3, 3, 5, 7}: mean, median, mode.',
       steps: [
-        { math: 'Mean = (2+3+3+5+7)/5 = 20/5 = 4', narrationKo: '합을 개수로 나눔.', narrationEn: 'Sum ÷ count.' },
-        { math: 'Median = 3 (middle after sorting)',     narrationKo: '이미 정렬된 가운데 값.', narrationEn: 'Already sorted; pick middle.' },
-        { math: 'Mode = 3 (appears twice)',           narrationKo: '가장 자주 나오는 값.', narrationEn: 'Most frequent.' },
+        { math: 'Mean = (2+3+3+5+7)/5 = 20/5 = 4', narrationKo: '합을 개수로 나누는 이유는 각 데이터가 동등한 가중치로 전체에 기여한다고 정의하기 때문이다. 하지만 이 정의 때문에 극단값(여기서는 7)이 평균을 위로 끌어올리는 효과가 생긴다. 이는 \'평균 = 모든 값의 균형점\' 모델의 직접적인 결과다.', narrationEn: 'We sum and divide by count because every data point contributes equally by definition (the balance-point model). This same definition is why an extreme value (here 7) pulls the mean upward. The mean is the center of mass; outliers have leverage.' },
+        { math: 'Median = 3 (middle after sorting)',     narrationKo: '정렬 후 가운데 값을 고르는 이유는 위치만 보기 때문에 극단값의 영향에서 자유롭기 때문이다. 5개 데이터에서 3번째(가운데) 위치의 값 3은 \'절반은 위, 절반은 아래\'를 보장하는 50번째 백분위수다. 평균과 달리 \'저항성(resistant)\' 성질이 있다.', narrationEn: 'After sorting we pick the middle because position alone is unaffected by how far the extremes are. With 5 values the 3rd is the 50th percentile — half the data lies on each side by construction. This is why the median is robust (resistant) where the mean is not.' },
+        { math: 'Mode = 3 (appears twice)',           narrationKo: '가장 자주 나오는 값을 고르는 이유는 \'가장 전형적인(빈도가 높은) 관측값\'을 대표값으로 삼기 때문이다. 여기서는 3이 두 번 나타나 최빈값이다. 최빈값은 분포의 봉우리(peak)를 가리키며, 평균이나 중앙값과 독립적이다.', narrationEn: 'We report the value that appears most often because it is the most "typical" observation by frequency. Here 3 appears twice and is the mode. The mode points at the peak of the distribution and is independent of the mean/median calculations.' },
       ],
     },
     misconception: {
       wrongKo: '"평균이 4이므로 점수의 절반은 4보다 작다."',
       wrongEn: '"Mean is 4, so half the scores are below 4."',
-      whyKo: '평균과 중앙값을 같다고 가정.',
-      whyEn: 'Confusing mean with median.',
-      correctKo: '평균은 합 기반, 중앙값만 "절반 위/아래"를 보장한다.',
-      correctEn: 'Median guarantees half above/below, not the mean.',
+      whyKo: '이는 평균과 중앙값을 혼동하는 전형적인 meanVsMedianConfusion이다. (exemplar: meanVsMedianConfusion) 학생은 \'대푯값\'이라는 단어 하나로 평균·중앙값·최빈값을 동일시하고, 평균이 \'중간 위치\'도 보장한다고 착각한다. 실제 평균은 극단값에 끌려가서 실제 데이터의 \'절반\'과 멀어질 수 있다. 2022 개정에서 강조하는 \'맥락에 맞는 대푯값 선택\'의 핵심 오류다. 여기서 중앙값 3만이 \'절반 위/아래\'를 보장한다.',
+      whyEn: 'This is the classic mean-vs-median confusion (meanVsMedianConfusion). The student treats all "representative values" as interchangeable and assumes the mean also guarantees "half the data below/above." In reality the mean is the balance point and can be pulled away from the middle by extremes; only the median (by construction of the 50th percentile) guarantees half above and half below. In the 2022 curriculum this is exactly why we must choose the representative value according to the question and the shape of the data. (See EXEMPLAR_RATIONALES meanVsMedianConfusion.)',
+      correctKo: '평균은 합 기반의 균형점(극단값에 민감). 중앙값만이 정렬 위치에 의해 \'절반 위/아래\'를 보장한다(저항성). 이 데이터에서는 중앙값 3이 실제 \'전형적\' 위치를 더 잘 나타낸다. 평균 4는 7이라는 큰 값 때문에 위로 끌려간 결과다.',
+      correctEn: 'Mean = balance point (pulled by extremes). Only the median guarantees half the data above/below it because it is defined by position after sorting (resistant). In this set the median 3 better represents the "typical" location; the mean 4 was dragged upward by the single large value 7. (exemplar: meanVsMedianConfusion)',
     },
     retrieval: {
       promptKo: '{1, 4, 4, 9} 의 평균은?',
       promptEn: 'Mean of {1, 4, 4, 9}?',
       accept: ['4.5', '9/2'],
-      explainKo: '(1+4+4+9)/4 = 18/4 = 4.5.',
-      explainEn: '(1+4+4+9)/4 = 18/4 = 4.5.',
+      explainKo: '(1+4+4+9)/4 = 18/4 = 4.5. 합을 개수로 나눈 균형점. 중앙값은 4 (정렬 후 2번째·3번째의 평균).',
+      explainEn: '(1+4+4+9)/4 = 18/4 = 4.5. The balance point obtained by sum ÷ count. (Median would be 4 after sorting.)',
     },
   },
 

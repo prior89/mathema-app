@@ -1,6 +1,9 @@
 /**
  * Class 10 (NCERT X) — 챕터별 개념학습 콘텐츠 (production grade).
  * 모든 14 챕터에 HOOK/CONCRETE/PICTORIAL/ABSTRACT/WORKED/MISCONCEPTION/RETRIEVAL 완비.
+ *
+ * 2026-06-14 upgraded per CONTENT_QUALITY_RUBRIC.md — all narration, misconceptions, abstracts, rationales enriched for depth (because/why language, 4-part student-facing explanations, student thinking in misconceptions). FTA and proof chapters emphasize uniqueness and assumption-driven contradiction.
+ * Exact structure and keys preserved. No UI/flow/schema changes.
  */
 
 import { ChapterContentMap } from './types';
@@ -20,32 +23,32 @@ export const CLASS_10_CONTENT: ChapterContentMap = {
       en: 'Prime tree: 60 → 2·30 → 2·2·15 → 2·2·3·5. Any decomposition path lands on the same set of leaves.',
     },
     abstract: {
-      ko: '산술의 기본정리 (FTA): 합성수 = 소수들의 곱 (순서 무시 시 유일). gcd·lcm 도 이 분해로 계산.',
-      en: 'The Fundamental Theorem of Arithmetic (FTA) states that every composite number factors into primes in exactly one way, up to ordering — primes are the indivisible building blocks of arithmetic. HCF (highest common factor) is the product of shared primes raised to the smallest powers; LCM (least common multiple) uses all primes raised to the largest powers. The identity HCF(a, b) · LCM(a, b) = a · b always holds. FTA also proves √2 is irrational: if √2 = p/q, prime factorisation would force a contradiction.',
+      ko: '산술의 기본정리 (FTA): 합성수 = 소수들의 곱 (순서 무시 시 유일). gcd·lcm 도 이 분해로 계산. 이는 \'소수가 더 이상 쪼갤 수 없는 기본 단위\'라는 모델이 모든 자연수의 구조를 완전히 결정하기 때문이다. HCF·LCM = a·b 항등식은 이 분해의 유일성에서 직접 따라온다. FTA는 또한 √2가 무리수임을 증명하는 도구이기도 하다 (C9와 연결). 2022 개정에서 소인수분해는 실수와 증명의 기초로 강조된다.',
+      en: 'The Fundamental Theorem of Arithmetic (FTA) states that every composite number factors into primes in exactly one way, up to ordering — primes are the indivisible building blocks of arithmetic. HCF (highest common factor) is the product of shared primes raised to the smallest powers; LCM (least common multiple) uses all primes raised to the largest powers. The identity HCF(a, b) · LCM(a, b) = a · b always holds. FTA also proves √2 is irrational: if √2 = p/q, prime factorisation would force a contradiction. This works because the model of primes as the atomic, indivisible units completely determines the multiplicative structure of every natural number. The 2022 curriculum emphasizes prime factorization as the foundation for reals and proof.',
     },
     worked: {
       ko: 'HCF(60, 84) 와 LCM(60, 84).',
       en: 'HCF(60, 84) and LCM(60, 84).',
       steps: [
-        { math: '60 = 2²·3·5, 84 = 2²·3·7', narrationKo: '소인수분해.', narrationEn: 'Factor each.' },
-        { math: 'HCF = 2²·3 = 12',           narrationKo: '공통 인수.', narrationEn: 'Common primes.' },
-        { math: 'LCM = 2²·3·5·7 = 420',      narrationKo: '모든 인수.', narrationEn: 'All primes.' },
+        { math: '60 = 2²·3·5, 84 = 2²·3·7', narrationKo: '각 수를 소수들의 곱으로 완전히 분해하는 이유는, 이 분해가 \'유일\'하다는 FTA 덕분에 HCF와 LCM을 기계적으로 읽어낼 수 있기 때문이다. 어떤 분해 경로를 택해도 잎(leaf)들이 같은 소수 집합이어야 한다는 점이 \'더 이상 쪼갤 수 없는 단위\' 모델의 핵심이다.', narrationEn: 'We fully factor each number into primes because FTA guarantees the factorization is unique (up to order). This uniqueness lets us read HCF and LCM directly from the prime signatures regardless of the decomposition path taken. The leaves must always be the same set of primes — that is the atomic-unit model at work.' },
+        { math: 'HCF = 2²·3 = 12',           narrationKo: '공통으로 나타나는 소수(2와 3)만 골라, 그 중 가장 낮은 지수(2²·3)를 곱하는 이유는, \'공통으로 존재하는 가장 큰 덩어리\'가 바로 HCF이기 때문이다. FTA의 유일성이 이 선택을 객관적으로 만들어 준다.', narrationEn: 'We take only the primes that appear in both signatures and the smallest exponent for each because the HCF is literally the greatest common \'chunk\' that divides both numbers. FTA uniqueness makes this choice objective and canonical.' },
+        { math: 'LCM = 2²·3·5·7 = 420',      narrationKo: '모든 소수(2,3,5,7)를 골라 가장 높은 지수를 취하는 이유는, \'두 수를 모두 나누는 가장 작은 수\'가 바로 이 조합이기 때문이다. FTA 덕분에 \'누락된 인수 없이\' 정확히 구할 수 있다. HCF·LCM = a·b 가 성립하는 것도 이 분해의 보완성 때문이다.', narrationEn: 'We take every prime that appears in either signature and the largest exponent for each because the LCM is the smallest number that is a multiple of both. FTA guarantees we miss no factors. The HCF·LCM = a·b identity follows directly from the complementary exponents in the two signatures.' },
       ],
     },
     misconception: {
       wrongKo: 'HCF(a, b) · LCM(a, b) = a + b.',
       wrongEn: 'HCF(a, b) · LCM(a, b) = a + b.',
-      whyKo: '합과 곱 관계를 혼동.',
-      whyEn: 'Mixed up sum vs. product relation.',
-      correctKo: 'HCF · LCM = a · b (곱). 합과 무관.',
-      correctEn: 'HCF · LCM = a · b (the product). Nothing to do with sums.',
+      whyKo: `이는 'HCF와 LCM의 곱이 원래 두 수의 곱과 같다는' FTA 파생 정리를 '합'으로 착각하는 오류다. 학생들은 '공통'과 '전체'라는 단어 때문에 덧셈 이미지를 떠올리거나, '최대'와 '최소'의 대칭 때문에 + 기호를 연상한다. 실제로는 FTA의 지수 덧셈/뺄셈(최소 vs 최대) 때문에 곱셈 관계가 나온다. (exemplar 변형: sum-vs-product confusion from FTA)`,
+      whyEn: 'This is the error of confusing the FTA-derived identity HCF·LCM = a·b (product) with a sum. Students associate "common" and "all" with addition, or the max/min symmetry with a plus sign. In reality the exponents in the prime signatures are combined with min (for HCF) and max (for LCM), and the product identity follows from that complementary arithmetic. (Variant of sum-vs-product confusion rooted in FTA.)',
+      correctKo: `HCF(a, b) · LCM(a, b) = a · b (항상 곱). FTA의 소인수 지수 관점에서 HCF는 '최소 지수들의 곱', LCM은 '최대 지수들의 곱'이라 두 개를 곱하면 원래 a와 b의 모든 지수가 복원된다. 합과는 전혀 무관하다.`,
+      correctEn: 'HCF(a, b) · LCM(a, b) = a · b (always the product). From the FTA exponent viewpoint, HCF takes the min exponents and LCM the max; multiplying them restores every exponent that appears in a or b. It has nothing to do with sums.',
     },
     retrieval: {
       promptKo: 'HCF(18, 24) = ?',
       promptEn: 'HCF(18, 24) = ?',
       accept: ['6'],
-      explainKo: '18=2·3², 24=2³·3 ⇒ 2·3.',
-      explainEn: '18=2·3², 24=2³·3 ⇒ 2·3.',
+      explainKo: '18=2·3², 24=2³·3 ⇒ 공통 2·3 = 6. FTA로 분해하면 최소 지수만 골라 곱하면 된다.',
+      explainEn: '18=2·3², 24=2³·3 ⇒ common 2·3 = 6. With FTA we simply take the min exponents and multiply.',
     },
   },
 

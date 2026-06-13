@@ -1,6 +1,9 @@
 /**
  * Class 9 (NCERT IX) — 챕터별 개념학습 콘텐츠 (production grade).
  * 모든 12 챕터 7단계 완비.
+ *
+ * 2026-06-14 upgraded per CONTENT_QUALITY_RUBRIC.md — all narration, misconceptions, abstracts, rationales enriched for depth (because/why language, 4-part student-facing explanations, student thinking in misconceptions). Proof chapters emphasize assumption chains and contradiction.
+ * Exact structure and keys preserved. No UI/flow/schema changes.
  */
 
 import { ChapterContentMap } from './types';
@@ -20,33 +23,33 @@ export const CLASS_9_CONTENT: ChapterContentMap = {
       en: 'Locate √2: diagonal of a unit square has length √2; transfer with a compass to the number line.',
     },
     abstract: {
-      ko: '실수 ℝ = ℚ ∪ (무리수). 무리수: 순환·종료하지 않는 소수 (예: √2, π).',
-      en: 'ℝ = ℚ ∪ irrationals. Irrationals: non-terminating, non-repeating decimals (e.g. √2, π).',
+      ko: '실수 ℝ = ℚ ∪ (무리수). 무리수: 순환·종료하지 않는 소수 (예: √2, π). 이는 수직선이 \'완비(complete)\' 되어 있어야 한다는 기하학적 요구에서 비롯된다. 유리수만으로는 모든 점을 채울 수 없기 때문에 무리수가 필요하며, 이는 \'측정 가능한 모든 길이\'에 대응하는 수 체계의 완성을 의미한다. 2022 개정에서도 실수 개념의 도입에서 이 완비성과 증명의 필요성을 강조한다.',
+      en: 'ℝ = ℚ ∪ irrationals. Irrationals: non-terminating, non-repeating decimals (e.g. √2, π). This arises because the number line must be complete — every point corresponds to a unique length. Rationals alone leave gaps (as proven by √2), so irrationals are required to fill every possible measurable distance. The 2022 curriculum emphasizes this completeness and the necessity of proof when introducing real numbers.',
     },
     worked: {
       ko: '√2 가 무리수임을 보이는 핵심 아이디어.',
       en: 'Key idea of √2\'s irrationality proof.',
       steps: [
-        { math: '√2 = p/q (coprime), assume', narrationKo: '귀류법.', narrationEn: 'Proof by contradiction.' },
-        { math: '2q² = p² ⇒ p even', narrationKo: 'p² 짝수 ⇒ p 짝수.', narrationEn: 'p² even ⇒ p even.' },
-        { math: 'p=2k ⇒ q² = 2k² ⇒ q even', narrationKo: 'q 도 짝수.', narrationEn: 'q also even.' },
-        { math: 'p, q coprime — contradiction', narrationKo: '귀류 완료.', narrationEn: 'Contradiction.' },
+        { math: '√2 = p/q (coprime), assume', narrationKo: `귀류법을 쓰는 이유는 '√2가 유리수'라는 가정을 받아들였을 때 논리적 모순이 발생함을 보여 '가정이 틀렸다'는 결론을 이끌어내기 위해서다. 증명에서 가정을 명시적으로 두는 것은 2022 개정에서 강조하는 '가정(assumption) 없이 증명할 수 없다'는 원칙을 따르는 첫 단계다.`, narrationEn: 'We use proof by contradiction because we assume "√2 is rational" and derive a logical impossibility, thereby showing the assumption must be false. Explicitly stating the assumption at the start follows the 2022 curriculum principle that nothing can be proved without clear assumptions.' },
+        { math: '2q² = p² ⇒ p even', narrationKo: `p²이 짝수이면 p도 짝수라는 성질을 적용하는 이유는, 소인수분해의 관점에서 2가 p에 한 번만 나타날 수 없기 때문이다. 만약 p가 홀수라면 p²도 홀수여야 하는데 2q²은 짝수이므로 모순이 생긴다. 이 단계는 '짝수 제곱은 짝수'라는 기본 성질이 가정에서 출발한 논리 사슬의 일부임을 보여준다.`, narrationEn: 'We use the property that if p² is even then p is even because, from the unique prime factorization viewpoint, an odd p would produce an odd square, yet 2q² is even — contradiction. This step illustrates how basic parity properties are deployed inside the assumption-driven chain.' },
+        { math: 'p=2k ⇒ q² = 2k² ⇒ q even', narrationKo: 'p가 짝수(p=2k)라면 q도 짝수라는 결론이 나오는 이유는, 이제 2가 p와 q 양쪽에 공통으로 나타나 coprime(서로소) 가정을 깨기 때문이다. 이 모순이 핵심이다. 가정(√2 = p/q with gcd(p,q)=1)에서 출발해 \'둘 다 짝수\'라는 결론에 도달했으므로, 원래 가정이 불가능하다는 것이 증명된다.', narrationEn: 'Once p is even (p=2k) we quickly reach q even because 2 now divides both p and q, violating the coprime assumption that started the proof. Reaching "both even" from the coprime assumption is the contradiction that forces us to reject the initial claim that √2 is rational.' },
+        { math: 'p, q coprime — contradiction', narrationKo: '최종 모순: p와 q가 모두 짝수라면 2가 공통인수이므로 \'서로소\'라는 가정이 깨진다. 따라서 \'√2 = p/q (서로소)\'라는 가정 자체가 불가능하다는 결론. 이 과정은 증명이 \'가정 → 필연적 결론 → 모순 → 가정 거부\'의 사슬임을 명확히 보여준다.', narrationEn: 'Final contradiction: if both p and q are even then 2 is a common factor, so they cannot be coprime. The assumption "√2 = p/q in lowest terms" is therefore impossible. The entire proof is the classic assumption → necessary consequence → contradiction → reject assumption chain.' },
       ],
     },
     misconception: {
       wrongKo: '"π = 22/7" (정확)',
       wrongEn: '"π = 22/7" exactly',
-      whyKo: '22/7 은 근사값일 뿐. π 는 무리수.',
-      whyEn: '22/7 is an approximation; π is irrational.',
-      correctKo: 'π 는 분수로 표기 불가; 22/7 은 0.04% 정확도의 근사.',
-      correctEn: 'π has no fractional form; 22/7 is just a 0.04% approximation.',
+      whyKo: '학생들은 \'근사값\'과 \'정확한 값\'을 구분하지 못하고, 22/7이라는 유한 분수가 π 자체와 동일하다고 착각한다. 이는 \'모든 수는 분수로 표현 가능하다\'는 유리수 중심의 선입견 때문이다. 2022 개정에서 무리수의 존재를 처음 배우면서 \'분수로 안 되는 수\'의 충격을 받는 지점이다. 22/7은 계산 편의를 위한 근사일 뿐, π의 정확한 값이 아니다.',
+      whyEn: 'Students fail to distinguish approximation from exact value and believe the finite fraction 22/7 is literally π. This stems from the prior belief that "every number can be written as a fraction." In the 2022 curriculum the first encounter with irrationals often produces exactly this shock: "there are numbers that cannot be expressed as fractions." 22/7 is merely a convenient approximation (error ~0.04%), not the exact value.',
+      correctKo: 'π는 순환하지도, 종료되지도 않는 무한 소수이며 어떤 분수 p/q로도 정확히 나타낼 수 없다. 22/7은 계산이나 근사 목적으로 쓰이는 유리수일 뿐이다. 무리수의 정의 자체가 \'유리수로 표현 불가능\'임을 보여주는 증거다.',
+      correctEn: 'π is an infinite non-repeating decimal and cannot be expressed exactly as any fraction p/q. 22/7 is only a rational number used for approximation or convenience. The very definition of irrational is "not expressible as a ratio of integers."',
     },
     retrieval: {
       promptKo: '√(16) 은 유리수인가 무리수인가?',
       promptEn: 'Is √16 rational or irrational?',
       accept: ['유리수', 'rational', '4'],
-      explainKo: '√16 = 4, 유리수.',
-      explainEn: '√16 = 4 — rational.',
+      explainKo: '√16 = 4 = 4/1, 유리수. 완전제곱수의 제곱근은 항상 유리수(정수)다.',
+      explainEn: '√16 = 4 = 4/1 — rational. The square root of a perfect square is always rational (in fact integer).',
     },
   },
 

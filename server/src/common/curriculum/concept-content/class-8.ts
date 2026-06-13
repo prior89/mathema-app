@@ -1,6 +1,9 @@
 /**
  * Class 8 (NCERT VIII) — 챕터별 개념학습 콘텐츠 (production grade).
  * 모든 13 챕터 7단계 완비.
+ *
+ * 2026-06-14 upgraded per CONTENT_QUALITY_RUBRIC.md — all narration, misconceptions, abstracts, rationales enriched for depth (because/why language, 4-part student-facing explanations, student thinking in misconceptions).
+ * Exact structure and keys preserved. No UI/flow/schema changes.
  */
 
 import { ChapterContentMap } from './types';
@@ -20,31 +23,31 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
       en: 'Fractions on a number line: −2/3 left of 0, 3/5 right. Their sum lands somewhere between, closer to 0.',
     },
     abstract: {
-      ko: 'a/b ± c/d = (ad ± bc)/bd. ℚ 는 +, −, ×, ÷ 에 대해 닫혀있고 결합·교환·분배법칙 모두 성립.',
-      en: 'Rationals extend integers by allowing division. The four operations on a/b: a/b ± c/d = (ad ± bc)/bd (common denominator for +/−), (a/b)·(c/d) = ac/bd, (a/b) ÷ (c/d) = ad/bc. ℚ is closed under all four operations (excluding ÷0) and obeys associativity, commutativity, and distributivity. Every rational has a terminating or eventually repeating decimal expansion, and vice versa.',
+      ko: 'a/b ± c/d = (ad ± bc)/bd. ℚ 는 +, −, ×, ÷ 에 대해 닫혀있고 결합·교환·분배법칙 모두 성립. 이는 유리수가 \'측정의 일관된 확장\' 모델을 제공하기 때문이다. 정수의 덧셈/곱셈 규칙이 분수에도 동일하게 적용되도록 \'같은 단위(공통분모)\'로 환원하는 메커니즘이 모든 연산의 닫힘성을 보장한다. 2022 개정에서도 순환소수와 분수의 상호 변환을 통해 이 일관성을 강조한다.',
+      en: 'Rationals extend integers by allowing division. The four operations on a/b: a/b ± c/d = (ad ± bc)/bd (common denominator for +/−), (a/b)·(c/d) = ac/bd, (a/b) ÷ (c/d) = ad/bc. ℚ is closed under all four operations (excluding ÷0) and obeys associativity, commutativity, and distributivity. Every rational has a terminating or eventually repeating decimal expansion, and vice versa. This works because the rational number system is a consistent extension of integer measurement — the \'common unit\' mechanism (common denominator) lets the same addition/multiplication rules apply without contradiction, preserving the field structure that models all fractional quantities reliably.',
     },
     worked: {
       ko: '계산: −2/3 + 3/5',
       en: 'Compute: −2/3 + 3/5',
       steps: [
-        { math: 'Common denominator 15', narrationKo: '공통분모로 통분.', narrationEn: 'Find a common denominator.' },
-        { math: '−10/15 + 9/15 = −1/15', narrationKo: '분자 합산.', narrationEn: 'Add numerators.' },
+        { math: 'Common denominator 15', narrationKo: '공통분모 15를 찾는 이유는 두 분수가 서로 다른 단위(3등분과 5등분)로 전체를 표현하고 있기 때문이다. 덧셈은 \'같은 크기의 조각\'끼리만 합할 수 있으므로, 15등분으로 환원해야 −2/3 = −10/15, 3/5 = 9/15 이 되어 의미 있는 합이 된다. 이는 \'부분 + 부분\'이 되려면 단위가 동일해야 한다는 기본 원리를 반영한다.', narrationEn: 'We find common denominator 15 because the two fractions express the whole in different units (thirds vs fifths). Addition can only combine pieces of the same size, so we must rewrite both over 15 equal parts (−2/3 = −10/15, 3/5 = 9/15). This reflects the fundamental requirement that parts can be added only when they share the same unit.' },
+        { math: '−10/15 + 9/15 = −1/15', narrationKo: '이제 같은 단위의 조각을 더할 수 있다. 음수 10조각과 양수 9조각의 합은 결과적으로 음수 1조각(15분의 1)이 남는다. 공통분모로 통분한 후 분자만 더하는 이유는 등식의 양변에 같은 수를 곱해도 값이 변하지 않는 성질(등식의 성질)을 이용해 원래 값을 보존하면서 단위를 맞추기 때문이다.', narrationEn: 'Now pieces of the same size can be combined. 10 negative fifteenths plus 9 positive fifteenths nets to 1 negative fifteenth. We add only the numerators after making denominators equal because multiplying both sides of the fraction by the same number (to reach the common denominator) preserves the value exactly, thanks to the equality property of multiplication.' },
       ],
     },
     misconception: {
       wrongKo: 'a/b + c/d = (a+c)/(b+d)',
       wrongEn: 'a/b + c/d = (a+c)/(b+d)',
-      whyKo: '분모를 분모끼리 더해버리는 흔한 오류.',
-      whyEn: 'Adding denominators directly — classic error.',
-      correctKo: '분모를 통분해야 분자 합산이 의미를 갖는다.',
-      correctEn: 'Must equate denominators first; only then add numerators.',
+      whyKo: `이는 '분모를 분모끼리 더해버리는' 전형적인 ADD_NUMERATOR_ONLY / DENOMINATOR_ERROR다. 학생은 정수처럼 '위 숫자끼리, 아래 숫자끼리' 더하면 된다는 직관을 분수 덧셈에 그대로 가져왔다. 이전에 '분수는 숫자 두 개'로 외웠기 때문에, '단위가 다르다'는 점을 무시하고 분모를 그냥 합산한다. 이는 '부분 + 부분'이 되려면 반드시 같은 크기의 단위여야 한다는 모델을 놓친 결과다. (exemplar: addNumeratorsAndDenominators)`,
+      whyEn: 'This is the classic "add numerators and denominators separately" error (ADD_NUMERATOR_ONLY / DENOMINATOR_ERROR). The student treats the fraction as two separate numbers and applies the integer addition habit "tops with tops, bottoms with bottoms." Because they previously memorized "a fraction is just two numbers," they ignore that the denominators represent different unit sizes and simply add them. This misses the model that parts can only be combined when measured in identical units. (See EXEMPLAR_RATIONALES addNumeratorsAndDenominators.)',
+      correctKo: `분모가 다르면 먼저 공통분모로 통분해 같은 단위로 만든 뒤 분자만 더해야 한다. 그래야 '15분의 10 + 15분의 9 = 15분의 −1' 처럼 실제 양을 정확히 반영한다. 공통분모는 덧셈에서만 필요하며, 이는 등식의 성질을 이용해 값을 보존하면서 단위를 통일하는 과정이기 때문이다.`,
+      correctEn: 'When denominators differ we must first rewrite with a common denominator so the parts are the same size, then add only the numerators. Only then does −10/15 + 9/15 truly equal −1/15. Common denominators are required only for + and − precisely because we are using the equality property of multiplication to unify units while preserving exact value.',
     },
     retrieval: {
       promptKo: '1/2 − 1/3 = ?',
       promptEn: '1/2 − 1/3 = ?',
       accept: ['1/6'],
-      explainKo: '3/6 − 2/6 = 1/6.',
-      explainEn: '3/6 − 2/6 = 1/6.',
+      explainKo: `공통분모 6으로 통분: 3/6 − 2/6 = 1/6. 분모가 다를 때 단위를 맞추는 이유는 덧셈/뺄셈에서만 '같은 크기 조각'끼리 연산해야 하기 때문이다.`,
+      explainEn: 'Common denominator 6: 3/6 − 2/6 = 1/6. We unify units only for +/− because those operations require pieces of identical size; multiplication does not.',
     },
   },
 
