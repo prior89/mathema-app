@@ -2075,3 +2075,16 @@ model SubscriptionEvent {
   @@index([subscriptionId, receivedAt])
   @@index([eventType])
 }
+
+/// System-level key/value store for bootstrap state we don't want to rebuild
+/// from scratch on every container start. The first user is
+/// ConceptLessonsBootstrap, which stores a stable hash of the seed content
+/// here so a deploy that genuinely changes a narration / fade flag / visual
+/// payload auto-triggers a full re-sync, while a deploy that only touched
+/// unrelated code skips the 1100+ query rebuild. Keep the surface narrow —
+/// this table is for internal sync state, not user-visible config.
+model SystemMetadata {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}

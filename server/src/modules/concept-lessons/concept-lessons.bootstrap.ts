@@ -1,9 +1,15 @@
+import { createHash } from 'crypto';
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { ConceptStepKind } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { NCERT_CHAPTERS } from '../../common/curriculum/ncert-chapters';
 import { CHAPTER_CONTENT, ConceptChapterContent } from '../../common/curriculum/concept-content';
 import { pickSequence } from '../../common/learning/concept-framework';
+
+/** SystemMetadata key for the stable content hash of CHAPTER_CONTENT. Versioned
+ *  so an intentional algorithm change (e.g. switching what we feed into the
+ *  hash) invalidates every existing prod stamp and forces one re-sync. */
+const CONCEPT_CONTENT_HASH_KEY = 'concept_content_hash_v1';
 
 /**
  * 부팅 시 ConceptLesson + ConceptStep 을 NCERT_CHAPTERS / CHAPTER_CONTENT 와 자동 동기화.
@@ -56,16 +62,37 @@ export class ConceptLessonsBootstrap implements OnModuleInit {
       units.map((u) => [u.name, u.id]),
     );
 
-    // 챕터 수가 일치하면 skip — 매 부팅 1100+ query 회피.
-    // 콘텐츠 변경을 즉시 반영하려면 환경 변수 FORCE_CONCEPT_SYNC=1 또는 `npm run db:seed`.
+    // Decide whether to skip sync. Three independent signals can force a
+    // re-run:
+    //   1) FORCE_CONCEPT_SYNC=1 env (manual override / break-glass).
+    //   2) row count is short — empty or partial DB, must seed.
+    //   3) the stable hash of CHAPTER_CONTENT differs from the value we
+    //      stamped on the previous successful sync — i.e. a seed file
+    //      genuinely changed (narration tweak, fade flag, new visualData).
+    // Otherwise skip to avoid the ~1100 query rebuild on every container
+    // start. Hash compare closes the silent-drift loophole that previously
+    // required FORCE_CONCEPT_SYNC=1 to be set on every deploy
+    // ([[antipatterns/seed_sync_skipped_by_row_count]] hit 2026-06-13).
     const contentVersion = `v${NCERT_CHAPTERS.length}.${Object.keys(CHAPTER_CONTENT).length}.${Object.keys(NCERT_EXCERPTS).length}`;
-    const existingCount = await this.prisma.conceptLesson.count();
+    const contentHash = computeContentHash();
+    const [existingCount, storedHashRow] = await Promise.all([
+      this.prisma.conceptLesson.count(),
+      this.prisma.systemMetadata.findUnique({ where: { key: CONCEPT_CONTENT_HASH_KEY } }),
+    ]);
     const force = process.env.FORCE_CONCEPT_SYNC === '1';
-    if (!force && existingCount >= NCERT_CHAPTERS.length) {
-      this.logger.log(`ConceptLessons already in sync (${existingCount}/${NCERT_CHAPTERS.length}, ${contentVersion}) — skipping. Set FORCE_CONCEPT_SYNC=1 to force.`);
+    const countOk = existingCount >= NCERT_CHAPTERS.length;
+    const hashMatches = storedHashRow?.value === contentHash;
+    const shortHash = (h?: string | null) => (h ? h.slice(0, 8) : 'none');
+    if (!force && countOk && hashMatches) {
+      this.logger.log(`ConceptLessons already in sync (${existingCount}/${NCERT_CHAPTERS.length}, ${contentVersion}, hash=${shortHash(contentHash)}) — skipping.`);
       return;
     }
-    this.logger.log(`Syncing ConceptLessons: ${existingCount} → ${NCERT_CHAPTERS.length} (${contentVersion})`);
+    const reason = force
+      ? 'FORCE_CONCEPT_SYNC=1'
+      : !countOk
+        ? `count ${existingCount}<${NCERT_CHAPTERS.length}`
+        : `hash ${shortHash(storedHashRow?.value)} → ${shortHash(contentHash)}`;
+    this.logger.log(`Syncing ConceptLessons: ${existingCount} → ${NCERT_CHAPTERS.length} (${contentVersion}, reason=${reason})`);
 
     let lessons = 0;
     let steps = 0;
@@ -123,8 +150,27 @@ export class ConceptLessonsBootstrap implements OnModuleInit {
       }
     }
 
-    this.logger.log(`ConceptLesson bootstrap complete: ${lessons} lessons, ${steps} steps.`);
+    // Stamp the hash of the content we just synced so the next deploy can
+    // short-circuit when nothing changed. Done after the sync loop so a
+    // partial failure (loop throws) leaves the previous stamp intact and
+    // the next boot retries the whole sync.
+    await this.prisma.systemMetadata.upsert({
+      where: { key: CONCEPT_CONTENT_HASH_KEY },
+      update: { value: contentHash },
+      create: { key: CONCEPT_CONTENT_HASH_KEY, value: contentHash },
+    });
+
+    this.logger.log(`ConceptLesson bootstrap complete: ${lessons} lessons, ${steps} steps (hash=${shortHash(contentHash)}).`);
   }
+}
+
+/** Stable SHA-256 of the seed content. JSON.stringify on a literal object
+ *  preserves insertion order in V8, and `concept-content` is built once per
+ *  process from typed object literals, so the same module bundle always
+ *  hashes to the same value. A false-positive change (key reordering, etc.)
+ *  costs one ~5s re-sync, never under-syncs. */
+function computeContentHash(): string {
+  return createHash('sha256').update(JSON.stringify(CHAPTER_CONTENT)).digest('hex');
 }
 
 // ---------- buildSteps (prisma/seed-concepts.ts 와 동일 로직 — production 동기화용) ----------
