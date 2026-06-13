@@ -11,14 +11,14 @@ import { BrandLogo } from '../components/Brand';
 import '../styles/onboarding.css';
 
 export default function GuardianConsentPage() {
-  const { refreshUser } = useAuth();
+  const { refreshUser, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useT();
   const qc = useQueryClient();
   const statusQ = useQuery({
     queryKey: ['guardian-consent-status'],
     queryFn: fetchGuardianConsentStatus,
-    refetchInterval: (q) => (q.state.data?.verified ? false : 10_000),
+    refetchInterval: (q) => (q.state.data?.verified ? false : 5_000),
   });
 
   useEffect(() => {
@@ -34,9 +34,13 @@ export default function GuardianConsentPage() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  /* Escape hatch (user feedback 2026-06-13): a typo'd parent email used to
+     trap the student — the waiting state only offered "resend". */
+  const [changingEmail, setChangingEmail] = useState(false);
 
   const status = statusQ.data;
-  const waiting = sent || (status?.requestStatus === 'PENDING' && !!status?.parentEmail);
+  const waiting = !changingEmail
+    && (sent || (status?.requestStatus === 'PENDING' && !!status?.parentEmail));
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,6 +50,7 @@ export default function GuardianConsentPage() {
     try {
       await requestGuardianConsent({ parentEmail: parentEmail.trim() });
       setSent(true);
+      setChangingEmail(false);
       await qc.invalidateQueries({ queryKey: ['guardian-consent-status'] });
       await refreshUser();
     } catch (ex: any) {
@@ -100,8 +105,21 @@ export default function GuardianConsentPage() {
                   <div className="alert success">
                     {t('guardianConsent.sent', { email: status?.parentEmail ?? parentEmail })}
                   </div>
+                  <p className="caption">{t('guardianConsent.autoAdvance')}</p>
                   <button type="button" className="btn text" disabled={busy} onClick={resend}>
                     {busy ? t('guardianConsent.sending') : t('guardianConsent.resend')}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn text"
+                    disabled={busy}
+                    onClick={() => {
+                      setParentEmail(status?.parentEmail ?? parentEmail);
+                      setSent(false);
+                      setChangingEmail(true);
+                    }}
+                  >
+                    {t('guardianConsent.changeEmail')}
                   </button>
                 </>
               ) : (
@@ -126,6 +144,14 @@ export default function GuardianConsentPage() {
 
               {err && waiting && <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>}
               <p className="caption" style={{ fontSize: 11.5 }}>{t('guardianConsent.policy')}</p>
+              <button
+                type="button"
+                className="btn text"
+                style={{ marginTop: 'auto', color: 'var(--p-muted)' }}
+                onClick={() => { void logout().then(() => navigate('/login', { replace: true })); }}
+              >
+                {t('guardianConsent.logout')}
+              </button>
             </div>
           </div>
         </div>

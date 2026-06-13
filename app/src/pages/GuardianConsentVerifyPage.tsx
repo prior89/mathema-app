@@ -1,8 +1,15 @@
+/* Guardian consent confirmation — the page a parent lands on from the
+ * consent email link. Rewritten 2026-06-13 (user feedback): it previously
+ * reused the login AuthShell (parents thought they hit a signup screen),
+ * auto-verified on page load (no affirmative action), and ended with a
+ * "go to sign in" link that funneled account-less parents into signup.
+ * Now: dedicated layout, explicit approve button, close-this-window end. */
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { post, get } from '../lib/api';
 import { useT } from '../lib/i18n';
-import { AuthShell } from './LoginPage';
+import { BrandLogo } from '../components/Brand';
+import '../styles/onboarding.css';
 
 type Preview = {
   childName: string;
@@ -17,45 +24,73 @@ export default function GuardianConsentVerifyPage() {
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [status, setStatus] = useState<'loading' | 'working' | 'success' | 'failed'>('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'working' | 'success' | 'failed'>('loading');
 
   useEffect(() => {
     if (!token) { setStatus('failed'); return; }
     get<Preview>(`/guardian-consent/preview?token=${encodeURIComponent(token)}`)
-      .then((p) => { setPreview(p); setStatus('working'); })
+      .then((p) => { setPreview(p); setStatus('ready'); })
       .catch(() => setStatus('failed'));
   }, [token]);
 
-  useEffect(() => {
-    if (status !== 'working' || !token) return;
+  const approve = () => {
+    if (status !== 'ready') return;
+    setStatus('working');
     post('/guardian-consent/verify', { token })
       .then(() => setStatus('success'))
       .catch(() => setStatus('failed'));
-  }, [status, token]);
-
-  const msg =
-    status === 'loading' || status === 'working' ? t('guardianConsent.verify.working')
-    : status === 'success' ? t('guardianConsent.verify.success')
-    : t('guardianConsent.verify.failed');
-
-  const alertClass =
-    status === 'success' ? 'alert success'
-    : status === 'failed' ? 'alert error'
-    : 'alert info';
+  };
 
   return (
-    <AuthShell title={t('guardianConsent.verify.title')} subtitle={t('app.brand')}>
-      {preview && status !== 'failed' && (
-        <p style={{ fontSize: 14, color: 'var(--p-muted)', marginBottom: 14 }}>
-          {t('guardianConsent.verify.forChild', { name: preview.childName })}
-        </p>
-      )}
-      <div className={alertClass} style={{ marginBottom: 14 }}>{msg}</div>
-      {status !== 'loading' && status !== 'working' && (
-        <div style={{ textAlign: 'center' }}>
-          <Link to="/login" className="link-primary">{t('guardianConsent.verify.goLogin')}</Link>
+    <div className="mathema-app">
+      <div className="mathema-viewport">
+        <div className="mathema-phone">
+          <div className="screen">
+            <div style={{ padding: '20px 24px 0' }}>
+              <BrandLogo size="sm" />
+            </div>
+            <div className="screen-body" style={{ gap: 18, paddingTop: 16 }}>
+              <div>
+                <span className="eyebrow">{t('guardianConsent.eyebrow')}</span>
+                <h2 className="title" style={{ marginTop: 8 }}>{t('guardianConsent.verify.title')}</h2>
+                {preview && status !== 'failed' && (
+                  <p className="subtitle">{t('guardianConsent.verify.forChild', { name: preview.childName })}</p>
+                )}
+              </div>
+
+              {status === 'loading' && (
+                <div className="alert info">{t('common.loading')}</div>
+              )}
+
+              {(status === 'ready' || status === 'working') && (
+                <>
+                  <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--p-ink-2)' }}>
+                    {t('guardianConsent.verify.intro')}
+                  </p>
+                  <button type="button" className="btn" disabled={status === 'working'} onClick={approve}>
+                    {status === 'working' ? t('guardianConsent.verify.working') : t('guardianConsent.verify.approve')}
+                  </button>
+                </>
+              )}
+
+              {status === 'success' && (
+                <>
+                  <div className="alert success">{t('guardianConsent.verify.success')}</div>
+                  <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--p-ink-2)' }}>
+                    {t('guardianConsent.verify.done')}
+                  </p>
+                </>
+              )}
+
+              {status === 'failed' && (
+                <div className="alert error">{t('guardianConsent.verify.failed')}</div>
+              )}
+
+              <p className="caption" style={{ fontSize: 11.5, marginTop: 'auto' }}>{t('guardianConsent.policy')}</p>
+            </div>
+          </div>
         </div>
-      )}
-    </AuthShell>
+      </div>
+    </div>
   );
 }

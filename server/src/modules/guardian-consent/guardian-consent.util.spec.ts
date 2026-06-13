@@ -1,5 +1,6 @@
 import {
   ageFromBirthDate,
+  birthDateFromAge,
   requiresGuardianConsent,
   requiresGuardianConsentFromAge,
   resolveConsentMethod,
@@ -35,6 +36,27 @@ describe('guardian-consent.util', () => {
     expect(requiresGuardianConsent(new Date('2000-01-01'), 'KR', now)).toBe(false);
     expect(requiresGuardianConsent(null, 'IN', now)).toBe(false);
     expect(requiresGuardianConsent(undefined, 'KR', now)).toBe(false);
+  });
+
+  it('round-trips self-reported age exactly, any day of the year', () => {
+    // Regression: the old Jul 1 anchor undercounted by one during Jan-Jun,
+    // so a self-reported 14yo (KR) was wrongly guardian-gated.
+    const days = [
+      new Date('2026-01-01T00:00:00Z'),
+      new Date('2026-06-13T12:00:00Z'),
+      new Date('2026-06-30T23:59:59Z'),
+      new Date('2026-07-01T00:00:00Z'),
+      new Date('2026-12-31T23:59:59Z'),
+    ];
+    for (const day of days) {
+      for (const age of [11, 13, 14, 18]) {
+        expect(ageFromBirthDate(birthDateFromAge(age, day), day)).toBe(age);
+      }
+    }
+    expect(requiresGuardianConsent(birthDateFromAge(14, now), 'KR', now)).toBe(false);
+    expect(requiresGuardianConsent(birthDateFromAge(13, now), 'KR', now)).toBe(true);
+    expect(requiresGuardianConsent(birthDateFromAge(13, now), 'IN', now)).toBe(false);
+    expect(requiresGuardianConsent(birthDateFromAge(12, now), 'IN', now)).toBe(true);
   });
 
   it('resolves KR email OTP by default', () => {

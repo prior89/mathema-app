@@ -23,10 +23,12 @@ export function requiresGuardianConsentFromAge(age: number, country?: GuardianCo
   return age < guardianConsentAgeThreshold(country);
 }
 
-/** Self-reported age → approximate ISO birth date (mid-year). */
+/** Self-reported age → approximate ISO birth date.
+ * Jan 1 anchor: ageFromBirthDate() must return exactly `age` all year
+ * (a Jul 1 anchor undercounts by one during Jan–Jun). */
 export function birthDateFromAge(age: number, now = new Date()): string {
   const year = now.getUTCFullYear() - age;
-  return new Date(Date.UTC(year, 6, 1)).toISOString();
+  return new Date(Date.UTC(year, 0, 1)).toISOString();
 }
 
 export function requiresGuardianConsent(

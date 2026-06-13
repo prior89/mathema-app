@@ -36,10 +36,13 @@ export function requiresGuardianConsentFromAge(age: number, country?: CountryCod
   return age < guardianConsentAgeThreshold(country);
 }
 
-/** Approximate DOB from self-reported age — mid-year, not exact verification. */
+/** Approximate DOB from self-reported age — not exact verification.
+ * Anchored to Jan 1 so ageFromBirthDate() returns exactly `age` for the
+ * whole calendar year. The previous Jul 1 anchor made every student one
+ * year younger during Jan–Jun, wrongly triggering the guardian gate. */
 export function birthDateFromAge(age: number, now = new Date()): Date {
   const year = now.getUTCFullYear() - age;
-  return new Date(Date.UTC(year, 6, 1));
+  return new Date(Date.UTC(year, 0, 1));
 }
 
 export function requiresGuardianConsent(
