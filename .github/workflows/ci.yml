@@ -67,6 +67,15 @@ jobs:
           name: server-coverage
           path: server/coverage
           if-no-files-found: ignore
+
+      # Content-quality validator (CONTENT_QUALITY_RUBRIC.md gate). Runs in
+      # --warn-only mode so the gradual chapter-by-chapter upgrade can land
+      # without blocking unrelated PRs. Drop --warn-only once Batch N covers
+      # the whole curriculum. Also flags the unescaped-single-quote class of
+      # syntax break that bit class-8/9/10 during the 2026-06-14 Batch 1.
+      - name: Content rubric validator (warn-only)
+        working-directory: server
+        run: npx ts-node scripts/validate-content-rubric.ts --warn-only
           retention-days: 14
 
   app:
