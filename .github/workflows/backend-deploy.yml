@@ -131,6 +131,14 @@ jobs:
       - name: Container App revision update
         run: |
           ENV_VARS="OPENAI_API_KEY=secretref:openai-api-key"
+          # Force concept-lessons bootstrap to re-sync seed content on every
+          # deploy. Without this, the bootstrap short-circuits when the row
+          # count already matches NCERT_CHAPTERS, so edits to seed files
+          # (workedSteps narration, fade flags, visualData payloads, etc.)
+          # never reach prod. Sync runs in setImmediate() so it does not
+          # block /listen and the ~5s + ~1100 query cost is amortised over
+          # the deploy window.
+          ENV_VARS="$ENV_VARS FORCE_CONCEPT_SYNC=1"
           ENV_VARS="$ENV_VARS FEATURE_ADAPTIVE_DIAGNOSTIC_PCT=100"
           ENV_VARS="$ENV_VARS FEATURE_FIRST_SESSION_ACHIEVEMENT_PCT=100"
           ENV_VARS="$ENV_VARS FEATURE_KR_COLD_START_PCT=100"
