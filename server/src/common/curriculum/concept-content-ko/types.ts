@@ -20,7 +20,9 @@ export interface KoreanConceptChapterContent {
   abstract: string;
   worked: {
     intro: string;
-    steps: Array<{ math: string; narration: string }>;
+    /** `fade: true` swaps the narration for a "try first, then reveal" CTA
+     *  (fading worked-example pattern). Leave earliest steps full. */
+    steps: Array<{ math: string; narration: string; fade?: boolean }>;
   };
   misconception?: {
     wrong: string;

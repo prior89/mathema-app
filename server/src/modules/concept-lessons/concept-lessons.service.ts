@@ -159,6 +159,7 @@ export class ConceptLessonsService {
                 lang === 'hi' ? (w.narrationHi ?? w.narrationEn) :
                 lang === 'en' ? w.narrationEn :
                 w.narrationKo,
+              fade: w.fade === true,
             }))
           : null;
         const filteredMisc = s.misconception

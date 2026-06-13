@@ -56,6 +56,7 @@ function buildSteps(content: KoreanConceptChapterContent): Array<{
       step: i + 1,
       math: s.math,
       narrationKo: s.narration,
+      fade: s.fade === true,
     })),
   });
   if (content.misconception) {

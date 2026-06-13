@@ -421,17 +421,30 @@ function Misconception({ data }: { data: ConceptStep['misconception'] }) {
 
 function WorkedExample({ steps }: { steps: NonNullable<ConceptStep['workedSteps']> }) {
   const { t } = useT();
+  const [revealed, setRevealed] = useState<Record<number, true>>({});
   return (
     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {steps.map((s, i) => (
-        <div key={i} className="card" style={{ padding: 12, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <span className="chip primary" style={{ fontSize: 10.5, padding: '2px 8px' }}>{t('lesson.workedExample.step', { n: i + 1 })}</span>
+      {steps.map((s, i) => {
+        const faded = s.fade === true && !revealed[i];
+        return (
+          <div key={i} className="card" style={{ padding: 12, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span className="chip primary" style={{ fontSize: 10.5, padding: '2px 8px' }}>{t('lesson.workedExample.step', { n: i + 1 })}</span>
+            </div>
+            <div className="math-big" style={{ fontSize: 16 }}><MathText text={s.math} /></div>
+            {faded ? (
+              <div style={{ marginTop: 8 }}>
+                <p style={{ fontSize: 12.5, color: 'var(--p-muted)', margin: '0 0 6px' }}>{t('lesson.workedExample.fade.hint')}</p>
+                <button type="button" className="btn text" style={{ padding: '4px 8px', fontSize: 12.5 }} onClick={() => setRevealed((r) => ({ ...r, [i]: true }))}>
+                  {t('lesson.workedExample.fade.cta')}
+                </button>
+              </div>
+            ) : (
+              <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)' }}><MathText text={s.narration} /></div>
+            )}
           </div>
-          <div className="math-big" style={{ fontSize: 16 }}><MathText text={s.math} /></div>
-          <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--p-ink-2)' }}><MathText text={s.narration} /></div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -1122,6 +1135,51 @@ function KoreanPracticePhase({
 }
 
 
+function KoreanWorkedSteps({
+  steps, chipBg, chipColor,
+}: {
+  steps: NonNullable<KoreanConceptStep['workedSteps']>;
+  chipBg: string;
+  chipColor: string;
+}) {
+  const { t } = useT();
+  const [revealed, setRevealed] = useState<Record<number, true>>({});
+  return (
+    <ol style={{ marginTop: 12, paddingLeft: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
+      {steps.map((ws, i) => {
+        const faded = ws.fade === true && !revealed[i];
+        return (
+          <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <span style={{
+              flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
+              background: chipBg, color: chipColor,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700,
+            }}>{ws.step}</span>
+            <div style={{ fontSize: 13, lineHeight: 1.55, flex: 1 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', marginBottom: 2 }}>
+                <MathText text={ws.math} />
+              </div>
+              {faded ? (
+                <div style={{ marginTop: 4 }}>
+                  <p style={{ fontSize: 12, color: 'var(--p-muted)', margin: '0 0 4px' }}>{t('lesson.workedExample.fade.hint')}</p>
+                  <button type="button" className="btn text" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => setRevealed((r) => ({ ...r, [i]: true }))}>
+                    {t('lesson.workedExample.fade.cta')}
+                  </button>
+                </div>
+              ) : (
+                <div style={{ color: 'var(--p-ink-2)' }}>
+                  <MathText text={ws.narrationKo} />
+                </div>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
   const { t } = useT();
   const tone = STEP_TONE[step.kind] ?? DEFAULT_STEP_TONE;
@@ -1153,26 +1211,7 @@ function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
       )}
 
       {step.kind === 'WORKED_EXAMPLE' && step.workedSteps && step.workedSteps.length > 0 && (
-        <ol style={{ marginTop: 12, paddingLeft: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
-          {step.workedSteps.map((ws, i) => (
-            <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <span style={{
-                flexShrink: 0, width: 22, height: 22, borderRadius: '50%',
-                background: tone.chipBg, color: tone.chipColor,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700,
-              }}>{ws.step}</span>
-              <div style={{ fontSize: 13, lineHeight: 1.55 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', marginBottom: 2 }}>
-                  <MathText text={ws.math} />
-                </div>
-                <div style={{ color: 'var(--p-ink-2)' }}>
-                  <MathText text={ws.narrationKo} />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ol>
+        <KoreanWorkedSteps steps={step.workedSteps} chipBg={tone.chipBg} chipColor={tone.chipColor} />
       )}
 
       {step.kind === 'MISCONCEPTION' && step.misconception && (

@@ -617,7 +617,7 @@ export type ConceptStep = {
   // request (CurrentLang decorator) and ships flattened payloads. The earlier
   // multi-language shape made these three fields silently render empty.
   misconception: { wrong: string; why: string; correct: string } | null;
-  workedSteps: Array<{ math: string; narration: string }> | null;
+  workedSteps: Array<{ math: string; narration: string; fade?: boolean }> | null;
   retrievalCheck: {
     prompt: string;
     hint: string | null;
@@ -703,7 +703,7 @@ export type KoreanConceptStep = {
   // The KO seed stores these as-is (no flattening). Each block is the raw
   // JSON from the seed file — components should guard for shape.
   misconception: { wrongKo: string; whyKo: string; correctKo: string } | null;
-  workedSteps: Array<{ step: number; math: string; narrationKo: string }> | null;
+  workedSteps: Array<{ step: number; math: string; narrationKo: string; fade?: boolean }> | null;
   retrievalCheck: {
     prompt: string;
     accept: string[];

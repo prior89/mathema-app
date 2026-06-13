@@ -158,7 +158,9 @@ export const CLASS_11_CONTENT: ChapterContentMap = {
       steps: [
         { math: '2 − 2i + 3i − 3i²',   narrationKo: '분배.', narrationEn: 'Distribute.' },
         { math: '2 + i − 3(−1)',       narrationKo: 'i² 치환.', narrationEn: 'Substitute i².' },
-        { math: '= 5 + i',             narrationKo: '정리.',  narrationEn: 'Simplify.' },
+        // Faded last step — the two scaffolded steps above set the student up
+        // to predict the final value before the explanation is revealed.
+        { math: '= 5 + i',             narrationKo: '실부 2+3=5, 허부 i 그대로.', narrationEn: 'Real part 2+3=5, imaginary stays as i.', fade: true },
       ],
     },
     misconception: {

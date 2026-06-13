@@ -35,8 +35,18 @@ export interface ConceptChapterContent {
     ko: string;
     en: string;
     hi?: string;
-    /** 단계별 풀이 (math + narration) */
-    steps: Array<{ math: string; narrationKo: string; narrationEn: string; narrationHi?: string }>;
+    /** Step-by-step solution (math + narration).
+     *  `fade: true` swaps the narration for a "try first, then reveal" CTA —
+     *  the standard fading worked-example pattern. Convention: leave the
+     *  earliest steps full and fade only the later ones so the student has
+     *  scaffolding before being asked to predict. */
+    steps: Array<{
+      math: string;
+      narrationKo: string;
+      narrationEn: string;
+      narrationHi?: string;
+      fade?: boolean;
+    }>;
   };
   misconception?: {
     wrongKo: string;   wrongEn: string;   wrongHi?: string;
