@@ -235,7 +235,7 @@ export function AdminKoreanStudyProblemNewScreen() {
         )}
 
         <button
-          className="cta"
+          className="btn"
           disabled={!valid || submit.isPending}
           onClick={() => submit.mutate()}
           style={{ marginTop: 8 }}
