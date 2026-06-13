@@ -100,11 +100,14 @@ You MUST return a single JSON object with this exact schema (no markdown, no com
 Rules:
 - Exactly 5 choices per step. Exactly one isCorrect:true.
 - distractorType MUST be one of: CONCEPT_CONFUSION, CALC_ERROR, PROCESS_SKIP, TIME_PRESSURE_GUESS (and null only for the correct choice).
-- rationale (for wrong choices) names the specific misconception or slip — useful for the analyst, not shown to students.
+- For EVERY wrong choice, produce a **student-facing elaborated rationale** (2–4 full sentences). Structure: (1) name the specific misconception or error the student is likely making, (2) explain *why this thinking fails in this exact problem/context*, (3) contrast with the correct reasoning ("올바른 생각은..." / "The correct approach is..."), (4) give one actionable next step or re-teach hint. Never write analyst-only notes. The student will read this directly in feedback.
 - ANSWER choices must be concrete answers (numbers / expressions). If the NCERT problem's correct answer is ambiguous, choose the canonical answer from the NCERT solution manual.
 - Do not invent problems; faithfully transcribe the input. If the input is broken/unparseable, set every field to "UNCLEAR" and isCorrect:true on the first choice of each step.
-- All strings in English (the app's primary content language is English for Indian users).
-- Output JSON ONLY. No leading/trailing prose.`;
+- All strings in English (the app's primary content language is English for Indian users). For Korean curriculum (KSAT/KR_* formats) produce natural Korean where appropriate.
+- Output JSON ONLY. No leading/trailing prose.
+
+Additional rule for high-quality conceptual teaching:
+- When the prompt references or generates worked-example style content, ensure narrations use explicit explanatory language ("because...", "this works because...", "to preserve equality / model the real situation...", "prevents the common error of..."). Pure procedural steps ("add the numerators") are insufficient.`;
 
 const SYSTEM_PROMPT_SINGLE_STEP = `You are an expert math educator generating a single-step multiple-choice question for Matheo (Indian NCERT Class 7-12 students).
 
@@ -136,10 +139,12 @@ Rules:
 - Exactly ONE step with stepType="ANSWER". No CONCEPT or PROCESS step — Study tab is for whole-problem practice with a scratch pad, not staged reasoning.
 - Exactly 5 choices. Exactly one isCorrect:true.
 - distractorType MUST be one of: CONCEPT_CONFUSION, CALC_ERROR, PROCESS_SKIP, TIME_PRESSURE_GUESS (null only for the correct choice).
+- For EVERY wrong choice, produce a **student-facing elaborated rationale** (2–4 full sentences). Structure: (1) name the specific misconception or error the student is likely making, (2) explain *why this thinking fails in this exact problem/context*, (3) contrast with the correct reasoning ("올바른 생각은..." / "The correct approach is..."), (4) give one actionable next step or re-teach hint. Never write analyst-only notes. The student will read this directly in feedback.
 - The answer choices must be concrete final answers (numbers / expressions / coordinates), not procedural fragments.
 - The four distractors must each represent a plausible mistake a real Class 7-12 student would make — never random or absurd wrong values.
 - Match the requested NCERT class + chapter difficulty band. Do not exceed the chapter's topic boundary.
-- All strings in English. Output JSON ONLY.`;
+- All strings in English (primary for Indian users). For Korean curriculum formats produce natural Korean where appropriate.
+- Output JSON ONLY.`;
 
 /**
  * Per-exam-style framing prepended to the LLM prompt. Each line is a short
@@ -150,6 +155,10 @@ Rules:
  * Calibrated for the 2026-05-22 user spec ([[matheo-ux-spec-full]]):
  *   - India: NCERT base + JEE/NEET/CBSE variants
  *   - Korea: KSAT (수능) + 내신 + 평가원 모의고사 variants
+ *
+ * 2026-06-14 Analysis-driven update (see CONTENT_QUALITY_RUBRIC.md):
+ * All generated content and rationales must meet the "sufficient" bar for
+ * conceptual depth and elaborated, student-facing error feedback.
  */
 function examStyleHint(format: DraftPayload['examFormat'] | undefined): string | null {
   if (!format || format === 'NCERT_TEXTBOOK') return null;
@@ -163,11 +172,11 @@ function examStyleHint(format: DraftPayload['examFormat'] | undefined): string |
     case 'NEET':
       return 'Authoring style: NEET. Bias toward formula-recall and direct application. Distractors should target unit-conversion slips, sign flips, and trigonometric-identity confusions common in biology-bound students with weaker math fluency.';
     case 'KSAT':
-      return 'Authoring style: 한국 수능 수학 영역. 5지선다, 정답 1개. 객관식 풀이 시간 ~3분 가정. 4개 오답은 (i) 개념 혼동, (ii) 부호·차원 실수, (iii) 풀이 중간 단계 누락, (iv) 흔한 함정 (예: 정의역 누락) 패턴을 각각 반영.';
+      return 'Authoring style: 한국 수능 수학 영역. 5지선다, 정답 1개. 객관식 풀이 시간 ~3분 가정. 4개 오답은 (i) 개념 혼동, (ii) 부호·차원 실수, (iii) 풀이 중간 단계 누락, (iv) 흔한 함정 (예: 정의역 누락) 패턴을 각각 반영. 2022 개정 특화: 증명 가정 오류, 그래프에서 변화 의미 오해, skewed 데이터에서 평균/중앙값 혼동, 함수 그래프 x/y 좌표 스왑 등을 적극 반영.';
     case 'KR_INTERNAL':
-      return 'Authoring style: 한국 고교 내신. 교과서 예제 / 평가 기준에 충실. 풀이 길이 4~6줄, 단답 친화. 오답은 교사가 흔히 보는 풀이 실수 (계산 오류, 공식 적용 오류) 위주.';
+      return 'Authoring style: 한국 고교 내신. 교과서 예제 / 평가 기준에 충실. 풀이 길이 4~6줄, 단답 친화. 오답은 교사가 흔히 보는 풀이 실수 (계산 오류, 공식 적용 오류) 위주. 2022 개정: 증명 없이 성질 사용, 대푯값/중앙값 혼동, 변화와 관계에서 그래프 해석 오류 등을 명시적으로 다룰 것.';
     case 'KR_MOCK_EVAL':
-      return 'Authoring style: 한국 평가원 모의고사 (3월·6월·9월). 수능 형식과 동일하나 신유형 1개 포함 권장. 오답은 EBS 빈출 함정 + 평가원 특유 비주얼 트릭 (좌표·그래프 오독) 반영.';
+      return 'Authoring style: 한국 평가원 모의고사 (3월·6월·9월). 수능 형식과 동일하나 신유형 1개 포함 권장. 오답은 EBS 빈출 함정 + 평가원 특유 비주얼 트릭 (좌표·그래프 오독) 반영. 2022 개정 signature misconceptions (증명 가정, 함수 변화, 통계 대표값, 좌표 혼동 등)을 1개 이상 포함.';
     default:
       return null;
   }
