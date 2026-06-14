@@ -1,28 +1,31 @@
 /* ReviewQueueScreen — FIFO + 3-day-cooldown wrong-note review.
  *
- * Shows exactly one problem at a time. The student writes their working in
- * the handwriting canvas (scratch only — not graded), types the final answer
- * into the text box, and taps Check. Right answers mark the wrong-note
- * mastered and advance the queue; wrong answers stay on the same problem.
+ * Shows exactly one problem at a time. Format (2026-06-15 user spec change):
+ * single-step 5-choice multiple-choice (matches the Study tab) on top of a
+ * scratch handwriting canvas — was free-text input before. Right answers
+ * mark the wrong-note mastered and advance the queue; wrong answers stay
+ * on the same problem.
  *
  * After three wrong submits on the same problem the Hint button unlocks so
  * the student isn't stuck forever, but the hint is only a one-line nudge —
  * no full solution reveal. This is the deliberate forced-sequential design
  * the user spec'd.
  */
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { fetchProblemHint, fetchReviewQueueNext } from '../../lib/queries';
+import { fetchProblem, fetchProblemHint, fetchReviewQueueNext } from '../../lib/queries';
 import { checkReviewAnswer, reviewWrongNote, type ReviewQuality } from '../../lib/mutations';
 import { Sm2ReviewButtons } from './Sm2ReviewButtons';
 import { toast } from '../Toast';
 import { useT } from '../../lib/i18n';
+import { useShuffledChoices } from '../../lib/shuffle';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
-import { MathInput } from '../MathInput';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
+
+const CHOICE_LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
 const HINT_UNLOCK_AFTER = 3; // wrong submits before Hint button activates
 
@@ -152,7 +155,7 @@ function ActiveProblem({
 }) {
   const { t } = useT();
   const canvasRef = useRef<HandwritingCanvasHandle>(null);
-  const [studentAnswer, setStudentAnswer] = useState('');
+  const [pickedId, setPickedId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ kind: 'correct' | 'wrong'; msg: string } | null>(null);
   const [showSm2, setShowSm2] = useState(false);
   const [wrongCount, setWrongCount] = useState(0);
@@ -162,6 +165,19 @@ function ActiveProblem({
   // hardcoded constant. Reset whenever the wrong-note key changes.
   const startedAtRef = useRef<number>(Date.now());
 
+  // Pull the full Problem so we can render the ANSWER step's 5-choice MC
+  // (Study-tab format, applied to wrong-note review as of 2026-06-15).
+  const problemQuery = useQuery({
+    queryKey: ['problem', note.problemId],
+    queryFn: () => fetchProblem(note.problemId),
+  });
+  const answerStep = useMemo(
+    () => problemQuery.data?.steps?.find((s) => s.stepType === 'ANSWER') ?? null,
+    [problemQuery.data],
+  );
+  const shuffledChoices = useShuffledChoices(answerStep?.choices ?? []);
+  const pickedChoice = shuffledChoices.find((c) => c.id === pickedId) ?? null;
+
   const hintQuery = useQuery({
     queryKey: ['problem-hint', note.problemId],
     queryFn: () => fetchProblemHint(note.problemId),
@@ -170,7 +186,10 @@ function ActiveProblem({
 
   const check = useMutation({
     mutationFn: () => checkReviewAnswer(note.wrongNoteId, {
-      answer: studentAnswer,
+      // The server still grades on string match against problem.answer;
+      // shipping the picked choice's text keeps the existing pipeline
+      // intact (no schema or endpoint change required).
+      answer: pickedChoice?.text ?? '',
       durationSec: Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)),
     }),
     onSuccess: async (r) => {
@@ -213,8 +232,15 @@ function ActiveProblem({
   });
 
   function onCheck() {
-    if (!studentAnswer.trim() || check.isPending || showSm2) return;
+    if (!pickedChoice || check.isPending || showSm2) return;
     check.mutate();
+  }
+  function onPick(id: string) {
+    // Allow re-pick after a wrong attempt without leaving the previous
+    // feedback card stuck on the new selection.
+    if (check.isPending || showSm2) return;
+    if (feedback?.kind === 'wrong') setFeedback(null);
+    setPickedId(id);
   }
 
   function onHintClick() {
@@ -302,10 +328,35 @@ function ActiveProblem({
         <div style={{ height: 8 }} />
       </div>
 
-      {/* Sticky bottom — hint + answer input + check */}
+      {/* 5-choice MC row (Study-tab format applied to wrong-note review).
+       *  Rendered inside the scrollable body just above the sticky footer
+       *  so the canvas + choices both stay reachable on small viewports. */}
+      {!showSm2 && shuffledChoices.length > 0 && (
+        <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+          {shuffledChoices.map((c, i) => {
+            const isPicked = pickedId === c.id;
+            const isCorrectReveal = feedback?.kind === 'correct' && isPicked;
+            const isWrongPick = feedback?.kind === 'wrong' && isPicked;
+            const cls = isCorrectReveal ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
+            return (
+              <div key={c.id} className={cls} onClick={() => onPick(c.id)}>
+                <div className="letter">{CHOICE_LETTERS[i] ?? c.choiceIndex}</div>
+                <span className="text"><MathText text={c.text} /></span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!showSm2 && problemQuery.isLoading && (
+        <div style={{ padding: '0 22px 8px', fontSize: 12, color: 'var(--p-muted)' }}>
+          {t('review.loading')}
+        </div>
+      )}
+
+      {/* Sticky bottom — hint + check */}
       {!showSm2 && (
         <div className="screen-foot" style={{ paddingTop: 8 }}>
-          <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('review.answerEyebrow')}</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
             <button
               type="button"
@@ -323,21 +374,12 @@ function ActiveProblem({
             >
               💡
             </button>
-            <MathInput
-              value={studentAnswer}
-              onChange={setStudentAnswer}
-              placeholder={t('review.answer.placeholder')}
-              onKeyDown={(e) => { if (e.key === 'Enter') onCheck(); }}
-              showPreview={false}
-              disabled={check.isPending}
-              style={{ flex: 1, minWidth: 0 }}
-            />
             <button
               type="button"
               className="btn"
               onClick={onCheck}
-              disabled={!studentAnswer.trim() || check.isPending}
-              style={{ width: 'auto', height: 44, padding: '0 18px', fontSize: 14, flexShrink: 0 }}
+              disabled={!pickedChoice || check.isPending}
+              style={{ flex: 1, height: 44, padding: '0 18px', fontSize: 14, flexShrink: 0 }}
             >
               {check.isPending ? t('review.checking') : t('review.check')}
             </button>
