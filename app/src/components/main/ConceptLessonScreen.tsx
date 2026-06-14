@@ -933,21 +933,16 @@ function KoreanPracticePhase({
   const [decomposed, setDecomposed] = useState(false);
   const qc = useQueryClient();
 
-  if (isLoading) {
-    return <Shell back={onBack}><Centered msg="문제를 불러오는 중…" /></Shell>;
-  }
-  if (problems.length === 0) {
-    return (
-      <Shell back={onBack}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
-          <div style={{ fontSize: 14, color: 'var(--p-muted)' }}>이 챕터의 연습 문제는 아직 준비 중입니다.</div>
-        </div>
-      </Shell>
-    );
-  }
-
+  // Derived values must stay above the hook calls below — but crucially,
+  // ALL hooks (useShuffledChoices, useMutation) now run on every render,
+  // even when isLoading or problems is empty. The early returns moved
+  // below the hook block fix the previous React-rules-of-hooks violation
+  // (hook count changed between renders → "Rendered more hooks…" crash).
+  // Derived values are nullable-safe; the mutationFn closure only runs
+  // when the user taps submit, which is unreachable until problems load
+  // and the early returns let the render through.
   const problem = problems[problemIdx];
-  const allSteps = problem.steps;
+  const allSteps = problem?.steps ?? [];
   const answerSteps = allSteps.filter((s) => s.stepType === 'ANSWER');
   const faded =
     !decomposed
@@ -969,9 +964,9 @@ function KoreanPracticePhase({
       selectedChoice: StepResult['selectedChoice'];
       correctChoice: StepResult['correctChoice'];
     }>(`/attempts`, {
-      problemId: problem.id,
+      problemId: problem!.id,
       choiceId: pickedId,
-      stepIndex: step.stepIndex,
+      stepIndex: step!.stepIndex,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt) / 1000)),
       context: 'PRACTICE',
     }),
@@ -1001,15 +996,30 @@ function KoreanPracticePhase({
     onError: (e: any) => {
       // eslint-disable-next-line no-console
       console.error('[ko-practice] /attempts failed', {
-        problemId: problem.id,
+        problemId: problem!.id,
         choiceId: pickedId,
-        stepIndex: step.stepIndex,
+        stepIndex: step!.stepIndex,
         status: e?.response?.status,
         body: e?.response?.data,
       });
       setResult({ isCorrect: false, selectedChoice: null, correctChoice: null, error: true });
     },
   });
+
+  // Early returns LAST — see rules-of-hooks rationale at the derived-values
+  // block above. Anything below this point can safely dereference problem.
+  if (isLoading) {
+    return <Shell back={onBack}><Centered msg="문제를 불러오는 중…" /></Shell>;
+  }
+  if (problems.length === 0) {
+    return (
+      <Shell back={onBack}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
+          <div style={{ fontSize: 14, color: 'var(--p-muted)' }}>이 챕터의 연습 문제는 아직 준비 중입니다.</div>
+        </div>
+      </Shell>
+    );
+  }
 
   const locked = submit.isPending || result?.isCorrect === true;
   const pickChoice = (id: string) => {
