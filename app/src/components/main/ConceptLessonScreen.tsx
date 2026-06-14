@@ -25,6 +25,11 @@ import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { GraphRenderer } from '../GraphRenderer';
 import { DEFAULT_STEP_TONE, STEP_TONE } from '../../lib/step-tone';
+import { useBillingStatus } from '../../hooks/useBillingStatus';
+import { startPremiumPreview } from '../../lib/billing';
+
+const FREE_MASTERY_PROBLEMS = 5;
+const FULL_MASTERY_PROBLEMS = 20;
 
 /* Scaffold policy (2026-06-12 audit, expertise-reversal effect): every
  * practice problem serves the ANSWER step directly. The CONCEPT→PROCESS
@@ -53,6 +58,7 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
   const targetProblemId = sp.get('problemId');
   const nav = useNavigate();
   const qc = useQueryClient();
+  const billing = useBillingStatus();
   const lesson = useQuery({ queryKey: ['lesson', code], queryFn: () => fetchConceptLesson(code!), enabled: !!code });
 
   // phase 'concept' = all concept steps on one screen
@@ -81,6 +87,27 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
   });
   const totalProblems = problemList.data?.length ?? 0;
   const currentProblemId = problemList.data?.[practiceProblemIdx]?.id ?? null;
+  const freeMasteryLimitReached =
+    billing.data?.billingUiEnabled === true
+    && billing.data.premium === false
+    && totalProblems === FREE_MASTERY_PROBLEMS;
+
+  const preview = useMutation({
+    mutationFn: startPremiumPreview,
+    onSuccess: async () => {
+      const solvedCount = totalProblems;
+      await qc.invalidateQueries({ queryKey: ['billing-status'] });
+      const refreshed = await problemList.refetch();
+      if ((refreshed.data?.length ?? 0) > solvedCount) {
+        setPracticeProblemIdx(solvedCount);
+        setPracticeStepIdx(1);
+        setDecomposed(false);
+        setPhase('practice');
+        return;
+      }
+      nav('/app/paywall?reason=premium&feature=full_mastery_sets');
+    },
+  });
 
   // Resolve initial phase once lesson + problemList have loaded.
   // Priority order (user-report 2026-05-23 — Korean dogfood):
@@ -189,10 +216,14 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
       setDecomposed(false);
       return;
     }
-    // all problems done — deep-link entry (Notes ?problemId=) skips
-    // goFromConcept, so retry the finalize here to guarantee mastered=true.
+    // All currently available problems are done. For Free this is the
+    // five-problem sample, not full 20-problem mastery; finalizeConcept only
+    // records that the concept walkthrough was completed.
     track('chapter.practice.complete', { chapterCode: code, totalProblems });
-    track('chapter.done', { chapterCode: code, hadPractice: true });
+    track(
+      freeMasteryLimitReached ? 'chapter.practice.free-limit-reached' : 'chapter.done',
+      { chapterCode: code, hadPractice: true, totalProblems },
+    );
     finalizeConcept.mutate();
     setPhase('done');
   };
@@ -232,7 +263,20 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
         <Centered msg={t('lesson.loadingNext')} />
       )}
       {phase === 'done' && (
-        <DonePhase chapterTitle={lesson.data.title} onBack={() => nav('/app/learn')} />
+        <DonePhase
+          chapterTitle={lesson.data.title}
+          onBack={() => nav('/app/learn')}
+          freeLimit={freeMasteryLimitReached ? {
+            solved: totalProblems,
+            total: FULL_MASTERY_PROBLEMS,
+            previewDays: billing.data?.monetization?.premiumPreview?.days ?? 3,
+            previewEligible: billing.data?.entitlement?.previewEligibility.eligible === true,
+            previewLoading: billing.isLoading || preview.isPending,
+            previewError: preview.isError,
+            onStartPreview: () => preview.mutate(),
+            onViewPremium: () => nav('/app/paywall?reason=premium&feature=full_mastery_sets'),
+          } : undefined}
+        />
       )}
     </Shell>
   );
@@ -699,8 +743,27 @@ function FeedbackCard({ result }: { result: StepResult }) {
   );
 }
 
+type FreeLimitState = {
+  solved: number;
+  total: number;
+  previewDays: number;
+  previewEligible: boolean;
+  previewLoading: boolean;
+  previewError: boolean;
+  onStartPreview: () => void;
+  onViewPremium: () => void;
+};
+
 // ───────── Phase 2: Done / chapter complete ─────────
-function DonePhase({ chapterTitle, onBack }: { chapterTitle: string; onBack: () => void }) {
+function DonePhase({
+  chapterTitle,
+  onBack,
+  freeLimit,
+}: {
+  chapterTitle: string;
+  onBack: () => void;
+  freeLimit?: FreeLimitState;
+}) {
   const { t } = useT();
   return (
     <>
@@ -712,16 +775,67 @@ function DonePhase({ chapterTitle, onBack }: { chapterTitle: string; onBack: () 
           <Glyph.Check accent="var(--p-primary)" size={36} />
         </div>
         <div>
-          <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>{t('lesson.done.eyebrow')}</span>
+          <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>
+            {t(freeLimit ? 'lesson.freeDone.eyebrow' : 'lesson.done.eyebrow')}
+          </span>
           <h2 className="title" style={{ fontSize: 26, marginTop: 6 }}>{chapterTitle}</h2>
-          <p className="subtitle" style={{ maxWidth: 320 }}>
-            {t('lesson.done.body')}
-          </p>
+          {freeLimit ? (
+            <>
+              <div
+                className="chip"
+                style={{ margin: '12px auto 0', width: 'fit-content', color: 'var(--p-primary)' }}
+              >
+                {t('lesson.freeDone.progress', {
+                  solved: freeLimit.solved,
+                  total: freeLimit.total,
+                })}
+              </div>
+              <p className="subtitle" style={{ maxWidth: 330 }}>
+                {t('lesson.freeDone.body', {
+                  solved: freeLimit.solved,
+                  remaining: freeLimit.total - freeLimit.solved,
+                })}
+              </p>
+            </>
+          ) : (
+            <p className="subtitle" style={{ maxWidth: 320 }}>
+              {t('lesson.done.body')}
+            </p>
+          )}
         </div>
-        <button className="btn" onClick={onBack} style={{ marginTop: 16, maxWidth: 280 }}>
-          {t('lesson.done.backChapters')}
-          <Glyph.ChevronR />
-        </button>
+        {freeLimit ? (
+          <div style={{ width: '100%', maxWidth: 320, display: 'grid', gap: 10 }}>
+            {freeLimit.previewEligible && (
+              <button
+                className="btn"
+                onClick={freeLimit.onStartPreview}
+                disabled={freeLimit.previewLoading}
+              >
+                {freeLimit.previewLoading
+                  ? t('lesson.freeDone.previewStarting')
+                  : t('lesson.freeDone.preview', { days: freeLimit.previewDays })}
+                <Glyph.ChevronR />
+              </button>
+            )}
+            {freeLimit.previewError && (
+              <div className="alert error" role="alert">
+                {t('lesson.freeDone.previewError')}
+              </div>
+            )}
+            <button className="btn outline" onClick={freeLimit.onViewPremium}>
+              {t('lesson.freeDone.premium')}
+              <Glyph.ChevronR />
+            </button>
+            <button className="btn text" onClick={onBack}>
+              {t('lesson.done.backChapters')}
+            </button>
+          </div>
+        ) : (
+          <button className="btn" onClick={onBack} style={{ marginTop: 16, maxWidth: 280 }}>
+            {t('lesson.done.backChapters')}
+            <Glyph.ChevronR />
+          </button>
+        )}
       </div>
     </>
   );
@@ -741,6 +855,8 @@ function Centered({ msg }: { msg: string }) {
 function KoreanConceptLessonScreen({ code }: { code: string }) {
   const nav = useNavigate();
   const { t } = useT();
+  const qc = useQueryClient();
+  const billing = useBillingStatus();
   const location = useLocation();
   // Deep-link target: when Home chapter-progress card sends ?problemId=X
   // the screen skips the concept walkthrough and lands the student straight
@@ -750,11 +866,32 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
   const [phase, setPhase] = useState<'concept' | 'practice' | 'done'>(
     deepProblemId ? 'practice' : 'concept',
   );
+  const [resumeProblemId, setResumeProblemId] = useState<string | null>(null);
   const lesson = useQuery({ queryKey: ['ko-lesson', code], queryFn: () => fetchKoreanConceptLesson(code) });
   const practice = useQuery({
     queryKey: ['ko-practice', code],
     queryFn: () => fetchKoreanPracticeProblems(code),
     enabled: !!code,
+  });
+  const problemCount = practice.data?.length ?? 0;
+  const freeMasteryLimitReached =
+    billing.data?.billingUiEnabled === true
+    && billing.data.premium === false
+    && problemCount === FREE_MASTERY_PROBLEMS;
+  const preview = useMutation({
+    mutationFn: startPremiumPreview,
+    onSuccess: async () => {
+      const solvedCount = problemCount;
+      await qc.invalidateQueries({ queryKey: ['billing-status'] });
+      const refreshed = await practice.refetch();
+      const nextProblem = refreshed.data?.[solvedCount];
+      if (nextProblem) {
+        setResumeProblemId(nextProblem.id);
+        setPhase('practice');
+        return;
+      }
+      nav('/app/paywall?reason=premium&feature=full_mastery_sets');
+    },
   });
 
   if (lesson.isLoading) {
@@ -784,7 +921,7 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
     if (practice.isLoading || !practice.data) {
       return <Shell back={() => setPhase('concept')}><Centered msg={t('lesson.loading')} /></Shell>;
     }
-    const startId = deepProblemId ?? lesson.data.nextProblemId ?? null;
+    const startId = resumeProblemId ?? deepProblemId ?? lesson.data.nextProblemId ?? null;
     return (
       <KoreanPracticePhase
         chapterCode={code}
@@ -801,17 +938,25 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
   if (phase === 'done') {
     return (
       <Shell back={() => nav('/app/learn')}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 }}>
-          <div style={{ fontSize: 18, fontFamily: 'var(--font-display)' }}>{lesson.data.titleKo} 학습 완료</div>
-          <div style={{ fontSize: 13, color: 'var(--p-muted)' }}>다음 챕터로 이어가거나 다른 챕터를 골라보세요.</div>
-          <button className="btn" onClick={() => nav('/app/learn')}>{t('lesson.done.backChapters')}<Glyph.ChevronR /></button>
-        </div>
+        <DonePhase
+          chapterTitle={lesson.data.titleKo}
+          onBack={() => nav('/app/learn')}
+          freeLimit={freeMasteryLimitReached ? {
+            solved: problemCount,
+            total: FULL_MASTERY_PROBLEMS,
+            previewDays: billing.data?.monetization?.premiumPreview?.days ?? 3,
+            previewEligible: billing.data?.entitlement?.previewEligibility.eligible === true,
+            previewLoading: billing.isLoading || preview.isPending,
+            previewError: preview.isError,
+            onStartPreview: () => preview.mutate(),
+            onViewPremium: () => nav('/app/paywall?reason=premium&feature=full_mastery_sets'),
+          } : undefined}
+        />
       </Shell>
     );
   }
 
   const { titleKo, bigIdeaKo, steps } = lesson.data;
-  const problemCount = practice.data?.length ?? 0;
   // RETRIEVAL cards excluded (user verdict 2026-06-13): a recall question with
   // no working space is unanswerable, and revealing the answer defeats it.
   const visibleSteps = steps.filter((s) => s.kind !== 'RETRIEVAL');
