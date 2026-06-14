@@ -4,6 +4,7 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { WrongNotesRepository } from '../../wrong-notes/wrong-notes.repository';
 import { Difficulty } from '../../../common/enums/difficulty.enum';
 import { examDifficultyDistribution } from '../../../common/utils/difficulty-matcher.util';
+import { NCERT_TO_KR_GRADE } from '../../diagnostic/diagnostic-pool-gate';
 
 /**
  * AI 맞춤 진단 모의고사 — 약점 단원 위주 30문제 자동 구성.
@@ -88,7 +89,11 @@ export class AiRecommendExamService {
    *   real       — 6단원 균등 분포 30문제 (실전 시험 시뮬레이션)
    */
   async composeTyped(userId: string, kind: 'mini' | 'wrong-redo' | 'real') {
-    const country = await this.userCountry(userId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { country: true, gradeLevel: true },
+    });
+    const country = user?.country === 'KR' ? 'KR' : 'IN';
     if (kind === 'wrong-redo') {
       const due = await this.wrongNotesRepo.findDue(userId, 20);
       const problemIds = due.map((d: any) => d.problemId);
@@ -137,35 +142,28 @@ export class AiRecommendExamService {
     // real — grade-wide mixed paper (board-exam simulation, every chapter
     // eligible regardless of unit weakness).
     //
-    // KR has no per-user Korean grade (User.gradeLevel is the NCERT enum even
-    // for country=KR), so the KR paper draws from the whole Korean curriculum
-    // pool instead of a grade slice — drawing from the NCERT tree here was the
-    // bug that served English problems to Korean users.
+    // User.gradeLevel stores CLASS_7..CLASS_12 for both countries. KR maps
+    // those values to MIDDLE_1..HIGH_3 before filtering the Korean lesson
+    // relation. Never fall back to another grade: an empty same-grade pool is
+    // safer than serving an off-grade full-paper exam.
     let pool: Array<{ id: string; source: string; difficulty: string }> = [];
-    if (country === 'KR') {
+    if (country === 'KR' && user?.gradeLevel) {
+      const koreanGrade = NCERT_TO_KR_GRADE[user.gradeLevel];
       pool = await this.prisma.problem.findMany({
-        where: { koreanConceptLessonId: { not: null }, steps: { some: { stepIndex: 1 } } },
+        where: {
+          koreanConceptLesson: { koreanGrade },
+          steps: { some: { stepIndex: 1 } },
+        },
         orderBy: { source: 'asc' },
       });
-    } else {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { gradeLevel: true },
+    } else if (country === 'IN' && user?.gradeLevel) {
+      pool = await this.prisma.problem.findMany({
+        where: {
+          conceptLesson: { ncertClass: user.gradeLevel },
+          steps: { some: { stepIndex: 1 } },
+        },
+        orderBy: { source: 'asc' },
       });
-      const ncertClass = GRADE_TO_NCERT[user?.gradeLevel ?? ''];
-      if (ncertClass) {
-        const lessons = await this.prisma.conceptLesson.findMany({
-          where: { ncertClass: ncertClass as any },
-          select: { id: true },
-        });
-        const lessonIds = lessons.map((l) => l.id);
-        if (lessonIds.length > 0) {
-          pool = await this.prisma.problem.findMany({
-            where: { conceptLessonId: { in: lessonIds }, steps: { some: { stepIndex: 1 } } },
-            orderBy: { source: 'asc' },
-          });
-        }
-      }
     }
     if (pool.length > 0) {
       const shuffled = [...pool];
@@ -176,14 +174,6 @@ export class AiRecommendExamService {
       const picked = shuffled.slice(0, 10);
       return { kind, problems: picked.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })) };
     }
-    // Last resort: any-linked (country-scoped).
-    const fb = await this.fallbackAnyLinked(10, country);
-    return { kind, fallbackReason: 'no-grade-problems' as const, ...fb };
+    return { kind, fallbackReason: 'no-grade-problems' as const, problems: [] };
   }
 }
-
-/** GradeLevel → NcertClass (DB enum 매핑 — 1:1) */
-const GRADE_TO_NCERT: Record<string, string> = {
-  CLASS_7: 'CLASS_7', CLASS_8: 'CLASS_8', CLASS_9: 'CLASS_9',
-  CLASS_10: 'CLASS_10', CLASS_11: 'CLASS_11', CLASS_12: 'CLASS_12',
-};
