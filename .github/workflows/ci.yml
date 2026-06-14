@@ -78,6 +78,17 @@ jobs:
         working-directory: server
         run: npx ts-node scripts/validate-content-rubric.ts --warn-only
 
+      # Server ESLint gate. The lint config existed but the @typescript-eslint
+      # plugin + parser were never in devDependencies — running `npm run lint`
+      # blew up with "ESLint couldn't find the plugin" so nothing was actually
+      # checked. After restoring the deps the codebase has 0 errors and 25
+      # legacy `no-unused-vars` warnings, frozen as the current ceiling via
+      # --max-warnings. Drop the ceiling chapter-by-chapter as those imports
+      # get cleaned up.
+      - name: Server ESLint
+        working-directory: server
+        run: npx eslint "{src,test}/**/*.ts" --max-warnings=25
+
   app:
     name: app (tsc + vite build)
     runs-on: ubuntu-latest
