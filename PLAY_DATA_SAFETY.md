@@ -144,10 +144,10 @@ Use these exact answers when filling the Data Safety wizard:
 2. *Is all of the user data collected by your app encrypted in transit?* — **Yes**.
 3. *Do you provide a way for users to request that their data be deleted?* — **Yes** (`DELETE /users/me` is exposed from Settings → Privacy).
 4. *Will users be able to request that their data be deleted, but not through your app?* — **Also yes** (any user can email the developer; the in-app path is canonical).
-5. *Has your app committed to the Google Play Families Policy?* — **Yes** (Class 7-12 audience; verifiable parent email consent for under-13 (IN) / under-14 (KR); optional PARENT role for supervision).
+5. *Has your app committed to the Google Play Families Policy?* — **Yes** (Class 7-12 audience; guardian approval for under-18 (IN) / under-14 (KR); optional PARENT role for supervision).
 6. *Does your app contain in-app purchases?* — **Yes** (Premium subscription via Google Play Billing v8 — `premium_monthly`, `premium_yearly`, plus cardless `premium_preview_3d` trial).
 7. *Does your app contain ads?* — **No**.
-8. *Does your app target children?* — **Mixed audience** (primary 11-18; under-13 (IN) / under-14 (KR) require verified parent email consent — see answer 5).
+8. *Does your app target children?* — **Mixed audience** (primary 11-18; under-18 (IN) / under-14 (KR) require guardian approval — see answer 5).
 
 ---
 

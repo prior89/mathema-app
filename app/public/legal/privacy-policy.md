@@ -1,8 +1,8 @@
 # Privacy Policy
 
 **Effective date:** 2026-05-21
-**Last updated:** 2026-05-21
-**Policy version:** 1.0
+**Last updated:** 2026-06-15
+**Policy version:** 1.1
 
 This Privacy Policy describes how the **matheo** mobile application and
 related services (the "Service", "we", "us") collect, use, share, and protect
@@ -20,9 +20,9 @@ If you do not agree, do not use the Service.
 > name, email, class level, and how you answer practice questions. We never
 > sell your data. You can delete your account at any time from
 > **Settings → Privacy → Delete account**, which permanently erases every
-> record we hold about you. Users below the age gate (under 13 in India,
-> under 14 in Korea) need a one-time parent email confirmation; teens
-> receive privacy-enhanced defaults (analytics/marketing off unless opted in).
+> record we hold about you. Users below the country-specific age gate
+> (under 18 in India, under 14 in Korea) need parent or legal-guardian
+> approval before learning features unlock.
 
 ---
 
@@ -210,18 +210,22 @@ local law.
 
 **Verifiable parent/guardian gate (country-specific thresholds):**
 
-- **India (IN) and other markets:** students **under 13** must complete a
-  one-time **parent/guardian email confirmation** before learning features
-  unlock (COPPA-aligned; DPDP Act 2023 §9 verifiable consent).
+- **India (IN) and other markets:** students **under 18** must obtain
+  parent or legal-guardian approval before learning features unlock. This
+  follows the DPDP Act 2023 definition of a child and Section 9's
+  verifiable-parental-consent requirement. The current internal-testing flow
+  sends a one-time approval link to the guardian's email. We may strengthen
+  identity and age verification as applicable rules and approved verification
+  services become operational.
 - **Korea (KR):** students **under 14** must complete the same email
   confirmation (PIPA). Mobile identity verification (PASS) may replace
   email when `GUARDIAN_PASS_ENABLED` is on in production.
 
-**Teen privacy (13–17 in IN; 14–17 in KR):** these users may register
-without the email gate. DPDP defines a "child" as under 18; we apply
-enhanced defaults instead of a blanket guardian block: **analytics and
-marketing are off unless explicitly opted in**, we do not serve targeted
-advertising, and optional consents can be changed in Settings → Privacy.
+**Teen privacy:** Indian users aged 13–17 remain behind the guardian gate.
+Korean users aged 14–17 may register without that gate. For every minor,
+**analytics and marketing are off unless explicitly opted in**, we do not
+serve targeted advertising, and optional consents can be changed in
+Settings → Privacy.
 
 - We collect a **self-reported age** (approximate date of birth) at student
   signup — not government ID verification.

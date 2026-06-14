@@ -35,10 +35,10 @@
 |---|------|------|-----------|
 | 0.1 | `main` CI green | GitHub Actions **CI** 워크플로 | server jest + coverage, app tsc + vite build, android-compile 모두 성공 |
 | 0.2 | 타입체크 | `npm run typecheck` | exit 0 (server + app) |
-| 0.3 | 보호자 연령 단위 테스트 | `npm -w server exec -- npx jest guardian-consent.util.spec.ts` | KR 14세 / default 13세 케이스 통과 |
+| 0.3 | 보호자 연령 단위 테스트 | `npm -w server exec -- npx jest guardian-consent.util.spec.ts` | KR 14세 / IN·default 18세 경계 케이스 통과 |
 | 0.4 | 빌링 서버 테스트 | CI jest `billing/*` | 전체 통과 |
 | 0.5 | 빌링 앱 단위 테스트 | CI vitest `billing-*` | 전체 통과 |
-| 0.6 | Android 컴파일 | CI `android-compile` job | Java compile 성공 (Capacitor 8 + Play Billing 7.1.1) |
+| 0.6 | Android 컴파일 | CI `android-compile` job | Java compile 성공 (Capacitor 8 + Play Billing 8.0.0) |
 
 - [ ] G0-A 전체 통과
 
@@ -122,7 +122,7 @@ BILLING_UI_ENABLED=true
 
 | # | 위치 | 작업 | 통과 기준 |
 |---|------|------|-----------|
-| 1.4 | Monetize → Subscriptions | `premium_monthly`, `premium_yearly` base plan **Active** | 5개국 가격 + 60일 intro (`launch-promo-60d`) |
+| 1.4 | Monetize → Subscriptions | `premium_monthly`, `premium_yearly` base plan **Active** | 현재 지역별 가격이 앱 paywall과 일치. Play 무료체험 offer는 의도적으로 활성화한 경우에만 노출 |
 | 1.5 | Settings → License testing | 테스터 Google 계정 등록 | 최소 2계정 (구매·복원 분리 테스트용) |
 | 1.6 | Monetize → Monetization setup | RTDN Pub/Sub 연결 | Push → `POST /billing/rtdn` |
 | 1.7 | RTDN 테스트 알림 | Console에서 test notification 전송 | HTTP 200, inbox `PROCESSED` |
@@ -244,7 +244,7 @@ v1 출시 UX: **`LAUNCH_STUDENT_ONLY = true`** — 학부모/교사 가입 UI �
 
 | # | 시나리오 | 기대 (KR / IN) |
 |---|----------|----------------|
-| 3.12 | IN, 만 12세 | 보호자 이메일 OTP 필요 (threshold **13**) |
+| 3.12 | IN, 만 17세 | 보호자 이메일 승인 필요 (threshold **18**) |
 | 3.13 | KR, 만 13세 | 보호자 동의 필요 (threshold **14**) |
 | 3.14 | 보호자 이메일 발송 | 메일 수신, `/guardian-consent/verify?token=…` |
 | 3.15 | 보호자 링크 클릭 | `guardianConsentVerifiedAt` 설정, 학생 앱 잠금 해제 |

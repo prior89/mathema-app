@@ -69,8 +69,8 @@ exact gaps that keep tripping you up.
   • Worked examples explain the reasoning step-by-step before you try a
     problem yourself, then guided practice scaffolds you down to fully
     independent work.
-  • A retrieval check at the end of every lesson catches misconceptions
-    early — the test is mastery, not memorisation.
+  • Guided practice and answer feedback catch misconceptions early — the
+    goal is mastery, not memorisation.
 
 — Practice that adapts to you —
 
@@ -108,9 +108,9 @@ exact gaps that keep tripping you up.
     independently from Settings → Privacy at any time.
   • Account deletion from inside the app or the web — every record is
     permanently removed within 30 days. No dark patterns, no retention.
-  • Under-13 (India) / under-14 (Korea) accounts need a one-time parent
-    email confirmation. A PARENT role is also available for optional
-    supervision of teen accounts.
+  • Under-18 (India) / under-14 (Korea) accounts require parent or legal-
+    guardian approval before learning features unlock. A PARENT role is
+    also available for optional supervision.
 
 — Made for Class 7 to Class 12 —
 
@@ -155,25 +155,28 @@ spaced-repetition wrong-note book. Built for Indian students under DPDP
 | User-generated content / chat between users? | **No.** Wrong notes and feedback are private to the user. There is no peer chat surface. |
 | Shares user location with third parties? | **No.** No precise location is collected. |
 | Allows users to interact online? | **No.** All multiplayer / leaderboard features are out of scope for v1.0. |
-| Digital purchases? | **No.** Free PoC. |
+| Digital purchases? | **Yes.** Optional Premium subscriptions through Google Play. |
 | Recommended age rating | **3+** (Education / Math). Play will resolve to "Everyone" / equivalent regional bracket. |
 
 ---
 
 ## Target audience and content
 
-- **Target audience age groups**: 13-15, 16-17, 18+ (NCERT Class 7-12 spans
-  these brackets; the Indian regulatory floor for digital consent is 13).
+- **Target audience age groups**: 9-12, 13-15, 16-17, 18+ (the product
+  accepts learners from age 11 and NCERT Class 7-12 spans these brackets).
 - **Appeals to children?**: Yes, indirectly — Class 7-9 users are typically
-  13-15. Family-policy compliance is therefore claimed.
+  minors. India users under 18 and Korea users under 14 follow the
+  country-specific guardian gate.
 - **Ads**: **None** in v1.0.
 
 ---
 
 ## Pricing and distribution
 
-- **Price**: Free.
-- **In-app purchases**: None for v1.0.
+- **Price**: Free to install; core learning remains available on the Free tier.
+- **In-app purchases**: Optional auto-renewing Google Play Premium monthly
+  and yearly subscriptions. A separate one-time, cardless 3-day Premium
+  Preview does not auto-renew or charge the user.
 - **Countries**:
   - Launch wave: **India** only.
   - Phase 2 candidates: Bhutan, Nepal, Bangladesh, Sri Lanka (sharing NCERT
@@ -208,8 +211,8 @@ notes: This account starts at the onboarding flow. Pick any NCERT class to
 - [x] Custom domain live: https://app.matheo.verastudy.net (HTTPS enabled)
       every placeholder URL above.
 - [ ] Reviewer account created + password stored in the secrets vault.
-- [ ] Feature graphic 1024 × 500 and 8 phone screenshots in
-      `app/store-assets/` (task E2).
-- [ ] 512 × 512 launcher icon authored from the brand mark (task B1).
+- [x] Feature graphic 1024 × 500 and 6 phone screenshots in
+      `store-assets/play-console/`.
+- [x] 512 × 512 launcher icon authored from the brand mark.
 - [ ] FCM credentials live so push notification claim is genuine
       (task C1).
