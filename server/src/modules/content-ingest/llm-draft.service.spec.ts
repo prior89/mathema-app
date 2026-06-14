@@ -6,7 +6,11 @@
  * OpenAI quota. parseAndValidate is private so we drive it via generate().
  */
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { LlmDraftService } from './llm-draft.service';
+import {
+  LlmDraftService,
+  SYSTEM_PROMPT_MULTI_STEP,
+  SYSTEM_PROMPT_SINGLE_STEP,
+} from './llm-draft.service';
 
 function validMulti() {
   const choices = [
@@ -48,6 +52,42 @@ function aiReturning(payload: unknown) {
     }),
   };
 }
+
+describe('System prompts — pedagogical directives must not drift', () => {
+  // These prompts are the only piece of LLM-draft pipeline a future
+  // refactor can silently erase. Lock the four pedagogical layers
+  // (Rubric / EF / Hattie process+self-regulation / Chi caveat) into a
+  // spec so a stray edit that removes one of them fails CI rather than
+  // shipping a flatter rationale to learners.
+  const HATTIE_PROCESS = /process layer/i;
+  const HATTIE_SELF_REG = /self-regulation/i;
+  const CHI_CAVEAT = /chi.*2024/i;
+  const FOUR_PART = /4-part|4-part|four[- ]part|student-facing/i;
+  const CAUSAL_NARRATION = /because|this works because/i;
+  const PROMPTS = {
+    'SYSTEM_PROMPT_MULTI_STEP': SYSTEM_PROMPT_MULTI_STEP,
+    'SYSTEM_PROMPT_SINGLE_STEP': SYSTEM_PROMPT_SINGLE_STEP,
+  };
+  Object.entries(PROMPTS).forEach(([name, prompt]) => {
+    it(`${name} keeps Hattie process layer`, () => {
+      expect(prompt).toMatch(HATTIE_PROCESS);
+    });
+    it(`${name} keeps Hattie self-regulation layer`, () => {
+      expect(prompt).toMatch(HATTIE_SELF_REG);
+    });
+    it(`${name} keeps Chi 2024 caveat (no generic self-explain)`, () => {
+      expect(prompt).toMatch(CHI_CAVEAT);
+    });
+    it(`${name} keeps the 4-part / student-facing rationale rule`, () => {
+      expect(prompt).toMatch(FOUR_PART);
+    });
+  });
+  // Worked-example narration only lives in the multi-step prompt (Study-tab
+  // single-step is a one-shot MC with no per-step narration).
+  it('SYSTEM_PROMPT_MULTI_STEP keeps explicit "because" causal-narration directive', () => {
+    expect(SYSTEM_PROMPT_MULTI_STEP).toMatch(CAUSAL_NARRATION);
+  });
+});
 
 describe('LlmDraftService.generate — schema validation', () => {
   it('accepts a valid multi-step payload', async () => {

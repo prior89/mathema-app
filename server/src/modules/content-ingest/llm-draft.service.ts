@@ -69,7 +69,7 @@ export type DraftResult = {
  */
 export type DraftMode = 'multi-step' | 'single-step';
 
-const SYSTEM_PROMPT_MULTI_STEP = `You are an expert math educator transforming NCERT (Indian Class 7-12) and similar problems into a strict 3-step multiple-choice format for the Matheo learning app.
+export const SYSTEM_PROMPT_MULTI_STEP = `You are an expert math educator transforming NCERT (Indian Class 7-12) and similar problems into a strict 3-step multiple-choice format for the Matheo learning app.
 
 You MUST return a single JSON object with this exact schema (no markdown, no commentary):
 
@@ -114,7 +114,7 @@ Hattie & Timperley feedback layering (apply per wrong choice; do not flatten):
 - Self-regulation layer: end every rationale with one concrete check the student can run before attempting a similar problem ("Next time: …", "다음에는 …", "Check: …"). One short sentence; no praise, no self-level commentary.
 Research caveat (Chi et al. 2024): a generic "explain why" prompt can lower the worked-example benefit. Keep self-regulation hints tightly scoped to the actual error type instead of asking the student to self-explain in general.`;
 
-const SYSTEM_PROMPT_SINGLE_STEP = `You are an expert math educator generating a single-step multiple-choice question for Matheo (Indian NCERT Class 7-12 students).
+export const SYSTEM_PROMPT_SINGLE_STEP = `You are an expert math educator generating a single-step multiple-choice question for Matheo (Indian NCERT Class 7-12 students).
 
 Return a single JSON object with this exact schema (no markdown, no commentary):
 
