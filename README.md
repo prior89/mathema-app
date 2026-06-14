@@ -23,9 +23,9 @@ Monorepo:
 > - 🟢 Backend live on Azure Central India (Container Apps + Postgres Flexible + Redis + Key Vault).
 > - 🟢 Frontend live on custom domain (`https://app.matheo.verastudy.net`).
 > - 🟢 Math-helper sidecar live (internal ingress, called from server).
-> - 🟢 Signed Android AAB ready (Capacitor 8 + Play Billing 7.1.1 native plugin).
-> - 🟢 Google Play Billing: Subscription Prisma model + Play Developer API v3 server verify + RTDN webhook + Free 8/day quota gate + paywall UI. All wired; **Play Console product creation + Internal Testing track release are the operator's last steps.**
-> - 🟡 Pricing: Free (8/day) + Premium monthly + Premium yearly (5 countries: KR / IN / ID / VN / AE) — 60-day Launch Promo via Play introductory price.
+> - 🟢 Signed Android AAB workflow ready (Capacitor 8 + Play Billing 8.0.0 native plugin).
+> - 🟢 Google Play Billing: Subscription Prisma model + Play Developer API v3 server verify + RTDN webhook + Free-tier gates + paywall UI. All wired; **Play Console product verification + Internal Testing track release are the operator's last steps.**
+> - 🟡 Pricing: Free chapter learning includes 5 problems; a cardless 3-day Premium Preview unlocks the remaining problems without auto-renewal or charge. Premium monthly/yearly subscriptions use Google Play Billing.
 > - 🟡 Family plan: deferred to v1.
 > - 🟡 Network hardening (VNet + private endpoints for PG/KV): deferred to a follow-up sprint — currently `publicNetworkAccess: Enabled` with KV `defaultAction: Allow` since ACA shared-pool egress isn't on Microsoft's trusted-services list.
 >
@@ -414,11 +414,11 @@ Live topology (RG `mathema-prod-cin`):
 - AAB rebuild: `gh workflow run android-release.yml --ref main`; artifact `matheo-aab` in the run's Artifacts.
 
 ### What's NOT deployed yet (operator-driven last mile)
-- Play Console product creation (`premium_monthly` / `premium_yearly` + 5-country pricing + 60-day intro offer with `launch-promo-60d` tag).
+- Play Console verification that `premium_monthly` / `premium_yearly` base plans are active and their regional prices match the app paywall. No Play free-trial offer should be enabled unless deliberately added and disclosed.
 - Internal Testing track release of the current AAB.
 - GCP Pub/Sub topic + Play Console RTDN linkage (server `/billing/rtdn` endpoint is ready; operator fills `RTDN_AUDIENCE` + `RTDN_SERVICE_ACCOUNT_EMAIL` env vars once Pub/Sub is provisioned).
 - FCM credentials (`google-services.json` + ACA env). Push notifications inactive until then.
-- Designer assets: app icon adaptive + splash (current launcher is from the 512px brand icon), feature graphic 1024×500, 2-8 phone screenshots.
+- Upload the prepared store assets: 512px app icon, 1024×500 feature graphic, and 6 phone screenshots from `store-assets/play-console/`.
 - VNet integration + private endpoints (PG / KV / AOAI) — task #27.
 
 ---
