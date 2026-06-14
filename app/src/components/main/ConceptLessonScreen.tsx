@@ -1196,9 +1196,25 @@ function KoreanWorkedSteps({
 
 function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
   const { t } = useT();
+  const [sp] = useSearchParams();
+  const focus = sp.get('focus');
+  const isFocused = focus === step.kind;
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isFocused) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [isFocused]);
   const tone = STEP_TONE[step.kind] ?? DEFAULT_STEP_TONE;
   return (
-    <div className="card concept-step-body" style={{ padding: '16px 18px', borderLeft: `3px solid ${tone.accent}` }}>
+    <div
+      ref={ref}
+      className="card concept-step-body"
+      style={{
+        padding: '16px 18px',
+        borderLeft: `3px solid ${tone.accent}`,
+        outline: isFocused ? '2px solid var(--p-primary)' : undefined,
+        outlineOffset: isFocused ? 4 : undefined,
+      }}
+    >
       <span
         className="chip concept-step-chip"
         style={{
