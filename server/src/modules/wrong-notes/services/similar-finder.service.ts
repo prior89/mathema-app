@@ -39,9 +39,27 @@ export class SimilarFinderService {
   async findSimilar(problemId: string, limit = 5, lang: Lang = 'en') {
     const src = await this.prisma.problem.findUnique({
       where: { id: problemId },
-      select: { unitId: true, difficulty: true },
+      select: {
+        unitId: true,
+        subUnitId: true,
+        conceptLessonId: true,
+        koreanConceptLessonId: true,
+        difficulty: true,
+      },
     });
     if (!src) return [];
+
+    // Korean problems share a legacy fallback unitId because Problem.unitId
+    // is non-null, so unitId is not a chapter boundary for the KR tree.
+    // Prefer the real lesson FK for both curricula; use sub-unit/unit only for
+    // legacy rows that have no lesson mapping.
+    const chapterScope = src.koreanConceptLessonId
+      ? { koreanConceptLessonId: src.koreanConceptLessonId }
+      : src.conceptLessonId
+        ? { conceptLessonId: src.conceptLessonId }
+        : src.subUnitId
+          ? { subUnitId: src.subUnitId }
+          : { unitId: src.unitId };
 
     const select = {
       id: true,
@@ -49,12 +67,18 @@ export class SimilarFinderService {
       body: true,
       difficulty: true,
       unit: { select: { name: true } },
+      conceptLesson: {
+        select: { titleKo: true, titleEn: true, titleHi: true },
+      },
+      koreanConceptLesson: {
+        select: { titleKo: true, titleEn: true },
+      },
     } as const;
 
     const exact = await this.prisma.problem.findMany({
       where: {
         id: { not: problemId },
-        unitId: src.unitId,
+        ...chapterScope,
         difficulty: src.difficulty,
         ...USABLE_QUALITY,
       },
@@ -66,7 +90,7 @@ export class SimilarFinderService {
         ? await this.prisma.problem.findMany({
             where: {
               id: { not: problemId, notIn: exact.map((p) => p.id) },
-              unitId: src.unitId,
+              ...chapterScope,
               difficulty: { not: src.difficulty },
               ...USABLE_QUALITY,
             },
@@ -77,10 +101,21 @@ export class SimilarFinderService {
 
     return [...exact, ...rest].map((p) => {
       const en = lang !== 'ko' ? PROBLEM_EN[p.source]?.body : undefined;
+      const lessonTitle = p.koreanConceptLesson
+        ? (lang === 'ko'
+            ? p.koreanConceptLesson.titleKo
+            : p.koreanConceptLesson.titleEn ?? p.koreanConceptLesson.titleKo)
+        : p.conceptLesson
+          ? (lang === 'ko'
+              ? p.conceptLesson.titleKo
+              : lang === 'hi'
+                ? p.conceptLesson.titleHi ?? p.conceptLesson.titleEn
+                : p.conceptLesson.titleEn)
+          : pickUnit(p.unit.name, lang);
       return {
         id: p.id,
         preview: toPreview(en ?? p.body),
-        chapter: pickUnit(p.unit.name, lang),
+        chapter: lessonTitle,
         difficulty: pickDifficulty(p.difficulty, lang),
       };
     });
