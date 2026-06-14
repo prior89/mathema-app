@@ -39,6 +39,7 @@ export const ERROR_CODE_VOCAB = {
   ORDER_OF_OPERATIONS_ERROR: '연산 순서 오류',
 } as const;
 
+// eslint-disable-next-line @typescript-eslint/ban-types -- `string & {}` is the standard literal-union + autocomplete pattern
 export type ErrorCode = keyof typeof ERROR_CODE_VOCAB | (string & {});
 
 export type KoreanProblemOption = {

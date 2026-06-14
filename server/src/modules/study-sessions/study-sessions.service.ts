@@ -7,7 +7,8 @@ import { StartSessionDto } from './dto/start-session.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { SessionContext } from '../../common/enums/session-context.enum';
 import { Lang } from '../../common/i18n/current-lang.decorator';
-import { CHOICE_EN } from '../../common/i18n/content-en';
+import { CHOICE_EN, UNIT_NAME_EN } from '../../common/i18n/content-en';
+import { UNIT_NAME_HI } from '../../common/i18n/content-hi';
 import { AdaptiveNextProblemService } from '../recommendations/services/adaptive-next-problem.service';
 import { AdaptiveStartDto } from './dto/adaptive-start.dto';
 
@@ -149,9 +150,7 @@ export class StudySessionsService {
     // 단원명 EN / HI 변환
     const unitDisplay = (name: string) => {
       if (lang === 'ko') return name;
-      const { UNIT_NAME_EN } = require('../../common/i18n/content-en');
       if (lang === 'hi') {
-        const { UNIT_NAME_HI } = require('../../common/i18n/content-hi');
         return UNIT_NAME_HI[name] ?? UNIT_NAME_EN[name] ?? name;
       }
       return UNIT_NAME_EN[name] ?? name;

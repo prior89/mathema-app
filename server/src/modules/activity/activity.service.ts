@@ -23,7 +23,7 @@ export class ActivityService {
       take: 365,
     });
     let streak = 0;
-    let cursor = new Date(); cursor.setHours(0, 0, 0, 0);
+    const cursor = new Date(); cursor.setHours(0, 0, 0, 0);
     for (const a of acts) {
       const d = new Date(a.date); d.setHours(0, 0, 0, 0);
       if (d.getTime() === cursor.getTime()) {

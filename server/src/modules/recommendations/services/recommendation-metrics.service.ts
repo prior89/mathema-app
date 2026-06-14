@@ -52,7 +52,7 @@ export class RecommendationMetricsService {
     const duplicateRate = duplicatePicks / total;
 
     // sameConceptStreak — 시간순으로 정렬한 logs 에서 연속된 같은 targetConceptId 묶음 평균.
-    let streaks: number[] = [];
+    const streaks: number[] = [];
     let cur = 1;
     for (let i = 1; i < logs.length; i++) {
       if (logs[i].targetConceptId && logs[i].targetConceptId === logs[i - 1].targetConceptId) {

@@ -232,8 +232,10 @@ describe('WrongNotesService.review (SM-2)', () => {
   }
 
   // Patch parseQuality so we can drive q=5 directly without re-implementing the mapping.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires -- jest.spyOn needs the live module reference
+  const spacedRepetitionModule = require('./services/spaced-repetition.service');
   const PARSE_QUALITY_SPY = jest.spyOn(
-    require('./services/spaced-repetition.service').SpacedRepetitionService,
+    spacedRepetitionModule.SpacedRepetitionService,
     'parseQuality',
   );
   afterAll(() => PARSE_QUALITY_SPY.mockRestore());

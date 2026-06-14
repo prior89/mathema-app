@@ -6,7 +6,7 @@
  */
 
 export function stripLatexDelimiters(raw: string): string {
-  let t = raw.trim();
+  const t = raw.trim();
   if (t.startsWith('$$') && t.endsWith('$$') && t.length >= 4) {
     return t.slice(2, -2).trim();
   }

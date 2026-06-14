@@ -66,8 +66,8 @@ export class StudySessionsRepository {
 
     let focusScore: number | null = null;
     let fatigueSignal: string | null = null;
-    let problemCount = attempts.length;
-    let correctCount = attempts.filter((a) => a.isCorrect).length;
+    const problemCount = attempts.length;
+    const correctCount = attempts.filter((a) => a.isCorrect).length;
     let averageResponseTimeSec: number | null = null;
 
     if (attempts.length > 0) {
