@@ -848,6 +848,13 @@ const ko = {
   'lesson.done.eyebrow': '챕터 완료',
   'lesson.done.body': '풀이 기록이 저장됐어요. AI 코치가 이 데이터로 약점 패턴을 찾고 다음 챕터를 추천해 드려요.',
   'lesson.done.backChapters': '챕터 목록으로',
+  'lesson.freeDone.eyebrow': '무료 학습 완료',
+  'lesson.freeDone.progress': '{solved} / {total}문제',
+  'lesson.freeDone.body': '무료 문제 {solved}개를 모두 풀었어요. 전체 마스터리를 완료하려면 남은 {remaining}문제를 이어서 풀어보세요.',
+  'lesson.freeDone.preview': '자동결제 없이 {days}일 무료 체험',
+  'lesson.freeDone.previewStarting': '무료 체험 시작 중…',
+  'lesson.freeDone.previewError': '무료 체험을 시작하지 못했어요. Premium 화면에서 다시 시도해 주세요.',
+  'lesson.freeDone.premium': 'Premium으로 20문제 계속 풀기',
 
   // ===== Learn Screen =====
   'learn.tab.label': 'Library',
@@ -2198,6 +2205,13 @@ const en: typeof ko = {
   'lesson.done.eyebrow': 'CHAPTER COMPLETE',
   'lesson.done.body': 'Your attempts are saved. Your AI coach will use this data to surface weak patterns and target the next chapter.',
   'lesson.done.backChapters': 'Back to chapters',
+  'lesson.freeDone.eyebrow': 'FREE PRACTICE COMPLETE',
+  'lesson.freeDone.progress': '{solved} / {total} problems',
+  'lesson.freeDone.body': 'You finished all {solved} free problems. Continue with the remaining {remaining} problems to complete full mastery.',
+  'lesson.freeDone.preview': 'Try free for {days} days — no auto-renewal',
+  'lesson.freeDone.previewStarting': 'Starting free preview…',
+  'lesson.freeDone.previewError': 'We could not start the free preview. Please try again from the Premium screen.',
+  'lesson.freeDone.premium': 'Continue all 20 with Premium',
 
   // Learn Screen
   'learn.tab.label': 'Library',
