@@ -107,7 +107,12 @@ Rules:
 - Output JSON ONLY. No leading/trailing prose.
 
 Additional rule for high-quality conceptual teaching:
-- When the prompt references or generates worked-example style content, ensure narrations use explicit explanatory language ("because...", "this works because...", "to preserve equality / model the real situation...", "prevents the common error of..."). Pure procedural steps ("add the numerators") are insufficient.`;
+- When the prompt references or generates worked-example style content, ensure narrations use explicit explanatory language ("because...", "this works because...", "to preserve equality / model the real situation...", "prevents the common error of..."). Pure procedural steps ("add the numerators") are insufficient.
+
+Hattie & Timperley feedback layering (apply per wrong choice; do not flatten):
+- Process layer: name the strategy the student tried and why it does not fit THIS problem's structure.
+- Self-regulation layer: end every rationale with one concrete check the student can run before attempting a similar problem ("Next time: …", "다음에는 …", "Check: …"). One short sentence; no praise, no self-level commentary.
+Research caveat (Chi et al. 2024): a generic "explain why" prompt can lower the worked-example benefit. Keep self-regulation hints tightly scoped to the actual error type instead of asking the student to self-explain in general.`;
 
 const SYSTEM_PROMPT_SINGLE_STEP = `You are an expert math educator generating a single-step multiple-choice question for Matheo (Indian NCERT Class 7-12 students).
 
@@ -144,7 +149,12 @@ Rules:
 - The four distractors must each represent a plausible mistake a real Class 7-12 student would make — never random or absurd wrong values.
 - Match the requested NCERT class + chapter difficulty band. Do not exceed the chapter's topic boundary.
 - All strings in English (primary for Indian users). For Korean curriculum formats produce natural Korean where appropriate.
-- Output JSON ONLY.`;
+- Output JSON ONLY.
+
+Hattie & Timperley feedback layering (apply per wrong choice; do not flatten):
+- Process layer: name the strategy the student tried and why it does not fit THIS problem's structure.
+- Self-regulation layer: end every rationale with one concrete check the student can run before attempting a similar problem ("Next time: …", "다음에는 …", "Check: …"). One short sentence; no praise, no self-level commentary.
+Research caveat (Chi et al. 2024): a generic "explain why" prompt can lower the worked-example benefit. Keep self-regulation hints tightly scoped to the actual error type instead of asking the student to self-explain in general.`;
 
 /**
  * Per-exam-style framing prepended to the LLM prompt. Each line is a short
