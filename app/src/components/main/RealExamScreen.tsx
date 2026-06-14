@@ -365,7 +365,7 @@ export function RealExamScreen() {
         )}
       </div>
 
-      <div className="screen-foot" style={{ display: 'flex', gap: 8 }}>
+      <div className="screen-foot" style={{ flexDirection: 'row', gap: 8, flexShrink: 0 }}>
         <button
           className="btn outline"
           onClick={() => goTo(Math.max(0, idx - 1))}
