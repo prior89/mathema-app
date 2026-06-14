@@ -230,7 +230,14 @@ export function WrongNoteDetailScreen() {
                       key={s.id}
                       type="button"
                       className="card"
-                      style={{ padding: 12, textAlign: 'left', cursor: 'pointer', width: '100%' }}
+                      style={{
+                        padding: 12,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        width: '100%',
+                        color: 'var(--p-ink)',
+                        fontFamily: 'inherit',
+                      }}
                       onClick={() => nav(`/app/practice/${s.id}`)}
                     >
                       <div style={{ fontSize: 13, lineHeight: 1.55 }}>
