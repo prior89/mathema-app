@@ -17,6 +17,7 @@ export function AnswerFeedbackSheet({
   actionPending,
   onAction,
   onDismiss,
+  reteachCta,
 }: {
   correct: boolean;
   /** Verdict subline — parent escalates the copy across retry attempts. */
@@ -30,6 +31,11 @@ export function AnswerFeedbackSheet({
   actionPending: boolean;
   onAction: () => void;
   onDismiss: () => void;
+  /** Optional process-level feedback (Hattie & Timperley): a secondary CTA
+   *  that sends the student back to the ConceptLesson step matched to the
+   *  distractorType they hit. Caller resolves the label and route. Null
+   *  hides the row entirely so older call sites stay unchanged. */
+  reteachCta?: { label: string; onClick: () => void } | null;
 }) {
   const { t } = useT();
   return (
@@ -73,6 +79,11 @@ export function AnswerFeedbackSheet({
         <button className="btn" onClick={onAction} disabled={actionPending}>
           {actionLabel}
         </button>
+        {!correct && reteachCta && (
+          <button className="btn text" style={{ marginTop: 6 }} onClick={reteachCta.onClick}>
+            {reteachCta.label}
+          </button>
+        )}
       </div>
     </>
   );

@@ -21,6 +21,7 @@ import { hapticResult, hapticSelect } from '../../lib/haptics';
 import { nextStudyProblem } from '../../lib/mutations';
 import { fetchProblemHint, fetchProblemHintWalkthrough, fetchStreak } from '../../lib/queries';
 import { useShuffledChoices } from '../../lib/shuffle';
+import { reteachStepFor, reteachCtaKey } from '../../lib/distractor-reteach';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
 import { AnswerFeedbackSheet } from './AnswerFeedbackSheet';
@@ -474,6 +475,20 @@ export function StudyPracticeScreen() {
           actionPending={fetchNext.isPending}
           onAction={result.isCorrect ? onNext : onTryAgain}
           onDismiss={() => setSheetOpen(false)}
+          reteachCta={(() => {
+            if (result.isCorrect) return null;
+            const dt = result.selectedChoice?.distractorType ?? null;
+            const step = reteachStepFor(dt);
+            const ctaKey = reteachCtaKey(dt);
+            if (!step || !ctaKey || !chapterCode) return null;
+            return {
+              label: t(ctaKey as any),
+              onClick: () => {
+                setSheetOpen(false);
+                nav(`/app/learn/${chapterCode}?focus=${step}`);
+              },
+            };
+          })()}
         />
       )}
     </div>

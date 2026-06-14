@@ -6,7 +6,7 @@
  * math mentally without writing space doesn't work — retrieval happens in the
  * practice problems instead.
  */
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -303,6 +303,16 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
 
 function ConceptStepBlock({ step }: { step: ConceptStep }) {
   const { t } = useT();
+  const [sp] = useSearchParams();
+  // Re-teach deep-link target: AnswerFeedbackSheet sends the learner here
+  // with ?focus=<ConceptStepKind> to address the failure mode behind their
+  // last wrong answer. Scroll the matched step into view and highlight it.
+  const focus = sp.get('focus');
+  const isFocused = focus === step.kind;
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isFocused) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [isFocused]);
   const tone = STEP_TONE[step.kind] ?? DEFAULT_STEP_TONE;
   const mc = step.misconception;
   const hasMisconception = !!(mc && (mc.wrong || mc.why || mc.correct));
@@ -317,7 +327,11 @@ function ConceptStepBlock({ step }: { step: ConceptStep }) {
   if (!step.body && !hasMisconception && !hasWorked && !hasReflect && !hasVisual) return null;
 
   return (
-    <div className="concept-step">
+    <div
+      className="concept-step"
+      ref={ref}
+      style={isFocused ? { outline: '2px solid var(--p-primary)', outlineOffset: 4, borderRadius: 8 } : undefined}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
         <span
           className="chip concept-step-chip"
