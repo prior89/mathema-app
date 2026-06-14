@@ -486,6 +486,10 @@ export type Problem = {
   // answer 필드는 응시 중 클라이언트로 노출되지 않음
   imageUrl: string | null; hint: string | null;
   steps?: ProblemStep[];
+  /** ConceptLesson chapter this problem belongs to (when mapped). Used by
+   *  AnswerFeedbackSheet / FeedbackCard to deep-link a wrong answer back
+   *  to the matching ConceptStep — see lib/distractor-reteach.ts. */
+  chapterCode?: string | null;
 };
 export type Hint = {
   hint: string | null;

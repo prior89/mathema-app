@@ -12,6 +12,7 @@ import { fetchProblem, fetchProblemSolution, reportProblem } from '../../lib/que
 import { masterWrongNoteByProblem } from '../../lib/mutations';
 import { post } from '../../lib/api';
 import { useShuffledChoices } from '../../lib/shuffle';
+import { reteachStepFor, reteachCtaKey } from '../../lib/distractor-reteach';
 import { useT } from '../../lib/i18n';
 import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
@@ -344,7 +345,7 @@ export function SoloProblemScreen() {
             })}
           </div>
 
-          {result && <FeedbackCard result={result} />}
+          {result && <FeedbackCard result={result} chapterCode={problem.data?.chapterCode ?? null} />}
         </div>
       )}
 
@@ -544,8 +545,15 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
   );
 }
 
-function FeedbackCard({ result }: { result: StepResult }) {
+function FeedbackCard({
+  result,
+  chapterCode,
+}: {
+  result: StepResult;
+  chapterCode: string | null;
+}) {
   const { t } = useT();
+  const nav = useNavigate();
   const correct = result.isCorrect;
   const sel = result.selectedChoice;
   const distractorTypeText = sel?.distractorType
@@ -587,6 +595,21 @@ function FeedbackCard({ result }: { result: StepResult }) {
           <span className="chip" style={{ fontSize: 10.5 }}>{distractorTypeText}</span>
         </div>
       )}
+      {!correct && chapterCode && (() => {
+        const step = reteachStepFor(sel?.distractorType ?? null);
+        const ctaKey = reteachCtaKey(sel?.distractorType ?? null);
+        if (!step || !ctaKey) return null;
+        return (
+          <button
+            type="button"
+            className="btn text"
+            style={{ marginTop: 8, padding: '4px 8px', fontSize: 12 }}
+            onClick={() => nav(`/app/learn/${chapterCode}?focus=${step}`)}
+          >
+            {t(ctaKey as any)}
+          </button>
+        );
+      })()}
     </div>
   );
 }

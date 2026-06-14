@@ -23,7 +23,10 @@ const shuffle = <T>(arr: T[]): T[] => {
 
 const sanitizeForClient = (p: any, lang: Lang = 'en') => {
   if (!p) return p;
-  const { answer, ...rest } = p;
+  const { answer, conceptLesson, ...rest } = p;
+  // Flatten the conceptLesson join so the client receives `chapterCode`
+  // directly on Problem instead of having to read .conceptLesson.chapterCode.
+  if (conceptLesson?.chapterCode) rest.chapterCode = conceptLesson.chapterCode;
   if (lang !== 'ko') {
     const en = PROBLEM_EN[p.source];
     if (en) rest.body = en.body;
@@ -85,7 +88,13 @@ export class ProblemsRepository {
   async findById(id: string, lang: Lang = 'en') {
     const row = await this.prisma.problem.findUnique({
       where: { id },
-      include: { steps: { orderBy: { stepIndex: 'asc' }, include: { choices: { orderBy: { choiceIndex: 'asc' } } } } },
+      include: {
+        steps: { orderBy: { stepIndex: 'asc' }, include: { choices: { orderBy: { choiceIndex: 'asc' } } } },
+        // Pulled so the client can deep-link a wrong answer back to the
+        // ConceptLesson MISCONCEPTION / WORKED_EXAMPLE step that addresses
+        // the failure mode (see app/src/lib/distractor-reteach.ts).
+        conceptLesson: { select: { chapterCode: true } },
+      },
     });
     return sanitizeForClient(row, lang);
   }
