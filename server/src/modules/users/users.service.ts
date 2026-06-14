@@ -38,10 +38,15 @@ export class UsersService {
     }
 
     if (dto.birthDate !== undefined) {
-      if (user.birthDate) {
+      // DOB is locked only after verifiable guardian consent is recorded —
+      // the consent is anchored to that exact birth date. Before VERIFIED,
+      // allow corrections so a mis-tapped age picker is not a permanent
+      // dead-end. The change re-runs ensurePendingForStudent below to
+      // re-evaluate the gate against the new age.
+      if (user.birthDate && user.guardianConsentVerifiedAt) {
         throw new ForbiddenException({
           code: 'birth_date_immutable',
-          message: 'Date of birth cannot be changed after it is set.',
+          message: 'Date of birth cannot be changed after guardian consent is verified.',
         });
       }
       data.birthDate = new Date(dto.birthDate);

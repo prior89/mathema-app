@@ -10,12 +10,20 @@ type RepoMock = {
   update: jest.Mock;
 };
 
-function mockUser(over: Partial<{ id: string; role: UserRole; examDate: Date }> = {}) {
+function mockUser(over: Partial<{
+  id: string;
+  role: UserRole;
+  examDate: Date;
+  birthDate: Date | null;
+  guardianConsentVerifiedAt: Date | null;
+}> = {}) {
   return {
     id: 'user-1',
     role: 'STUDENT' as UserRole,
     examDate: new Date('2026-12-01'),
     passwordHash: 'hash',
+    birthDate: null as Date | null,
+    guardianConsentVerifiedAt: null as Date | null,
     ...over,
   };
 }
@@ -77,5 +85,38 @@ describe('UsersService.updateProfile', () => {
     await expect(svc.updateProfile('user-1', { role: 'STUDENT' })).rejects.toMatchObject({
       response: { code: 'role_change_blocked' },
     });
+  });
+
+  it('sets birthDate on first declaration', async () => {
+    const { svc, repo } = build({ user: mockUser({ birthDate: null }) });
+    await svc.updateProfile('user-1', { birthDate: '2010-03-15T00:00:00.000Z' });
+    expect(repo.update).toHaveBeenCalledWith('user-1', {
+      birthDate: new Date('2010-03-15T00:00:00.000Z'),
+    });
+  });
+
+  it('allows DOB correction before guardian consent is verified', async () => {
+    const { svc, repo } = build({
+      user: mockUser({
+        birthDate: new Date('2012-01-01'),
+        guardianConsentVerifiedAt: null,
+      }),
+    });
+    await svc.updateProfile('user-1', { birthDate: '2010-03-15T00:00:00.000Z' });
+    expect(repo.update).toHaveBeenCalledWith('user-1', {
+      birthDate: new Date('2010-03-15T00:00:00.000Z'),
+    });
+  });
+
+  it('blocks DOB change after guardian consent is verified (403)', async () => {
+    const { svc } = build({
+      user: mockUser({
+        birthDate: new Date('2012-01-01'),
+        guardianConsentVerifiedAt: new Date('2026-06-14T10:00:00Z'),
+      }),
+    });
+    await expect(
+      svc.updateProfile('user-1', { birthDate: '2010-03-15T00:00:00.000Z' }),
+    ).rejects.toMatchObject({ response: { code: 'birth_date_immutable' } });
   });
 });
