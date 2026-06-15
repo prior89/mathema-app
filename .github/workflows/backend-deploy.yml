@@ -128,6 +128,23 @@ jobs:
               "firebase-client-email=${FIREBASE_CLIENT_EMAIL}" \
               "firebase-private-key=${FIREBASE_PRIVATE_KEY}"
 
+      # Play Developer API service account JSON — server-side purchase verify.
+      # Large multi-line value, so routed through an ACA secret rather than a
+      # direct env var. No-op when the GitHub secret is unset.
+      - name: Ensure Play service account secret reference
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "PLAY_SERVICE_ACCOUNT_JSON not configured — skipping Play SA secret sync"
+            exit 0
+          fi
+          az containerapp secret set \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --secrets \
+              "play-service-account-json=${PLAY_SERVICE_ACCOUNT_JSON}"
+
       - name: Container App revision update
         run: |
           ENV_VARS="OPENAI_API_KEY=secretref:openai-api-key"
@@ -165,6 +182,9 @@ jobs:
           fi
           if [ -n "${{ secrets.PLAY_OBFUSCATED_ACCOUNT_SECRET }}" ]; then
             ENV_VARS="$ENV_VARS PLAY_OBFUSCATED_ACCOUNT_SECRET=${{ secrets.PLAY_OBFUSCATED_ACCOUNT_SECRET }}"
+          fi
+          if [ -n "${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}" ]; then
+            ENV_VARS="$ENV_VARS PLAY_SERVICE_ACCOUNT_JSON=secretref:play-service-account-json"
           fi
           az containerapp update \
             --name ${{ env.CONTAINER_APP }} \
