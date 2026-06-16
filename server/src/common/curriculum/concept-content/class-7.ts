@@ -41,10 +41,10 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     misconception: {
       wrongKo: '(−7) + (+4) = −11',
       wrongEn: '(−7) + (+4) = −11',
-      whyKo: '이는 \'부호가 다른 수의 덧셈\'에서 절댓값만 더하고 부호를 무시하는 전형적인 부호 오류(SIGN_ERROR)다. 학생은 이전에 \'크기끼리 더한다\'는 패턴이 통했던 기억(음수끼리 더하기) 때문에 이번에도 \'더하기니까 그냥 크기를 합치자\'고 생각했다. 하지만 여기서는 한 방향(양수)과 반대 방향(음수)의 이동이므로 방향을 고려한 차이를 내야 하며, 큰 쪽의 방향이 결과 부호가 된다. 실제로는 방향이 반대인 이동이 서로를 상쇄하기 때문에 크기 차이만 계산하는 것이다.',
-      whyEn: 'This is the classic "sign error on different signs" (SIGN_ERROR / CONCEPT_CONFUSION). The student added the absolute values as if both numbers had the same sign or forgot that the result keeps the sign of the number with the larger magnitude. In this problem the directions oppose on the number line, so we subtract the distances and attach the sign of the longer move. The prior success with same-sign addition made the "just add the sizes" shortcut feel safe, but it ignores the opposing-direction model.',
-      correctKo: '부호가 다르면 절댓값 차를 구하고, |·|가 큰 수의 부호를 따른다. 이는 수직선에서 반대 방향 이동이 부분적으로 상쇄되기 때문이다. 큰 쪽의 이동이 이기므로 그 방향을 결과에 붙인다. (exemplar: signErrorDifferentSigns)',
-      correctEn: 'Different signs ⇒ difference of absolutes + sign of the larger magnitude. This works because opposing directed movements on the number line partially cancel; the stronger (farther-from-zero) movement determines the final direction. Correct move: difference of absolutes + sign of the larger. (See EXEMPLAR_RATIONALES signErrorDifferentSigns.)',
+      whyKo: '이는 \'부호가 다른 수의 덧셈\'에서 절댓값만 더하고 부호를 무시하는 전형적인 부호 오류다. 학생은 이전에 \'크기끼리 더한다\'는 패턴이 통했던 기억(음수끼리 더하기) 때문에 이번에도 \'더하기니까 그냥 크기를 합치자\'고 생각했다. 하지만 여기서는 한 방향(양수)과 반대 방향(음수)의 이동이므로 방향을 고려한 차이를 내야 하며, 큰 쪽의 방향이 결과 부호가 된다. 실제로는 방향이 반대인 이동이 서로를 상쇄하기 때문에 크기 차이만 계산하는 것이다.',
+      whyEn: 'This is the classic sign error on different signs. The student added the absolute values as if both numbers had the same sign or forgot that the result keeps the sign of the number with the larger magnitude. In this problem the directions oppose on the number line, so we subtract the distances and attach the sign of the longer move. The prior success with same-sign addition made the "just add the sizes" shortcut feel safe, but it ignores the opposing-direction model.',
+      correctKo: '부호가 다르면 절댓값 차를 구하고, |·|가 큰 수의 부호를 따른다. 이는 수직선에서 반대 방향 이동이 부분적으로 상쇄되기 때문이다. 큰 쪽의 이동이 이기므로 그 방향을 결과에 붙인다.',
+      correctEn: 'Different signs ⇒ difference of absolutes + sign of the larger magnitude. This works because opposing directed movements on the number line partially cancel; the stronger (farther-from-zero) movement determines the final direction. Correct move: difference of absolutes + sign of the larger.',
     },
     retrieval: {
       promptKo: '(−12) + 5 = ?',
@@ -84,10 +84,10 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     misconception: {
       wrongKo: '분수 곱셈에서 분모를 공통분모로 맞춘다.',
       wrongEn: 'Finding a common denominator before multiplying.',
-      whyKo: '이는 분수 곱셈에서 \'통분이 먼저\'라고 생각하는 흔한 오개념(CONCEPT_CONFUSION)이다. 학생은 덧셈·뺄셈 규칙(공통분모 필수)을 모든 분수 연산에 기계적으로 적용했다. 이전 장에서 \'분수 계산은 통분부터\'라는 절차가 성공했기 때문에 이번에도 \'곱하기니까 일단 분모를 맞추자\'고 생각한 것이다. 하지만 곱셈은 \'부분의 부분\'을 직접 구하므로 분모를 맞출 필요가 전혀 없다. 공통분모는 오직 + 와 − 에서만 필요하다. (exemplar: commonDenominatorInMultiplication)',
-      whyEn: 'This is the "common denominator for everything" error (CONCEPT_CONFUSION). The student applied the addition/subtraction rule (you must have a common denominator) to multiplication because the procedure "common denominator first" had worked in the previous chapter. But multiplication asks for a part of a part; the unit is already consistent, so we multiply numerators and denominators directly. Common denominators are needed only for + and −. (See EXEMPLAR_RATIONALES commonDenominatorInMultiplication.)',
+      whyKo: '이는 분수 곱셈에서 \'통분이 먼저\'라고 생각하는 흔한 오개념이다. 학생은 덧셈·뺄셈 규칙(공통분모 필수)을 모든 분수 연산에 기계적으로 적용했다. 이전 장에서 \'분수 계산은 통분부터\'라는 절차가 성공했기 때문에 이번에도 \'곱하기니까 일단 분모를 맞추자\'고 생각한 것이다. 하지만 곱셈은 \'부분의 부분\'을 직접 구하므로 분모를 맞출 필요가 전혀 없다. 공통분모는 오직 + 와 − 에서만 필요하다.',
+      whyEn: 'This is the "common denominator for everything" error. The student applied the addition/subtraction rule (you must have a common denominator) to multiplication because the procedure "common denominator first" had worked in the previous chapter. But multiplication asks for a part of a part; the unit is already consistent, so we multiply numerators and denominators directly. Common denominators are needed only for + and −.',
       correctKo: '곱셈에서는 분자·분모를 그대로 곱한 뒤 약분한다. 공통분모는 오직 + 와 − 에서만 필요하다. 이는 곱셈이 \'배\'의 연산이기 때문이며, 부분 × 부분 = (a×c)/(b×d) 라는 모델이 분모를 미리 맞추지 않아도 정확히 동작하기 때문이다.',
-      correctEn: 'For ×, just multiply across (numerators and denominators) and reduce afterwards. Common denominators are required only for + and −. This works because multiplication is scaling one measure by another; the denominators already describe the reference whole, so their product directly gives the new reference count. (exemplar: commonDenominatorInMultiplication)',
+      correctEn: 'For ×, just multiply across (numerators and denominators) and reduce afterwards. Common denominators are required only for + and −. This works because multiplication is scaling one measure by another; the denominators already describe the reference whole, so their product directly gives the new reference count.',
     },
     retrieval: {
       promptKo: '3/4 × 2/5 = ?',
@@ -127,10 +127,10 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
     misconception: {
       wrongKo: '"평균이 4이므로 점수의 절반은 4보다 작다."',
       wrongEn: '"Mean is 4, so half the scores are below 4."',
-      whyKo: '이는 평균과 중앙값을 혼동하는 전형적인 meanVsMedianConfusion이다. (exemplar: meanVsMedianConfusion) 학생은 \'대푯값\'이라는 단어 하나로 평균·중앙값·최빈값을 동일시하고, 평균이 \'중간 위치\'도 보장한다고 착각한다. 실제 평균은 극단값에 끌려가서 실제 데이터의 \'절반\'과 멀어질 수 있다. 2022 개정에서 강조하는 \'맥락에 맞는 대푯값 선택\'의 핵심 오류다. 여기서 중앙값 3만이 \'절반 위/아래\'를 보장한다.',
-      whyEn: 'This is the classic mean-vs-median confusion (meanVsMedianConfusion). The student treats all "representative values" as interchangeable and assumes the mean also guarantees "half the data below/above." In reality the mean is the balance point and can be pulled away from the middle by extremes; only the median (by construction of the 50th percentile) guarantees half above and half below. In the 2022 curriculum this is exactly why we must choose the representative value according to the question and the shape of the data. (See EXEMPLAR_RATIONALES meanVsMedianConfusion.)',
+      whyKo: '이는 평균과 중앙값을 혼동하는 전형적인 오개념이다. 학생은 \'대푯값\'이라는 단어 하나로 평균·중앙값·최빈값을 동일시하고, 평균이 \'중간 위치\'도 보장한다고 착각한다. 실제 평균은 극단값에 끌려가서 실제 데이터의 \'절반\'과 멀어질 수 있다. 맥락에 맞는 대푯값을 선택하는 것이 중요하며, 여기서 중앙값 3만이 \'절반 위/아래\'를 보장한다.',
+      whyEn: 'This is the classic mean-vs-median confusion. The student treats all "representative values" as interchangeable and assumes the mean also guarantees "half the data below/above." In reality the mean is the balance point and can be pulled away from the middle by extremes; only the median (by construction of the 50th percentile) guarantees half above and half below. This is exactly why we must choose the representative value according to the question and the shape of the data.',
       correctKo: '평균은 합 기반의 균형점(극단값에 민감). 중앙값만이 정렬 위치에 의해 \'절반 위/아래\'를 보장한다(저항성). 이 데이터에서는 중앙값 3이 실제 \'전형적\' 위치를 더 잘 나타낸다. 평균 4는 7이라는 큰 값 때문에 위로 끌려간 결과다.',
-      correctEn: 'Mean = balance point (pulled by extremes). Only the median guarantees half the data above/below it because it is defined by position after sorting (resistant). In this set the median 3 better represents the "typical" location; the mean 4 was dragged upward by the single large value 7. (exemplar: meanVsMedianConfusion)',
+      correctEn: 'Mean = balance point (pulled by extremes). Only the median guarantees half the data above/below it because it is defined by position after sorting (resistant). In this set the median 3 better represents the "typical" location; the mean 4 was dragged upward by the single large value 7.',
     },
     retrieval: {
       promptKo: '{1, 4, 4, 9} 의 평균은?',

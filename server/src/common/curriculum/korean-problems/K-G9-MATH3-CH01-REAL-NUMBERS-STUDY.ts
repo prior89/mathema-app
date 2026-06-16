@@ -22,10 +22,10 @@ const problems: KoreanStudyProblemSeed[] = [
     stem: '$\\sqrt{25}$ 의 값은?',
     options: [
       { key: 'A', text: '$5$', isCorrect: true, errorCode: null, errorReason: null },
-      { key: 'B', text: '$\\pm 5$', isCorrect: false, errorCode: 'SIGN_ERROR', errorReason: '이는 SIGN_ERROR다. 학생은 $\\sqrt{ }$ 기호가 양의 제곱근만을 의미한다는 점을 놓치고 ±를 자동으로 붙였다. 제곱근 기호는 원리적으로 비음수(≥0) 결과를 내기 때문에 음수 답은 불가능하다. (exemplar: signError for roots)' },
-      { key: 'C', text: '$25$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 CONCEPT_MISUNDERSTANDING다. 학생은 제곱근을 적용하지 않고 원래 수를 그대로 답으로 선택했다. $\\sqrt{x}$ 는 x를 제곱해서 만드는 수의 역연산임을 잊었다. 다음에는 "이 수의 제곱이 25인가?"를 먼저 확인하자.' },
-      { key: 'D', text: '$12.5$', isCorrect: false, errorCode: 'FORMULA_SELECTION_ERROR', errorReason: '이는 FORMULA_SELECTION_ERROR다. 학생은 제곱근을 "절반"으로 착각하고 /2 연산을 잘못 적용했다. 제곱근은 제곱의 역이므로 25의 제곱근은 5다.' },
-      { key: 'E', text: '$-5$', isCorrect: false, errorCode: 'SIGN_ERROR', errorReason: '이는 SIGN_ERROR다. 학생은 제곱근 결과에 음수 부호를 강제로 붙였다. 실제 $\\sqrt{25} = 5$ (양수)이고, $-\\sqrt{25} = -5$는 별도의 표현이다. 기호의 의미를 정확히 구분하자.' },
+      { key: 'B', text: '$\\pm 5$', isCorrect: false, errorCode: 'SIGN_ERROR', errorReason: '이는 전형적인 부호 오류다. 학생은 $\\sqrt{ }$ 기호가 양의 제곱근만을 의미한다는 점을 놓치고 ±를 자동으로 붙였다. 제곱근 기호는 원리적으로 비음수(≥0) 결과를 내기 때문에 음수 답은 불가능하다.' },
+      { key: 'C', text: '$25$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 개념 혼동이다. 학생은 제곱근을 적용하지 않고 원래 수를 그대로 답으로 선택했다. $\\sqrt{x}$ 는 x를 제곱해서 만드는 수의 역연산임을 잊었다. 다음에는 "이 수의 제곱이 25인가?"를 먼저 확인하자.' },
+      { key: 'D', text: '$12.5$', isCorrect: false, errorCode: 'FORMULA_SELECTION_ERROR', errorReason: '이는 공식 선택 오류다. 학생은 제곱근을 "절반"으로 착각하고 /2 연산을 잘못 적용했다. 제곱근은 제곱의 역이므로 25의 제곱근은 5다.' },
+      { key: 'E', text: '$-5$', isCorrect: false, errorCode: 'SIGN_ERROR', errorReason: '이는 부호 오류다. 학생은 제곱근 결과에 음수 부호를 강제로 붙였다. 실제 $\\sqrt{25} = 5$ (양수)이고, $-\\sqrt{25} = -5$는 별도의 표현이다. 기호의 의미를 정확히 구분하자.' },
     ],
     solution: '$5^2 = 25$ → $\\sqrt{25} = 5$.' },
 
@@ -34,10 +34,10 @@ const problems: KoreanStudyProblemSeed[] = [
     stem: '$\\sqrt{36}$ 의 값은?',
     options: [
       { key: 'A', text: '$6$', isCorrect: true, errorCode: null, errorReason: null },
-      { key: 'B', text: '$18$', isCorrect: false, errorCode: 'FORMULA_SELECTION_ERROR', errorReason: '이는 FORMULA_SELECTION_ERROR다. 학생은 제곱근을 "반으로 나누기"로 착각했다. $\\sqrt{36} = 6$이지 18이 아니다. 제곱근은 제곱의 역연산임을 기억하자.' },
-      { key: 'C', text: '$\\pm 6$', isCorrect: false, errorCode: 'SIGN_ERROR', errorReason: '이는 SIGN_ERROR다. 학생은 제곱근 기호에 ±를 자동으로 붙였다. $\\sqrt{ }$는 비음수 결과만을 의미한다. $-\\sqrt{36}$가 별도의 음수 표현이다.' },
-      { key: 'D', text: '$36$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 CONCEPT_MISUNDERSTANDING다. 학생은 제곱근을 적용하지 않고 원래 수를 답으로 골랐다. "제곱해서 36이 되는 수"를 찾는 문제임을 잊었다.' },
-      { key: 'E', text: '$5$', isCorrect: false, errorCode: 'ARITHMETIC_ERROR', errorReason: '이는 ARITHMETIC_ERROR다. 학생은 $\\sqrt{25}=5$와 혼동했다. 36의 제곱근은 6이다. 완전제곱수 표를 외우거나 계산으로 확인하자.' },
+      { key: 'B', text: '$18$', isCorrect: false, errorCode: 'FORMULA_SELECTION_ERROR', errorReason: '이는 공식 선택 오류다. 학생은 제곱근을 "반으로 나누기"로 착각했다. $\\sqrt{36} = 6$이지 18이 아니다. 제곱근은 제곱의 역연산임을 기억하자.' },
+      { key: 'C', text: '$\\pm 6$', isCorrect: false, errorCode: 'SIGN_ERROR', errorReason: '이는 부호 오류다. 학생은 제곱근 기호에 ±를 자동으로 붙였다. $\\sqrt{ }$는 비음수 결과만을 의미한다. $-\\sqrt{36}$가 별도의 음수 표현이다.' },
+      { key: 'D', text: '$36$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 개념 혼동이다. 학생은 제곱근을 적용하지 않고 원래 수를 답으로 골랐다. "제곱해서 36이 되는 수"를 찾는 문제임을 잊었다.' },
+      { key: 'E', text: '$5$', isCorrect: false, errorCode: 'ARITHMETIC_ERROR', errorReason: '이는 계산 오류다. 학생은 $\\sqrt{25}=5$와 혼동했다. 36의 제곱근은 6이다. 완전제곱수 표를 외우거나 계산으로 확인하자.' },
     ],
     solution: '$6^2 = 36$ → $\\sqrt{36} = 6$.' },
 
@@ -70,10 +70,10 @@ const problems: KoreanStudyProblemSeed[] = [
     stem: '다음 중 유리수인 것은?',
     options: [
       { key: 'A', text: '$\\sqrt{9}$', isCorrect: true, errorCode: null, errorReason: null },
-      { key: 'B', text: '$\\sqrt{2}$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 CONCEPT_MISUNDERSTANDING다. 학생은 모든 제곱근이 유리수라고 착각했다. $\\sqrt{2}$는 순환하지 않는 무한소수로 무리수다. 완전제곱수(9,16,25...)의 제곱근만 유리수임을 구분하자.' },
-      { key: 'C', text: '$\\sqrt{5}$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 CONCEPT_MISUNDERSTANDING다. $\\sqrt{5}$ 역시 무리수 (비완전제곱수). "제곱근 = 유리수"라는 과도한 일반화 오류다.' },
-      { key: 'D', text: '$\\sqrt{7}$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 CONCEPT_MISUNDERSTANDING다. 무리수 제곱근을 유리수로 분류했다. 7은 완전제곱수가 아니다.' },
-      { key: 'E', text: '$\\pi$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 CONCEPT_MISUNDERSTANDING다. π는 무리수지만 "제곱근" 문제와 무관하다. 문제는 제곱근 중 유리수를 찾는 것이다.' },
+      { key: 'B', text: '$\\sqrt{2}$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 개념 혼동이다. 학생은 모든 제곱근이 유리수라고 착각했다. $\\sqrt{2}$는 순환하지 않는 무한소수로 무리수다. 완전제곱수(9,16,25...)의 제곱근만 유리수임을 구분하자.' },
+      { key: 'C', text: '$\\sqrt{5}$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 개념 혼동이다. $\\sqrt{5}$ 역시 무리수 (비완전제곱수). "제곱근 = 유리수"라는 과도한 일반화 오류다.' },
+      { key: 'D', text: '$\\sqrt{7}$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 개념 혼동이다. 무리수 제곱근을 유리수로 분류했다. 7은 완전제곱수가 아니다.' },
+      { key: 'E', text: '$\\pi$', isCorrect: false, errorCode: 'CONCEPT_MISUNDERSTANDING', errorReason: '이는 개념 혼동이다. π는 무리수지만 "제곱근" 문제와 무관하다. 문제는 제곱근 중 유리수를 찾는 것이다.' },
     ],
     solution: '$\\sqrt{9} = 3$ (정수, 유리수). 나머지는 무리수.' },
 
