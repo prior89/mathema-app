@@ -102,7 +102,7 @@ export function TeacherDashboardPage({ embedded = false }: { embedded?: boolean 
         )}
 
         {/* (2) Concept × score heatmap */}
-        <SectionTitle no="02" title={lang === 'ko' ? '개념별 숙련도 (Heatmap)' : 'Mastery heatmap'} />
+        <SectionTitle no="02" title={lang === 'ko' ? '개념별 이해도' : 'Mastery heatmap'} />
         <HeatmapGrid rows={mastery.data ?? []} onSelect={(id) => setSelectedConcept(id)} selected={selectedConcept} />
 
         {/* (3) 선택 concept 의 시계열 — 최근 5회 변화량 (5번 항목 통합) */}

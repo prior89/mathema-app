@@ -45,7 +45,7 @@ const PLAN_LABELS: Record<string, { ko: string; en: string; hi: string; icon: an
 const LABELS = {
   title:      { ko: '약점 분석 & 균형 진단', en: 'Weakness & Balance', hi: 'कमज़ोरी और संतुलन विश्लेषण' },
   subtitle:   {
-    ko: '단원별 학습 시간과 숙련도를 비교해 균형을 진단하고, AI가 오늘의 학습 계획을 짜드립니다.',
+    ko: '단원별 학습 시간과 이해도를 비교해 균형을 진단하고, AI가 오늘의 학습 계획을 짜드립니다.',
     en: 'Compare study time vs mastery per unit, get balance diagnostics and an AI-curated plan.',
     hi: 'अध्यायवार समय बनाम दक्षता तुलना, संतुलन निदान और AI द्वारा बनाई दैनिक योजना।',
   },
@@ -55,7 +55,7 @@ const LABELS = {
   minutes:    { ko: '분', en: 'min', hi: 'मिनट' },
   balanced:   { ko: '균형 잡힘', en: 'Balanced', hi: 'संतुलित' },
   skewed:     { ko: '편중됨',    en: 'Skewed',  hi: 'असंतुलित' },
-  heatmap:    { ko: '단원별 숙련도 맵', en: 'Mastery Heatmap', hi: 'दक्षता हीटमैप' },
+  heatmap:    { ko: '단원별 이해도 지도', en: 'Mastery Heatmap', hi: 'दक्षता हीटमैप' },
   timeChart:  { ko: '단원별 학습 시간', en: 'Study Time per Unit', hi: 'अध्यायवार समय' },
   underStudied: { ko: '학습 부족 단원', en: 'Under-studied Units', hi: 'कम अभ्यास वाले अध्याय' },
   lowEff:     { ko: '저효율 단원',     en: 'Low-Efficiency Units', hi: 'कम दक्षता वाले अध्याय' },
@@ -72,7 +72,7 @@ const LABELS = {
                  hi: 'अधिक डेटा एकत्र होने पर AI योजना सक्रिय होगी।' },
   giniHint:   { ko: '0에 가까울수록 균형, 1에 가까울수록 편중', en: 'Closer to 0 = balanced, closer to 1 = skewed', hi: '0 के पास = संतुलित, 1 के पास = असंतुलित' },
   noStudyYet: { ko: '아직 시작 안 함', en: 'Not started', hi: 'शुरू नहीं किया' },
-  score:      { ko: '숙련도', en: 'Mastery', hi: 'दक्षता' },
+  score:      { ko: '이해도', en: 'Mastery', hi: 'दक्षता' },
   time:       { ko: '시간', en: 'Time', hi: 'समय' },
 } as const;
 

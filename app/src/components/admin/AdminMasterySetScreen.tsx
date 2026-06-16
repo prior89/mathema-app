@@ -122,7 +122,7 @@ export function AdminMasterySetScreen() {
         {/* Lookup form */}
         <div className="card" style={{ padding: 14, marginTop: 12 }}>
           <div style={{ fontSize: 12, color: 'var(--p-ink-2)', marginBottom: 6 }}>
-            챕터 코드 (예: <code>C10-CH04-QUADRATIC-EQUATIONS</code>, <code>K-G7-MATH1-CH02-INTEGERS</code>)
+            단원 코드 (예: <code>C10-CH04-QUADRATIC-EQUATIONS</code>, <code>K-G7-MATH1-CH02-INTEGERS</code>)
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <input
@@ -148,7 +148,7 @@ export function AdminMasterySetScreen() {
         )}
         {inventory.isError && (
           <div style={{ padding: 14, color: 'var(--p-danger)' }}>
-            조회 실패: 챕터 코드를 확인해 주세요.
+            조회 실패: 단원 코드를 확인해 주세요.
           </div>
         )}
 

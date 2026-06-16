@@ -85,7 +85,7 @@ export function MeScreen() {
                 <div className="badge" style={{ background: 'var(--p-primary-tint)', color: 'var(--p-primary)', fontStyle: 'normal', fontSize: 16 }}>＋</div>
                 <div className="info">
                   <div className="ttl">한국 연습 문제 추가</div>
-                  <div className="sub">KR 챕터별 단일 5지선다 문제 직접 작성</div>
+                  <div className="sub">KR 단원별 단일 5지선다 문제 직접 작성</div>
                 </div>
                 <Glyph.ChevronR accent="var(--p-muted)" size={16} />
               </div>

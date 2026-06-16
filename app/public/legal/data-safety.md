@@ -1,13 +1,10 @@
-# Play Store Data Safety inventory
+# Matheo Data Safety Summary
 
-Source-of-truth for the **Data Safety form** in Google Play Console. Re-check
-this document before every store submission — when a new field is added to
-`server/prisma/schema.prisma` or a new 3rd-party SDK lands, the corresponding
-row here MUST be updated, otherwise the listing falls out of compliance.
+This document explains what data Matheo collects, why it is collected, and
+which trusted service providers may process it. It is intended to mirror the
+Google Play Data Safety disclosures for the Android app.
 
-Last updated: 2026-06-11 (Premium / Play Billing)
-Backend reference: `server/prisma/schema.prisma`
-Frontend reference: `app/src/lib/{api,analytics,queries,mutations}.ts`
+Last updated: 2026-06-17 (Premium / Play Billing)
 
 ---
 
@@ -90,8 +87,8 @@ preference, not location data.
 
 ## 2. Data shared with third parties
 
-Every third-party recipient enumerated. Each should be cross-checked against
-its own data-processing addendum (DPA) and listed in the Privacy Policy.
+Matheo uses the following service providers to operate learning, sign-in,
+notifications, diagnostics, and billing-related features.
 
 | Recipient | Purpose | Data sent | Consent gate |
 |---|---|---|---|
@@ -130,9 +127,9 @@ its own data-processing addendum (DPA) and listed in the Privacy Policy.
 
 ---
 
-## 4. Required Play Console answers (cheat sheet)
+## 4. Google Play Data Safety answers
 
-Use these exact answers when filling the Data Safety wizard:
+The Android app uses these Data Safety disclosures:
 
 1. *Does your app collect any of the required user data types?* — **Yes**.
 2. *Is all of the user data collected by your app encrypted in transit?* — **Yes**.
@@ -142,10 +139,13 @@ Use these exact answers when filling the Data Safety wizard:
 
 ---
 
-## 5. Open items to lock before submitting
+## 5. User controls
 
-- [ ] **Privacy Policy URL** (task A2) and Terms of Service URL — Play Console requires the URL to be public when the listing goes live.
-- [ ] **Confirm Sentry / App Insights opt-out** is reachable from Settings → Privacy. Right now `SettingsScreen` toggles `Consent.kind` rows but the wiring to Sentry's `Sentry.setUser(null)` on revocation needs checking.
-- [ ] **OpenAI DPA** copy on file + request Zero Data Retention (ZDR) for the API org — required for child personal data under OpenAI's under-18 guidance (India DPDP treats under-18 as children). Gemini API was removed 2026-06-12 (its terms prohibit under-18-directed API clients).
-- [ ] **FCM project + service account** finalised (task C1).
-- [ ] **NCERT attribution** flow surfaced in-app (Phase 2 — listed but not required for v1.0 since raw NCERT extracts were already removed in commit `1c841b1`).
+- **Delete account**: Settings -> Privacy -> Delete account permanently deletes
+  the account and associated learning data.
+- **Export data**: Settings -> Privacy -> Export data returns the user's
+  account and learning records in a portable JSON format.
+- **Consent choices**: optional analytics, AI improvement, and marketing
+  consents can be changed from Settings -> Privacy.
+- **Subscriptions**: Premium subscriptions are managed through Google Play's
+  subscription center.

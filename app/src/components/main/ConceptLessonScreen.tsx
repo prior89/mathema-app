@@ -996,7 +996,7 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
 
           {visibleSteps.length === 0 && (
             <div className="card" style={{ padding: 16, color: 'var(--p-muted)', fontSize: 13 }}>
-              이 챕터의 학습 콘텐츠가 아직 준비되지 않았어요.
+              이 단원의 학습 콘텐츠가 아직 준비되지 않았어요.
             </div>
           )}
 
@@ -1026,7 +1026,7 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
           ) : (
             <>
               <div style={{ fontSize: 12.5, color: 'var(--p-muted)', textAlign: 'center', marginTop: 8 }}>
-                이 챕터의 연습 문제는 아직 준비 중입니다.
+                이 단원의 연습 문제는 아직 준비 중입니다.
               </div>
               <button className="btn" onClick={() => nav('/app/learn')} style={{ marginTop: 4, maxWidth: 280, alignSelf: 'center' }}>
                 {t('lesson.done.backChapters')}
@@ -1160,7 +1160,7 @@ function KoreanPracticePhase({
     return (
       <Shell back={onBack}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
-          <div style={{ fontSize: 14, color: 'var(--p-muted)' }}>이 챕터의 연습 문제는 아직 준비 중입니다.</div>
+          <div style={{ fontSize: 14, color: 'var(--p-muted)' }}>이 단원의 연습 문제는 아직 준비 중입니다.</div>
         </div>
       </Shell>
     );

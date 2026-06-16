@@ -7,7 +7,7 @@ import { scoreToHeatmapStyle, scoreToColor } from '../../lib/palette';
 export { scoreToColor };
 
 const LABELS = {
-  score: { ko: '숙련도', en: 'Mastery', hi: 'दक्षता' },
+  score: { ko: '이해도', en: 'Mastery', hi: 'दक्षता' },
   time: { ko: '시간', en: 'Time', hi: 'समय' },
   minutes: { ko: '분', en: 'min', hi: 'मिनट' },
   noStudyYet: { ko: '아직 시작 안 함', en: 'Not started', hi: 'शुरू नहीं किया' },

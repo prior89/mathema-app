@@ -109,13 +109,13 @@ export default function ConceptHubPage({ embedded = false }: { embedded?: boolea
 
         <div style={{ marginTop: embedded ? 0 : 12 }}>
           <div style={{ fontSize: 11, letterSpacing: '0.2em', color: '#8B95AB' }}>
-            CONCEPT LEARNING · NCERT 7–12
+            CONCEPT LEARNING · GRADES 7–12
           </div>
           <h1 style={titleStyle}>{lang === 'en' ? 'Concept Learning' : '개념학습'}</h1>
           <p style={subtitleStyle}>
             {lang === 'en'
-              ? 'Build the big idea before solving problems. A short lesson grounded in six learning-science principles (CPA · CLT · Variation · Worked-Example · Retrieval · Misconception).'
-              : '문제를 풀기 전에 단원의 빅 아이디어를 잡습니다. 인지심리학 6원칙 (CPA · CLT · Variation · Worked-Example · Retrieval · Misconception) 으로 구성된 짧은 차시.'}
+              ? 'Build the big idea before solving problems. Each lesson uses examples, visuals, guided solutions, and quick review questions.'
+              : '문제를 풀기 전에 단원의 큰 아이디어를 잡습니다. 예시, 그림, 풀이, 복습 문제로 차근차근 배워요.'}
           </p>
         </div>
 

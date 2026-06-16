@@ -20,13 +20,13 @@ import { MasteryHeatmap } from '../mastery/MasteryHeatmap';
 import { ActiveErrorPatternList } from '../mastery/ActiveErrorPatterns';
 
 const LABELS = {
-  title: { ko: '숙련도', en: 'Mastery', hi: 'दक्षता' },
+  title: { ko: '이해도', en: 'Mastery', hi: 'दक्षता' },
   subtitle: {
-    ko: '단원별 숙련도와 복습이 필요한 개념을 한눈에 확인하세요.',
+    ko: '단원별 이해도와 복습이 필요한 개념을 한눈에 확인하세요.',
     en: 'See unit mastery and which concepts need review.',
     hi: 'अध्यायवार दक्षता और पुनरावलोकन के लिए अवधारणाएँ देखें।',
   },
-  heatmap: { ko: '단원별 숙련도 맵', en: 'Mastery heatmap', hi: 'दक्षता हीटमैप' },
+  heatmap: { ko: '단원별 이해도 지도', en: 'Mastery heatmap', hi: 'दक्षता हीटमैप' },
   review: { ko: '복습이 필요한 개념', en: 'Concepts to review', hi: 'पुनरावलोकन अवधारणाएँ' },
   errorPatterns: { ko: '반복 실수 패턴', en: 'Repeated error patterns', hi: 'दोहराई गई गलतियाँ' },
   concepts: { ko: '개념별 상태', en: 'Concept status', hi: 'अवधारणा स्थिति' },

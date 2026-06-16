@@ -289,7 +289,7 @@ function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sess
         <div className="grain" style={{ backgroundColor: '#F8F4E9', border: '1px solid #14285015', borderRadius: '4px', padding: '32px', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
             <div>
-              <div style={sectionLabelStyle}>No 01 — 숙련도 지도</div>
+              <div style={sectionLabelStyle}>No 01 — 이해도 지도</div>
               <h2 className="serif" style={{ fontSize: '28px', fontWeight: 500, letterSpacing: '-0.02em', margin: 0 }}>{t('dashboard.section.masteryMap')}</h2>
             </div>
             {diagnosis.data?.weakUnit && (

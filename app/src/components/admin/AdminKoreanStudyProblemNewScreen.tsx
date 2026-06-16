@@ -114,13 +114,13 @@ export function AdminKoreanStudyProblemNewScreen() {
       </div>
 
       <div style={{ padding: '0 20px 120px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <Field label="챕터">
+        <Field label="단원">
           <select
             value={chapterCode}
             onChange={(e) => setChapterCode(e.target.value)}
             style={selectStyle}
           >
-            <option value="">— 챕터 선택 —</option>
+            <option value="">— 단원 선택 —</option>
             {(chapters.data ?? []).map((c) => (
               <option key={c.id} value={c.chapterCode}>
                 {c.koreanGrade} · {c.koreanSubject} · CH{c.chapterNumber} · {c.titleKo}
