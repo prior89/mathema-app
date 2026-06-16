@@ -1320,7 +1320,7 @@ function ScreenResults({
               <div className="track">
                 <div className="fill" style={{ width: `${c.value}%`, background: c.tag === 'Focus' ? 'var(--p-accent)' : 'var(--p-primary)' }} />
               </div>
-              <span className="value">{c.value}</span>
+              <span className="value">{c.value}%</span>
             </div>
           ))}
         </div>
