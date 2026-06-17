@@ -31,6 +31,19 @@ def clean_question(question: str) -> str:
         .replace("³", "^3")
         .strip()
     )
+    # OCR wraps math in renderer-friendly LaTeX delimiters (`\( ... \)` /
+    # `\[ ... \]`). The deterministic parsers operate on plain equations, so
+    # remove only the wrappers while preserving the math content inside.
+    q = (
+        q.replace("\\(", " ")
+        .replace("\\)", " ")
+        .replace("\\[", " ")
+        .replace("\\]", " ")
+    )
+    q = re.sub(r"(?<!\\)\$", " ", q)
+    q = re.sub(r"\\(?:times|cdot)", "*", q)
+    q = re.sub(r"\\div", "/", q)
+    q = re.sub(r"\s+", " ", q).strip()
     # Strip common imperative prefixes the per-equation checkers don't want:
     #   "Solve for x:", "Solve x =", "Find x:", "Find the value of x:", "Solve:",
     #   "Find the roots of:" etc. Idempotent — leaves bare equations untouched.
@@ -43,7 +56,17 @@ def clean_question(question: str) -> str:
         q,
         flags=re.IGNORECASE,
     )
-    return q.strip()
+    # OCR often appends a second short instruction after the equation:
+    #   "Solve for \(x\): \(2x + 7 = 15\). Find \(x\)."
+    # Keeping that tail makes the RHS "15. Find x" and the parser rejects an
+    # otherwise exact linear equation. Remove only terminal target prompts.
+    q = re.sub(
+        r"\.?\s*(?:find|solve\s+for|determine|calculate)\s+[a-zA-Z]\s*\.?\s*$",
+        "",
+        q,
+        flags=re.IGNORECASE,
+    )
+    return q.strip().rstrip(".")
 
 
 def normalize(value: str | None) -> str:

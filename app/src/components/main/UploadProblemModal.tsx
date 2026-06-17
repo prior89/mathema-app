@@ -867,7 +867,7 @@ function ResultPhase({
   const { t } = useT();
   const solve = result.result;
   const checked = solve.isStudentCorrect !== undefined && solve.isStudentCorrect !== null;
-  const conceptText = [solve.detected.chapter, solve.detected.topic].filter(Boolean).join(' · ');
+  const conceptText = [solve.detected?.chapter, solve.detected?.topic].filter(Boolean).join(' · ');
   const hints = (solve.hints ?? []).filter(Boolean);
   const [revealedHintCount, setRevealedHintCount] = useState(0);
   const [solutionRevealed, setSolutionRevealed] = useState(false);

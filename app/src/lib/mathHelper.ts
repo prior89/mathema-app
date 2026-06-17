@@ -9,7 +9,7 @@
  */
 
 export type MathHelperSolveResponse = {
-  detected: {
+  detected?: {
     classLevel: number;
     chapter: string;
     topic: string;
