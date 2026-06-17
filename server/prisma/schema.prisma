@@ -1550,6 +1550,9 @@ model Concept {
   /// Stable identifier — e.g., "chain_rule", "composite_function". Ensures seed/import consistency.
   code       String      @unique
   name       String // "Chain Rule"
+  /// Korean localised name — sourced from NCERT_CHAPTERS.titleKo via ConceptsBootstrap.
+  /// Nullable so existing rows back-fill on the next sync; consumers fall back to `name`.
+  nameKo     String?
   /// Subject — 'math', 'physics', etc. First PoC is 'math' only.
   subject    String      @default("math")
   /// Grade level — used to filter Concept recommendations to the student's grade.

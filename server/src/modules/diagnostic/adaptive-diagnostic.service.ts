@@ -274,7 +274,7 @@ export class AdaptiveDiagnosticService {
     const trajectories = conceptIds.length
       ? await this.prisma.masteryTrajectory.findMany({
           where: { userId, conceptId: { in: conceptIds } },
-          include: { concept: { select: { name: true, code: true } } },
+          include: { concept: { select: { name: true, nameKo: true, code: true } } },
         })
       : [];
 
@@ -285,6 +285,7 @@ export class AdaptiveDiagnosticService {
       masteries: trajectories.map((t) => ({
         conceptId: t.conceptId,
         conceptName: t.concept.name,
+        conceptNameKo: t.concept.nameKo,
         conceptCode: t.concept.code,
         score: t.masteryScore,
       })),

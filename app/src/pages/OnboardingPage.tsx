@@ -1283,11 +1283,13 @@ function ScreenDiagnostic({
 function ScreenResults({
   step, onBack, onNext, name, result,
 }: { step: number; onBack: () => void; onNext: () => void; name: string; result: DiagnosticResult | null }) {
-  const { t } = useT();
+  const { t, lang } = useT();
+  const localizedConceptName = (m: { conceptName: string; conceptNameKo?: string | null }) =>
+    lang === 'ko' && m.conceptNameKo ? m.conceptNameKo : m.conceptName;
   // 실 mastery 결과 → UI shape 으로 매핑 (없으면 빈 안내).
   const concepts: Array<{ name: string; value: number; tag: 'Focus' | 'Steady' | 'Strong' }> =
     (result?.masteries ?? []).slice(0, 5).map((m) => ({
-      name: m.conceptName,
+      name: localizedConceptName(m),
       value: Math.round(m.score),
       tag: m.score < 50 ? 'Focus' : m.score < 75 ? 'Steady' : 'Strong',
     }));
@@ -1333,7 +1335,7 @@ function ScreenResults({
               <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--p-ink)' }}>{t('onboarding.results.coach.title')}</div>
               <div style={{ fontSize: 13, color: 'var(--p-ink-2)', marginTop: 4, lineHeight: 1.45 }}>
                 {focusConcept
-                  ? <><strong>{focusConcept.conceptName}</strong>{t('onboarding.results.coach.body', { from: Math.round(focusConcept.score) })}</>
+                  ? <><strong>{localizedConceptName(focusConcept)}</strong>{t('onboarding.results.coach.body', { from: Math.round(focusConcept.score) })}</>
                   : <>{t('onboarding.results.coach.empty')}</>}
               </div>
               {/* Diagnostic result chips removed 2026-05-24 per user spec —

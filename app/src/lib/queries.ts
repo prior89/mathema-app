@@ -167,6 +167,9 @@ export type DiagnosticProblem = {
 export type DiagnosticMastery = {
   conceptId: string;
   conceptName: string;
+  /** Korean localised name (populated from NCERT_CHAPTERS.titleKo). UI picks
+   *  this when current language is `ko`; falls back to `conceptName`. */
+  conceptNameKo?: string | null;
   conceptCode: string;
   score: number;
 };

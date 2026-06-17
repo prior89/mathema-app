@@ -57,6 +57,7 @@ export class ConceptsBootstrap implements OnModuleInit {
         where: { code: ch.chapterCode },
         update: {
           name: ch.titleEn,
+          nameKo: ch.titleKo,
           subject: 'math',
           gradeLevel: ncertToGrade(ch.ncertClass),
           prerequisiteConceptIds: ch.prerequisites ?? [],
@@ -65,6 +66,7 @@ export class ConceptsBootstrap implements OnModuleInit {
         create: {
           code: ch.chapterCode,
           name: ch.titleEn,
+          nameKo: ch.titleKo,
           subject: 'math',
           gradeLevel: ncertToGrade(ch.ncertClass),
           prerequisiteConceptIds: ch.prerequisites ?? [],
