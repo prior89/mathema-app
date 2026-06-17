@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { RecommendationType } from '@prisma/client';
+import { Prisma, RecommendationType } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
 /**
@@ -57,6 +57,7 @@ export class SimilarProblemService {
 
     const targetDiff = attempt.problem.difficultyLevel;
     const errorCodes = attempt.errorCodes;
+    const chapterScope = this.chapterScope(attempt.problem);
 
     // 이미 푼 problem 제외.
     const solvedProblemIds = (await this.prisma.attempt.findMany({
@@ -73,6 +74,7 @@ export class SimilarProblemService {
         id: { notIn: Array.from(excludeIds) },
         difficultyLevel: { gte: Math.max(1, targetDiff - 2), lte: Math.min(5, targetDiff + 2) },
         concepts: { some: { conceptId: { in: conceptIds } } },
+        ...chapterScope,
         // Sprint 4: active-pool filter — same gate as Adaptive (Sprint 2 A7) +
         // chapter-mismatch guard so mis-tagged rows can't seed look-alikes.
         conceptMismatch: { not: true },
@@ -137,6 +139,19 @@ export class SimilarProblemService {
         shortfallReason: `Only ${candidates.length} suitable-difficulty candidate(s) for the ${conceptIds.length} concept(s) — could not fill all 5.`,
       }),
     };
+  }
+
+  private chapterScope(problem: {
+    conceptLessonId?: string | null;
+    koreanConceptLessonId?: string | null;
+  }): Prisma.ProblemWhereInput {
+    if (problem.koreanConceptLessonId) {
+      return { koreanConceptLessonId: problem.koreanConceptLessonId };
+    }
+    if (problem.conceptLessonId) {
+      return { conceptLessonId: problem.conceptLessonId };
+    }
+    return {};
   }
 
   private buildReason(problem: { commonErrorCodes: string[] }, errorCodes: string[]): string {
