@@ -15,6 +15,7 @@ import {
   type ReviewScheduleRow,
 } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
+import { pickConceptName } from '../../lib/concept-name';
 import { TabBar } from './TabBar';
 import { MasteryHeatmap } from '../mastery/MasteryHeatmap';
 import { ActiveErrorPatternList } from '../mastery/ActiveErrorPatterns';
@@ -152,7 +153,7 @@ function ReviewConceptCard({ row, lang }: { row: ReviewScheduleRow; lang: 'ko' |
   return (
     <div className="card" style={{ padding: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{row.conceptName}</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{pickConceptName(row, lang)}</div>
         <span
           className="status-chip"
           style={{
@@ -180,7 +181,7 @@ function ConceptStatusCard({ row, lang }: { row: ConceptMastery; lang: 'ko' | 'e
     <div className="card" style={{ padding: 12 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{row.concept.name}</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{pickConceptName(row.concept, lang)}</div>
           <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 2 }}>
             {lowEvidence
               ? (lang === 'ko' ? '데이터 부족' : lang === 'hi' ? 'डेटा कम' : 'Low evidence')

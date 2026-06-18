@@ -29,6 +29,7 @@ import {
 } from '../lib/queries';
 import { get } from '../lib/api';
 import { useT } from '../lib/i18n';
+import { pickConceptName } from '../lib/concept-name';
 
 const COLORS = {
   bg: '#EFEBDF', ink: '#142850', sub: '#5C6B85', line: '#14285020', card: '#FAF7EF',
@@ -121,7 +122,7 @@ export function StudentDashboardPage({ embedded = false }: { embedded?: boolean 
         {(mastery.data?.filter((m) => m.trend === 'UP').length ?? 0) > 0 && (
           <>
             <SectionTitle no="04" title={lang === 'ko' ? '최근 좋아진 개념' : 'Recently improved'} />
-            <ImprovedList rows={(mastery.data ?? []).filter((m) => m.trend === 'UP')} />
+            <ImprovedList rows={(mastery.data ?? []).filter((m) => m.trend === 'UP')} lang={lang} />
           </>
         )}
 
@@ -223,7 +224,7 @@ function MasteryGrid({ rows, loading, lang }: { rows: ConceptMastery[]; loading:
             ...cardStyle, padding: 16, borderLeft: `3px solid ${color}`,
             opacity: lowEvidence ? 0.65 : 1,
           }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: COLORS.ink, marginBottom: 6 }}>{m.concept.name}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: COLORS.ink, marginBottom: 6 }}>{pickConceptName(m.concept, lang)}</div>
             <div style={{ fontSize: 12, color, marginBottom: 6 }}>{msg}</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
               <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 22, fontWeight: 600, color: lowEvidence ? '#8B95AB' : COLORS.ink }}>
@@ -242,12 +243,12 @@ function MasteryGrid({ rows, loading, lang }: { rows: ConceptMastery[]; loading:
   );
 }
 
-function ImprovedList({ rows }: { rows: ConceptMastery[] }) {
+function ImprovedList({ rows, lang }: { rows: ConceptMastery[]; lang: 'ko' | 'en' | 'hi' }) {
   return (
     <Card>
       {rows.slice(0, 4).map((m) => (
         <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px dashed ${COLORS.line}`, fontSize: 13 }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><CheckCircle2 size={14} color={COLORS.good} />{m.concept.name}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><CheckCircle2 size={14} color={COLORS.good} />{pickConceptName(m.concept, lang)}</span>
           <span style={{ color: COLORS.sub, fontFamily: 'JetBrains Mono, monospace' }}>{Math.round(m.masteryScore)}/100</span>
         </div>
       ))}
@@ -263,7 +264,7 @@ function PatternList({ rows, lang }: { rows: ErrorPatternRow[]; lang: 'ko' | 'en
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600 }}>
               <AlertCircle size={14} color={p.severity === 'high' ? COLORS.bad : COLORS.warn} />
-              {p.concept.name}
+              {pickConceptName(p.concept, lang)}
             </span>
             <span style={{ fontSize: 11, padding: '2px 8px', backgroundColor: COLORS.bg, border: `1px solid ${COLORS.line}`, borderRadius: 2, fontFamily: 'JetBrains Mono, monospace' }}>
               {p.errorCode} · {p.recentFrequency}회

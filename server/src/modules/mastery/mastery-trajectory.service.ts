@@ -159,7 +159,7 @@ export class MasteryTrajectoryService {
   async getAllForUser(userId: string) {
     const rows = await this.prisma.masteryTrajectory.findMany({
       where: { userId },
-      include: { concept: { select: { id: true, code: true, name: true, gradeLevel: true } } },
+      include: { concept: { select: { id: true, code: true, name: true, nameKo: true, gradeLevel: true } } },
       orderBy: { masteryScore: 'asc' },
     });
     return rows

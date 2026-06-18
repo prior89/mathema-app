@@ -277,7 +277,7 @@ export class MathHelperService {
         where: { userId, masteryScore: { lt: 70 } },
         orderBy: [{ masteryScore: 'asc' }, { evidenceCount: 'desc' }],
         take: 5,
-        include: { concept: { select: { code: true, name: true } } },
+        include: { concept: { select: { code: true, name: true, nameKo: true } } },
       }),
       this.prisma.attempt.findMany({
         where: { userId },
@@ -332,6 +332,7 @@ export class MathHelperService {
       weakConcepts: weakTrajectories.map((t) => ({
         conceptCode: t.concept.code,
         conceptName: t.concept.name,
+        conceptNameKo: t.concept.nameKo,
         masteryScore: t.masteryScore,
         attempts: t.evidenceCount,
         recentAccuracy: t.recentAccuracy,

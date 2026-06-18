@@ -34,6 +34,7 @@ export class ReviewScheduleService {
   async getForUser(userId: string, take = 10): Promise<Array<{
     conceptId: string;
     conceptName: string;
+    conceptNameKo: string | null;
     masteryScore: number;
     daysSinceLast: number | null;
     forgettingRisk: number;       // 0~1
@@ -41,7 +42,7 @@ export class ReviewScheduleService {
   }>> {
     const trajectories = await this.prisma.masteryTrajectory.findMany({
       where: { userId },
-      include: { concept: { select: { id: true, name: true } } },
+      include: { concept: { select: { id: true, name: true, nameKo: true } } },
     });
 
     const now = Date.now();
@@ -54,6 +55,7 @@ export class ReviewScheduleService {
       return {
         conceptId: t.conceptId,
         conceptName: t.concept.name,
+        conceptNameKo: t.concept.nameKo,
         masteryScore: Math.round(t.masteryScore),
         daysSinceLast: daysSinceLast === null ? null : Math.round(daysSinceLast * 10) / 10,
         forgettingRisk: Math.round(forgettingRisk * 100) / 100,

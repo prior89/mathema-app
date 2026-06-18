@@ -146,7 +146,7 @@ export class ErrorPatternService {
   async getActiveForUser(userId: string) {
     return this.prisma.errorPatternProfile.findMany({
       where: { userId, status: ErrorPatternStatus.ACTIVE },
-      include: { concept: { select: { id: true, code: true, name: true } } },
+      include: { concept: { select: { id: true, code: true, name: true, nameKo: true } } },
       orderBy: [{ severity: 'desc' }, { recentFrequency: 'desc' }],
     });
   }

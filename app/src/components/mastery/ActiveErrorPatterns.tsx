@@ -3,6 +3,7 @@
  * Shared by MasteryScreen (full list) and NotesListScreen (top banner).
  */
 import type { ErrorPatternRow } from '../../lib/queries';
+import { pickConceptName } from '../../lib/concept-name';
 import { Glyph } from '../onboarding/Glyph';
 
 type UiLang = 'ko' | 'en' | 'hi';
@@ -36,13 +37,14 @@ export function errorPatternStatusLabel(status: ErrorPatternRow['status'], lang:
 export function errorPatternStudentCopy(p: ErrorPatternRow, lang: UiLang): string {
   const code = errorCodeLabel(p.errorCode, lang);
   const status = errorPatternStatusLabel(p.status, lang);
+  const name = pickConceptName(p.concept, lang);
   if (lang === 'ko') {
-    return `${p.concept.name}에서 ${code} 패턴 ${p.recentFrequency}회 — ${status}.`;
+    return `${name}에서 ${code} 패턴 ${p.recentFrequency}회 — ${status}.`;
   }
   if (lang === 'hi') {
-    return `${p.concept.name}: ${code} — ${p.recentFrequency} बार, ${status}.`;
+    return `${name}: ${code} — ${p.recentFrequency} बार, ${status}.`;
   }
-  return `${p.concept.name}: ${code} pattern ×${p.recentFrequency} — ${status}.`;
+  return `${name}: ${code} pattern ×${p.recentFrequency} — ${status}.`;
 }
 
 function severityStyle(severity: ErrorPatternRow['severity']) {
@@ -88,7 +90,7 @@ export function ActiveErrorPatternBanner({
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--p-ink)' }}>
-          {pattern.concept.name} · {errorCodeLabel(pattern.errorCode, lang)}
+          {pickConceptName(pattern.concept, lang)} · {errorCodeLabel(pattern.errorCode, lang)}
         </div>
         <div style={{ fontSize: 11.5, color: 'var(--p-ink-2)', lineHeight: 1.45 }}>
           {pattern.llmSummary ?? errorPatternStudentCopy(pattern, lang)}
@@ -120,7 +122,7 @@ export function ActiveErrorPatternList({
           <div key={p.id} className="card" style={{ padding: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{p.concept.name}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{pickConceptName(p.concept, lang)}</div>
                 <div style={{ fontSize: 11, color: 'var(--p-muted)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
                   {errorCodeLabel(p.errorCode, lang)} · {p.recentFrequency}×
                 </div>

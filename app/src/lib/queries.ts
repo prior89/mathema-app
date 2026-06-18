@@ -366,7 +366,7 @@ export type ConceptMastery = {
   confidenceGap: number;
   lastAttemptAt: string | null;
   updatedBy: 'RULE_BASED' | 'LLM' | 'HYBRID' | 'TEACHER_OVERRIDE';
-  concept: { id: string; code: string; name: string; gradeLevel: string | null };
+  concept: { id: string; code: string; name: string; nameKo?: string | null; gradeLevel: string | null };
 };
 
 export type MasteryEventRow = {
@@ -387,12 +387,13 @@ export type ErrorPatternRow = {
   status: 'ACTIVE' | 'IMPROVING' | 'RESOLVED';
   llmSummary: string | null;
   lastDetectedAt: string;
-  concept: { id: string; code: string; name: string };
+  concept: { id: string; code: string; name: string; nameKo?: string | null };
 };
 
 export type ReviewScheduleRow = {
   conceptId: string;
   conceptName: string;
+  conceptNameKo?: string | null;
   masteryScore: number;
   daysSinceLast: number | null;
   forgettingRisk: number;
