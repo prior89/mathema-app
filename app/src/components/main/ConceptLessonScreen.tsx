@@ -237,6 +237,7 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
           bigIdea={lesson.data.bigIdea}
           onContinue={goFromConcept}
           ctaLabel={hasProblems ? t('lesson.cta.continue', { n: totalProblems }) : t('lesson.cta.finishChapter')}
+          freeNote={hasProblems && freeMasteryLimitReached}
         />
       )}
       {phase === 'practice' && problem.data && currentSteps[practiceStepIdx - 1] && (
@@ -316,8 +317,10 @@ function SegmentIndicator({ total, active }: { total: number; active: number }) 
 }
 
 // ───────── Phase 0: all concept steps stacked ─────────
-function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
+function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel, freeNote }: {
   steps: ConceptStep[]; bigIdea: string; onContinue: () => void; ctaLabel: string;
+  /** Free user on a capped 5-problem set — explain the 5/20 split up front. */
+  freeNote?: boolean;
 }) {
   const { t } = useT();
   return (
@@ -340,6 +343,16 @@ function ConceptPhase({ steps, bigIdea, onContinue, ctaLabel }: {
           {ctaLabel}
           <Glyph.ChevronR />
         </button>
+        {freeNote && (
+          <div
+            style={{
+              marginTop: 10, textAlign: 'center', fontSize: 12.5,
+              color: 'var(--p-muted)', lineHeight: 1.5,
+            }}
+          >
+            {t('lesson.freeNote', { free: FREE_MASTERY_PROBLEMS, full: FULL_MASTERY_PROBLEMS })}
+          </div>
+        )}
       </div>
     </>
   );

@@ -92,6 +92,8 @@ const ko = {
   'reg.student.examDate': '시험 날짜 (Board exam)',
   'reg.student.targetGrade': '목표 등급 (1=최상위)',
   'ageGate.label': '몇 살이에요?',
+  'ageGate.adult': '19+',
+  'ageGate.adult.aria': '19세 이상 (성인)',
   'ageGate.hint': '만 18세 이상이면 바로 시작할 수 있어요. 미만은 보호자 이메일만 필요해요.',
   'ageGate.hint.kr': '만 14세 이상이면 바로 시작할 수 있어요. 미만은 보호자 이메일만 필요해요.',
   'ageGate.hint.default': '만 18세 이상이면 바로 시작할 수 있어요. 미만은 보호자 이메일만 필요해요.',
@@ -855,6 +857,7 @@ const ko = {
   'lesson.freeDone.previewStarting': '무료 체험 시작 중…',
   'lesson.freeDone.previewError': '무료 체험을 시작하지 못했어요. Premium 화면에서 다시 시도해 주세요.',
   'lesson.freeDone.premium': 'Premium으로 20문제 계속 풀기',
+  'lesson.freeNote': '무료로 {free}문제를 풀 수 있어요 · 전체 {full}문제는 Premium에서 이어서 풀 수 있어요.',
 
   // ===== Learn Screen =====
   'learn.tab.label': 'Library',
@@ -1153,7 +1156,7 @@ const ko = {
   'onboarding.welcome.title.line3': '씩',
   'onboarding.welcome.title.line4': '차근차근.',
   'onboarding.welcome.tagline': '7학년부터 12학년까지 — 모든 단원, 모든 개념을 맞춤형으로 코치하는 수학 학습 파트너.',
-  'onboarding.welcome.cta.start': '시작하기',
+  'onboarding.welcome.cta.start': '회원가입',
   'onboarding.welcome.cta.signin': '이미 계정이 있어요',
   'onboarding.auth.devLogin.failed': '개발자 로그인에 실패했어요.',
   'onboarding.auth.invalidEmail': '올바른 이메일 주소를 입력해 주세요.',
@@ -1450,6 +1453,8 @@ const en: typeof ko = {
   'reg.student.examDate': 'Board exam date',
   'reg.student.targetGrade': 'Target rank band (1 = top)',
   'ageGate.label': 'How old are you?',
+  'ageGate.adult': '19+',
+  'ageGate.adult.aria': '19 or older (adult)',
   'ageGate.hint': '18 or older? You can start right away. Under 18? We only need a parent email.',
   'ageGate.hint.kr': '14 or older? Start right away. Under 14? We only need a parent email.',
   'ageGate.hint.default': '18 or older? You can start right away. Under 18? We only need a parent email.',
@@ -2212,6 +2217,7 @@ const en: typeof ko = {
   'lesson.freeDone.previewStarting': 'Starting free preview…',
   'lesson.freeDone.previewError': 'We could not start the free preview. Please try again from the Premium screen.',
   'lesson.freeDone.premium': 'Continue all 20 with Premium',
+  'lesson.freeNote': 'Solve {free} problems free · continue all {full} with Premium.',
 
   // Learn Screen
   'learn.tab.label': 'Library',
@@ -2510,7 +2516,7 @@ const en: typeof ko = {
   'onboarding.welcome.title.line3': '',
   'onboarding.welcome.title.line4': 'at a time.',
   'onboarding.welcome.tagline': 'Class 7 to 12 — a math study partner that coaches every chapter and concept just for you.',
-  'onboarding.welcome.cta.start': 'Get started',
+  'onboarding.welcome.cta.start': 'Sign up',
   'onboarding.welcome.cta.signin': 'I already have an account',
   'onboarding.auth.devLogin.failed': 'Developer login failed.',
   'onboarding.auth.invalidEmail': 'Please enter a valid email address.',
@@ -2807,6 +2813,8 @@ const hi: Partial<typeof ko> = {
   'reg.student.targetGrade': 'लक्ष्य रैंक (1 = सर्वोच्च)',
 
   'ageGate.label': 'आपकी उम्र क्या है?',
+  'ageGate.adult': '19+',
+  'ageGate.adult.aria': '19 या अधिक (वयस्क)',
   'ageGate.hint': '18 या उससे अधिक? तुरंत शुरू करें। 18 से कम? केवल अभिभावक का ईमेल चाहिए।',
   'ageGate.hint.kr': '14 या उससे अधिक? तुरंत शुरू करें। 14 से कम? केवल अभिभावक का ईमेल चाहिए।',
   'ageGate.hint.default': '18 या उससे अधिक? तुरंत शुरू करें। 18 से कम? केवल अभिभावक का ईमेल चाहिए।',
