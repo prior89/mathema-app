@@ -3,7 +3,7 @@ import { GRADE_LEVELS, GradeLevel } from '../../../common/enums/unit.enum';
 import { STUDY_GOALS, StudyGoal } from '../../auth/dto/register.dto';
 
 /** v1 active markets — must match onboarding country chips. */
-const PATCHABLE_COUNTRIES = ['IN', 'KR'] as const;
+const PATCHABLE_COUNTRIES = ['IN', 'KR', 'AE'] as const;
 export type PatchableCountry = (typeof PATCHABLE_COUNTRIES)[number];
 
 const PATCHABLE_ROLES = ['STUDENT', 'PARENT', 'TEACHER'] as const;
