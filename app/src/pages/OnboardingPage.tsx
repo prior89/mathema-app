@@ -353,9 +353,10 @@ function ScreenCountry({
   step, onBack, onNext, country, setCountry,
 }: { step: number; onBack: () => void; onNext: () => void; country: CountryId; setCountry: (c: CountryId) => void }) {
   const { t, setLang } = useT();
-  // v1 active = IN + KR. Others compile but show as disabled "Coming soon"
-  // chips so a later launch (US/UK/AU/SG) is one flag flip away.
-  const COUNTRIES: Array<{ id: CountryId; flag: string; name: string; sub: string; active: boolean }> = [
+  // Active markets = IN + KR. Inactive entries (US/UK/AU/SG) stay in the list so
+  // a later launch is one `active` flip away, but they are filtered out of the
+  // render below — users only see live markets, no "Coming soon" chips.
+  const COUNTRY_OPTIONS: Array<{ id: CountryId; flag: string; name: string; sub: string; active: boolean }> = [
     { id: 'IN', flag: '🇮🇳', name: 'India',         sub: 'NCERT / CBSE / JEE',     active: true  },
     { id: 'KR', flag: '🇰🇷', name: '대한민국',       sub: '2022 개정 교육과정 · 수능', active: true  },
     { id: 'US', flag: '🇺🇸', name: 'United States', sub: 'Common Core / SAT',      active: false },
@@ -363,6 +364,7 @@ function ScreenCountry({
     { id: 'AU', flag: '🇦🇺', name: 'Australia',     sub: 'ACARA',                  active: false },
     { id: 'SG', flag: '🇸🇬', name: 'Singapore',     sub: 'MOE',                    active: false },
   ];
+  const COUNTRIES = COUNTRY_OPTIONS.filter((c) => c.active);
   const pick = (c: CountryId) => {
     setCountry(c);
     // BUG FIX 2026-05-27: flip i18n WITHOUT triggering a page reload. Earlier
