@@ -266,7 +266,7 @@ function ActiveProblem({
 
         <div>
           <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('review.workingsEyebrow')}</div>
-          <HandwritingCanvas ref={canvasRef} height={420} extendable />
+          <HandwritingCanvas ref={canvasRef} height={300} extendable />
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
             <button
               type="button"
@@ -286,6 +286,32 @@ function ActiveProblem({
             </button>
           </div>
         </div>
+
+        {/* 5-choice MC (Study-tab format). Kept INSIDE the scroll body with the
+         *  canvas so a single swipe scrolls problem + canvas + choices together
+         *  — mirrors the Study / Solo screens. (Was previously a sibling of the
+         *  scroll area, which squeezed the canvas and split the gesture.) */}
+        {!showSm2 && shuffledChoices.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {shuffledChoices.map((c, i) => {
+              const isPicked = pickedId === c.id;
+              const isCorrectReveal = feedback?.kind === 'correct' && isPicked;
+              const isWrongPick = feedback?.kind === 'wrong' && isPicked;
+              const cls = isCorrectReveal ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
+              return (
+                <div key={c.id} className={cls} onClick={() => onPick(c.id)}>
+                  <div className="letter">{CHOICE_LETTERS[i] ?? c.choiceIndex}</div>
+                  <span className="text"><MathText text={c.text} /></span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {!showSm2 && problemQuery.isLoading && (
+          <div style={{ fontSize: 12, color: 'var(--p-muted)' }}>
+            {t('review.loading')}
+          </div>
+        )}
 
         {hintRevealed && hintText && (
           <div
@@ -327,32 +353,6 @@ function ActiveProblem({
 
         <div style={{ height: 8 }} />
       </div>
-
-      {/* 5-choice MC row (Study-tab format applied to wrong-note review).
-       *  Rendered inside the scrollable body just above the sticky footer
-       *  so the canvas + choices both stay reachable on small viewports. */}
-      {!showSm2 && shuffledChoices.length > 0 && (
-        <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-          {shuffledChoices.map((c, i) => {
-            const isPicked = pickedId === c.id;
-            const isCorrectReveal = feedback?.kind === 'correct' && isPicked;
-            const isWrongPick = feedback?.kind === 'wrong' && isPicked;
-            const cls = isCorrectReveal ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
-            return (
-              <div key={c.id} className={cls} onClick={() => onPick(c.id)}>
-                <div className="letter">{CHOICE_LETTERS[i] ?? c.choiceIndex}</div>
-                <span className="text"><MathText text={c.text} /></span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {!showSm2 && problemQuery.isLoading && (
-        <div style={{ padding: '0 22px 8px', fontSize: 12, color: 'var(--p-muted)' }}>
-          {t('review.loading')}
-        </div>
-      )}
 
       {/* Sticky bottom — hint + check */}
       {!showSm2 && (
