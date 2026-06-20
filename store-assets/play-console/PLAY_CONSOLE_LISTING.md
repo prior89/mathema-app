@@ -1,6 +1,6 @@
 # Google Play Console Listing Assets
 
-Generated: 2026-06-05
+Generated: 2026-06-20
 
 ## Image assets
 
@@ -48,3 +48,11 @@ Students can manage consent settings, request account deletion, and review priva
 Spend your study time on the problems that actually matter.
 
 Character count: 1717 / 4000
+
+## Premium pricing
+
+Use `PLAY_PRICING.md` as the Play Console source of truth. The Android app
+renders the live Google Play Billing price; do not paste fixed prices into the
+store description. Current Korean launch anchor: KRW 9,900 monthly / KRW
+99,000 yearly. The 3-day Premium Preview is cardless and is not a Play Billing
+free-trial offer.

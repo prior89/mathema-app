@@ -1,8 +1,8 @@
 # Terms of Service
 
 **Effective date:** 2026-06-03
-**Last updated:** 2026-06-15
-**Version:** 1.2
+**Last updated:** 2026-06-20
+**Version:** 1.3
 
 These Terms of Service ("Terms") form a legal agreement between you and the
 operators of the **matheo** application and service ("Service", "we",
@@ -145,14 +145,17 @@ The Service is offered in two tiers:
 
 - **Free**: All core features (concept lessons, wrong notes, mock exams,
   mastery dashboard) are available at no charge. AI Solver usage is capped
-  at **8 problems per day** per account.
+  at **8 problems per day** per account after any launch grace period.
 - **Premium**: Unlimited AI Solver, full mastery problem sets, adaptive
   practice, wrong-note analysis, and weekly reports. Available as a monthly
   or yearly subscription via **Google Play Billing**.
 
-The exact subscription price in your local currency is shown on the in-app
-Premium screen before purchase. Prices are set by us in line with Google
-Play's regional pricing tiers.
+The current launch price table is maintained in `PLAY_PRICING.md`. In Korea,
+the current base prices are **KRW 9,900 monthly** and **KRW 99,000 yearly**.
+Other launch and expansion-region prices are configured manually in Google
+Play. The exact subscription price in your local currency is shown on the
+in-app Premium screen and Google Play purchase sheet before purchase; that
+local Google Play price controls.
 
 ### 7.2 Premium Preview (cardless 3-day trial)
 
@@ -162,13 +165,12 @@ automatically after 3 days — there is no charge and no auto-renewal. Each
 account is eligible for the Preview only once, and only before any paid
 subscription has been associated with the account.
 
-### 7.3 Launch promotional pricing
+### 7.3 Launch pricing and offers
 
-During the launch period, Google Play may apply **introductory pricing** to
-first-time subscribers (typically a discount for the first 60 days). The
-promotional price and the price after the promotional period both appear
-on the purchase screen, and Google Play notifies you of any price change
-before it takes effect.
+We do not enable a Google Play free-trial or introductory-price offer by
+default. Any launch discount, regional promotion, or Play Billing offer must
+be deliberately enabled, shown on the Google Play purchase screen, and
+disclosed in these Terms before it is used.
 
 ### 7.4 Auto-renewal and cancellation
 

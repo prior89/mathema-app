@@ -77,9 +77,10 @@ jobs:
       - name: Install containerapp extension
         run: az extension add --name containerapp --upgrade -y
 
-      # OCR + hint walkthrough call OpenAI directly (OPENAI_API_KEY). Gemini
-      # was removed 2026-06-12: its API terms prohibit clients directed at
-      # under-18 users, which covers our student-facing OCR/hints.
+      # OCR uses Mathpix first when configured, with OpenAI fallback / graph
+      # repair. Hint walkthrough and math-helper solve still call OpenAI.
+      # Gemini was removed 2026-06-12: its API terms prohibit clients
+      # directed at under-18 users, which covers our student-facing features.
 
       # Repo secret takes precedence: the KV copy of openai-api-key went
       # stale (prod served 401s on 2026-06-12) and the SP cannot write KV
@@ -108,6 +109,25 @@ jobs:
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --secrets "openai-api-key=keyvaultref:${KV_URI}secrets/openai-api-key,identityref:system"
           fi
+
+      # Mathpix OCR secrets. Both values are required; otherwise backend
+      # intentionally stays on OpenAI OCR fallback instead of half-configuring
+      # Mathpix and failing student uploads at runtime.
+      - name: Ensure Mathpix secret references
+        env:
+          MATHPIX_APP_ID: ${{ secrets.MATHPIX_APP_ID }}
+          MATHPIX_APP_KEY: ${{ secrets.MATHPIX_APP_KEY }}
+        run: |
+          if [ -z "$MATHPIX_APP_ID" ] || [ -z "$MATHPIX_APP_KEY" ]; then
+            echo "::warning::MATHPIX_APP_ID / MATHPIX_APP_KEY not both configured; Mathpix OCR will stay disabled for this revision."
+            exit 0
+          fi
+          az containerapp secret set \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --secrets \
+              "mathpix-app-id=${MATHPIX_APP_ID}" \
+              "mathpix-app-key=${MATHPIX_APP_KEY}"
 
       # FCM push — GitHub secrets → Container App secrets (no-op when unset).
       - name: Ensure Firebase secret references
@@ -146,8 +166,23 @@ jobs:
               "play-service-account-json=${PLAY_SERVICE_ACCOUNT_JSON}"
 
       - name: Container App revision update
+        env:
+          MATHPIX_APP_ID: ${{ secrets.MATHPIX_APP_ID }}
+          MATHPIX_APP_KEY: ${{ secrets.MATHPIX_APP_KEY }}
         run: |
           ENV_VARS="OPENAI_API_KEY=secretref:openai-api-key"
+          ENV_VARS="$ENV_VARS AI_OCR_MODEL=gpt-4o-mini"
+          ENV_VARS="$ENV_VARS AI_OCR_FALLBACK_MODEL=gpt-5.4-mini"
+          ENV_VARS="$ENV_VARS AI_OCR_GRAPH_MODEL=gpt-5.4-mini"
+          ENV_VARS="$ENV_VARS OCR_GRAPH_ENHANCEMENT=true"
+          ENV_VARS="$ENV_VARS MATHPIX_TIMEOUT_MS=180000"
+          if [ -n "$MATHPIX_APP_ID" ] && [ -n "$MATHPIX_APP_KEY" ]; then
+            ENV_VARS="$ENV_VARS OCR_PRIMARY_PROVIDER=mathpix"
+            ENV_VARS="$ENV_VARS MATHPIX_APP_ID=secretref:mathpix-app-id"
+            ENV_VARS="$ENV_VARS MATHPIX_APP_KEY=secretref:mathpix-app-key"
+          else
+            ENV_VARS="$ENV_VARS OCR_PRIMARY_PROVIDER=openai"
+          fi
           # Force concept-lessons bootstrap to re-sync seed content on every
           # deploy. Without this, the bootstrap short-circuits when the row
           # count already matches NCERT_CHAPTERS, so edits to seed files

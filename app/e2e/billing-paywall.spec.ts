@@ -72,8 +72,8 @@ test.describe('billing — 403 paywall redirect', () => {
                       offerId: null,
                       pricingPhases: [
                         {
-                          priceFormatted: '₩79,000',
-                          priceAmountMicros: '79000000000',
+                          priceFormatted: '₩99,000',
+                          priceAmountMicros: '99000000000',
                           currencyCode: 'KRW',
                           billingPeriod: 'P1Y',
                           recurrenceMode: 1,
@@ -246,7 +246,7 @@ test.describe('billing — 403 paywall redirect', () => {
 
     const plans = page.locator('.paywall-plan-card');
     await expect(plans).toHaveCount(2);
-    await expect(page.getByText('월간 결제 대비 34% 절약')).toBeVisible();
+    await expect(page.getByText('월간 결제 대비 17% 절약')).toBeVisible();
 
     // Yearly is pre-selected, so the purchase dock CTA starts as the yearly one.
     const yearlyCta = page.getByRole('button', { name: '연간 구독 시작' });

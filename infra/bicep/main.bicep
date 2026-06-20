@@ -76,6 +76,14 @@ param provisionAzureOpenAi bool = false
 @secure()
 param openaiApiKey string
 
+@description('Mathpix app id for primary image OCR. Leave empty to keep OpenAI-only OCR.')
+@secure()
+param mathpixAppId string = ''
+
+@description('Mathpix app key for primary image OCR. Leave empty to keep OpenAI-only OCR.')
+@secure()
+param mathpixAppKey string = ''
+
 @description('Anthropic API key (optional — fallback LLM provider).')
 @secure()
 param anthropicApiKey string = ''
@@ -108,6 +116,7 @@ var redisName = '${namePrefix}-redis-${uniqueSuffix}'
 var keyVaultName = '${namePrefix}-kv-${take(uniqueSuffix, 6)}'
 var aoaiName = '${namePrefix}-aoai-${take(uniqueSuffix, 4)}'
 var swaName = '${namePrefix}-swa'
+var hasMathpix = !empty(mathpixAppId) && !empty(mathpixAppKey)
 
 // ---------- Log Analytics + Application Insights ----------
 
@@ -278,6 +287,18 @@ resource kvOpenai 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   properties: { value: openaiApiKey }
 }
 
+resource kvMathpixAppId 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (hasMathpix) {
+  parent: keyVault
+  name: 'mathpix-app-id'
+  properties: { value: mathpixAppId }
+}
+
+resource kvMathpixAppKey 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (hasMathpix) {
+  parent: keyVault
+  name: 'mathpix-app-key'
+  properties: { value: mathpixAppKey }
+}
+
 resource kvAnthropic 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (!empty(anthropicApiKey)) {
   parent: keyVault
   name: 'anthropic-api-key'
@@ -359,7 +380,7 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
           identity: 'system'
         }
       ]
-      secrets: [
+      secrets: concat([
         { name: 'database-url',         keyVaultUrl: kvDbUrl.properties.secretUri,         identity: 'system' }
         { name: 'redis-url',            keyVaultUrl: kvRedisUrl.properties.secretUri,      identity: 'system' }
         { name: 'jwt-access-secret',    keyVaultUrl: kvJwtAccess.properties.secretUri,     identity: 'system' }
@@ -368,7 +389,10 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
         { name: 'admin-emails',         keyVaultUrl: kvAdminEmails.properties.secretUri,   identity: 'system' }
         // Play Developer API service-account JSON (seeded out-of-band)
         { name: 'play-service-account-json', keyVaultUrl: '${keyVault.properties.vaultUri}secrets/play-service-account-json', identity: 'system' }
-      ]
+      ], hasMathpix ? [
+        { name: 'mathpix-app-id',  keyVaultUrl: '${keyVault.properties.vaultUri}secrets/mathpix-app-id',  identity: 'system' }
+        { name: 'mathpix-app-key', keyVaultUrl: '${keyVault.properties.vaultUri}secrets/mathpix-app-key', identity: 'system' }
+      ] : [])
     }
     template: {
       containers: [
@@ -380,7 +404,7 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
           // (or `az containerapp update --image ...`).
           image: bootstrapMode ? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest' : '${acr.properties.loginServer}/mathema-backend:${containerImageTag}'
           resources: { cpu: json(containerCpu), memory: containerMemory }
-          env: [
+          env: concat([
             { name: 'NODE_ENV',            value: 'production' }
             { name: 'PORT',                value: '4000' }
             { name: 'DATABASE_URL',        secretRef: 'database-url' }
@@ -395,6 +419,11 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             // read OPENAI_API_KEY directly. Gemini API was removed 2026-06-12:
             // its terms prohibit API clients directed at under-18 users.
             { name: 'OPENAI_API_KEY',      secretRef: 'openai-api-key' }
+            { name: 'AI_OCR_MODEL',        value: 'gpt-4o-mini' }
+            { name: 'AI_OCR_FALLBACK_MODEL', value: 'gpt-5.4-mini' }
+            { name: 'AI_OCR_GRAPH_MODEL',  value: 'gpt-5.4-mini' }
+            { name: 'OCR_GRAPH_ENHANCEMENT', value: 'true' }
+            { name: 'MATHPIX_TIMEOUT_MS',  value: '180000' }
             { name: 'AI_VISION_PROVIDER',  value: 'openai' }
             { name: 'AI_VISION_MODEL',     value: 'gpt-4o-mini' }
             { name: 'AI_VISION_API_KEY',   secretRef: 'openai-api-key' }
@@ -434,7 +463,13 @@ resource backendApp 'Microsoft.App/containerApps@2024-03-01' = {
             // 호출도 TLS 자동 인증서 발급되므로 https 가 정상 경로.
             { name: 'MATH_HELPER_URL',         value: 'https://${mathHelperApp.properties.configuration.ingress.fqdn}' }
             { name: 'MATH_HELPER_TIMEOUT_MS',  value: '120000' }
-          ]
+          ], hasMathpix ? [
+            { name: 'OCR_PRIMARY_PROVIDER', value: 'mathpix' }
+            { name: 'MATHPIX_APP_ID',       secretRef: 'mathpix-app-id' }
+            { name: 'MATHPIX_APP_KEY',      secretRef: 'mathpix-app-key' }
+          ] : [
+            { name: 'OCR_PRIMARY_PROVIDER', value: 'openai' }
+          ])
           probes: [
             {
               type: 'liveness'
@@ -528,6 +563,8 @@ resource mathHelperApp 'Microsoft.App/containerApps@2024-03-01' = {
           resources: { cpu: json('0.5'), memory: '1.0Gi' }
           env: [
             { name: 'OPENAI_API_KEY',   secretRef: 'openai-api-key' }
+            { name: 'MATH_HELPER_MODEL', value: 'gpt-5.4-mini' }
+            { name: 'MATH_HELPER_FALLBACK_MODEL', value: 'gpt-5.5' }
             { name: 'PYTHONUNBUFFERED', value: '1' }
           ]
           probes: [

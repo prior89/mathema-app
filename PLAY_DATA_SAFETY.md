@@ -5,7 +5,7 @@ this document before every store submission — when a new field is added to
 `server/prisma/schema.prisma` or a new 3rd-party SDK lands, the corresponding
 row here MUST be updated, otherwise the listing falls out of compliance.
 
-Last updated: 2026-06-03 (Premium / Play Billing reflected)
+Last updated: 2026-06-20 (Premium pricing + AI Solver OCR routing aligned)
 Backend reference: `server/prisma/schema.prisma`
 Frontend reference: `app/src/lib/{api,analytics,queries,mutations}.ts`
 
@@ -46,7 +46,8 @@ store purchase-history metadata needed for entitlement gating.
 **Not collected**: credit card number, UPI ID, bank account, billing
 address, or any other payment instrument. All payment authentication is
 performed by Google Play; we receive only the opaque purchase token plus
-non-PII subscription state.
+non-PII subscription state. Regional prices are shown and processed by
+Google Play; they are not payment-instrument data collected by Matheo.
 
 ### 1.3 Location
 **None precise / approximate.** `User.country` is set by the user at signup —
@@ -100,8 +101,8 @@ its own data-processing addendum (DPA) and listed in the Privacy Policy.
 
 | Recipient | Purpose | Data sent | Consent gate |
 |---|---|---|---|
-| **OpenAI (gpt-4o-mini)** | LLM analysis (wrong-note diagnostic), math-helper solver, AI hint walkthrough | Problem body, student step-by-step input, student answer, wrong-note context | `AI_TRAINING` (analysis) — fallback to rule-based when absent; math-helper `/solve` always uses OpenAI when enabled |
-| **OpenAI (gpt-4o-mini) OCR** | OCR for photo / PDF problem upload | Photo / PDF image bytes | Per-use (the upload action is the consent surface) |
+| **Mathpix Convert API** | Primary OCR for uploaded math problem images | Photo image bytes | Per-use (the upload action is the consent surface) |
+| **OpenAI (gpt-5.4-mini / gpt-5.5 fallback)** | Math-helper solver, graph/diagram OCR repair, AI hint walkthrough, LLM analysis (wrong-note diagnostic) | Problem body, OCR text, student step-by-step input, student answer, wrong-note context; photo/PDF image bytes only for OCR fallback or graph/diagram repair | `AI_TRAINING` (analysis) - fallback to rule-based when absent; math-helper `/solve` always uses OpenAI when enabled; upload action gates OCR |
 | **Google OAuth 2.0** | Sign-in flow | Email, name, Google `sub` id | User-initiated sign-in |
 | **Firebase Cloud Messaging** | Push notification delivery | `DeviceToken.token`, message payload | `MARKETING` consent + OS-level permission |
 | **Sentry** | Crash + error capture | Stack trace, user id, breadcrumb, environment | `ANALYTICS` recommended; engineering-only viewers |
@@ -145,7 +146,7 @@ Use these exact answers when filling the Data Safety wizard:
 3. *Do you provide a way for users to request that their data be deleted?* — **Yes** (`DELETE /users/me` is exposed from Settings → Privacy).
 4. *Will users be able to request that their data be deleted, but not through your app?* — **Also yes** (any user can email the developer; the in-app path is canonical).
 5. *Has your app committed to the Google Play Families Policy?* — **Yes** (Class 7-12 audience; guardian approval for under-18 (IN) / under-14 (KR); optional PARENT role for supervision).
-6. *Does your app contain in-app purchases?* — **Yes** (Premium subscription via Google Play Billing v8 — `premium_monthly`, `premium_yearly`, plus cardless `premium_preview_3d` trial).
+6. *Does your app contain in-app purchases?* — **Yes** (Premium subscription via Google Play Billing v8 — `premium_monthly`, `premium_yearly`; the cardless `premium_preview_3d` preview is an internal entitlement, not a Play free-trial offer).
 7. *Does your app contain ads?* — **No**.
 8. *Does your app target children?* — **Mixed audience** (primary 11-18; under-18 (IN) / under-14 (KR) require guardian approval — see answer 5).
 

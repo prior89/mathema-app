@@ -28,6 +28,7 @@ describe('billing pricing helpers', () => {
   });
 
   it('calculates savings against twelve monthly payments', () => {
+    expect(annualSavingsPercent('9900000000', '99000000000')).toBe(17);
     expect(annualSavingsPercent('10000000', '96000000')).toBe(20);
     expect(annualSavingsPercent('10000000', '120000000')).toBe(0);
   });

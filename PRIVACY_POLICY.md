@@ -1,8 +1,8 @@
 # Privacy Policy
 
 **Effective date:** 2026-05-21
-**Last updated:** 2026-06-15
-**Policy version:** 1.1
+**Last updated:** 2026-06-20
+**Policy version:** 1.2
 
 This Privacy Policy describes how the **matheo** mobile application and
 related services (the "Service", "we", "us") collect, use, share, and protect
@@ -96,7 +96,14 @@ repository). Categories summarised here:
 
 We do **not** collect precise GPS location, browsing history outside the app,
 contact lists, photos other than ones you explicitly upload to OCR a math
-problem, or financial information.
+problem, or payment-instrument details.
+
+**Premium subscriptions (Google Play):** If you subscribe via the Android app,
+Google Play processes payment. We receive an opaque purchase token and
+subscription metadata (product, status, renewal dates, and country code when
+provided) to grant Premium access. The price shown to you and your payment
+method remain inside Google Play; we do **not** receive your card, UPI, bank,
+or other payment instrument details.
 
 ---
 
@@ -108,7 +115,7 @@ problem, or financial information.
 | Run the spaced-repetition + mastery algorithms | Contract performance | Required |
 | Send password reset / email verification mails | Legitimate use (DPDP §7(b)) | Required |
 | Diagnose crashes / outages | Legitimate use | Optional via `ANALYTICS` |
-| Analyse error patterns with AI (OpenAI gpt-4o-mini) | Consent (DPDP §6) | Optional via `AI_TRAINING` |
+| Analyse error patterns with AI (OpenAI AI Solver models) | Consent (DPDP §6) | Optional via `AI_TRAINING` |
 | Send push notifications about your review queue / streak | Consent | Optional via `MARKETING` |
 | Improve the Service via aggregate analytics | Consent | Optional via `ANALYTICS` |
 
@@ -119,6 +126,15 @@ information.
 
 ## 4. Who we share it with
 
+Mathpix is now the primary OCR processor for uploaded math problem images
+when configured. OpenAI remains the math-helper solve, AI hint, OCR fallback,
+and graph/diagram repair processor.
+
+- **Mathpix** receives uploaded math problem images for primary OCR when
+  Mathpix OCR is configured. We set Mathpix API metadata to avoid using
+  student images to improve Mathpix services, and we maintain retention
+  controls in the Mathpix Convert API dashboard.
+
 We share only what is operationally necessary and only with vendors that
 provide a contractual data-processing commitment (DPA). The full list is
 maintained in `PLAY_DATA_SAFETY.md §2`.
@@ -127,10 +143,10 @@ maintained in `PLAY_DATA_SAFETY.md §2`.
   step-by-step working when you have granted `AI_TRAINING` consent. The
   math-helper "solve" feature also routes the photo's OCR'd text and your
   attempted answer through OpenAI to produce the worked solution. OpenAI
-  also receives the image or PDF you upload, only at the moment you upload
-  it, to extract math text via OCR, and the problem text when you request
-  an AI hint. We use the API with training disabled (API inputs are not
-  used to train OpenAI models).
+  receives uploaded image/PDF bytes only for OCR fallback or graph/diagram
+  repair, and receives problem text when you request an AI hint. We use the
+  API with training disabled (API inputs are not used to train OpenAI
+  models).
 - **Google (Cloud Identity)** — only when you choose **Sign in with
   Google**. We receive your email address, name, and Google `sub` id.
 - **Firebase Cloud Messaging (Google)** — receives your push token to

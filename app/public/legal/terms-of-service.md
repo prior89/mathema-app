@@ -1,8 +1,8 @@
 # Terms of Service
 
 **Effective date:** 2026-05-21
-**Last updated:** 2026-06-15
-**Version:** 1.2
+**Last updated:** 2026-06-20
+**Version:** 1.3
 
 These Terms of Service ("Terms") form a legal agreement between you and the
 operators of the **matheo** application and service ("Service", "we",
@@ -139,11 +139,22 @@ third-party AI models unless you have granted `AI_TRAINING` consent.
 
 ## 7. Subscriptions and payments
 
-The core Service is available **free of charge**. An optional **Matheo Premium**
-subscription is offered on the Android app through **Google Play Billing**.
+The Service is offered in two tiers:
 
-- Prices and billing periods (monthly or yearly) are shown in Google Play before
-  you confirm purchase.
+- **Free**: Core learning features are available at no charge. Free users can
+  solve the first 5 chapter-learning problems and may use AI Solver within the
+  daily free quota.
+- **Premium**: Unlocks the full 20-problem chapter set, AI Solver, adaptive
+  practice, wrong-note AI analysis, and weekly reports. Premium is offered on
+  the Android app through **Google Play Billing** as monthly and yearly
+  subscriptions.
+
+The current launch price table is maintained for Google Play operations. In
+Korea, the current base prices are **KRW 9,900 monthly** and **KRW 99,000
+yearly**. Other launch and expansion-region prices are configured manually in
+Google Play. Prices and billing periods are shown in Google Play before you
+confirm purchase, and the local Google Play purchase-sheet price controls.
+
 - Subscriptions **renew automatically** until you cancel in the [Google Play
   subscriptions center](https://play.google.com/store/account/subscriptions).
 - Payment is processed by Google; we do not store your payment instrument.
@@ -151,8 +162,10 @@ subscription is offered on the Android app through **Google Play Billing**.
   applicable law provides otherwise.
 - Refunds follow Google Play policies unless we offer a separate refund policy.
 
-Premium Preview (when offered) provides time-limited access without a payment
-method and does not auto-renew.
+Premium Preview provides a one-time, cardless 3-day Premium experience without
+a payment method and does not auto-renew. It is not a Google Play free-trial
+offer. We do not enable a Google Play free-trial or introductory-price offer by
+default unless it is deliberately launched and disclosed before use.
 
 ---
 

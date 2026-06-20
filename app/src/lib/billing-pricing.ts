@@ -40,7 +40,7 @@ export function monthlyEquivalent(
   );
 }
 
-// India-market price anchoring ("just ₹X a day") — Doubtnut/PW style framing.
+// Regional pricing often uses a per-day frame in India/SEA paywalls.
 export function perDayPrice(
   yearlyMicros: string,
   currencyCode: string,

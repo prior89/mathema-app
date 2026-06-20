@@ -14,7 +14,7 @@ verbatim. Hindi locale (`hi-IN`) is intentionally omitted in v1.0; see
 | App name (Play Store listing) | **matheo** |
 | Package name | `ai.matheo.app` |
 | Default language | English (United States) — `en-US` |
-| Additional supported language | English (India) — `en-IN` |
+| Additional supported languages | English (India) — `en-IN`; Korean (South Korea) — `ko-KR` |
 | Category | Education |
 | Tags (≤ 5) | NCERT, CBSE, Class 7-12, Math practice, JEE foundation |
 | Contact email | `VeraStudy01@gmail.com` |
@@ -176,12 +176,15 @@ spaced-repetition wrong-note book. Built for Indian students under DPDP
 - **Price**: Free to install; core learning remains available on the Free tier.
 - **In-app purchases**: Optional auto-renewing Google Play Premium monthly
   and yearly subscriptions. A separate one-time, cardless 3-day Premium
-  Preview does not auto-renew or charge the user.
+  Preview does not auto-renew or charge the user. Regional subscription
+  prices are managed in `PLAY_PRICING.md`; the Korean launch anchor is
+  KRW 9,900 monthly / KRW 99,000 yearly, with the final local price shown
+  by Google Play before purchase.
 - **Countries**:
-  - Launch wave: **India** only.
-  - Phase 2 candidates: Bhutan, Nepal, Bangladesh, Sri Lanka (sharing NCERT
-    or similar Indian-board curriculum exposure). Switch on country-by-
-    country as legal review clears.
+  - Launch wave: **India** and **South Korea**.
+  - Expansion pricing prepared for **Indonesia**, **Vietnam**, and the
+    **United Arab Emirates** in `PLAY_PRICING.md`. Switch on country-by-
+    country as legal/listing review clears.
 - **Devices**: Android phones (primary). Tablet support left open — layouts
   already responsive but no tablet screenshots in v1.0.
 

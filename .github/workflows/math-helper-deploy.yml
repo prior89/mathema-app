@@ -58,15 +58,19 @@ jobs:
       - name: Install containerapp extension
         run: az extension add --name containerapp --upgrade -y
 
-      # math-helper's llm.py is OpenAI-only (gpt-5-mini → gpt-4o-mini fallback).
-      # OPENAI_API_KEY is wired by the Bicep template; no per-deploy secret
-      # sync needed here.
+      # math-helper's llm.py is OpenAI-only: gpt-5.4-mini primary, gpt-5.5
+      # only for transient provider-failure fallback.
+      # OPENAI_API_KEY is wired by the Bicep template. Set model policy
+      # explicitly so the live app matches AI_SOLVER_MODEL_POLICY.md.
       - name: Container App revision update
         run: |
           az containerapp update \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+            --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
+            --set-env-vars \
+              MATH_HELPER_MODEL=gpt-5.4-mini \
+              MATH_HELPER_FALLBACK_MODEL=gpt-5.5
 
       # math-helper has internal ingress (external: false), so GitHub
       # runners can't curl it directly. We verify health by polling

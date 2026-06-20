@@ -66,6 +66,9 @@ step "3. Swap math-helper Container App from hello-world to real image"
 az containerapp update \
   -n mathema-math-helper -g "$RG" \
   --image "$ACR.azurecr.io/mathema-math-helper:initial" \
+  --set-env-vars \
+    MATH_HELPER_MODEL=gpt-5.4-mini \
+    MATH_HELPER_FALLBACK_MODEL=gpt-5.5 \
   --query "properties.latestRevisionName" -o tsv \
   || fail "containerapp update failed"
 

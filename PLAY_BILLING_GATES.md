@@ -3,6 +3,10 @@
 Operator checklist for Matheo Premium rollout on Google Play. Automated code
 readiness lives in `GET /admin/billing/readiness` and `npm run billing:preflight`.
 
+Pricing source of truth: `PLAY_PRICING.md`. The app renders live Google Play
+Billing prices, so Play Console must be set to the same regional table before
+G1 sign-off.
+
 ## G1 — Internal testing upload (조건부 GO)
 
 Upload AAB to **Internal testing** after automated checks pass. License tester
@@ -31,7 +35,7 @@ BILLING_UI_ENABLED=true
 
 ### Play Console (manual)
 
-1. **Monetize → Products → Subscriptions**: `premium_monthly`, `premium_yearly` base plans live.
+1. **Monetize → Products → Subscriptions**: `premium_monthly`, `premium_yearly` base plans live with the 5-country launch prices from `PLAY_PRICING.md`.
 2. **License testers**: add Google accounts under Settings → License testing.
 3. **RTDN**: Pub/Sub push subscription → `POST /billing/rtdn`; send **test notification** (expect 200 + inbox PROCESSED).
 4. **AAB**: GitHub Actions → **Android Release (AAB)** → download artifact → Internal testing → Create release.
@@ -76,6 +80,9 @@ Run on a **license tester** device with the Internal testing build.
 | AI Solver quota | 9th free solve → `/app/paywall?reason=quota` |
 | Weekly report | `/app/report` → `PremiumRequired` |
 | Adaptive practice | Study adaptive endpoint |
+
+Premium has no graph-specific solver cap at launch; only abuse and
+service-protection safeguards apply.
 
 Automated smoke: Playwright `e2e/billing-paywall.spec.ts` (mocked 403 path).
 

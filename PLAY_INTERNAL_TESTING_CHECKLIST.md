@@ -3,7 +3,7 @@
 > **대상**: v0.1.0 RC → Play Console **Internal testing** 트랙 첫 업로드  
 > **패키지**: `ai.matheo.app`  
 > **관련 문서**: `PLAY_BILLING_GATES.md` · `PLAY_LISTING.md` · `PLAY_DATA_SAFETY.md` · `README.md`  
-> **최종 갱신**: 2026-06-11
+> **최종 갱신**: 2026-06-20
 
 이 문서는 **G0(인프라·코드)** → **G1(콘솔·AAB 업로드)** → **G2(결제 E2E)** → **G3(가입·학습 스모크)** 순서로 진행합니다.  
 각 게이트의 **Sign-off** 체크박스를 모두 통과한 뒤 Internal testing 릴리스를 승인합니다.
@@ -122,7 +122,7 @@ BILLING_UI_ENABLED=true
 
 | # | 위치 | 작업 | 통과 기준 |
 |---|------|------|-----------|
-| 1.4 | Monetize → Subscriptions | `premium_monthly`, `premium_yearly` base plan **Active** | 현재 지역별 가격이 앱 paywall과 일치. Play 무료체험 offer는 의도적으로 활성화한 경우에만 노출 |
+| 1.4 | Monetize → Subscriptions | `premium_monthly`, `premium_yearly` base plan **Active** | `PLAY_PRICING.md`의 5개국 출시 가격과 앱 paywall 가격이 일치. Play 무료체험/인트로 offer는 의도적으로 활성화한 경우에만 노출 |
 | 1.5 | Settings → License testing | 테스터 Google 계정 등록 | 최소 2계정 (구매·복원 분리 테스트용) |
 | 1.6 | Monetize → Monetization setup | RTDN Pub/Sub 연결 | Push → `POST /billing/rtdn` |
 | 1.7 | RTDN 테스트 알림 | Console에서 test notification 전송 | HTTP 200, inbox `PROCESSED` |
@@ -420,4 +420,4 @@ bash scripts/smoke-prod.sh "$SMOKE_BACKEND_URL" "$SMOKE_USER_EMAIL" "$SMOKE_USER
 
 ---
 
-*이 체크리스트는 `PLAY_BILLING_GATES.md`의 G1/G2를 확장한 운영 문서입니다. Play Console 정책·가격 변경 시 `PLAY_DATA_SAFETY.md`와 `PLAY_LISTING.md`를 먼저 갱신하세요.*
+*이 체크리스트는 `PLAY_BILLING_GATES.md`의 G1/G2를 확장한 운영 문서입니다. Play Console 정책·가격 변경 시 `PLAY_PRICING.md`, `PLAY_DATA_SAFETY.md`, `PLAY_LISTING.md`를 먼저 갱신하세요.*

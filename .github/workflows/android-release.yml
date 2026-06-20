@@ -43,6 +43,11 @@ jobs:
       - name: Install workspace deps
         run: npm ci
 
+      - name: Require Google OAuth client ID
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: npm run android:require-google-client-id
+
       - name: Build Vite SPA
         env:
           # Capacitor Android bundles the SPA into the AAB. Without this

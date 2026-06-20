@@ -830,7 +830,7 @@ export type OcrResult = {
   text: string;
   latex?: string | null;
   confidence?: number | null;
-  source: 'openai';
+  source: 'openai' | 'mathpix' | 'mathpix+openai';
 };
 export type SolveResult = import('./mathHelper').MathHelperSolveResponse & {
   problemId?: string | null;

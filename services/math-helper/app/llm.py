@@ -1,58 +1,97 @@
 import logging
+import os
 
+from openai import APIConnectionError, APIStatusError, APITimeoutError, RateLimitError
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 _logger = logging.getLogger(__name__)
 
-# Primary: gpt-5-mini. Selected 2026-06-08 after a direct bench across
-# OpenAI's available models on two hard in-scope problems:
-#   1) NCERT Class 12 integral with x sin(x)/(1+cos^2(x))
-#   2) Korean multi-part conditional sequence where a_10 = 11
-#
-#   model        integral  sequence  latency  in/out $/1M    cost/solve
-#   gpt-5-mini   pass      pass      8.0 s    $0.25/$2.00   $0.0023
-#   gpt-5-nano   pass      pass      9.3 s    $0.20/$0.40   $0.0006
-#   o3-mini      pass      pass      5.1 s    $1.10/$4.40   $0.0050
-#   gpt-4o-mini  pass      pass      9.9 s    $0.15/$0.60   $0.0004
-#   gpt-4o       fail      -         7.6 s    $2.50/$10     $0.006
-#
-# gpt-5-mini balances reasoning capability (Korean sequence parsing) with
-# acceptable latency and cost. gpt-4o was excluded after returning the
-# wrong sign on the integral, the same failure mode that pushed an earlier
-# revision off gpt-4o (commit eb8ff43).
-#
-# This file covers the math-helper reasoning model only. OCR is served by the
-# NestJS OcrService (OpenAI gpt-4o-mini, source='openai'); keep those layers
-# separate when evaluating compliance or provider migration work.
-_primary = ChatOpenAI(
-    model="gpt-5-mini",
-    max_completion_tokens=8192,
+PRIMARY_MODEL = os.getenv("MATH_HELPER_MODEL", "gpt-5.4-mini")
+FALLBACK_MODEL = os.getenv("MATH_HELPER_FALLBACK_MODEL", "gpt-5.5")
+PROVIDER_FAILURE_STATUS_CODES = {408, 409, 425, 429, 500, 502, 503, 504}
+
+
+def _int_env(name: str, default: int) -> int:
+    try:
+        return int(os.getenv(name, str(default)))
+    except ValueError:
+        return default
+
+
+def _chat(model: str, max_completion_tokens: int) -> ChatOpenAI:
+    kwargs = {
+        "model": model,
+        "max_completion_tokens": max_completion_tokens,
+    }
+    if not model.lower().startswith("gpt-5"):
+        kwargs["temperature"] = 0
+    return ChatOpenAI(**kwargs)
+
+
+def _is_provider_failure(exc: BaseException, seen: set[int] | None = None) -> bool:
+    """Return true only for transient provider / network failures.
+
+    Schema validation, prompt bugs, bad requests, and parser errors should not
+    jump to the expensive fallback model; they need to fail loudly.
+    """
+    if isinstance(exc, (APIConnectionError, APITimeoutError, RateLimitError)):
+        return True
+    if isinstance(exc, APIStatusError):
+        return exc.status_code in PROVIDER_FAILURE_STATUS_CODES
+
+    status_code = getattr(exc, "status_code", None)
+    if isinstance(status_code, int) and status_code in PROVIDER_FAILURE_STATUS_CODES:
+        return True
+
+    seen = seen or set()
+    seen.add(id(exc))
+    for nested in (getattr(exc, "__cause__", None), getattr(exc, "__context__", None)):
+        if nested is not None and id(nested) not in seen and _is_provider_failure(nested, seen):
+            return True
+    return False
+
+
+# Solver policy, 2026-06-20:
+# - gpt-5.4-mini is the default because it is strong enough for multi-step math
+#   at launch economics.
+# - gpt-5.5 is reserved for provider failure fallback; it is higher quality but
+#   much too expensive to run on every 9,900 KRW subscription solve.
+# - OCR happens in NestJS OcrService: Mathpix first, OpenAI vision only for
+#   graph/diagram repair or fallback.
+_primary = _chat(
+    PRIMARY_MODEL,
+    _int_env("MATH_HELPER_MAX_COMPLETION_TOKENS", 8192),
 )
 
-# Fallback: gpt-4o-mini. Cheaper and faster than the primary, no reasoning
-# tokens; used when gpt-5-mini errors out (rate-limit, transient API
-# failure). Accuracy is lower on multi-part Korean problems, so this is a
-# last-mile graceful degradation, not a co-equal.
-_openai_fallback = ChatOpenAI(
-    model="gpt-4o-mini",
-    max_completion_tokens=4096,
-    temperature=0,
+_openai_fallback = _chat(
+    FALLBACK_MODEL,
+    _int_env("MATH_HELPER_FALLBACK_MAX_COMPLETION_TOKENS", 8192),
 )
 
 
 async def structured(prompt: str, schema: type[BaseModel]):
     """Schema-constrained LLM call with single-vendor failover.
 
-    Order: gpt-5-mini -> gpt-4o-mini -> re-raise. `with_structured_output(schema)`
+    Order: primary -> fallback. `with_structured_output(schema)`
     works on both so callers don't care which model answered.
     """
     try:
         return await _primary.with_structured_output(schema).ainvoke(prompt)
     except Exception as e:
+        if not _is_provider_failure(e):
+            _logger.warning(
+                "%s structured() failed with non-provider error (%s); not falling back to %s",
+                PRIMARY_MODEL,
+                type(e).__name__,
+                FALLBACK_MODEL,
+            )
+            raise
         _logger.warning(
-            "gpt-5-mini structured() failed (%s); falling back to gpt-4o-mini",
+            "%s structured() provider failure (%s); falling back to %s",
+            PRIMARY_MODEL,
             type(e).__name__,
+            FALLBACK_MODEL,
         )
     return await _openai_fallback.with_structured_output(schema).ainvoke(prompt)
 
