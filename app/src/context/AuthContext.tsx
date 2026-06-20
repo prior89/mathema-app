@@ -8,7 +8,7 @@ import {
   restoreStoredSession,
   revokeRefreshToken,
 } from '../lib/api';
-import type { Me, GradeLevel } from '../lib/queries';
+import type { Me, GradeLevel, CountryCode } from '../lib/queries';
 import { postAuthPath } from '../lib/post-auth-path';
 import { unregisterPushToken } from '../native/push-bridge';
 import { track } from '../lib/analytics';
@@ -51,7 +51,7 @@ export type RegisterInput = {
   tenantCode?: string;
   // Country chip (IN | KR | ...). Optional — backend defaults to IN when
   // missing for back-compat with the pre-2026-05-24 onboarding flow.
-  country?: 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'GLOBAL';
+  country?: CountryCode;
   // Minor student — parent contact (sent during signup)
   parentName?: string;
   parentEmail?: string;

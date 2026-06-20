@@ -124,7 +124,7 @@ export type Achievement = { icon: string; title: string; sub: string; color: str
 export type GradeLevel = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12';
 export type UserRole = 'STUDENT' | 'PARENT' | 'TEACHER' | 'ADMIN';
 export type StudyGoal = 'BOARD' | 'JEE' | 'SCHOOL' | 'CATCHUP';
-export type CountryCode = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'GLOBAL';
+export type CountryCode = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'AE' | 'ID' | 'GLOBAL';
 export type Me = {
   id: string; name: string; email: string;
   emailVerifiedAt?: string | null;
