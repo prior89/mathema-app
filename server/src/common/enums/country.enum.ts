@@ -3,7 +3,7 @@
  * 새 국가 추가 시 여기 한 곳만 수정.
  */
 
-export const COUNTRY_CODES = ['IN', 'KR', 'US', 'UK', 'AU', 'SG', 'GLOBAL'] as const;
+export const COUNTRY_CODES = ['IN', 'KR', 'US', 'UK', 'AU', 'SG', 'AE', 'ID', 'GLOBAL'] as const;
 export type CountryCode = (typeof COUNTRY_CODES)[number];
 
 export type CountryConfig = {
@@ -98,6 +98,26 @@ export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
     numberFormat: { thousands: ',', decimal: '.' },
     curriculum: 'MOE_SG', gradeLabel: 'Grade',
     examNames: { mini: 'Topical Quiz', mock: 'O-Level Mock', recommended: 'AI Diagnostic', wrongRedo: 'Review' },
+    status: 'planned',
+  },
+  AE: {
+    code: 'AE', name: 'United Arab Emirates', defaultLang: 'en',
+    currency: 'AED', currencyCode: 'AED', dateFormat: 'dd/MM/yyyy',
+    numberFormat: { thousands: ',', decimal: '.' },
+    // Most UAE private schools follow a CBSE/NCERT-aligned syllabus, so the
+    // Indian curriculum content is reused directly for the first launch.
+    curriculum: 'NCERT', gradeLabel: 'Grade',
+    examNames: { mini: 'Chapter Mini Test', mock: 'Board Mock Exam', recommended: 'AI Diagnostic Mock', wrongRedo: 'Revision Test' },
+    status: 'live',
+  },
+  ID: {
+    code: 'ID', name: 'Indonesia', defaultLang: 'en',
+    currency: 'Rp', currencyCode: 'IDR', dateFormat: 'dd/MM/yyyy',
+    numberFormat: { thousands: '.', decimal: ',' },
+    // Merdeka curriculum + Bahasa content not built yet, and PSE registration
+    // is pending — kept GENERIC and planned until those blockers clear.
+    curriculum: 'GENERIC', gradeLabel: 'Grade',
+    examNames: { mini: 'Chapter Quiz', mock: 'Mock Exam', recommended: 'AI Diagnostic', wrongRedo: 'Review' },
     status: 'planned',
   },
   GLOBAL: {

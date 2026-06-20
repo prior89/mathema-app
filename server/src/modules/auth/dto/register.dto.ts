@@ -8,9 +8,9 @@ export const STUDY_GOALS = ['BOARD', 'JEE', 'SCHOOL', 'CATCHUP'] as const;
 export type StudyGoal = (typeof STUDY_GOALS)[number];
 
 // Mirrors prisma `CountryCode` enum. Drives curriculum (NCERT vs Korean 2022
-// 개정), locale default, currency display. v1 launches IN + KR; other entries
-// kept compiled but should be flagged "Coming soon" in onboarding chip UI.
-export const COUNTRY_CODES = ['IN', 'KR', 'US', 'UK', 'AU', 'SG', 'GLOBAL'] as const;
+// 개정), locale default, currency display. Active markets IN + KR + AE; other
+// entries kept compiled but hidden from the onboarding chip UI until launch.
+export const COUNTRY_CODES = ['IN', 'KR', 'US', 'UK', 'AU', 'SG', 'AE', 'ID', 'GLOBAL'] as const;
 export type CountryCode = (typeof COUNTRY_CODES)[number];
 
 export class RegisterDto {
