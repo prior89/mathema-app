@@ -174,7 +174,11 @@ export default function LoginPage() {
               <div style={{ flex: 1 }} />
 
               <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Link to="/onboarding" style={{ color: 'var(--p-primary)', fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+                <Link
+                  to="/onboarding"
+                  className="btn outline"
+                  style={{ height: 44, maxWidth: 240, alignSelf: 'center', textDecoration: 'none' }}
+                >
                   {t('login.goOnboarding')}
                 </Link>
                 <Link to="/forgot-password" style={{ color: 'var(--p-muted)', fontSize: 12, textDecoration: 'none' }}>

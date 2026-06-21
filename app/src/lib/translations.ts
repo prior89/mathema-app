@@ -1133,7 +1133,7 @@ const ko = {
   'login.or': '또는',
   'login.devHint.pre': 'PoC 개발자 로그인 — 계정 없이 입장하려면 ',
   'login.devHint.post': ' 을 입력하세요.',
-  'login.goOnboarding': '회원가입 →',
+  'login.goOnboarding': '회원가입',
   'login.forgotPw': '비밀번호를 잊으셨나요?',
 
   // ===== Register Page (small additions) =====
@@ -2490,7 +2490,7 @@ const en: typeof ko = {
   'login.or': 'or',
   'login.devHint.pre': 'PoC dev login — enter ',
   'login.devHint.post': ' to skip account creation.',
-  'login.goOnboarding': 'Sign up →',
+  'login.goOnboarding': 'Sign up',
   'login.forgotPw': 'Forgot your password?',
 
   // Register Page (small additions)
