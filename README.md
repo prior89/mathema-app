@@ -16,7 +16,7 @@ Monorepo:
 
 - **`server/`** — NestJS + Prisma + PostgreSQL + Redis + BullMQ backend (REST `/api/v1/*`)
 - **`app/`** — React + Vite + Capacitor (Android `ai.matheo.app`) — student / parent / teacher / admin UI
-- **`services/math-helper/`** — Python LangGraph microservice (NCERT problem solver, OpenAI) — partner-maintained ([Karvy-Singh](https://github.com/Karvy-Singh))
+- **`services/math-helper/`** — Python LangGraph microservice (AI Solver: `/math-helper/solve`, OpenAI)
 
 > **Status: v0.1.0 release candidate — Internal Testing track upload in progress.**
 >
@@ -184,7 +184,7 @@ The `NormalizedProblem` shape carries 13 optional enrichment fields
 (`correctAnswer`, `acceptedAnswers`, `difficultyLevel`, `conceptCodes`,
 `requiredSkills`, `expectedSolutionSteps`, `hints`, `commonErrorCodes`,
 `distractors`, `solutionFinalAnswer`, `solutionSteps`, `solutionExplanation`,
-`chapterCode`/`topicCode`) absorbed from the Karvy curriculum format so
+`chapterCode`/`topicCode`) from the rich NCERT JSON ingest format so
 adapters with rich source data can preserve their distractor-with-errorCode
 mappings instead of having the LLM re-invent them.
 
@@ -343,11 +343,10 @@ does publish abort and demand a manual `SOURCE:` override.
 
 ---
 
-## Karvy code absorbed
+## NCERT ingest enrichment
 
-The `feat/karvy-absorb-ncert` branch absorbed the math-checking and
-content-shape pieces from the standalone Karvy NCERT prototype so they live
-inside the main monorepo:
+The NCERT ingest and AI Solver paths are maintained directly in this
+monorepo:
 
 - **`server/src/infrastructure/math/deterministic-check.service.ts`** —
   TypeScript port (875 LoC) of the Python deterministic checker. Nine
@@ -361,14 +360,13 @@ inside the main monorepo:
   2-test micro-benchmark** under `server/src/infrastructure/math/`.
 
 - **`server/src/modules/content-ingest/types.ts`** — `NormalizedProblem`
-  extended with the 13 Karvy enrichment fields listed above so adapters
+  extended with the 13 enrichment fields listed above so adapters
   carrying rich source data (curated distractors with error codes, concept
   codes, expected solution steps) can hand them straight through to the
   draft step without a round-trip through the LLM.
 
-No Karvy database schema was absorbed — the existing Prisma schema already
-covers the published-Problem shape, and no migrations were generated for
-this branch (verify with `prisma migrate status`).
+No extra database schema was needed — the existing Prisma schema already
+covers the published-Problem shape (verify with `prisma migrate status`).
 
 ---
 

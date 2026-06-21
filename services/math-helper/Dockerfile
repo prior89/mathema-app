@@ -2,7 +2,7 @@
 #  Mathēma math-helper — Python FastAPI + LangGraph service.
 #
 #  Build context = repo root (so we can COPY both services/math-helper/
-#  and services/data/). Karvy's curriculum_data.py uses APP_DIR-relative
+#  and services/data/). curriculum_data.py uses APP_DIR-relative
 #  paths to find services/data/ncert/*.json, so we keep the on-disk
 #  layout identical to the repo and just change WORKDIR.
 # =============================================================

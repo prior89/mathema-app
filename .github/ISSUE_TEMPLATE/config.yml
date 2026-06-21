@@ -5,9 +5,3 @@ contact_links:
     about: |
       Please do not report security issues in public issues. See SECURITY.md
       for our private disclosure process and email contact.
-  - name: math-helper / NCERT data issues (partner repo)
-    url: https://github.com/Karvy-Singh/mathema/issues
-    about: |
-      services/math-helper/ and services/data/ncert/ are partner-maintained
-      by @Karvy-Singh under a 0-line modification policy in this repo.
-      Please file issues for those areas in the upstream repo.

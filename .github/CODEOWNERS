@@ -6,11 +6,6 @@
 # Default owner
 *                                     @prior89
 
-# Karvy partner directories (0-line modification policy for prior89)
-/services/math-helper/                @Karvy-Singh
-/services/data/                       @Karvy-Singh
-/scripts/ncert-pdf-extract/           @Karvy-Singh
-
 # Infra / CI sensitive
 /infra/                               @prior89
 /.github/workflows/                   @prior89

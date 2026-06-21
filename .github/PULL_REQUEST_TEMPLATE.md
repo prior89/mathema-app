@@ -54,8 +54,3 @@ At minimum the PR checklist below should be green. -->
       collection, third-party processors, or PII flows without updating
       `PRIVACY_POLICY.md` and `PLAY_DATA_SAFETY.md`. (Tick "N/A" if not
       applicable.)
-- [ ] **Karvy boundary**: this PR does not modify
-      `services/math-helper/app/**`, `services/data/ncert/**`, or
-      `scripts/ncert-pdf-extract/**` (0-line modification policy). Changes
-      needed there should go to
-      [github.com/Karvy-Singh/mathema](https://github.com/Karvy-Singh/mathema).

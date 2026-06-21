@@ -89,7 +89,7 @@ updates:
         update-types:
           - "version-update:semver-major"
 
-  # Math-helper Dockerfile (partner-maintained directory; Karvy reviews).
+  # Math-helper Dockerfile
   - package-ecosystem: "docker"
     directory: "/services/math-helper"
     schedule:
@@ -104,7 +104,7 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
     reviewers:
-      - "Karvy-Singh"
+      - "prior89"
     ignore:
       - dependency-name: "python"
         update-types:

@@ -59,19 +59,6 @@ npm -w server exec prisma migrate dev --name <short-description>
   conversations, and design docs may be written in Korean or English — use
   whichever lets you communicate clearly with the other reviewer.
 
-## Partner-Maintained Directories — 0-Line Modification Policy
-
-The following directories are owned by **Karvy-Singh** (partner) and **must
-not be modified** in PRs raised against this repo:
-
-- `services/math-helper/app/**`
-- `services/data/ncert/**`
-- `scripts/ncert-pdf-extract/**`
-
-If you find a bug or want a change in these areas, open an issue against the
-upstream repo: [github.com/Karvy-Singh/mathema](https://github.com/Karvy-Singh/mathema).
-Changes that span both sides should be coordinated with Karvy first.
-
 ## Pull Request Checklist
 
 Before requesting review, please confirm:
@@ -89,7 +76,6 @@ Before requesting review, please confirm:
       but please double-check the diff.
 - [ ] Commits follow Conventional Commits (see above).
 - [ ] All identifiers and comments are in English.
-- [ ] The Karvy 0-line policy is respected.
 
 ### Schema Changes
 

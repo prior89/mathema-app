@@ -1,7 +1,7 @@
 /* Source-agnostic normalized types — every adapter (PDF/HTTP/JSON/CSV) emits the same shape. */
 import type { ContentIngestStatus, ErrorCode, NcertClass } from '@prisma/client';
 
-/// Distractor as ingested from external sources (Karvy NCERT format).
+/// Distractor as ingested from external sources (rich NCERT JSON format).
 /// Maps to ProblemChoice + LLMAnalysisLog reasoning when published.
 export type NormalizedDistractor = {
   answer: string;
@@ -11,7 +11,7 @@ export type NormalizedDistractor = {
 
 /// Single problem unit produced by an adapter — consumed as input to the LLM draft step.
 /// Minimal viable shape: { text }. All other fields are best-effort enrichment.
-/// Karvy NCERT JSON-format adapters can populate the rich fields; bare PDF text extraction
+/// Rich NCERT JSON adapters can populate the optional fields; bare PDF text extraction
 /// will fill only the basics and let LlmDraftService synthesize the rest.
 export type NormalizedProblem = {
   /// Stable external identifier (e.g. "NCERT-C7-CH01-EX1.1-Q1"). Use for dedup + provenance.
@@ -20,11 +20,11 @@ export type NormalizedProblem = {
   ncertClass?: NcertClass;
   /// NCERT chapter number (the LLM infers it when missing).
   chapterNumber?: number;
-  /// Karvy curriculum chapter code (e.g. "C7-CH01-INTEGERS"). Links to taxonomy.
+  /// Curriculum chapter code (e.g. "C7-CH01-INTEGERS"). Links to taxonomy.
   chapterCode?: string;
   /// Best-guess English chapter title (used to enrich LLM input).
   chapterTitleHint?: string;
-  /// Karvy curriculum topic code (e.g. "C7-CH01-T01").
+  /// Curriculum topic code (e.g. "C7-CH01-T01").
   topicCode?: string;
   /// Source identifier such as "EX5.1".
   exerciseId?: string;
@@ -52,7 +52,7 @@ export type NormalizedProblem = {
   hints?: string[];
   /// Misconception error codes attached to this problem.
   commonErrorCodes?: ErrorCode[];
-  /// Pre-curated distractors with errorCode mapping (Karvy format).
+  /// Pre-curated distractors with errorCode mapping (rich ingest format).
   /// When present, LlmDraftService preserves these instead of inventing new ones.
   distractors?: NormalizedDistractor[];
   /// Final answer of the solution (canonical).

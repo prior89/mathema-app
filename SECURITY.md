@@ -63,12 +63,8 @@ same in return.
 - `infra/` — Azure infrastructure-as-code, deployment scripts, CI workflows.
 - Configuration files in the repo root (`.github/workflows/`, `docker-compose.yml`, etc.).
 
-**Out of scope (report upstream):**
+**Out of scope:**
 
-- `services/math-helper/` and `services/data/ncert/` are partner-maintained
-  by **Karvy-Singh** under a 0-line modification policy in this repo. Please
-  report issues in those directories to the upstream project:
-  [github.com/Karvy-Singh/mathema](https://github.com/Karvy-Singh/mathema).
 - Third-party services we integrate with (OpenAI, Azure, Google Play
   Billing, etc.) — please report directly to the relevant vendor.
 - Social-engineering, physical security, and denial-of-service tests against

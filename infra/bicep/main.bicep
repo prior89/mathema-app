@@ -524,13 +524,11 @@ resource kvSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' 
 
 // ---------- Math-helper Container App (Python FastAPI · internal) ----------
 //
-// Karvy 의 LangGraph 서비스. /math-helper/solve, /assessments/* 호출 시
-// NestJS backend 가 internal FQDN 으로 HTTP 호출.
+// Python math-helper (LangGraph AI Solver). NestJS calls /solve over internal FQDN.
 //
-// - ingress.external: false  → 인터넷 노출 X, 같은 ACA Environment 안에서만 도달.
-// - minReplicas: 0          → idle 시 scale-to-zero (cold start ~3s).
-// - OPENAI_API_KEY          → backend 와 동일한 KV secret 재사용 (Karvy llm.py 가
-//                              langchain-openai.ChatOpenAI 로 호출).
+// - ingress.external: false  → no public internet; reachable inside ACA Environment only.
+// - minReplicas: 0          → scale-to-zero when idle (cold start ~3s).
+// - OPENAI_API_KEY          → same KV secret as backend (langchain-openai in llm.py).
 resource mathHelperApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: mathHelperAppName
   location: location

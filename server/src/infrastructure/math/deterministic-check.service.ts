@@ -137,7 +137,7 @@ export class DeterministicCheckService {
 
   private addImplicitMultiplication(expr: string): string {
     let e = this.cleanQuestion(expr);
-    // Karvy uses ^ -> ** (Python). Our parser handles ^ directly, keep it.
+    // Python math-helper uses ^ -> **; our parser handles ^ directly, keep it.
     // Insert * between number and identifier/paren, identifier/paren and identifier/paren.
     e = e.replace(/(\d)([a-zA-Z(])/g, '$1*$2');
     e = e.replace(/([a-zA-Z)])(\d)/g, '$1*$2');
