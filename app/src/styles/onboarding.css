@@ -307,7 +307,7 @@
 .mathema-app .choice {
   display: flex; align-items: center; gap: 12px; padding: 14px;
   border-radius: 14px; border: 1.5px solid var(--p-border); background: var(--p-surface);
-  cursor: pointer; transition: all .12s ease;
+  cursor: pointer; transition: all .12s ease; min-width: 0; touch-action: pan-y;
 }
 .mathema-app .choice:hover { border-color: var(--p-border-strong); }
 .mathema-app .choice .letter {
@@ -315,7 +315,7 @@
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--p-ink-2); flex-shrink: 0;
 }
-.mathema-app .choice .text { font-size: 15px; font-family: var(--font-mono); color: var(--p-ink); }
+.mathema-app .choice .text { flex: 1; min-width: 0; font-size: 15px; font-family: var(--font-mono); color: var(--p-ink); overflow-wrap: anywhere; }
 .mathema-app .choice.selected { border-color: var(--p-primary); background: var(--p-primary-tint); }
 .mathema-app .choice.selected .letter { background: var(--p-primary); border-color: var(--p-primary); color: var(--p-primary-fg); }
 .mathema-app .choice.correct { border-color: var(--p-success); background: var(--p-success-tint); }

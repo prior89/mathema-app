@@ -33,6 +33,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(BillingPlugin.class);
+        registerPlugin(GoogleAuthPlugin.class);
         super.onCreate(savedInstanceState);
         appUpdateManager = AppUpdateManagerFactory.create(this);
         checkForImmediateUpdate();

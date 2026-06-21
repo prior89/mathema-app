@@ -80,6 +80,7 @@ jobs:
           MATHEO_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           MATHEO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           MATHEO_KEY_ALIAS: matheo
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           # build.gradle reads this and falls back to 1 locally. Play Console
           # refuses duplicate codes, so every signed AAB needs its own.
           ANDROID_VERSION_CODE: ${{ github.run_number }}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ensureGoogleIdentity, triggerGoogleSignIn } from '../lib/google-identity';
 import { isGoogleSignInConfigured } from '../lib/google-client-id';
+import { GoogleAuth, isNativeGoogleAuthPlatform } from '../native/google-auth-bridge';
 
 type UseGoogleSignInOpts = {
   onCredential: (idToken: string) => void | Promise<void>;
@@ -15,7 +16,8 @@ export function useGoogleSignIn({ onCredential, enabled = true }: UseGoogleSignI
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
-  const configured = isGoogleSignInConfigured();
+  const nativePlatform = isNativeGoogleAuthPlatform();
+  const configured = nativePlatform || isGoogleSignInConfigured();
 
   useEffect(() => {
     if (!enabled || !configured) {
@@ -23,6 +25,22 @@ export function useGoogleSignIn({ onCredential, enabled = true }: UseGoogleSignI
       return;
     }
     let cancelled = false;
+    if (nativePlatform) {
+      GoogleAuth.isAvailable()
+        .then(({ available }) => {
+          if (!cancelled) {
+            setReady(available);
+            setLoadError(!available);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setReady(false);
+            setLoadError(true);
+          }
+        });
+      return () => { cancelled = true; };
+    }
     ensureGoogleIdentity((token) => callbackRef.current(token))
       .then((ok) => {
         if (!cancelled) {
@@ -37,12 +55,21 @@ export function useGoogleSignIn({ onCredential, enabled = true }: UseGoogleSignI
         }
       });
     return () => { cancelled = true; };
-  }, [enabled, configured]);
+  }, [enabled, configured, nativePlatform]);
 
-  const signIn = useCallback(() => {
+  const signIn = useCallback(async () => {
     if (!ready) return;
+    if (nativePlatform) {
+      try {
+        const { idToken } = await GoogleAuth.signIn();
+        if (idToken) await callbackRef.current(idToken);
+      } catch (error) {
+        console.warn('Google sign-in was not completed', error);
+      }
+      return;
+    }
     triggerGoogleSignIn();
-  }, [ready]);
+  }, [nativePlatform, ready]);
 
   return {
     configured,

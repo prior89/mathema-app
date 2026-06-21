@@ -282,7 +282,18 @@ export function SoloProblemScreen() {
 
       {/* MC walk-through — branches on step count per user-spec 2026-05-23. */}
       {problem.data && step && !done && (
-        <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0 }}>
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            touchAction: 'pan-y',
+            padding: '14px 22px 132px',
+            minHeight: 0,
+          }}
+        >
           <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
             <div className="eyebrow" style={{ fontSize: 10 }}>{t('solo.problemEyebrow')}</div>
             <div className="math-big" style={{ fontSize: 16, marginTop: 6, whiteSpace: 'pre-wrap' }}>
@@ -453,7 +464,21 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
   }
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div
+      style={{
+        flex: 1,
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
+        touchAction: 'pan-y',
+        padding: '14px 22px 132px',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
       {/* PROBLEM card */}
       <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
         <div className="eyebrow" style={{ fontSize: 10 }}>{t('solo.problemEyebrow')}</div>

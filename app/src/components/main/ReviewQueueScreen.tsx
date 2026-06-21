@@ -251,7 +251,21 @@ function ActiveProblem({
   return (
     <>
       {/* Scrollable middle — problem body + canvas + feedback */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '14px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          touchAction: 'pan-y',
+          padding: '14px 22px 132px',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+        }}
+      >
         <div className="card" style={{ padding: 14, background: 'var(--p-surface-2)', borderColor: 'transparent' }}>
           {/* Attribution (note.source) intentionally not rendered. */}
           <div className="math-big" style={{ fontSize: 16, whiteSpace: 'pre-wrap' }}>
@@ -266,7 +280,7 @@ function ActiveProblem({
 
         <div>
           <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('review.workingsEyebrow')}</div>
-          <HandwritingCanvas ref={canvasRef} height={300} extendable />
+          <HandwritingCanvas ref={canvasRef} height={240} extendable />
           <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
             <button
               type="button"
@@ -292,14 +306,23 @@ function ActiveProblem({
          *  — mirrors the Study / Solo screens. (Was previously a sibling of the
          *  scroll area, which squeezed the canvas and split the gesture.) */}
         {!showSm2 && shuffledChoices.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, touchAction: 'pan-y' }}>
             {shuffledChoices.map((c, i) => {
               const isPicked = pickedId === c.id;
               const isCorrectReveal = feedback?.kind === 'correct' && isPicked;
               const isWrongPick = feedback?.kind === 'wrong' && isPicked;
               const cls = isCorrectReveal ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
               return (
-                <div key={c.id} className={cls} onClick={() => onPick(c.id)}>
+                <div
+                  key={c.id}
+                  className={cls}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onPick(c.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') onPick(c.id);
+                  }}
+                >
                   <div className="letter">{CHOICE_LETTERS[i] ?? c.choiceIndex}</div>
                   <span className="text"><MathText text={c.text} /></span>
                 </div>

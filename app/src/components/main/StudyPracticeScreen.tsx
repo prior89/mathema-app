@@ -306,7 +306,21 @@ export function StudyPracticeScreen() {
       </div>
 
       {/* Scrollable middle (canvas + choices + feedback) */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '12px 22px 8px', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          touchAction: 'pan-y',
+          padding: '12px 22px 132px',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+        }}
+      >
         <div>
           <div className="eyebrow" style={{ fontSize: 10, marginBottom: 6 }}>{t('practice.workingsEyebrow')}</div>
           <HandwritingCanvas ref={canvasRef} height={300} extendable />
