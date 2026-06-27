@@ -112,16 +112,16 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     );
   }
 
-  // Inverted email gate: instead of enumerating every learning route that may
-  // run before email verification, we now gate ONLY the small set of
-  // payment / entitlement-granting mutations. Everything else (learning,
-  // diagnostic, profile, analytics) is reachable immediately after signup.
-  // POST /billing/verify records a purchase and POST /billing/preview/start
-  // grants a preview entitlement — both need a verified, reachable contact.
-  private requiresVerifiedEmail(req: any): boolean {
-    const method = String(req.method ?? '').toUpperCase();
-    const path = String(req.path ?? req.originalUrl?.split('?')[0] ?? '');
-    const normalized = path.replace(/^\/api\/v1/, '');
-    return method === 'POST' && normalized.startsWith('/billing/');
+  // Email verification is a fully SOFT gate — no learning, diagnostic, or
+  // billing endpoint hard-blocks on it. Notably billing is NOT gated:
+  //   - POST /billing/preview/start grants the FREE cardless preview; gating it
+  //     would wall the "experience value first" funnel.
+  //   - POST /billing/verify records an already-completed Play purchase; gating
+  //     it would leave a paying user paid-but-not-entitled (refund/CS hazard).
+  // Social/phone login already supplies a verified identity, and a Kakao user
+  // may have no email at all. If a genuinely email-dependent action is added
+  // later (e.g. changing the account email), gate that specific route here.
+  private requiresVerifiedEmail(_req: any): boolean {
+    return false;
   }
 }

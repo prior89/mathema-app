@@ -68,9 +68,30 @@ function validateProductionSecrets(logger: Logger) {
   }
 }
 
+// production 빌드에서 mock identity providers 사용 금지 — 안전핀.
+// PASS mock 은 보호자 동의를, social mock 은 검증된 신원을 자동승인하므로
+// prod 에서 켜지면 미성년 동의·소셜 로그인이 전부 무력화된다. 부팅을 막는다.
+function validateProductionMockGuards(logger: Logger) {
+  if (process.env.NODE_ENV !== 'production') return;
+  const issues: string[] = [];
+  if (process.env.GUARDIAN_PASS_PROVIDER === 'mock') {
+    issues.push('GUARDIAN_PASS_PROVIDER=mock (auto-approves guardian consent)');
+  }
+  if (process.env.SOCIAL_AUTH_MOCK === 'true') {
+    issues.push('SOCIAL_AUTH_MOCK=true (auto-approves Kakao/Naver identities)');
+  }
+  if (issues.length > 0) {
+    logger.error('FATAL: mock identity provider enabled in production:');
+    issues.forEach((i) => logger.error(`  - ${i}`));
+    logger.error('Configure a real provider (NICE/PortOne/Kakao/Naver) or unset these flags.');
+    process.exit(1);
+  }
+}
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   validateProductionSecrets(logger);
+  validateProductionMockGuards(logger);
 
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const config = app.get(ConfigService);
