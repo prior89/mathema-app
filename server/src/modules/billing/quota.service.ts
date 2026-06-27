@@ -24,6 +24,9 @@ export class QuotaService {
   private redisKey(userId: string, day: string): string {
     return `quota:solver:${userId}:${day}`;
   }
+  private ocrRedisKey(userId: string, day: string): string {
+    return `quota:ocr:${userId}:${day}`;
+  }
   private nextMidnightUtc(d: Date = new Date()): Date {
     const t = new Date(d);
     t.setUTCHours(24, 0, 0, 0);
@@ -43,12 +46,35 @@ export class QuotaService {
     return v ? parseInt(v, 10) : 0;
   }
 
+  /** Separate, looser daily counter for the OCR-only endpoint. Same INCR+TTL
+   * pattern as the solver counter but a distinct key namespace so OCR never
+   * consumes a solve credit. */
+  async incrementOcr(userId: string): Promise<number> {
+    const key = this.ocrRedisKey(userId, this.dayKey());
+    return this.redis.incrWithTtl(key, 60 * 60 * 25);
+  }
+
+  async getOcrUsed(userId: string): Promise<number> {
+    const v = await this.redis.get(this.ocrRedisKey(userId, this.dayKey()));
+    return v ? parseInt(v, 10) : 0;
+  }
+
   async getSolverGraceState(userId: string): Promise<SolverGraceState> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { createdAt: true },
+      select: { createdAt: true, isGuest: true },
     });
     if (!user) {
+      return {
+        inGrace: false,
+        graceEndsAt: new Date(0),
+        limit: FREE_TIER_SOLVER_LIMIT,
+      };
+    }
+    // Guests don't get the elevated first-week grace limit: a guest account is
+    // resettable by clearing app data, so granting 16/day to guests would let
+    // reinstall farming double the free quota. Flat 8/day caps that vector.
+    if (user.isGuest) {
       return {
         inGrace: false,
         graceEndsAt: new Date(0),
