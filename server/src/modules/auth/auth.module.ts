@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { SecurityEventService } from './security-event.service';
 import { AuthDeviceService } from './auth-device.service';
+import { SocialProviderService } from './social-provider.service';
 import { MfaService } from './mfa.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
@@ -37,7 +38,7 @@ import { GuardianConsentModule } from '../guardian-consent/guardian-consent.modu
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, SecurityEventService, AuthDeviceService, MfaService, JwtStrategy, RefreshStrategy],
+  providers: [AuthService, SecurityEventService, AuthDeviceService, MfaService, JwtStrategy, RefreshStrategy, SocialProviderService],
   exports: [AuthService, SecurityEventService, AuthDeviceService, MfaService],
 })
 export class AuthModule {}

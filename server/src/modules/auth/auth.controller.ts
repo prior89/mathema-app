@@ -8,6 +8,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { GuestStartDto, GuestUpgradeDto } from './dto/guest.dto';
+import { SocialSignInDto } from './dto/social-sign-in.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -110,6 +111,27 @@ export class AuthController {
     const ua = (req?.headers?.['user-agent'] ?? null) as string | null;
     return this.service.signInWithGoogle(dto.idToken, {
       ip: ip ?? undefined, ua: ua ?? undefined,
+      deviceHash: deviceHash || undefined,
+    });
+  }
+
+  // KR social rails. The client obtains a Kakao/Naver access token via their
+  // SDK and posts it here; the backend verifies it provider-side and
+  // find-or-creates the user. New social users default to country KR.
+  @Throttle({ auth: { ttl: 60_000, limit: 10 } })
+  @Public() @Post('kakao')
+  kakao(@Body() dto: SocialSignInDto, @Req() req: any, @Headers('x-device-hash') deviceHash?: string) {
+    return this.service.signInWithSocial('kakao', dto.accessToken, {
+      ip: req?.ip ?? undefined, ua: req?.headers?.['user-agent'] ?? undefined,
+      deviceHash: deviceHash || undefined,
+    });
+  }
+
+  @Throttle({ auth: { ttl: 60_000, limit: 10 } })
+  @Public() @Post('naver')
+  naver(@Body() dto: SocialSignInDto, @Req() req: any, @Headers('x-device-hash') deviceHash?: string) {
+    return this.service.signInWithSocial('naver', dto.accessToken, {
+      ip: req?.ip ?? undefined, ua: req?.headers?.['user-agent'] ?? undefined,
       deviceHash: deviceHash || undefined,
     });
   }

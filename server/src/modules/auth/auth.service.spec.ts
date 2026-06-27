@@ -92,7 +92,7 @@ function build(over: Partial<{
   users: AnyMock; jwt: AnyMock; config: AnyMock; prisma: any;
   redis: AnyMock; mail: AnyMock; privacy: AnyMock;
   events: AnyMock; devices: AnyMock; parentLinks: AnyMock;
-  guardianConsent: AnyMock;
+  guardianConsent: AnyMock; social: AnyMock;
 }> = {}) {
   const users   = over.users   ?? mockUsers();
   const jwt     = over.jwt     ?? mockJwt();
@@ -112,13 +112,19 @@ function build(over: Partial<{
   const parentLinks = over.parentLinks ?? mockParentLinks();
   const guardianConsent = over.guardianConsent ?? mockGuardianConsent();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const social = over.social ?? {
+    isMock: jest.fn().mockReturnValue(true),
+    verify: jest.fn().mockResolvedValue({
+      provider: 'kakao', providerUserId: 'kk1', email: 'kakao_kk1@mock.local', emailVerified: true, name: '카카오 사용자',
+    }),
+  };
   const svc = new AuthService(
     users as any, jwt as any, config as any, prisma,
     redis as any, mail as any, privacy as any,
     events as any, devices as any, parentLinks as any,
-    guardianConsent as any,
+    guardianConsent as any, social as any,
   );
-  return { svc, users, jwt, config, prisma, redis, mail, privacy, events, devices, parentLinks, guardianConsent };
+  return { svc, users, jwt, config, prisma, redis, mail, privacy, events, devices, parentLinks, guardianConsent, social };
 }
 
 describe('AuthService', () => {

@@ -24,6 +24,7 @@ import { ParentLinksService } from '../parent-links/parent-links.service';
 import { GuardianConsentService } from '../guardian-consent/guardian-consent.service';
 import { UserRole } from '@prisma/client';
 import { COUNTRY_CONFIG, CountryCode } from '../../common/enums/country.enum';
+import { SocialProvider, SocialProviderService, SocialIdentity } from './social-provider.service';
 
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
@@ -48,6 +49,7 @@ export class AuthService {
     @Inject(forwardRef(() => ParentLinksService))
     private readonly parentLinks: ParentLinksService,
     private readonly guardianConsent: GuardianConsentService,
+    private readonly social: SocialProviderService,
   ) {
     const cid = this.config.get<string>('GOOGLE_CLIENT_ID');
     if (cid && cid !== 'api입력칸') this.googleClient = new OAuth2Client(cid);
@@ -383,6 +385,53 @@ export class AuthService {
       userId: verifiedUser.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
     });
     return this.issueTokens(verifiedUser.id, ctx.deviceHash);
+  }
+
+  /**
+   * Kakao / Naver sign-in — the default KR social rails. Verifies the
+   * provider access token (SocialProviderService), then find-or-creates the
+   * user on the same model as Google. New social accounts default to country
+   * KR (these are KR-market rails) with gradeLevel null so ProtectedRoute
+   * routes them through onboarding.
+   */
+  async signInWithSocial(
+    provider: SocialProvider,
+    accessToken: string,
+    ctx: { ip?: string; ua?: string; deviceHash?: string } = {},
+  ) {
+    const identity = await this.social.verify(provider, accessToken);
+    const user = await this.findOrCreateSocialUser(identity);
+    await this.bindAndDisplace({
+      userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
+    });
+    return this.issueTokens(user.id, ctx.deviceHash);
+  }
+
+  private async findOrCreateSocialUser(identity: SocialIdentity) {
+    const email = identity.email.toLowerCase();
+    let user = await this.users.findByEmail(email);
+    if (!user) {
+      const placeholderExam = new Date();
+      placeholderExam.setFullYear(placeholderExam.getFullYear() + 1);
+      user = await this.users.create({
+        email,
+        passwordHash: await bcrypt.hash(`${identity.provider}:${identity.providerUserId}:${Date.now()}`, BCRYPT_COST),
+        name: identity.name,
+        examDate: placeholderExam,
+        targetGrade: 1,
+        country: 'KR' as any,
+        // null (not the prisma CLASS_12 default) so ProtectedRoute routes the
+        // new social user through onboarding to pick their class.
+        gradeLevel: null,
+        emailVerifiedAt: identity.emailVerified ? new Date() : null,
+      });
+    } else if (identity.emailVerified && !(user as any).emailVerifiedAt) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date() },
+      }) as any;
+    }
+    return user!;
   }
 
   // ---------- Guest (try-first) ----------
