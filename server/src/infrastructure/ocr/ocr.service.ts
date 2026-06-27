@@ -240,6 +240,11 @@ export class OcrService {
     let lastFailure: Extract<OpenAiOcrCallResult, { ok: false }> | null = null;
     const body: Record<string, unknown> = {
       model,
+      // Student photo bytes flow through here. store:false opts the request out
+      // of OpenAI-side retention for dashboards/distillation, matching the
+      // privacy-policy / Data Safety "inputs are not retained or used to train"
+      // disclosure for minor data.
+      store: false,
       messages: [
         { role: 'system', content: systemPrompt },
         {

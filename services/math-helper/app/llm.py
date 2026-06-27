@@ -23,6 +23,10 @@ def _chat(model: str, max_completion_tokens: int) -> ChatOpenAI:
     kwargs = {
         "model": model,
         "max_completion_tokens": max_completion_tokens,
+        # Student problem text + answers flow through here. store=False opts the
+        # request out of OpenAI-side retention, matching the no-retention
+        # disclosure for minor data.
+        "model_kwargs": {"store": False},
     }
     if not model.lower().startswith("gpt-5"):
         kwargs["temperature"] = 0
@@ -56,7 +60,7 @@ def _is_provider_failure(exc: BaseException, seen: set[int] | None = None) -> bo
 # - gpt-5.4-mini is the default because it is strong enough for multi-step math
 #   at launch economics.
 # - gpt-5.5 is reserved for provider failure fallback; it is higher quality but
-#   much too expensive to run on every 9,900 KRW subscription solve.
+#   much too expensive to run on every 14,900 KRW subscription solve.
 # - OCR happens in NestJS OcrService: Mathpix first, OpenAI vision only for
 #   graph/diagram repair or fallback.
 _primary = _chat(

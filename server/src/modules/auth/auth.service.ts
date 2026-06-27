@@ -23,6 +23,7 @@ import { AuthDeviceService } from './auth-device.service';
 import { ParentLinksService } from '../parent-links/parent-links.service';
 import { GuardianConsentService } from '../guardian-consent/guardian-consent.service';
 import { UserRole } from '@prisma/client';
+import { COUNTRY_CONFIG, CountryCode } from '../../common/enums/country.enum';
 
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
@@ -59,6 +60,18 @@ export class AuthService {
     if (exists) throw new UnauthorizedException('email already used');
 
     const role = dto.role ?? 'STUDENT';
+
+    // ── Market gate: the DTO whitelists every compiled CountryCode, but only
+    // 'live'/'beta' markets have curriculum + locale wired. Reject 'planned'
+    // countries (US/UK/AU/SG/ID) server-side so a crafted register payload
+    // can't create a user who lands on an empty/English-fallback experience —
+    // the onboarding chip UI already hides these, this closes the API path. ──
+    const resolvedCountry = (dto.country ?? 'IN') as CountryCode;
+    if (COUNTRY_CONFIG[resolvedCountry]?.status === 'planned') {
+      throw new BadRequestException(
+        `Sign-up for ${COUNTRY_CONFIG[resolvedCountry].name} is not available yet`,
+      );
+    }
 
     // ── PARENT: 자녀 이메일로 초대 요청 (즉시 연결 금지 — 학생 승인 필요) ──
     let pendingChildUserId: string | null = null;

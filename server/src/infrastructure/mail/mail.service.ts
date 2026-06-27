@@ -56,14 +56,18 @@ export class MailService {
   private async deliver(kind: string, to: string, subject: string, text: string, html: string): Promise<void> {
     const transporter = this.smtpTransporter();
     if (!transporter) {
-      this.logger.warn(`[MAIL stub] ${kind} -> ${to}`);
-      this.logger.warn(`           ${text.replace(/\s+/g, ' ').trim()}`);
+      // Guard BEFORE logging: the stub WARN below echoes the recipient and the
+      // full message body (reset / verify / guardian-consent tokens). In prod a
+      // misconfigured SMTP must fail closed without writing that PII + live
+      // tokens to App Insights.
       if (this.isProduction()) {
         throw new ServiceUnavailableException({
           code: 'mail_not_configured',
           message: 'Email delivery is not configured. Please contact support.',
         });
       }
+      this.logger.warn(`[MAIL stub] ${kind} -> ${to}`);
+      this.logger.warn(`           ${text.replace(/\s+/g, ' ').trim()}`);
       return;
     }
 

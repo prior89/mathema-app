@@ -137,10 +137,16 @@ async function bootstrap() {
   const { JwtService } = await import('@nestjs/jwt');
   const jwtSvc = app.get(JwtService);
   const prisma = app.get(PrismaService);
+  // Fail closed: no hardcoded fallback. A missing/empty ADMIN_EMAILS grants
+  // nobody Bull Board access rather than silently admitting baked-in personal
+  // emails. ADMIN_EMAILS must be set explicitly in each environment.
   const adminEmails = new Set(
-    (config.get<string>('ADMIN_EMAILS') ?? 'VeraStudy01@gmail.com,polopot123@gmail.com')
+    (config.get<string>('ADMIN_EMAILS') ?? '')
       .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   );
+  if (adminEmails.size === 0) {
+    logger.warn('ADMIN_EMAILS is empty — Bull Board admin UI is locked to all users.');
+  }
   // Bull Board mutates queues (retry/promote/delete buttons all POST through
   // the same router). The global Nest ThrottlerGuard does not cover this
   // express-mounted middleware, so add a small in-memory token-bucket here:
