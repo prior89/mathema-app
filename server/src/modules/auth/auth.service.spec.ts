@@ -349,6 +349,56 @@ describe('AuthService', () => {
     });
   });
 
+  describe('phone OTP', () => {
+    it('stores phone OTP state and synthetic email without exposing the raw phone', async () => {
+      const rawPhone = '+91 98123 45678';
+      const rawDigits = '919812345678';
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue(null);
+      users.create.mockResolvedValue({
+        id: 'phone-user',
+        email: 'phone_hash@users.matheo.local',
+        emailVerifiedAt: new Date(),
+      });
+      const jwt = mockJwt();
+      jwt.sign.mockImplementation((p) => `t-${(p as any).sub}`);
+      const redis = mockRedis();
+      const otp = {
+        isMock: jest.fn().mockReturnValue(true),
+        send: jest.fn(async (_phone: string, code: string) => ({ channel: 'mock', devCode: code })),
+        verifyTruecaller: jest.fn(),
+      };
+      const { svc } = build({
+        users,
+        jwt,
+        redis,
+        otp,
+        config: mockConfig({
+          'jwt.accessSecret': 'a'.repeat(48),
+          'jwt.refreshSecret': 'b'.repeat(48),
+          'jwt.accessTtl': '15m',
+          'jwt.refreshTtl': '30d',
+          PHONE_ID_HASH_SECRET: 'phone-hash-secret',
+        }),
+      });
+
+      const started = await svc.startPhoneOtp(rawPhone);
+      const otpSet = redis.set.mock.calls.find(([key]) => String(key).startsWith('otp:phone:'));
+      expect(otpSet).toBeTruthy();
+      expect(String(otpSet![0])).not.toContain(rawDigits);
+      expect(redis.incrWithTtl.mock.calls[0][0]).not.toContain(rawDigits);
+
+      redis.get.mockResolvedValueOnce(otpSet![1]);
+      await expect(svc.verifyPhoneOtp(rawPhone, started.devCode!, { deviceHash: 'dh' }))
+        .resolves.toEqual({ accessToken: 't-phone-user', refreshToken: 't-phone-user' });
+
+      const created = users.create.mock.calls[0][0];
+      expect(created.email).toMatch(/^phone_[0-9a-f]{32}@users\.matheo\.local$/);
+      expect(created.email).not.toContain(rawDigits);
+      expect(created.passwordHash).not.toContain(rawDigits);
+    });
+  });
+
   // ─────── refresh ───────
   describe('refresh', () => {
     it('rejects invalid signature', async () => {

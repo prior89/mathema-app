@@ -39,7 +39,7 @@ export class OtpProviderService {
   /** Deliver a one-time code to the phone. Returns the channel used. */
   async send(phone: string, code: string): Promise<OtpSendResult> {
     if (this.isMock()) {
-      this.logger.warn(`[OTP mock] ${phone} -> ${code}`);
+      this.logger.warn('[OTP mock] issued a dev code');
       return { channel: 'mock', devCode: code };
     }
     const apiKey = this.config.get<string>('MSG91_AUTH_KEY');

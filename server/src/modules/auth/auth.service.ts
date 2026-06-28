@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, BadRequestException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { randomBytes, createHash, randomUUID } from 'crypto';
+import { randomBytes, createHash, createHmac, randomUUID, randomInt, timingSafeEqual } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { UsersService } from '../users/users.service';
@@ -26,7 +26,6 @@ import { UserRole } from '@prisma/client';
 import { COUNTRY_CONFIG, CountryCode } from '../../common/enums/country.enum';
 import { SocialProvider, SocialProviderService, SocialIdentity } from './social-provider.service';
 import { OtpProviderService } from './otp-provider.service';
-import { randomInt } from 'crypto';
 
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
@@ -447,8 +446,34 @@ export class AuthService {
     return `+${digits}`;
   }
 
-  private otpKey(phone: string): string { return `otp:phone:${phone}`; }
-  private otpSendKey(phone: string): string { return `otp:send:${phone}`; }
+  private phoneHashSecret(): string {
+    return this.config.get<string>('PHONE_ID_HASH_SECRET')
+      ?? this.config.get<string>('jwt.refreshSecret')
+      ?? process.env.JWT_REFRESH_SECRET
+      ?? 'dev-phone-id-secret';
+  }
+
+  private phoneFingerprint(phone: string): string {
+    return createHmac('sha256', this.phoneHashSecret())
+      .update(`phone:${phone}`)
+      .digest('hex')
+      .slice(0, 32);
+  }
+
+  private otpCodeHash(phone: string, code: string): string {
+    return createHmac('sha256', this.phoneHashSecret())
+      .update(`otp:${phone}:${code}`)
+      .digest('hex');
+  }
+
+  private hashEquals(a: string, b: string): boolean {
+    const left = Buffer.from(a, 'hex');
+    const right = Buffer.from(b, 'hex');
+    return left.length === right.length && timingSafeEqual(left, right);
+  }
+
+  private otpKey(phone: string): string { return `otp:phone:${this.phoneFingerprint(phone)}`; }
+  private otpSendKey(phone: string): string { return `otp:send:${this.phoneFingerprint(phone)}`; }
 
   /**
    * Send a one-time code to a phone (India default rail). Rate-limited to a few
@@ -465,7 +490,7 @@ export class AuthService {
       throw new BadRequestException({ code: 'otp_rate_limited', message: 'Too many code requests. Try again later.' });
     }
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
-    const codeHash = createHash('sha256').update(`${normalized}:${code}`).digest('hex');
+    const codeHash = this.otpCodeHash(normalized, code);
     await this.redis.set(this.otpKey(normalized), JSON.stringify({ codeHash, attempts: 0 }), 300);
     const result = await this.otp.send(normalized, code);
     return { sent: true, channel: result.channel, expiresInSec: 300, ...(result.devCode ? { devCode: result.devCode } : {}) };
@@ -481,8 +506,8 @@ export class AuthService {
       await this.redis.del(this.otpKey(normalized));
       throw new UnauthorizedException('too many attempts — request a new code');
     }
-    const codeHash = createHash('sha256').update(`${normalized}:${code}`).digest('hex');
-    if (codeHash !== state.codeHash) {
+    const codeHash = this.otpCodeHash(normalized, code);
+    if (!this.hashEquals(codeHash, state.codeHash)) {
       await this.redis.set(this.otpKey(normalized), JSON.stringify({ ...state, attempts: state.attempts + 1 }), 300);
       throw new UnauthorizedException('invalid code');
     }
@@ -501,16 +526,16 @@ export class AuthService {
   }
 
   private async findOrCreatePhoneUser(phone: string, name?: string) {
-    // No phone column on User — use a stable synthetic email as the identifier,
-    // mirroring the social rails. India is the phone-OTP market, so default IN.
-    const email = `phone_${phone.replace(/[^0-9]/g, '')}@users.matheo.local`;
+    // No phone column on User. Use a stable, non-reversible synthetic email as
+    // the identifier so /users/me and exports do not expose the raw phone.
+    const email = `phone_${this.phoneFingerprint(phone)}@users.matheo.local`;
     let user = await this.users.findByEmail(email);
     if (!user) {
       const placeholderExam = new Date();
       placeholderExam.setFullYear(placeholderExam.getFullYear() + 1);
       user = await this.users.create({
         email,
-        passwordHash: await bcrypt.hash(`phone:${phone}:${Date.now()}`, BCRYPT_COST),
+        passwordHash: await bcrypt.hash(randomBytes(32).toString('hex'), BCRYPT_COST),
         name: name ?? 'Student',
         examDate: placeholderExam,
         targetGrade: 1,
