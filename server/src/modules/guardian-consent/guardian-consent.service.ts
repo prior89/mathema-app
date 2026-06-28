@@ -269,7 +269,9 @@ export class GuardianConsentService {
     if (user.guardianConsentVerifiedAt) {
       return { alreadyVerified: true as const };
     }
-    const method = resolveConsentMethod(user.country) as GuardianConsentMethod;
+    const method = user.country === 'KR'
+      ? GuardianConsentMethod.KR_PASS
+      : resolveConsentMethod(user.country) as GuardianConsentMethod;
     if (method !== GuardianConsentMethod.KR_PASS) {
       throw new BadRequestException({
         code: 'not_pass_method',
