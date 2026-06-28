@@ -25,6 +25,8 @@ import { GuardianConsentService } from '../guardian-consent/guardian-consent.ser
 import { UserRole } from '@prisma/client';
 import { COUNTRY_CONFIG, CountryCode } from '../../common/enums/country.enum';
 import { SocialProvider, SocialProviderService, SocialIdentity } from './social-provider.service';
+import { OtpProviderService } from './otp-provider.service';
+import { randomInt } from 'crypto';
 
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
@@ -50,6 +52,7 @@ export class AuthService {
     private readonly parentLinks: ParentLinksService,
     private readonly guardianConsent: GuardianConsentService,
     private readonly social: SocialProviderService,
+    private readonly otp: OtpProviderService,
   ) {
     const cid = this.config.get<string>('GOOGLE_CLIENT_ID');
     if (cid && cid !== 'api입력칸') this.googleClient = new OAuth2Client(cid);
@@ -430,6 +433,93 @@ export class AuthService {
         where: { id: user.id },
         data: { emailVerifiedAt: new Date() },
       }) as any;
+    }
+    return user!;
+  }
+
+  // ---------- India phone-OTP rail ----------
+
+  /** Digits-only, +country-prefixed key. Bare 10-digit numbers default to +91. */
+  private normalizePhone(raw: string): string {
+    const digits = raw.replace(/[^0-9]/g, '');
+    if (raw.trim().startsWith('+')) return `+${digits}`;
+    if (digits.length === 10) return `+91${digits}`;
+    return `+${digits}`;
+  }
+
+  private otpKey(phone: string): string { return `otp:phone:${phone}`; }
+  private otpSendKey(phone: string): string { return `otp:send:${phone}`; }
+
+  /**
+   * Send a one-time code to a phone (India default rail). Rate-limited to a few
+   * sends per phone per hour. The code is stored hashed in Redis with a short
+   * TTL; only the mock provider echoes it back (devCode).
+   */
+  async startPhoneOtp(phone: string, _ctx: { ip?: string; ua?: string } = {}) {
+    const normalized = this.normalizePhone(phone);
+    if (normalized.replace(/[^0-9]/g, '').length < 8) {
+      throw new BadRequestException('invalid phone number');
+    }
+    const sends = await this.redis.incrWithTtl(this.otpSendKey(normalized), 3600);
+    if (sends > 5) {
+      throw new BadRequestException({ code: 'otp_rate_limited', message: 'Too many code requests. Try again later.' });
+    }
+    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    const codeHash = createHash('sha256').update(`${normalized}:${code}`).digest('hex');
+    await this.redis.set(this.otpKey(normalized), JSON.stringify({ codeHash, attempts: 0 }), 300);
+    const result = await this.otp.send(normalized, code);
+    return { sent: true, channel: result.channel, expiresInSec: 300, ...(result.devCode ? { devCode: result.devCode } : {}) };
+  }
+
+  /** Verify a phone code and find-or-create the user (country IN). */
+  async verifyPhoneOtp(phone: string, code: string, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
+    const normalized = this.normalizePhone(phone);
+    const raw = await this.redis.get(this.otpKey(normalized));
+    if (!raw) throw new UnauthorizedException('code expired or not requested');
+    const state = JSON.parse(raw) as { codeHash: string; attempts: number };
+    if (state.attempts >= 5) {
+      await this.redis.del(this.otpKey(normalized));
+      throw new UnauthorizedException('too many attempts — request a new code');
+    }
+    const codeHash = createHash('sha256').update(`${normalized}:${code}`).digest('hex');
+    if (codeHash !== state.codeHash) {
+      await this.redis.set(this.otpKey(normalized), JSON.stringify({ ...state, attempts: state.attempts + 1 }), 300);
+      throw new UnauthorizedException('invalid code');
+    }
+    await this.redis.del(this.otpKey(normalized));
+    const user = await this.findOrCreatePhoneUser(normalized);
+    await this.bindAndDisplace({ userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua });
+    return this.issueTokens(user.id, ctx.deviceHash);
+  }
+
+  /** Truecaller one-tap — verify the SDK token, then find-or-create by phone. */
+  async signInWithTruecaller(token: string, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
+    const identity = await this.otp.verifyTruecaller(token);
+    const user = await this.findOrCreatePhoneUser(this.normalizePhone(identity.phone), identity.name);
+    await this.bindAndDisplace({ userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua });
+    return this.issueTokens(user.id, ctx.deviceHash);
+  }
+
+  private async findOrCreatePhoneUser(phone: string, name?: string) {
+    // No phone column on User — use a stable synthetic email as the identifier,
+    // mirroring the social rails. India is the phone-OTP market, so default IN.
+    const email = `phone_${phone.replace(/[^0-9]/g, '')}@users.matheo.local`;
+    let user = await this.users.findByEmail(email);
+    if (!user) {
+      const placeholderExam = new Date();
+      placeholderExam.setFullYear(placeholderExam.getFullYear() + 1);
+      user = await this.users.create({
+        email,
+        passwordHash: await bcrypt.hash(`phone:${phone}:${Date.now()}`, BCRYPT_COST),
+        name: name ?? 'Student',
+        examDate: placeholderExam,
+        targetGrade: 1,
+        country: 'IN' as any,
+        gradeLevel: null,
+        // The verified phone is the identity; stamp emailVerifiedAt so the
+        // (now soft) email gate never nags a phone-first user.
+        emailVerifiedAt: new Date(),
+      });
     }
     return user!;
   }

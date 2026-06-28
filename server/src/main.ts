@@ -80,6 +80,9 @@ function validateProductionMockGuards(logger: Logger) {
   if (process.env.SOCIAL_AUTH_MOCK === 'true') {
     issues.push('SOCIAL_AUTH_MOCK=true (auto-approves Kakao/Naver identities)');
   }
+  if (process.env.OTP_AUTH_MOCK === 'true') {
+    issues.push('OTP_AUTH_MOCK=true (echoes OTP codes / fakes Truecaller)');
+  }
   if (issues.length > 0) {
     logger.error('FATAL: mock identity provider enabled in production:');
     issues.forEach((i) => logger.error(`  - ${i}`));
