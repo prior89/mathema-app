@@ -26,7 +26,7 @@ def _chat(model: str, max_completion_tokens: int) -> ChatOpenAI:
         # Student problem text + answers flow through here. store=False opts the
         # request out of OpenAI-side retention, matching the no-retention
         # disclosure for minor data.
-        "model_kwargs": {"store": False},
+        "store": False,
     }
     if not model.lower().startswith("gpt-5"):
         kwargs["temperature"] = 0
