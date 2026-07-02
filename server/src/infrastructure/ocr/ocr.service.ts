@@ -18,6 +18,14 @@ type MathpixOcrCallResult =
   | { ok: true; json: any }
   | { ok: false; status: number; errorText: string };
 
+/**
+ * Upper bound on how long we honor a vendor Retry-After before giving up. A 429
+ * whose Retry-After exceeds this means the account is rate-limited for longer
+ * than a single request can wait out — retrying then only amplifies the storm,
+ * so we fail fast instead of hammering the provider three times.
+ */
+const RETRY_AFTER_CAP_MS = 8_000;
+
 const OCR_PROMPT =
   'Extract every piece of mathematical content from this image as clean ' +
   "LaTeX (or plain text where math notation isn't appropriate). " +
@@ -100,6 +108,7 @@ export class OcrService {
     let lastFailure: Extract<MathpixOcrCallResult, { ok: false }> | null = null;
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
+      let retryDelayMs = 500 * 2 ** attempt;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.mathpixTimeoutMs());
       try {
@@ -130,6 +139,12 @@ export class OcrService {
           errorText: await res.text().catch(() => ''),
         };
         if (!this.shouldRetryStatus(res.status)) return lastFailure;
+        // Honor the vendor's Retry-After (429/503). If it exceeds our cap the
+        // account is throttled longer than this request can wait — stop now
+        // instead of retrying into a rate-limit storm.
+        const retryAfterMs = this.parseRetryAfterMs(res.headers.get('retry-after'));
+        if (retryAfterMs !== null && retryAfterMs > RETRY_AFTER_CAP_MS) return lastFailure;
+        if (retryAfterMs !== null) retryDelayMs = Math.max(retryDelayMs, retryAfterMs);
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
           throw new GatewayTimeoutException(
@@ -141,7 +156,7 @@ export class OcrService {
         clearTimeout(timeout);
       }
 
-      await this.sleep(500 * 2 ** attempt);
+      await this.sleep(retryDelayMs);
     }
 
     return lastFailure ?? { ok: false, status: 503, errorText: 'Mathpix OCR request did not complete.' };
@@ -261,6 +276,7 @@ export class OcrService {
     }
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
+      let retryDelayMs = 500 * 2 ** attempt;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.timeoutMs());
       try {
@@ -282,6 +298,12 @@ export class OcrService {
           errorText: await res.text().catch(() => ''),
         };
         if (!this.shouldRetryStatus(res.status)) return lastFailure;
+        // Honor the vendor's Retry-After (429/503). If it exceeds our cap the
+        // account is throttled longer than this request can wait — stop now
+        // instead of retrying into a rate-limit storm.
+        const retryAfterMs = this.parseRetryAfterMs(res.headers.get('retry-after'));
+        if (retryAfterMs !== null && retryAfterMs > RETRY_AFTER_CAP_MS) return lastFailure;
+        if (retryAfterMs !== null) retryDelayMs = Math.max(retryDelayMs, retryAfterMs);
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
           throw new GatewayTimeoutException(
@@ -293,7 +315,7 @@ export class OcrService {
         clearTimeout(timeout);
       }
 
-      await this.sleep(500 * 2 ** attempt);
+      await this.sleep(retryDelayMs);
     }
 
     return lastFailure ?? { ok: false, model, status: 503, errorText: 'OCR request did not complete.' };
@@ -332,6 +354,20 @@ export class OcrService {
 
   private shouldRetryStatus(status: number): boolean {
     return status === 429 || status === 500 || status === 503;
+  }
+
+  /**
+   * Parse an HTTP Retry-After header into milliseconds. Supports the
+   * delta-seconds form ("120") and the HTTP-date form. Returns null when the
+   * header is absent or unparseable (caller then keeps its own backoff).
+   */
+  private parseRetryAfterMs(headerValue: string | null): number | null {
+    if (!headerValue) return null;
+    const trimmed = headerValue.trim();
+    if (/^\d+$/.test(trimmed)) return parseInt(trimmed, 10) * 1000;
+    const dateMs = Date.parse(trimmed);
+    if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
+    return null;
   }
 
   private shouldTryNextModel(status: number): boolean {
