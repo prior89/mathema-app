@@ -86,23 +86,31 @@ export function resolveConsentMethod(country: CountryCode): 'KR_PASS' | 'KR_EMAI
   return 'IN_EMAIL_OTP';
 }
 
-/** A real (non-mock) PASS provider is wired and enabled — the only rail that
- * gives PIPA-grade *verifiable* guardian consent for KR under-14s. */
+/** A real (non-mock) PASS provider (휴대폰 본인인증 via 본인확인기관) is wired
+ * and enabled. This is the strongest guardian-consent rail (ties consent to a
+ * verified adult identity) but — per PIPA 시행령 제17조의2 — it is only ONE of
+ * seven acceptable methods, NOT a legal requirement for under-14 onboarding. */
 export function isKrPassProductionReady(): boolean {
   return process.env.GUARDIAN_PASS_ENABLED === 'true'
     && (process.env.GUARDIAN_PASS_PROVIDER ?? 'mock') !== 'mock';
 }
 
 /**
- * KR PIPA Art. 22-2 requires *verifiable* guardian consent before processing an
- * under-14's data. Our only verifiable rail is 휴대폰 본인인증 (PASS), which is
- * not wired to a real provider yet (GUARDIAN_PASS_PROVIDER=mock, blocked in
- * prod). Until it is, block KR under-14 sign-ups rather than collect a minor's
- * data behind an email-OTP consent whose PIPA sufficiency counsel has not
- * confirmed. Reversible without a deploy:
- *   - stand up a real PASS provider (isKrPassProductionReady) → auto-allow, or
- *   - set KR_UNDER14_SIGNUP_ALLOW_EMAIL_OTP=true once counsel clears the
- *     email-OTP fallback.
+ * KR under-14 (만14세 미만) sign-up gate.
+ *
+ * PIPA Art. 22-2 requires *verifiable* guardian consent, and 시행령 제17조의2
+ * enumerates SEVEN acceptable methods — email round-trip (method 5) and SMS
+ * confirmation of a guardian-facing consent page (method 1) among them. 휴대폰
+ * 본인인증 (PASS) is one option, NOT the floor; regulators punish the *absence*
+ * of any verification step, not use of a light method. Our email-OTP guardian
+ * rail (resolveConsentMethod → KR_EMAIL_OTP) is exactly that lawful method-5
+ * round-trip, and guardianAccessSatisfied() gates all learning until the parent
+ * confirms — so no under-14 data is processed pre-consent.
+ *
+ * Default: ALLOW KR under-14 and route through email-OTP consent (statutory
+ * minimum, matches competitors). Block ONLY when an operator explicitly opts
+ * into PASS-grade identity assurance (e.g. a future PIPC "법정대리인 동의
+ * 현실화" tightening) via KR_UNDER14_REQUIRE_PASS=true and that rail isn't live.
  * 14+ users and every non-KR market are unaffected.
  */
 export function isKrUnder14SignupBlocked(
@@ -112,7 +120,8 @@ export function isKrUnder14SignupBlocked(
 ): boolean {
   if (country !== 'KR') return false;
   if (!requiresGuardianConsent(birthDate, country, now)) return false;
-  if (isKrPassProductionReady()) return false;
-  if (process.env.KR_UNDER14_SIGNUP_ALLOW_EMAIL_OTP === 'true') return false;
-  return true;
+  if (process.env.KR_UNDER14_REQUIRE_PASS === 'true' && !isKrPassProductionReady()) {
+    return true;
+  }
+  return false;
 }

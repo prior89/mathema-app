@@ -95,14 +95,16 @@ export class AuthService {
       );
     }
 
-    // KR PIPA under-14 gate: refuse the account before we create it when no
-    // verifiable-consent rail (real PASS) is live, rather than storing a
-    // minor's data behind an unconfirmed email-OTP consent. 14+ unaffected.
+    // KR PIPA under-14 gate. Normally a no-op: under-14 KR onboards via the
+    // decree-compliant email-OTP guardian rail (started after create). Only
+    // fires when an operator opts into PASS-grade assurance (KR_UNDER14_REQUIRE
+    // _PASS) that isn't live yet. 14+ and non-KR unaffected.
     const birthDateForGate = dto.birthDate ? new Date(dto.birthDate) : null;
     if (role === 'STUDENT' && isKrUnder14SignupBlocked(birthDateForGate, resolvedCountry)) {
-      throw new BadRequestException(
-        'KR sign-up for under-14s is temporarily unavailable while guardian identity verification (PASS) is being set up.',
-      );
+      throw new BadRequestException({
+        code: 'kr_under14_requires_pass',
+        message: 'KR sign-up for under-14s currently requires guardian identity verification (PASS), which is being set up.',
+      });
     }
 
     // ── PARENT: 자녀 이메일로 초대 요청 (즉시 연결 금지 — 학생 승인 필요) ──
@@ -716,15 +718,16 @@ export class AuthService {
     const exists = await this.users.findByEmail(email);
     if (exists) throw new BadRequestException('email already used');
 
-    // KR PIPA under-14 gate — same rule as register(): block before the guest
-    // row is upgraded into a real (identified) minor account without a
-    // verifiable-consent rail. Effective country = new value or the guest's.
+    // KR PIPA under-14 gate — same rule as register(): normally a no-op
+    // (email-OTP consent runs after upgrade); only fires under the
+    // KR_UNDER14_REQUIRE_PASS opt-in. Effective country = new value or guest's.
     const upgradeCountry = (dto.country ?? (me as any).country ?? 'KR') as CountryCode;
     const upgradeBirthDate = dto.birthDate ? new Date(dto.birthDate) : null;
     if (isKrUnder14SignupBlocked(upgradeBirthDate, upgradeCountry)) {
-      throw new BadRequestException(
-        'KR sign-up for under-14s is temporarily unavailable while guardian identity verification (PASS) is being set up.',
-      );
+      throw new BadRequestException({
+        code: 'kr_under14_requires_pass',
+        message: 'KR sign-up for under-14s currently requires guardian identity verification (PASS), which is being set up.',
+      });
     }
 
     await assertPasswordNotBreached(dto.password);

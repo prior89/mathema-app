@@ -63,17 +63,16 @@ export class UsersService {
       data.country = dto.country;
     }
 
-    // KR PIPA under-14 gate — catches the deferred/corrected-age path: a KR
-    // student setting or changing their DOB (or switching to KR) into the
-    // under-14 band is refused while no verifiable-consent rail (real PASS) is
-    // live, before the change is persisted. Only fires when age/country moves.
+    // KR PIPA under-14 gate — deferred/corrected-age path. Normally a no-op
+    // (email-OTP consent handles under-14); only fires under the
+    // KR_UNDER14_REQUIRE_PASS opt-in. Only checked when age/country moves.
     if (user.role === UserRole.STUDENT && (dto.birthDate !== undefined || countryChanging)) {
       const effectiveBirthDate = dto.birthDate !== undefined ? new Date(dto.birthDate) : user.birthDate;
       const gateCountry = (dto.country ?? user.country) as CountryCode;
       if (isKrUnder14SignupBlocked(effectiveBirthDate, gateCountry)) {
         throw new ForbiddenException({
-          code: 'kr_under14_signup_blocked',
-          message: 'KR accounts for under-14s are temporarily unavailable while guardian identity verification (PASS) is being set up.',
+          code: 'kr_under14_requires_pass',
+          message: 'KR accounts for under-14s currently require guardian identity verification (PASS), which is being set up.',
         });
       }
     }

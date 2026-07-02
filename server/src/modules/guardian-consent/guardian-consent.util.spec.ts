@@ -79,58 +79,54 @@ describe('guardian-consent.util', () => {
     expect(resolveConsentMethod('IN')).toBe('IN_EMAIL_OTP');
   });
 
-  // KR PIPA under-14 sign-up gate — verifiable consent (real PASS) has no prod
-  // path yet, so under-14 KR sign-ups are blocked until one exists.
+  // KR PIPA under-14 sign-up gate. Default ALLOW: under-14 onboards through the
+  // decree-compliant email-OTP guardian rail (시행령 제17조의2 method 5). Blocks
+  // only under an explicit KR_UNDER14_REQUIRE_PASS opt-in with no live PASS.
   describe('isKrUnder14SignupBlocked', () => {
     const under14 = new Date('2013-06-01'); // age 13 at `now`
     const over14 = new Date('2012-06-01');  // age 14 at `now`
     const saved = {
       enabled: process.env.GUARDIAN_PASS_ENABLED,
       provider: process.env.GUARDIAN_PASS_PROVIDER,
-      allow: process.env.KR_UNDER14_SIGNUP_ALLOW_EMAIL_OTP,
+      requirePass: process.env.KR_UNDER14_REQUIRE_PASS,
     };
     afterEach(() => {
       // Restore env so tests stay order-independent.
       for (const [k, v] of [
         ['GUARDIAN_PASS_ENABLED', saved.enabled],
         ['GUARDIAN_PASS_PROVIDER', saved.provider],
-        ['KR_UNDER14_SIGNUP_ALLOW_EMAIL_OTP', saved.allow],
+        ['KR_UNDER14_REQUIRE_PASS', saved.requirePass],
       ] as const) {
         if (v === undefined) delete process.env[k];
         else process.env[k] = v;
       }
     });
 
-    it('blocks a KR under-14 by default (mock PASS, no override)', () => {
+    it('ALLOWS a KR under-14 by default (email-OTP consent rail, method 5)', () => {
       delete process.env.GUARDIAN_PASS_ENABLED;
       delete process.env.GUARDIAN_PASS_PROVIDER;
-      delete process.env.KR_UNDER14_SIGNUP_ALLOW_EMAIL_OTP;
-      expect(isKrUnder14SignupBlocked(under14, 'KR', now)).toBe(true);
+      delete process.env.KR_UNDER14_REQUIRE_PASS;
+      expect(isKrUnder14SignupBlocked(under14, 'KR', now)).toBe(false);
     });
 
-    it('does not block KR 14+ or non-KR minors', () => {
-      delete process.env.GUARDIAN_PASS_ENABLED;
+    it('never blocks KR 14+ or non-KR minors', () => {
+      process.env.KR_UNDER14_REQUIRE_PASS = 'true'; // even under the strict opt-in
       expect(isKrUnder14SignupBlocked(over14, 'KR', now)).toBe(false);
       expect(isKrUnder14SignupBlocked(under14, 'IN', now)).toBe(false); // IN uses its own gate
       expect(isKrUnder14SignupBlocked(null, 'KR', now)).toBe(false);
     });
 
-    it('allows KR under-14 once a real PASS provider is live', () => {
-      process.env.GUARDIAN_PASS_ENABLED = 'true';
-      process.env.GUARDIAN_PASS_PROVIDER = 'nice';
-      expect(isKrUnder14SignupBlocked(under14, 'KR', now)).toBe(false);
-    });
-
-    it('still blocks when PASS is enabled but only mock', () => {
-      process.env.GUARDIAN_PASS_ENABLED = 'true';
+    it('blocks under-14 only when PASS is required but not live', () => {
+      process.env.KR_UNDER14_REQUIRE_PASS = 'true';
       process.env.GUARDIAN_PASS_PROVIDER = 'mock';
-      delete process.env.KR_UNDER14_SIGNUP_ALLOW_EMAIL_OTP;
+      delete process.env.GUARDIAN_PASS_ENABLED;
       expect(isKrUnder14SignupBlocked(under14, 'KR', now)).toBe(true);
     });
 
-    it('allows KR under-14 when counsel opts into the email-OTP override', () => {
-      delete process.env.GUARDIAN_PASS_ENABLED;
-      process.env.KR_UNDER14_SIGNUP_ALLOW_EMAIL_OTP = 'true';
+    it('allows under-14 when PASS is required AND a real provider is live', () => {
+      process.env.KR_UNDER14_REQUIRE_PASS = 'true';
+      process.env.GUARDIAN_PASS_ENABLED = 'true';
+      process.env.GUARDIAN_PASS_PROVIDER = 'nice';
       expect(isKrUnder14SignupBlocked(under14, 'KR', now)).toBe(false);
     });
   });
