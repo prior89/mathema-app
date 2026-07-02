@@ -199,11 +199,14 @@ export default function MathLearningApp() {
 
 // ============ DASHBOARD ============
 function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sessionId: string, focus?: string) => void; onGotoWrongNotes: () => void }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const summary = useQuery({ queryKey: ['dashboard'], queryFn: Q.fetchDashboardSummary });
   const mastery = useQuery({ queryKey: ['mastery'], queryFn: Q.fetchMastery });
   const today = useQuery({ queryKey: ['today'], queryFn: Q.fetchToday });
   const recent = useQuery({ queryKey: ['wn-recent'], queryFn: () => Q.fetchRecentMistakes(3) });
+  // Active re-quiz nudge: turn the wrong-note store into a "N due, review now"
+  // prompt (the researched #1 driver — notes get made but never revisited).
+  const due = useQuery({ queryKey: ['wn-due'], queryFn: () => Q.fetchDueWrongNotes(50) });
   const heatmap = useQuery({ queryKey: ['heatmap'], queryFn: () => Q.fetchHeatmap(12) });
   const errorDna = useQuery({ queryKey: ['error-dna'], queryFn: Q.fetchErrorDna });
   const diagnosis = useQuery({ queryKey: ['diagnosis'], queryFn: Q.fetchDiagnosis });
@@ -244,6 +247,32 @@ function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sess
 
   return (
     <>
+      {(due.data?.length ?? 0) > 0 && (
+        <button
+          onClick={() => { trackClick('review_due_banner', { count: due.data!.length }); onGotoWrongNotes(); }}
+          className="hover-lift"
+          style={{
+            width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px',
+            padding: '14px 18px', marginBottom: '28px', background: '#142850', color: '#EFEBDF',
+            border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ fontSize: '22px' }} aria-hidden>🔁</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: '14px' }}>
+              {lang === 'ko'
+                ? `복습할 오답 ${due.data!.length}개가 기다려요`
+                : `${due.data!.length} wrong answer${due.data!.length > 1 ? 's' : ''} due for review`}
+            </div>
+            <div style={{ fontSize: '11.5px', color: '#B9C2D6', marginTop: '2px' }}>
+              {lang === 'ko'
+                ? '변형 문제로 다시 풀 때 진짜 실력이 됩니다 · 지금 복습하기'
+                : 'Re-solve them as fresh variants to lock them in · Review now'}
+            </div>
+          </div>
+          <span style={{ fontSize: '18px' }} aria-hidden>→</span>
+        </button>
+      )}
       <section style={{ marginBottom: '64px' }} className="fade-up">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#C7791F' }} className="pulse-warm" />
