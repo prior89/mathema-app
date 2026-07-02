@@ -135,6 +135,15 @@ export class AttemptsRepository {
       problemHasSteps: !!problem.expectedSolutionSteps,
     });
 
+    // H3: fold the resolved distractor error code into Attempt.errorCodes.
+    // grading.analyze only maps IN distractorType, so KR distractorErrorCode
+    // never reached errorCodes — and ErrorPatternProfile.refreshAllStatuses
+    // scans Attempt.errorCodes, so a recurring KR mistake false-RESOLVED after
+    // 5 attempts. Merging here keeps the read path market-symmetric.
+    const attemptErrorCodes = resolvedErrorCode && !errorCodes.includes(resolvedErrorCode)
+      ? [...errorCodes, resolvedErrorCode]
+      : errorCodes;
+
     // tenantId — User 로부터 lookup (denormalize).
     const user = await this.prisma.user.findUnique({
       where: { id: userId }, select: { tenantId: true },
@@ -156,7 +165,7 @@ export class AttemptsRepository {
         hintUsed: dto.hintUsed === true,
         hintCount: typeof dto.hintCount === 'number' ? Math.max(0, Math.floor(dto.hintCount)) : 0,
         stepByStepInput: stepByStepInput ?? undefined,
-        errorCodes,
+        errorCodes: attemptErrorCodes,
         deviceType,
         timeOfDay,
         stepIndex: typeof dto.stepIndex === 'number' ? dto.stepIndex : null,

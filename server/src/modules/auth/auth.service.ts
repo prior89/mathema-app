@@ -426,13 +426,19 @@ export class AuthService {
   }
 
   private async findOrCreateSocialUser(identity: SocialIdentity) {
-    const email = identity.email.toLowerCase();
-    let user = await this.users.findByEmail(email);
+    // SECURITY: only use the provider's email as the account key when the
+    // provider asserts it is verified. Otherwise namespace the account by the
+    // provider user id so an unverified/attacker-chosen social email can never
+    // link into (take over) an existing local email/password or Google account.
+    const accountKey = identity.emailVerified
+      ? identity.email.toLowerCase()
+      : `${identity.provider}_${identity.providerUserId}@users.matheo.local`;
+    let user = await this.users.findByEmail(accountKey);
     if (!user) {
       const placeholderExam = new Date();
       placeholderExam.setFullYear(placeholderExam.getFullYear() + 1);
       user = await this.users.create({
-        email,
+        email: accountKey,
         passwordHash: await bcrypt.hash(`${identity.provider}:${identity.providerUserId}:${Date.now()}`, BCRYPT_COST),
         name: identity.name,
         examDate: placeholderExam,

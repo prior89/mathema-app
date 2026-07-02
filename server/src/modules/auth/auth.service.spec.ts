@@ -484,4 +484,40 @@ describe('AuthService', () => {
       expect(mail.sendPasswordResetEmail).toHaveBeenCalledWith('a@b.com', expect.any(String));
     });
   });
+
+  // HIGH-1 (security): a social identity must NOT link into an existing local
+  // account unless the provider asserts the email is verified — else an
+  // attacker's Kakao/Naver identity claiming victim@x could take over the
+  // victim's password account.
+  describe('signInWithSocial account-linking safety', () => {
+    it('does NOT link an UNVERIFIED social email to an existing account (creates a namespaced account)', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockImplementation((e: string) =>
+        e === 'victim@x.com' ? { id: 'victim', emailVerifiedAt: new Date() } : null);
+      users.create.mockResolvedValue({ id: 'social-new' });
+      const jwt = mockJwt(); jwt.sign.mockImplementation((p: any) => `t-${p?.sub}`);
+      const social = {
+        isMock: jest.fn(), providerName: jest.fn(),
+        verify: jest.fn().mockResolvedValue({ provider: 'kakao', providerUserId: 'kk9', email: 'victim@x.com', emailVerified: false, name: 'x' }),
+      };
+      const { svc } = build({ users, jwt, social });
+      await svc.signInWithSocial('kakao', 'tok');
+      // must mint a provider-namespaced account, never return the victim's
+      expect(users.create).toHaveBeenCalledWith(expect.objectContaining({ email: 'kakao_kk9@users.matheo.local' }));
+    });
+
+    it('DOES link a VERIFIED social email to an existing account (no new account)', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockImplementation((e: string) =>
+        e === 'v@x.com' ? { id: 'v', emailVerifiedAt: new Date() } : null);
+      const jwt = mockJwt(); jwt.sign.mockImplementation((p: any) => `t-${p?.sub}`);
+      const social = {
+        isMock: jest.fn(), providerName: jest.fn(),
+        verify: jest.fn().mockResolvedValue({ provider: 'kakao', providerUserId: 'kk1', email: 'v@x.com', emailVerified: true, name: 'x' }),
+      };
+      const { svc } = build({ users, jwt, social });
+      await svc.signInWithSocial('kakao', 'tok');
+      expect(users.create).not.toHaveBeenCalled();
+    });
+  });
 });
