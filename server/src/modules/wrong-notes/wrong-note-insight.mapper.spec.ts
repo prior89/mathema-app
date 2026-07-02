@@ -1,9 +1,36 @@
 import type { AttemptAnalysis } from '../../infrastructure/ai/prompts/attempt-analyze.prompt';
 import {
+  buildFallbackInsight,
   inferConfidenceCalibration,
   mapAttemptAnalysisToInsightJson,
   WrongNoteInsightJsonSchema,
 } from './wrong-note-insight.mapper';
+
+describe('buildFallbackInsight (LLM-free why-wrong)', () => {
+  it('produces a schema-valid insight from error code + concept + formula', () => {
+    const r = buildFallbackInsight(
+      { errorTypeRaw: 'SIGN', problemConcept: '이차방정식의 근', problemFormula: 'x = (-b±√(b²-4ac))/2a' },
+      'ko',
+    );
+    expect(() => WrongNoteInsightJsonSchema.parse(r)).not.toThrow();
+    expect(r.correctConcept).toBe('이차방정식의 근');
+    expect(r.similarPatterns).toContain('부호 실수');
+    expect(r.drillSteps.length).toBeGreaterThanOrEqual(1);
+    expect(r.drillSteps.some((s) => s.includes('x = (-b'))).toBe(true); // formula step
+  });
+
+  it('is valid even with no error code, concept, or formula (worst case)', () => {
+    const r = buildFallbackInsight({}, 'en');
+    expect(() => WrongNoteInsightJsonSchema.parse(r)).not.toThrow();
+    expect(r.similarPatterns).toEqual([]);
+    expect(r.drillSteps.length).toBeGreaterThanOrEqual(1);
+    expect(r.lang).toBe('en');
+  });
+
+  it('maps hi -> en for the insight lang enum', () => {
+    expect(buildFallbackInsight({ errorTypeRaw: 'CALC' }, 'hi').lang).toBe('en');
+  });
+});
 
 describe('wrong-note-insight.mapper', () => {
   const baseAnalysis: AttemptAnalysis = {

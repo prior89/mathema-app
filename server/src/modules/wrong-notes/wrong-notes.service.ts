@@ -13,6 +13,7 @@ import { ReviewWrongNoteDto } from './dto/review-wrong-note.dto';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import { ReviewSchedulerService } from './review-scheduler.service';
 import { PremiumAccessService } from '../billing/premium-access.service';
+import { buildFallbackInsight } from './wrong-note-insight.mapper';
 
 @Injectable()
 export class WrongNotesService {
@@ -173,7 +174,15 @@ export class WrongNotesService {
     const note = await this.repo.findOne(userId, id, lang);
     const similar = await this.similar.findSimilar(note.problemId, 5, lang);
     const redacted = await this.premiumAccess.redactInsightJson(userId, note);
-    return { ...redacted, similar };
+    // Guarantee a "why you got it wrong" explanation on every note. If no AI
+    // insight is present (pending/low-confidence/consent-off) or it was redacted
+    // for a free user, attach the deterministic rule-based fallback AFTER
+    // redaction so the basic why-wrong stays free (never gated behind paywall).
+    const hasInsight = redacted.insightJson && Object.keys(redacted.insightJson).length > 0;
+    const withInsight = hasInsight
+      ? { ...redacted, insightSource: 'ai' as const }
+      : { ...redacted, insightJson: buildFallbackInsight(redacted, lang), insightSource: 'rule' as const };
+    return { ...withInsight, similar };
   }
   create(userId: string, dto: CreateWrongNoteDto) { return this.repo.create(userId, dto); }
 

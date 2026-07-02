@@ -43,6 +43,46 @@ export function inferConfidenceCalibration(
   return 'aligned';
 }
 
+/**
+ * Deterministic, LLM-free "why you got it wrong" insight. Built from the error
+ * type + concept + formula the problem already carries, so EVERY wrong note
+ * explains something the moment it's opened — no AI_TRAINING consent, no Redis
+ * worker, no confidence gate, no ads, no paywall. The async LLM pass (when it
+ * runs and clears confidence) upgrades this to a richer insightJson.
+ */
+export function buildFallbackInsight(
+  card: {
+    errorTypeRaw?: string | null;
+    problemConcept?: string | null;
+    problemFormula?: string | null;
+  },
+  langIn: 'ko' | 'en' | 'hi',
+): WrongNoteInsightJson {
+  const lang = langIn === 'ko' ? 'ko' : 'en';
+  const code = (card.errorTypeRaw ?? '').toUpperCase();
+  const errLabel = ERROR_CODE_LABELS[code]?.[lang];
+  const concept = card.problemConcept?.trim() || (lang === 'ko' ? '핵심 개념' : 'the key concept');
+  const rootCause = errLabel
+    ? (lang === 'ko' ? `이 문제는 '${errLabel}' 유형에서 막혔어요.` : `This one tripped on a ${errLabel.toLowerCase()}.`)
+    : (lang === 'ko' ? '개념 적용 과정에서 막혔어요.' : 'The slip was in applying the concept.');
+  const drillSteps: string[] = [
+    lang === 'ko' ? `핵심 개념 다시 보기: ${concept}` : `Revisit the key idea: ${concept}`,
+  ];
+  if (card.problemFormula?.trim()) {
+    drillSteps.push(lang === 'ko' ? `공식 확인: ${card.problemFormula.trim()}` : `Check the formula: ${card.problemFormula.trim()}`);
+  }
+  drillSteps.push(lang === 'ko' ? '변형 문제로 다시 풀어 확실히 익히기' : 'Re-solve a fresh variant to lock it in');
+  return WrongNoteInsightJsonSchema.parse({
+    rootCause,
+    correctConcept: concept,
+    drillSteps: drillSteps.slice(0, 5),
+    similarPatterns: errLabel ? [errLabel] : [],
+    confidenceCalibration: 'aligned',
+    reviewIntervalDays: WRONG_NOTE_INITIAL_COOLDOWN_DAYS,
+    lang,
+  });
+}
+
 export function mapAttemptAnalysisToInsightJson(input: {
   analysis: AttemptAnalysis;
   conceptTags: string[];

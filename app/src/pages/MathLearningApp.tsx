@@ -1458,10 +1458,19 @@ function StudySession({ sessionId, focusProblemId, onClear }: { sessionId: strin
 
 // ============ MOCK EXAM PAGE ============
 function MockExamPage({ onStartExam }: { onStartExam: (exam: M.ExamPackage) => void }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const summary = useQuery({ queryKey: ['mock-summary'], queryFn: Q.fetchMockSummary });
   const trajectory = useQuery({ queryKey: ['mock-trajectory'], queryFn: Q.fetchTrajectory });
   const results = useQuery({ queryKey: ['mock-results'], queryFn: Q.fetchExamResults });
+  // Weakest concepts — surfaced so the AI-recommended exam is visibly framed as
+  // personalized ("targets your N weakest"), since the assembly already
+  // weakness-weights server-side but the UI never said so.
+  const conceptMastery = useQuery({ queryKey: ['mastery', 'trajectory'], queryFn: Q.fetchConceptMastery });
+  const weakest = (conceptMastery.data ?? [])
+    .filter((c) => c.evidenceCount > 0)
+    .sort((a, b) => a.masteryScore - b.masteryScore)
+    .slice(0, 3)
+    .map((c) => (lang === 'ko' ? (c.concept.nameKo ?? c.concept.name) : c.concept.name));
   const [detailResult, setDetailResult] = useState<Q.ExamResult | null>(null);
 
   const handleStarted = (label: string) => (r: M.ExamPackage) => {
@@ -1619,9 +1628,23 @@ function MockExamPage({ onStartExam }: { onStartExam: (exam: M.ExamPackage) => v
           <div style={{ backgroundColor: '#142850', color: '#EFEBDF', borderRadius: '4px', padding: '32px', marginBottom: '16px' }}>
             <div style={{ fontSize: '11px', color: '#D9A055', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px' }}>{t('mock.aiRec.label')}</div>
             <h3 className="serif" style={{ fontSize: '22px', fontWeight: 500, marginBottom: '12px' }}>{t('mock.aiRec.title')}</h3>
-            <div style={{ fontSize: '13px', color: '#E0D8C8', lineHeight: 1.65, marginBottom: '20px' }}>
+            <div style={{ fontSize: '13px', color: '#E0D8C8', lineHeight: 1.65, marginBottom: weakest.length > 0 ? '12px' : '20px' }}>
               {t('mock.aiRec.desc')}
             </div>
+            {weakest.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '11px', color: '#D9A055', marginBottom: '6px' }}>
+                  🎯 {lang === 'ko' ? `가장 약한 개념 ${weakest.length}개 집중 공략` : `Targets your ${weakest.length} weakest concept${weakest.length > 1 ? 's' : ''}`}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {weakest.map((n, i) => (
+                    <span key={i} style={{ fontSize: '11px', padding: '3px 9px', backgroundColor: '#ffffff18', border: '1px solid #D9A05540', borderRadius: '999px', color: '#EFEBDF' }}>
+                      {n}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             <button
               onClick={() => recMut.mutate()}
               disabled={recMut.isPending}
