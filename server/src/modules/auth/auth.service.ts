@@ -31,6 +31,15 @@ const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
 const REFRESH_REVOKE_NAMESPACE = 'jwt:refresh:revoked:';
 
+// Phone-OTP hardening.
+const OTP_CODE_TTL_SEC = 300;
+const OTP_MAX_VERIFY_ATTEMPTS = 5;   // per issued code
+const OTP_MAX_SENDS_PER_HOUR = 5;    // per phone
+const OTP_PHONE_LOCK_FAILS = 10;     // persistent per-phone fail lock (survives re-send)
+// Synthetic identifier namespaces — never accepted as a real signup email so a
+// user can't squat a phone/social/guest identity address.
+const RESERVED_EMAIL_DOMAINS = ['users.matheo.local', 'mock.local', 'guest.matheo.invalid'];
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -59,6 +68,12 @@ export class AuthService {
 
   async register(dto: RegisterDto, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
     const email = dto.email.trim().toLowerCase();
+    // Structural isolation of the synthetic identity namespaces: reject them at
+    // signup regardless of secret strength, so no one can pre-register a
+    // phone_/kakao_/guest- address and hijack that identity later.
+    if (RESERVED_EMAIL_DOMAINS.includes(email.split('@')[1] ?? '')) {
+      throw new BadRequestException('this email domain is not allowed');
+    }
     const childEmail = dto.childEmail?.trim().toLowerCase();
     const exists = await this.users.findByEmail(email);
     if (exists) throw new UnauthorizedException('email already used');
@@ -406,6 +421,7 @@ export class AuthService {
     await this.bindAndDisplace({
       userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
     });
+    this.events.record('LOGIN_SUCCESS' as any, { userId: user.id, ip: ctx.ip, userAgent: ctx.ua, metadata: { method: provider } });
     return this.issueTokens(user.id, ctx.deviceHash);
   }
 
@@ -442,15 +458,24 @@ export class AuthService {
   private normalizePhone(raw: string): string {
     const digits = raw.replace(/[^0-9]/g, '');
     if (raw.trim().startsWith('+')) return `+${digits}`;
-    if (digits.length === 10) return `+91${digits}`;
+    // Strip a leading trunk '0' so 09812345678 and 9812345678 map to one
+    // identity before defaulting to +91 (Indian mobiles never start with 0).
+    const local = digits.replace(/^0+/, '');
+    if (local.length === 10) return `+91${local}`;
     return `+${digits}`;
   }
 
+  // Dedicated, NON-rotatable secret for phone identity fingerprints. Must NOT
+  // fall back to the JWT refresh secret — rotating JWTs would re-key every
+  // phone user's synthetic email and orphan their account/entitlement. Fails
+  // closed in prod so a world-known constant is never used there.
   private phoneHashSecret(): string {
-    return this.config.get<string>('PHONE_ID_HASH_SECRET')
-      ?? this.config.get<string>('jwt.refreshSecret')
-      ?? process.env.JWT_REFRESH_SECRET
-      ?? 'dev-phone-id-secret';
+    const s = this.config.get<string>('PHONE_ID_HASH_SECRET') ?? process.env.PHONE_ID_HASH_SECRET;
+    if (s) return s;
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('PHONE_ID_HASH_SECRET is required in production');
+    }
+    return 'dev-phone-id-secret';
   }
 
   private phoneFingerprint(phone: string): string {
@@ -474,46 +499,63 @@ export class AuthService {
 
   private otpKey(phone: string): string { return `otp:phone:${this.phoneFingerprint(phone)}`; }
   private otpSendKey(phone: string): string { return `otp:send:${this.phoneFingerprint(phone)}`; }
+  // Cumulative failed-verify counter that PERSISTS across code re-requests, so
+  // re-sending a fresh code can't reset the brute-force ceiling.
+  private otpFailKey(phone: string): string { return `otp:fail:${this.phoneFingerprint(phone)}`; }
 
   /**
-   * Send a one-time code to a phone (India default rail). Rate-limited to a few
-   * sends per phone per hour. The code is stored hashed in Redis with a short
-   * TTL; only the mock provider echoes it back (devCode).
+   * Send a one-time code to a phone (India default rail). Rate-limited per phone
+   * (sends/hour + a persistent failed-verify lock). The code is delivered BEFORE
+   * it is persisted, so a failed send never leaves a usable code in Redis.
    */
   async startPhoneOtp(phone: string, _ctx: { ip?: string; ua?: string } = {}) {
     const normalized = this.normalizePhone(phone);
     if (normalized.replace(/[^0-9]/g, '').length < 8) {
       throw new BadRequestException('invalid phone number');
     }
+    const fails = Number((await this.redis.get(this.otpFailKey(normalized))) ?? '0');
+    if (fails >= OTP_PHONE_LOCK_FAILS) {
+      throw new BadRequestException({ code: 'otp_locked', message: 'Too many attempts. Try again later.' });
+    }
     const sends = await this.redis.incrWithTtl(this.otpSendKey(normalized), 3600);
-    if (sends > 5) {
+    if (sends > OTP_MAX_SENDS_PER_HOUR) {
       throw new BadRequestException({ code: 'otp_rate_limited', message: 'Too many code requests. Try again later.' });
     }
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
-    const codeHash = this.otpCodeHash(normalized, code);
-    await this.redis.set(this.otpKey(normalized), JSON.stringify({ codeHash, attempts: 0 }), 300);
+    // Deliver first; only persist a live code once delivery is accepted.
     const result = await this.otp.send(normalized, code);
-    return { sent: true, channel: result.channel, expiresInSec: 300, ...(result.devCode ? { devCode: result.devCode } : {}) };
+    await this.redis.set(
+      this.otpKey(normalized),
+      JSON.stringify({ codeHash: this.otpCodeHash(normalized, code), attempts: 0 }),
+      OTP_CODE_TTL_SEC,
+    );
+    return { sent: true, channel: result.channel, expiresInSec: OTP_CODE_TTL_SEC, ...(result.devCode ? { devCode: result.devCode } : {}) };
   }
 
   /** Verify a phone code and find-or-create the user (country IN). */
   async verifyPhoneOtp(phone: string, code: string, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
     const normalized = this.normalizePhone(phone);
+    // Single generic error for every failure so /verify can't be used to probe
+    // whether a code is currently pending / a number is mid-login.
+    const invalid = () => new UnauthorizedException({ code: 'otp_invalid', message: 'invalid or expired code' });
     const raw = await this.redis.get(this.otpKey(normalized));
-    if (!raw) throw new UnauthorizedException('code expired or not requested');
+    if (!raw) throw invalid();
     const state = JSON.parse(raw) as { codeHash: string; attempts: number };
-    if (state.attempts >= 5) {
+    if (state.attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
       await this.redis.del(this.otpKey(normalized));
-      throw new UnauthorizedException('too many attempts — request a new code');
+      throw invalid();
     }
-    const codeHash = this.otpCodeHash(normalized, code);
-    if (!this.hashEquals(codeHash, state.codeHash)) {
-      await this.redis.set(this.otpKey(normalized), JSON.stringify({ ...state, attempts: state.attempts + 1 }), 300);
-      throw new UnauthorizedException('invalid code');
+    if (!this.hashEquals(this.otpCodeHash(normalized, code), state.codeHash)) {
+      await this.redis.set(this.otpKey(normalized), JSON.stringify({ ...state, attempts: state.attempts + 1 }), OTP_CODE_TTL_SEC);
+      const fails = await this.redis.incrWithTtl(this.otpFailKey(normalized), 3600);
+      this.events.record('LOGIN_FAIL' as any, { userId: null, ip: ctx.ip, userAgent: ctx.ua, metadata: { method: 'phone_otp', fails } });
+      throw invalid();
     }
     await this.redis.del(this.otpKey(normalized));
+    await this.redis.del(this.otpFailKey(normalized));
     const user = await this.findOrCreatePhoneUser(normalized);
     await this.bindAndDisplace({ userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua });
+    this.events.record('LOGIN_SUCCESS' as any, { userId: user.id, ip: ctx.ip, userAgent: ctx.ua, metadata: { method: 'phone_otp' } });
     return this.issueTokens(user.id, ctx.deviceHash);
   }
 
@@ -522,6 +564,7 @@ export class AuthService {
     const identity = await this.otp.verifyTruecaller(token);
     const user = await this.findOrCreatePhoneUser(this.normalizePhone(identity.phone), identity.name);
     await this.bindAndDisplace({ userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua });
+    this.events.record('LOGIN_SUCCESS' as any, { userId: user.id, ip: ctx.ip, userAgent: ctx.ua, metadata: { method: 'truecaller' } });
     return this.issueTokens(user.id, ctx.deviceHash);
   }
 

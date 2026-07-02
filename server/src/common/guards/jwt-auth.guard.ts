@@ -44,11 +44,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   private async hasVerifiedEmail(req: any): Promise<boolean> {
     if (req.user?.emailVerifiedAt || req.user?.role === 'ADMIN') return true;
     const userId = req.user?.id;
-    // Defensive fallback for tests or custom strategies that attach only {id}.
-    // The production JwtStrategy already includes these fields, so this query
-    // is not on the hot path. Absent a user id, fail open (matches prior
-    // behaviour for non-standard strategies).
-    if (!userId) return true;
+    // Fail CLOSED when no user id is attached — if a future route re-enables the
+    // email gate (see requiresVerifiedEmail), an unidentified request must not
+    // pass it. The production JwtStrategy always attaches the fields below.
+    if (!userId) return false;
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { emailVerifiedAt: true, role: true },

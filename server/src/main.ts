@@ -72,10 +72,16 @@ function validateProductionSecrets(logger: Logger) {
 // PASS mock 은 보호자 동의를, social mock 은 검증된 신원을 자동승인하므로
 // prod 에서 켜지면 미성년 동의·소셜 로그인이 전부 무력화된다. 부팅을 막는다.
 function validateProductionMockGuards(logger: Logger) {
-  if (process.env.NODE_ENV !== 'production') return;
+  // Fail closed on any non-development env (staging / unset NODE_ENV), matching
+  // the dev-login guard posture — a QA box must opt into mocks deliberately.
+  if (process.env.NODE_ENV === 'development') return;
   const issues: string[] = [];
-  if (process.env.GUARDIAN_PASS_PROVIDER === 'mock') {
-    issues.push('GUARDIAN_PASS_PROVIDER=mock (auto-approves guardian consent)');
+  // PASS defaults to the 'mock' provider when GUARDIAN_PASS_PROVIDER is UNSET,
+  // so gate on the effective value, not just the literal 'mock'.
+  const passEnabled = process.env.GUARDIAN_PASS_ENABLED === 'true';
+  const passProvider = process.env.GUARDIAN_PASS_PROVIDER ?? 'mock';
+  if (passEnabled && passProvider === 'mock') {
+    issues.push('GUARDIAN_PASS_ENABLED=true with mock provider (auto-approves guardian consent)');
   }
   if (process.env.SOCIAL_AUTH_MOCK === 'true') {
     issues.push('SOCIAL_AUTH_MOCK=true (auto-approves Kakao/Naver identities)');
