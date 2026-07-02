@@ -32,6 +32,9 @@ interface AttemptCompletedPayload {
   errorCodes?: ErrorCode[];
   /** KR distractor taxonomy on the selected wrong choice (string form). */
   distractorErrorCode?: string | null;
+  /** Canonical cross-market ErrorCode resolved from KR distractorErrorCode OR
+   *  IN distractorType — prefer this so IN attempts feed the error-pattern axis. */
+  resolvedErrorCode?: ErrorCode | null;
   isRetry?: boolean;
   tenantId?: string | null;
 }
@@ -97,12 +100,15 @@ export class MasteryTrajectoryListener {
     //    Sprint 1 A3: merge KR distractor errorCode (string) into the codes
     //    array. Unmapped strings drop; mapped ones feed the same pipeline
     //    as IN GradingService output so recommender sees a single signal.
-    const krCode = payload.distractorErrorCode
-      ? KR_DISTRACTOR_TO_ERROR_CODE[payload.distractorErrorCode] ?? null
-      : null;
+    // Prefer the canonical cross-market code (covers IN distractorType too);
+    // fall back to mapping the raw KR string for older payloads.
+    const distractorCode = payload.resolvedErrorCode
+      ?? (payload.distractorErrorCode
+        ? KR_DISTRACTOR_TO_ERROR_CODE[payload.distractorErrorCode] ?? null
+        : null);
     const mergedCodes: ErrorCode[] = [
       ...(payload.errorCodes ?? []),
-      ...(krCode ? [krCode] : []),
+      ...(distractorCode ? [distractorCode] : []),
     ];
     if (mergedCodes.length > 0) {
       try {

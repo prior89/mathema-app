@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { AttemptAnalysis } from '../../infrastructure/ai/prompts/attempt-analyze.prompt';
 import { WRONG_NOTE_INITIAL_COOLDOWN_DAYS } from './wrong-note-schedule.constants';
+import { KR_DISTRACTOR_TO_ERROR_CODE, IN_DISTRACTOR_TO_ERROR_CODE } from '../../common/learning/distractor-error-codes';
 
 export const WrongNoteInsightJsonSchema = z.object({
   rootCause: z.string(),
@@ -24,6 +25,23 @@ const ERROR_CODE_LABELS: Record<string, { ko: string; en: string }> = {
   CALC: { ko: '계산 실수', en: 'Calculation slip' },
   LOGIC: { ko: '논리·추론 오류', en: 'Logic error' },
 };
+
+/**
+ * Normalize whatever taxonomy a WrongNote.errorType was stored in (canonical
+ * short code like 'CON', a raw KR distractor string like 'CONCEPT_MISUNDERSTANDING',
+ * or a raw IN distractorType like 'CALC_ERROR') to a canonical code present in
+ * ERROR_CODE_LABELS — so the why-wrong label works regardless of market.
+ */
+function canonicalErrorCode(raw?: string | null): string | null {
+  if (!raw) return null;
+  const up = raw.toUpperCase();
+  if (ERROR_CODE_LABELS[up]) return up;
+  const kr = KR_DISTRACTOR_TO_ERROR_CODE[up] ?? KR_DISTRACTOR_TO_ERROR_CODE[raw];
+  if (kr && ERROR_CODE_LABELS[kr]) return kr;
+  const inc = IN_DISTRACTOR_TO_ERROR_CODE[up] ?? IN_DISTRACTOR_TO_ERROR_CODE[raw];
+  if (inc && ERROR_CODE_LABELS[inc]) return inc;
+  return null;
+}
 
 function asStringSteps(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -59,8 +77,8 @@ export function buildFallbackInsight(
   langIn: 'ko' | 'en' | 'hi',
 ): WrongNoteInsightJson {
   const lang = langIn === 'ko' ? 'ko' : 'en';
-  const code = (card.errorTypeRaw ?? '').toUpperCase();
-  const errLabel = ERROR_CODE_LABELS[code]?.[lang];
+  const code = canonicalErrorCode(card.errorTypeRaw);
+  const errLabel = code ? ERROR_CODE_LABELS[code]?.[lang] : undefined;
   const concept = card.problemConcept?.trim() || (lang === 'ko' ? '핵심 개념' : 'the key concept');
   const rootCause = errLabel
     ? (lang === 'ko' ? `이 문제는 '${errLabel}' 유형에서 막혔어요.` : `This one tripped on a ${errLabel.toLowerCase()}.`)
