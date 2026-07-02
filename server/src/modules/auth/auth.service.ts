@@ -22,6 +22,7 @@ import { SecurityEventService } from './security-event.service';
 import { AuthDeviceService } from './auth-device.service';
 import { ParentLinksService } from '../parent-links/parent-links.service';
 import { GuardianConsentService } from '../guardian-consent/guardian-consent.service';
+import { isKrUnder14SignupBlocked } from '../guardian-consent/guardian-consent.util';
 import { UserRole } from '@prisma/client';
 import { COUNTRY_CONFIG, CountryCode } from '../../common/enums/country.enum';
 import { SocialProvider, SocialProviderService, SocialIdentity } from './social-provider.service';
@@ -91,6 +92,16 @@ export class AuthService {
     if (COUNTRY_CONFIG[resolvedCountry]?.status === 'planned') {
       throw new BadRequestException(
         `Sign-up for ${COUNTRY_CONFIG[resolvedCountry].name} is not available yet`,
+      );
+    }
+
+    // KR PIPA under-14 gate: refuse the account before we create it when no
+    // verifiable-consent rail (real PASS) is live, rather than storing a
+    // minor's data behind an unconfirmed email-OTP consent. 14+ unaffected.
+    const birthDateForGate = dto.birthDate ? new Date(dto.birthDate) : null;
+    if (role === 'STUDENT' && isKrUnder14SignupBlocked(birthDateForGate, resolvedCountry)) {
+      throw new BadRequestException(
+        'KR sign-up for under-14s is temporarily unavailable while guardian identity verification (PASS) is being set up.',
       );
     }
 
@@ -704,6 +715,17 @@ export class AuthService {
     const email = dto.email.trim().toLowerCase();
     const exists = await this.users.findByEmail(email);
     if (exists) throw new BadRequestException('email already used');
+
+    // KR PIPA under-14 gate — same rule as register(): block before the guest
+    // row is upgraded into a real (identified) minor account without a
+    // verifiable-consent rail. Effective country = new value or the guest's.
+    const upgradeCountry = (dto.country ?? (me as any).country ?? 'KR') as CountryCode;
+    const upgradeBirthDate = dto.birthDate ? new Date(dto.birthDate) : null;
+    if (isKrUnder14SignupBlocked(upgradeBirthDate, upgradeCountry)) {
+      throw new BadRequestException(
+        'KR sign-up for under-14s is temporarily unavailable while guardian identity verification (PASS) is being set up.',
+      );
+    }
 
     await assertPasswordNotBreached(dto.password);
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);

@@ -85,3 +85,34 @@ export function resolveConsentMethod(country: CountryCode): 'KR_PASS' | 'KR_EMAI
   }
   return 'IN_EMAIL_OTP';
 }
+
+/** A real (non-mock) PASS provider is wired and enabled — the only rail that
+ * gives PIPA-grade *verifiable* guardian consent for KR under-14s. */
+export function isKrPassProductionReady(): boolean {
+  return process.env.GUARDIAN_PASS_ENABLED === 'true'
+    && (process.env.GUARDIAN_PASS_PROVIDER ?? 'mock') !== 'mock';
+}
+
+/**
+ * KR PIPA Art. 22-2 requires *verifiable* guardian consent before processing an
+ * under-14's data. Our only verifiable rail is 휴대폰 본인인증 (PASS), which is
+ * not wired to a real provider yet (GUARDIAN_PASS_PROVIDER=mock, blocked in
+ * prod). Until it is, block KR under-14 sign-ups rather than collect a minor's
+ * data behind an email-OTP consent whose PIPA sufficiency counsel has not
+ * confirmed. Reversible without a deploy:
+ *   - stand up a real PASS provider (isKrPassProductionReady) → auto-allow, or
+ *   - set KR_UNDER14_SIGNUP_ALLOW_EMAIL_OTP=true once counsel clears the
+ *     email-OTP fallback.
+ * 14+ users and every non-KR market are unaffected.
+ */
+export function isKrUnder14SignupBlocked(
+  birthDate: Date | null | undefined,
+  country?: CountryCode | string | null,
+  now = new Date(),
+): boolean {
+  if (country !== 'KR') return false;
+  if (!requiresGuardianConsent(birthDate, country, now)) return false;
+  if (isKrPassProductionReady()) return false;
+  if (process.env.KR_UNDER14_SIGNUP_ALLOW_EMAIL_OTP === 'true') return false;
+  return true;
+}

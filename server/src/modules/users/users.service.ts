@@ -3,6 +3,7 @@ import { CountryCode, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from './users.repository';
 import { GuardianConsentService } from '../guardian-consent/guardian-consent.service';
+import { isKrUnder14SignupBlocked } from '../guardian-consent/guardian-consent.util';
 import { daysUntil } from '../../common/utils/date.util';
 import { BCRYPT_COST } from '../../common/utils/auth-constants';
 import { assertPasswordNotBreached } from '../../common/utils/password-breach';
@@ -60,6 +61,21 @@ export class UsersService {
     const countryChanging = dto.country !== undefined && dto.country !== user.country;
     if (countryChanging) {
       data.country = dto.country;
+    }
+
+    // KR PIPA under-14 gate — catches the deferred/corrected-age path: a KR
+    // student setting or changing their DOB (or switching to KR) into the
+    // under-14 band is refused while no verifiable-consent rail (real PASS) is
+    // live, before the change is persisted. Only fires when age/country moves.
+    if (user.role === UserRole.STUDENT && (dto.birthDate !== undefined || countryChanging)) {
+      const effectiveBirthDate = dto.birthDate !== undefined ? new Date(dto.birthDate) : user.birthDate;
+      const gateCountry = (dto.country ?? user.country) as CountryCode;
+      if (isKrUnder14SignupBlocked(effectiveBirthDate, gateCountry)) {
+        throw new ForbiddenException({
+          code: 'kr_under14_signup_blocked',
+          message: 'KR accounts for under-14s are temporarily unavailable while guardian identity verification (PASS) is being set up.',
+        });
+      }
     }
 
     if (Object.keys(data).length === 0) return this.findOne(id);
