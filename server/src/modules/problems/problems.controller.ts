@@ -24,6 +24,15 @@ export class ProblemsController {
   }
 
   @Get(':id') one(@Param('id') id: string, @CurrentLang() lang: Lang) { return this.service.one(id, lang); }
+
+  /** Variant re-quiz: a fresh problem from the SAME chapter (same type, new
+   *  numbers for IN template items; a distinct same-concept item for KR) so
+   *  re-solving a wrong problem can't be gamed by memorising the answer. */
+  @Get(':id/variant')
+  variant(@Param('id') id: string, @CurrentUser('id') userId: string, @CurrentLang() lang: Lang) {
+    return this.service.variant(id, userId, lang);
+  }
+
   @Get(':id/hint') hint(@Param('id') id: string) { return this.service.hint(id); }
 
   /** Hint Lv2 — OpenAI step-by-step walkthrough. LLM-billed per call; the

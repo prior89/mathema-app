@@ -582,6 +582,9 @@ export type ProblemSolution = {
   }>;
 };
 export const fetchProblemSolution = (id: string) => get<ProblemSolution>(`/problems/${id}/solution`);
+/** Variant re-quiz: a fresh same-chapter problem (same type, new numbers) to
+ *  re-solve a wrong note without memorising the original's answer. */
+export const fetchVariant = (problemId: string) => get<{ id: string }>(`/problems/${problemId}/variant`);
 
 export const fetchCurriculum = (grade?: string) =>
   get<Unit[]>('/curriculum', grade ? { grade } : undefined);

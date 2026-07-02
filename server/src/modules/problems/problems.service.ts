@@ -40,6 +40,56 @@ export class ProblemsService {
   ) {}
   list(q: any, lang: Lang = 'en') { return this.repo.list(q, lang); }
   one(id: string, lang: Lang = 'en') { return this.repo.findById(id, lang); }
+
+  /**
+   * Variant re-quiz: return a different problem from the SAME chapter as the
+   * source problem, so re-solving a wrong item tests the same concept with new
+   * numbers (IN template siblings) or a distinct same-concept item (KR) — never
+   * the identical problem whose answer the student may have memorised. Skips
+   * problems the user attempted in the last 24h; prefers the same difficulty.
+   */
+  async variant(id: string, userId: string, lang: Lang = 'en') {
+    const src = await this.prisma.problem.findUnique({
+      where: { id },
+      select: { conceptLessonId: true, koreanConceptLessonId: true, difficulty: true },
+    });
+    if (!src) throw new NotFoundException('problem not found');
+    const lessonFilter = src.koreanConceptLessonId
+      ? { koreanConceptLessonId: src.koreanConceptLessonId }
+      : src.conceptLessonId
+        ? { conceptLessonId: src.conceptLessonId }
+        : null;
+    if (!lessonFilter) throw new NotFoundException('problem has no chapter to draw a variant from');
+
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recent = await this.prisma.attempt.findMany({
+      where: { userId, createdAt: { gte: since } },
+      select: { problemId: true },
+      distinct: ['problemId'],
+    });
+    const exclude = [id, ...recent.map((r) => r.problemId)];
+
+    const base = { ...lessonFilter, steps: { some: { stepIndex: 1 } } };
+    let pool = await this.prisma.problem.findMany({
+      where: { ...base, id: { notIn: exclude } },
+      select: { id: true, difficulty: true },
+      take: 40,
+    });
+    if (pool.length === 0) {
+      // Everything else in the chapter was seen recently — fall back to any
+      // sibling except the exact source problem.
+      pool = await this.prisma.problem.findMany({
+        where: { ...base, id: { not: id } },
+        select: { id: true, difficulty: true },
+        take: 40,
+      });
+    }
+    if (pool.length === 0) throw new NotFoundException('no variant available for this problem');
+
+    const sameDiff = pool.filter((p) => p.difficulty === src.difficulty);
+    const pick = (sameDiff.length > 0 ? sameDiff : pool)[0];
+    return this.repo.findById(pick.id, lang);
+  }
   hint(id: string) { return this.repo.findHint(id); }
 
   /**
