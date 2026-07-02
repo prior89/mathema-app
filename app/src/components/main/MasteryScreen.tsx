@@ -19,6 +19,7 @@ import { pickConceptName } from '../../lib/concept-name';
 import { TabBar } from './TabBar';
 import { MasteryHeatmap } from '../mastery/MasteryHeatmap';
 import { ActiveErrorPatternList } from '../mastery/ActiveErrorPatterns';
+import { Glyph } from '../onboarding/Glyph';
 
 const LABELS = {
   title: { ko: '이해도', en: 'Mastery', hi: 'दक्षता' },
@@ -33,9 +34,9 @@ const LABELS = {
   concepts: { ko: '개념별 상태', en: 'Concept status', hi: 'अवधारणा स्थिति' },
   loading: { ko: '불러오는 중…', en: 'Loading…', hi: 'लोड हो रहा है…' },
   noData: {
-    ko: '아직 학습 데이터가 부족해요. 문제를 풀어보세요.',
-    en: 'Not enough data yet — solve a few problems first.',
-    hi: 'अभी पर्याप्त डेटा नहीं — कुछ प्रश्न हल करें।',
+    ko: '문제를 풀면 여기에 약점 분석과 복습 지도가 열려요. 한 단원만 풀어볼까요?',
+    en: 'Solve a few problems to unlock your weakness map and review plan here. Start with one unit?',
+    hi: 'कुछ प्रश्न हल करें और यहाँ अपनी कमज़ोरी का नक्शा व पुनरावलोकन योजना खोलें।',
   },
   startLearn: { ko: '단원학습 시작', en: 'Start learning', hi: 'सीखना शुरू करें' },
   daysAgo: { ko: '일 전', en: 'd ago', hi: 'दिन पहले' },
@@ -110,7 +111,11 @@ export function MasteryScreen() {
               <span className="label">{L('errorPatterns', uiLang)}</span>
               <span className="more">{errorPatterns.data!.length}</span>
             </div>
-            <ActiveErrorPatternList patterns={errorPatterns.data!} lang={uiLang} />
+            <ActiveErrorPatternList
+              patterns={errorPatterns.data!}
+              lang={uiLang}
+              onPractice={() => nav('/app/learn')}
+            />
           </>
         )}
 
@@ -122,7 +127,7 @@ export function MasteryScreen() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {review.data!.slice(0, 6).map((row) => (
-                <ReviewConceptCard key={row.conceptId} row={row} lang={uiLang} />
+                <ReviewConceptCard key={row.conceptId} row={row} lang={uiLang} onClick={() => nav('/app/learn')} />
               ))}
             </div>
           </>
@@ -136,7 +141,7 @@ export function MasteryScreen() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {concepts.data!.slice(0, 8).map((row) => (
-                <ConceptStatusCard key={row.conceptId} row={row} lang={uiLang} />
+                <ConceptStatusCard key={row.conceptId} row={row} lang={uiLang} onClick={() => nav('/app/learn')} />
               ))}
             </div>
           </>
@@ -148,10 +153,15 @@ export function MasteryScreen() {
   );
 }
 
-function ReviewConceptCard({ row, lang }: { row: ReviewScheduleRow; lang: 'ko' | 'en' | 'hi' }) {
+function ReviewConceptCard({ row, lang, onClick }: { row: ReviewScheduleRow; lang: 'ko' | 'en' | 'hi'; onClick?: () => void }) {
   const riskPct = Math.round(row.forgettingRisk * 100);
   return (
-    <div className="card" style={{ padding: 12 }}>
+    <div
+      className="card"
+      role={onClick ? 'button' : undefined}
+      onClick={onClick}
+      style={{ padding: 12, cursor: onClick ? 'pointer' : 'default' }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{pickConceptName(row, lang)}</div>
         <span
@@ -164,21 +174,29 @@ function ReviewConceptCard({ row, lang }: { row: ReviewScheduleRow; lang: 'ko' |
           {L('risk', lang)} {riskPct}%
         </span>
       </div>
-      <div style={{ marginTop: 6, fontSize: 11.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>
-        {Math.round(row.masteryScore)}/100
-        {row.daysSinceLast != null && (
-          <> · {row.daysSinceLast}{L('daysAgo', lang)}</>
-        )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <div style={{ marginTop: 6, fontSize: 11.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>
+          {Math.round(row.masteryScore)}/100
+          {row.daysSinceLast != null && (
+            <> · {row.daysSinceLast}{L('daysAgo', lang)}</>
+          )}
+        </div>
+        {onClick && <Glyph.ChevronR accent="var(--p-muted)" size={14} />}
       </div>
     </div>
   );
 }
 
-function ConceptStatusCard({ row, lang }: { row: ConceptMastery; lang: 'ko' | 'en' | 'hi' }) {
+function ConceptStatusCard({ row, lang, onClick }: { row: ConceptMastery; lang: 'ko' | 'en' | 'hi'; onClick?: () => void }) {
   const score = Math.round(row.masteryScore);
   const lowEvidence = row.evidenceCount < 3;
   return (
-    <div className="card" style={{ padding: 12 }}>
+    <div
+      className="card"
+      role={onClick ? 'button' : undefined}
+      onClick={onClick}
+      style={{ padding: 12, cursor: onClick ? 'pointer' : 'default' }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{pickConceptName(row.concept, lang)}</div>

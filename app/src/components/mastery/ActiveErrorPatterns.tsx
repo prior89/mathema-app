@@ -104,22 +104,39 @@ export function ActiveErrorPatternBanner({
   );
 }
 
-/** Full list — Mastery screen section. */
+const PRACTICE_CTA: Record<UiLang, string> = {
+  ko: '이 약점 연습하기',
+  en: 'Practice this weakness',
+  hi: 'इस कमज़ोरी का अभ्यास करें',
+};
+
+/** Full list — Mastery screen section. When `onPractice` is provided each card
+ * becomes tappable and shows a "fix this" affordance, turning a passive
+ * weakness read-out into the next action in the loop. */
 export function ActiveErrorPatternList({
   patterns,
   lang,
   limit = 6,
+  onPractice,
 }: {
   patterns: ErrorPatternRow[];
   lang: UiLang;
   limit?: number;
+  onPractice?: (pattern: ErrorPatternRow) => void;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {patterns.slice(0, limit).map((p) => {
         const sev = severityStyle(p.severity);
+        const actionable = !!onPractice;
         return (
-          <div key={p.id} className="card" style={{ padding: 12 }}>
+          <div
+            key={p.id}
+            className="card"
+            role={actionable ? 'button' : undefined}
+            onClick={actionable ? () => onPractice!(p) : undefined}
+            style={{ padding: 12, cursor: actionable ? 'pointer' : 'default' }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)' }}>{pickConceptName(p.concept, lang)}</div>
@@ -134,6 +151,12 @@ export function ActiveErrorPatternList({
             <p style={{ margin: '8px 0 0', fontSize: 12.5, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
               {p.llmSummary ?? errorPatternStudentCopy(p, lang)}
             </p>
+            {actionable && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8, color: 'var(--p-primary)', fontSize: 12, fontWeight: 600 }}>
+                {PRACTICE_CTA[lang] ?? PRACTICE_CTA.en}
+                <Glyph.ChevronR accent="var(--p-primary)" size={14} />
+              </div>
+            )}
           </div>
         );
       })}
