@@ -29,8 +29,12 @@ export class AiRecommendExamService {
       where: { userId }, include: { unit: true },
     });
     if (masteries.length === 0) {
-      // Cold-start: no mastery yet → fall back to any concept-lesson-linked problems.
-      return this.fallbackAnyLinked(10, country);
+      // Cold-start: no unit mastery yet. Seed the "personalized" exam from the
+      // onboarding diagnostic's placement profile (weak concepts) so a brand-new
+      // user's first recommended exam actually targets their weak areas instead
+      // of a generic recent-problem grab. True generic fallback only if there's
+      // no placement either.
+      return this.coldStartExam(userId, country, 20);
     }
 
     const target = 20;
@@ -66,6 +70,32 @@ export class AiRecommendExamService {
       select: { country: true },
     });
     return user?.country === 'KR' ? 'KR' : 'IN';
+  }
+
+  /** Cold-start (no unit mastery): target the diagnostic-derived weak concepts
+   *  from UserPlacementProfile. Falls back to generic only if there is no
+   *  placement profile or its weak concepts have no linked problems. */
+  private async coldStartExam(userId: string, country: 'IN' | 'KR', target: number) {
+    const placement = await this.prisma.userPlacementProfile.findUnique({
+      where: { userId },
+      select: { weakConceptIds: true },
+    });
+    const weakIds = placement?.weakConceptIds ?? [];
+    if (weakIds.length === 0) return this.fallbackAnyLinked(10, country);
+    const treeFilter = country === 'KR'
+      ? { koreanConceptLessonId: { not: null } }
+      : { conceptLessonId: { not: null } };
+    const ps = await this.prisma.problem.findMany({
+      where: {
+        ...treeFilter,
+        concepts: { some: { conceptId: { in: weakIds } } },
+        steps: { some: { stepIndex: 1 } },
+      },
+      take: target,
+      orderBy: { createdAt: 'desc' },
+    });
+    if (ps.length === 0) return this.fallbackAnyLinked(10, country);
+    return { problems: ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })) };
   }
 
   /** Cold-start fallback: any curriculum-linked problem from the user's
