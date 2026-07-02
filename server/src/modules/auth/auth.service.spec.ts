@@ -197,6 +197,37 @@ describe('AuthService', () => {
       expect(users.create).toHaveBeenCalledWith(expect.objectContaining({ email: 'a@b.com', name: 'A', gradeLevel: null }));
       expect(result).toEqual({ accessToken: 'token-u-new', refreshToken: 'token-u-new' });
     });
+
+    // KR-first launch park: IN + AE share the un-seeded NCERT bank and are
+    // 'planned' in COUNTRY_CONFIG, so the register API must reject them even
+    // though the DTO whitelists the code. Guards against a re-live regression.
+    it('rejects sign-up for a parked market (country: IN)', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue(null);
+      const { svc } = build({ users });
+      await expect(
+        svc.register({
+          email: 'in@b.com', password: 'pw12345678', name: 'IN', role: 'STUDENT',
+          examDate: '2027-02-14', targetGrade: 2, country: 'IN',
+        } as any),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(users.create).not.toHaveBeenCalled();
+    });
+
+    it('defaults an omitted country to the live KR market', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue(null);
+      users.create.mockResolvedValue({ id: 'u-kr', email: 'k@b.com' });
+      const jwt = mockJwt();
+      jwt.sign.mockImplementation((p) => `token-${(p as any).sub ?? 'x'}`);
+      const prisma = mockPrisma();
+      const { svc } = build({ users, jwt, prisma });
+      await svc.register({
+        email: 'k@b.com', password: 'pw12345678', name: 'K', role: 'STUDENT',
+        examDate: '2027-02-14', targetGrade: 2,
+      } as any);
+      expect(users.create).toHaveBeenCalledWith(expect.objectContaining({ country: 'KR' }));
+    });
   });
 
   // ─────── login ───────

@@ -108,10 +108,10 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
   const [age, setAge] = useState<number | ''>('');
   const [parentEmail, setParentEmail] = useState('');
   const [goal, setGoal] = useState<GoalId | ''>('BOARD');
-  // Country defaults to IN. The country step (after welcome) lets the user
-  // flip to KR — picking KR also calls i18n setLang('ko') immediately so the
-  // remaining onboarding screens render in Korean.
-  const [country, setCountry] = useState<CountryId>('IN');
+  // Country defaults to KR — the only live market at the KR-first launch, so
+  // 'goal'/'diagnostic' work even if the user skips the country step. Picking a
+  // country also calls i18n setLang immediately (KR → 'ko').
+  const [country, setCountry] = useState<CountryId>('KR');
   const [consents, setConsents] = useState<ConsentMap>({ ANALYTICS: true, AI_TRAINING: false, MARKETING: false });
   const [notif, setNotif] = useState(true);
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
@@ -357,9 +357,13 @@ function ScreenCountry({
   // list so a later launch is one `active` flip away, but they are filtered out
   // of the render below — users only see live markets, no "Coming soon" chips.
   const COUNTRY_OPTIONS: Array<{ id: CountryId; flag: string; name: string; sub: string; active: boolean }> = [
-    { id: 'IN', flag: '🇮🇳', name: 'India',         sub: 'NCERT / CBSE / JEE',     active: true  },
+    // KR-first launch: KR is the only live market. IN + AE are parked (they
+    // share the NCERT content bank, which is not seeded yet) — keep them here
+    // so a later launch is one `active` flip away. Must stay in sync with the
+    // backend COUNTRY_CONFIG.status gate in country.enum.ts.
     { id: 'KR', flag: '🇰🇷', name: '대한민국',       sub: '2022 개정 교육과정 · 수능', active: true  },
-    { id: 'AE', flag: '🇦🇪', name: 'United Arab Emirates', sub: 'CBSE / NCERT',    active: true  },
+    { id: 'IN', flag: '🇮🇳', name: 'India',         sub: 'NCERT / CBSE / JEE',     active: false },
+    { id: 'AE', flag: '🇦🇪', name: 'United Arab Emirates', sub: 'CBSE / NCERT',    active: false },
     { id: 'US', flag: '🇺🇸', name: 'United States', sub: 'Common Core / SAT',      active: false },
     { id: 'UK', flag: '🇬🇧', name: 'United Kingdom', sub: 'GCSE / A-Level',         active: false },
     { id: 'AU', flag: '🇦🇺', name: 'Australia',     sub: 'ACARA',                  active: false },
@@ -669,6 +673,7 @@ function ScreenAuth({
             <GoogleSignInButton
               mode="signup"
               onCredential={handleGoogleSignIn}
+              onError={() => setErr(t('onboarding.auth.google.failed'))}
               busy={googleBusy}
               disabled={busy}
             />

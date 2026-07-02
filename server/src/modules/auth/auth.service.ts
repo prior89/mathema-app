@@ -82,10 +82,12 @@ export class AuthService {
 
     // ── Market gate: the DTO whitelists every compiled CountryCode, but only
     // 'live'/'beta' markets have curriculum + locale wired. Reject 'planned'
-    // countries (US/UK/AU/SG/ID) server-side so a crafted register payload
-    // can't create a user who lands on an empty/English-fallback experience —
-    // the onboarding chip UI already hides these, this closes the API path. ──
-    const resolvedCountry = (dto.country ?? 'IN') as CountryCode;
+    // countries (IN/AE/US/UK/AU/SG/ID at the KR-first launch) server-side so a
+    // crafted register payload can't create a user who lands on an empty bank —
+    // the onboarding chip UI already hides these, this closes the API path.
+    // Default is 'KR' (the only live market) so an omitted country never hits
+    // the reject branch. ──
+    const resolvedCountry = (dto.country ?? 'KR') as CountryCode;
     if (COUNTRY_CONFIG[resolvedCountry]?.status === 'planned') {
       throw new BadRequestException(
         `Sign-up for ${COUNTRY_CONFIG[resolvedCountry].name} is not available yet`,
@@ -130,10 +132,10 @@ export class AuthService {
       role,
       examDate,
       targetGrade,
-      // Country from onboarding country chip. Prisma default is IN so an
-      // omitted value still lands on India behaviour — KR sign-ups must
-      // explicitly send country: 'KR' for curriculum branching to fire.
-      country: (dto.country ?? 'IN') as any,
+      // Country from onboarding country chip. Default to 'KR' — the only live
+      // market at the KR-first launch. (Prisma column default is still IN for
+      // legacy rows; we write an explicit value so branching is unambiguous.)
+      country: resolvedCountry as any,
       // Onboarding may create the account before the class picker runs.
       // Write an explicit null instead of letting Prisma's legacy CLASS_12
       // default leak into diagnostics and ProtectedRoute decisions.
@@ -167,7 +169,7 @@ export class AuthService {
     if (role === 'STUDENT' && dto.birthDate) {
       const gc = await this.guardianConsent.ensurePendingForStudent({
         studentUserId: user.id,
-        country: (dto.country ?? 'IN') as any,
+        country: resolvedCountry as any,
         ip: ctx.ip,
         ua: ctx.ua,
       });
@@ -264,7 +266,9 @@ export class AuthService {
         name: 'Aarav Sharma',
         examDate: new Date('2027-02-14'),
         targetGrade: 1,
-        country: 'IN' as any,
+        // KR-first: dev-login lands on the live market so local testing hits
+        // the seeded KR curriculum instead of the empty India bank.
+        country: 'KR' as any,
         gradeLevel: 'CLASS_11' as any,
         role: 'STUDENT' as any,
         emailVerifiedAt: new Date(),
@@ -388,7 +392,10 @@ export class AuthService {
         name,
         examDate: placeholderExam,
         targetGrade: 1,
-        country: 'IN' as any,
+        // KR-first launch: new Google accounts start in the only live market.
+        // gradeLevel stays null so ProtectedRoute still routes them to
+        // onboarding, where the country chip can switch to another live market.
+        country: 'KR' as any,
         emailVerifiedAt: new Date(),
       });
     } else if (!(user as any).emailVerifiedAt) {
@@ -643,7 +650,9 @@ export class AuthService {
       role: 'STUDENT' as any,
       examDate: new Date('2027-02-14'),
       targetGrade: 3,
-      country: (dto.country ?? 'IN') as any,
+      // KR-first: default guests to the only live market when the chip hasn't
+      // sent one yet. The onboarding country step overrides this before content.
+      country: (dto.country ?? 'KR') as any,
       gradeLevel: (dto.gradeLevel ?? null) as any,
       emailVerifiedAt: new Date(),
       isGuest: true,
@@ -723,7 +732,7 @@ export class AuthService {
     if (dto.birthDate) {
       const gc = await this.guardianConsent.ensurePendingForStudent({
         studentUserId: userId,
-        country: (dto.country ?? me.country ?? 'IN') as any,
+        country: (dto.country ?? me.country ?? 'KR') as any,
         ip: ctx.ip,
         ua: ctx.ua,
       });
