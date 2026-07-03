@@ -4,11 +4,13 @@
  *   GET /recommendations/review-schedule → concepts to review
  *   GET /mastery/trajectory           → per-concept status
  */
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   fetchActivePatterns,
   fetchBalance,
+  fetchChapterLinks,
   fetchConceptMastery,
   fetchReviewSchedule,
   type ConceptMastery,
@@ -65,6 +67,28 @@ export function MasteryScreen() {
   const concepts = useQuery({ queryKey: ['mastery', 'trajectory'], queryFn: fetchConceptMastery });
   const errorPatterns = useQuery({ queryKey: ['error-patterns', 'active'], queryFn: fetchActivePatterns });
 
+  // Every conceptId visible on this screen, so a weakness card can deep-link
+  // to its own chapter. Resolved server-side (country-correct: KR → Korean
+  // chapter, IN → NCERT). Null entries fall back to the generic chapter list.
+  const conceptIds = useMemo(() => {
+    const set = new Set<string>();
+    errorPatterns.data?.forEach((p) => set.add(p.conceptId));
+    review.data?.forEach((r) => set.add(r.conceptId));
+    concepts.data?.forEach((c) => set.add(c.conceptId));
+    return [...set];
+  }, [errorPatterns.data, review.data, concepts.data]);
+
+  const chapterLinks = useQuery({
+    queryKey: ['chapter-links', conceptIds],
+    queryFn: () => fetchChapterLinks(conceptIds),
+    enabled: conceptIds.length > 0,
+  });
+
+  const chapterTarget = (conceptId: string): string => {
+    const code = chapterLinks.data?.[conceptId];
+    return code ? `/app/learn/${code}` : '/app/learn';
+  };
+
   const hasHeatmap = (balance.data?.perUnit.length ?? 0) > 0;
 
   return (
@@ -114,7 +138,7 @@ export function MasteryScreen() {
             <ActiveErrorPatternList
               patterns={errorPatterns.data!}
               lang={uiLang}
-              onPractice={() => nav('/app/learn')}
+              onPractice={(p) => nav(chapterTarget(p.conceptId))}
             />
           </>
         )}
@@ -127,7 +151,7 @@ export function MasteryScreen() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {review.data!.slice(0, 6).map((row) => (
-                <ReviewConceptCard key={row.conceptId} row={row} lang={uiLang} onClick={() => nav('/app/learn')} />
+                <ReviewConceptCard key={row.conceptId} row={row} lang={uiLang} onClick={() => nav(chapterTarget(row.conceptId))} />
               ))}
             </div>
           </>
@@ -141,7 +165,7 @@ export function MasteryScreen() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {concepts.data!.slice(0, 8).map((row) => (
-                <ConceptStatusCard key={row.conceptId} row={row} lang={uiLang} onClick={() => nav('/app/learn')} />
+                <ConceptStatusCard key={row.conceptId} row={row} lang={uiLang} onClick={() => nav(chapterTarget(row.conceptId))} />
               ))}
             </div>
           </>

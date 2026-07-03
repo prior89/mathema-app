@@ -447,6 +447,10 @@ export const fetchConceptMastery   = () => get<ConceptMastery[]>('/mastery/traje
 export const fetchConceptHistory   = (conceptId: string, take = 30) =>
   get<MasteryEventRow[]>(`/mastery/trajectory/${conceptId}/history`, { take });
 export const fetchActivePatterns   = () => get<ErrorPatternRow[]>('/mastery/error-patterns/active');
+/** conceptId → country-correct chapterCode (null when no lesson resolves).
+ *  Lets a weakness card deep-link straight to its chapter. */
+export const fetchChapterLinks     = (conceptIds: string[]) =>
+  get<Record<string, string | null>>('/mastery/chapter-links', { ids: conceptIds.join(',') });
 export const fetchReviewSchedule   = () => get<ReviewScheduleRow[]>('/recommendations/review-schedule');
 export const fetchNextProblem      = (sessionId?: string) =>
   get<NextProblemRec | null>('/recommendations/next-problem', sessionId ? { sessionId } : undefined);
