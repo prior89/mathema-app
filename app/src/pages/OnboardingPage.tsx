@@ -424,7 +424,7 @@ function ScreenCountry({
                   <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 2 }}>{c.sub}</div>
                 </div>
                 {!c.active && (
-                  <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>Coming soon</span>
+                  <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('common.comingSoon')}</span>
                 )}
                 {selected && (
                   <Glyph.ChevronR accent="var(--p-primary)" size={16} />
@@ -629,7 +629,7 @@ function ScreenAuth({
           <input
             type="email" autoComplete="email"
             value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t('onboarding.auth.emailPlaceholder')}
           />
         </div>
         <div className="field">

@@ -10,6 +10,19 @@ const ko = {
   'app.brand': 'Matheo',
   'app.tagline': '· NCERT 수학',
 
+  // ===== First-run core-loop tutorial =====
+  'tutorial.loop.eyebrow': '이렇게 공부해요',
+  'tutorial.loop.s1.title': '① 개념 익히고 문제 풀기',
+  'tutorial.loop.s1.body': '개념을 짧게 배우고 바로 문제를 풀어요. 모르는 문제는 사진으로 찍어 올리면 풀이를 바로 확인할 수 있어요.',
+  'tutorial.loop.s2.title': '② 오답은 자동으로, 약점은 콕 집어',
+  'tutorial.loop.s2.body': '틀린 문제는 오답노트에 저절로 모여요. 어떤 유형에서 자주 막히는지 약점까지 분석해 드려요.',
+  'tutorial.loop.s3.title': '③ 내 약점만 골라 복습',
+  'tutorial.loop.s3.body': '분석한 약점만 모아 나만의 복습 시험을 만들어요. 며칠 뒤 다시 풀면서 확실히 내 것으로 만들어요.',
+  'tutorial.loop.skip': '건너뛰기',
+  'tutorial.loop.start': '시작할게요',
+  'common.comingSoon': '준비 중',
+  'onboarding.auth.emailPlaceholder': '이메일 주소',
+
   // ===== Common =====
   'common.cancel': '취소',
   'common.save': '저장',
@@ -1367,6 +1380,19 @@ const en: typeof ko = {
   // Brand
   'app.brand': 'Matheo',
   'app.tagline': '· NCERT Maths',
+
+  // First-run core-loop tutorial
+  'tutorial.loop.eyebrow': 'How Matheo works',
+  'tutorial.loop.s1.title': '1 · Learn & solve',
+  'tutorial.loop.s1.body': 'Learn a concept in a minute, then solve. Stuck on a question? Snap a photo and get the full solution right away.',
+  'tutorial.loop.s2.title': '2 · Mistakes saved, weak spots found',
+  'tutorial.loop.s2.body': 'Wrong answers collect themselves into your notes, and we pinpoint the error patterns you keep hitting.',
+  'tutorial.loop.s3.title': '3 · Review just your weak spots',
+  'tutorial.loop.s3.body': 'We build a review test from your weak spots alone. Re-solve it a few days later to lock it in for good.',
+  'tutorial.loop.skip': 'Skip',
+  'tutorial.loop.start': "Let's start",
+  'common.comingSoon': 'Coming soon',
+  'onboarding.auth.emailPlaceholder': 'you@example.com',
 
   // Common
   'common.cancel': 'Cancel',

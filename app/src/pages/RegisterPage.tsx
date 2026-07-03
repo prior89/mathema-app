@@ -202,6 +202,7 @@ export default function RegisterPage() {
                     setLang={setLang}
                     googleBusy={googleBusy}
                     onGoogleSignIn={handleGoogleSignIn}
+                    onGoogleError={() => setErr(t('login.google.failed'))}
                     formBusy={busy}
                     hideGoogle={upgradeMode}
                     t={t}
@@ -295,7 +296,7 @@ export default function RegisterPage() {
 
 function StepRoleAndCredentials({
   role, setRole, email, setEmail, password, setPassword, name, setName,
-  country, setCountry, setLang, googleBusy, onGoogleSignIn, formBusy, hideGoogle, t,
+  country, setCountry, setLang, googleBusy, onGoogleSignIn, onGoogleError, formBusy, hideGoogle, t,
 }: any) {
   const COUNTRIES: Array<{ id: 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG'; flag: string; name: string; active: boolean }> = [
     { id: 'IN', flag: '🇮🇳', name: 'India', active: true },
@@ -363,7 +364,7 @@ function StepRoleAndCredentials({
       )}
       <div className="field">
         <label>{t('auth.email')}</label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" autoComplete="email" />
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('onboarding.auth.emailPlaceholder')} autoComplete="email" />
       </div>
       <div className="field">
         <label>{t('auth.passwordHint')}</label>
@@ -403,7 +404,13 @@ function StepRoleAndCredentials({
       {!hideGoogle && isGoogleSignInConfigured() && (
         <>
           <AuthDivider labelKey="reg.or" />
-          <GoogleSignInButton mode="signup" onCredential={onGoogleSignIn} busy={googleBusy} disabled={formBusy} />
+          <GoogleSignInButton
+            mode="signup"
+            onCredential={onGoogleSignIn}
+            onError={onGoogleError}
+            busy={googleBusy}
+            disabled={formBusy}
+          />
         </>
       )}
     </>
