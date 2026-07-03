@@ -59,7 +59,7 @@ export default function RegisterPage() {
 
   const [childEmail, setChildEmail] = useState('');
   const [tenantCode, setTenantCode] = useState('');
-  const [country, setCountry] = useState<'IN' | 'KR'>('IN');
+  const [country, setCountry] = useState<'IN' | 'KR'>('KR');
 
   const [parentEmail, setParentEmail] = useState('');
 
@@ -298,9 +298,13 @@ function StepRoleAndCredentials({
   role, setRole, email, setEmail, password, setPassword, name, setName,
   country, setCountry, setLang, googleBusy, onGoogleSignIn, onGoogleError, formBusy, hideGoogle, t,
 }: any) {
+  // KR-first launch: KR is the only live market. IN is parked (status:'planned'
+  // on the backend), so the register API would 400 on country:'IN' — keep it in
+  // the list but inactive so a stray pick can't hit that reject. Must stay in
+  // sync with COUNTRY_CONFIG.status and OnboardingPage's chip list.
   const COUNTRIES: Array<{ id: 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG'; flag: string; name: string; active: boolean }> = [
-    { id: 'IN', flag: '🇮🇳', name: 'India', active: true },
     { id: 'KR', flag: '🇰🇷', name: '대한민국', active: true },
+    { id: 'IN', flag: '🇮🇳', name: 'India', active: false },
     { id: 'US', flag: '🇺🇸', name: 'United States', active: false },
     { id: 'UK', flag: '🇬🇧', name: 'United Kingdom', active: false },
     { id: 'AU', flag: '🇦🇺', name: 'Australia', active: false },
@@ -395,7 +399,7 @@ function StepRoleAndCredentials({
               >
                 <span style={{ fontSize: 18, lineHeight: 1 }}>{c.flag}</span>
                 <span style={{ fontWeight: selected ? 600 : 500, color: 'var(--p-ink)' }}>{c.name}</span>
-                {!c.active && <span className="chip" style={{ marginLeft: 'auto', padding: '1px 6px', fontSize: 10 }}>Soon</span>}
+                {!c.active && <span className="chip" style={{ marginLeft: 'auto', padding: '1px 6px', fontSize: 10 }}>{t('common.comingSoon')}</span>}
               </button>
             );
           })}

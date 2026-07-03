@@ -138,7 +138,9 @@ export class AuthService {
     // SEC-2 breach check before bcrypt (faster reject on bad password).
     await assertPasswordNotBreached(dto.password);
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
-    const user = await this.users.create({
+    let user: Awaited<ReturnType<typeof this.users.create>>;
+    try {
+      user = await this.users.create({
       email,
       passwordHash,
       name: dto.name,
@@ -156,7 +158,16 @@ export class AuthService {
       ...(isStudent && dto.birthDate ? { birthDate: new Date(dto.birthDate) } : {}),
       ...(studyGoal ? { studyGoal } : {}),
       ...(tenantId ? { tenantId } : {}),
-    });
+      });
+    } catch (e) {
+      // A concurrent double-submit can slip past the findByEmail check above and
+      // race into the unique(email) constraint. Convert the raw Prisma P2002
+      // into the same clean "already used" signal instead of surfacing a 500.
+      if ((e as { code?: string })?.code === 'P2002') {
+        throw new UnauthorizedException('email already used');
+      }
+      throw e;
+    }
 
     if (role === 'PARENT' && pendingChildUserId) {
       await this.parentLinks.requestLink({

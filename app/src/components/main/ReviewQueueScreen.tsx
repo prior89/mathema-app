@@ -108,6 +108,7 @@ export function ReviewQueueScreen() {
 
 function EmptyState({ nextEligibleAt, onBack }: { nextEligibleAt: string | null; onBack: () => void }) {
   const { t } = useT();
+  const nav = useNavigate();
   let countdown: string | null = null;
   if (nextEligibleAt) {
     const ms = new Date(nextEligibleAt).getTime() - Date.now();
@@ -126,14 +127,25 @@ function EmptyState({ nextEligibleAt, onBack }: { nextEligibleAt: string | null;
           ? t('review.empty.body.countdown', { countdown })
           : t('review.empty.body.none')}
       </p>
-      <button
-        className="btn"
-        onClick={onBack}
-        style={{ maxWidth: 240, alignSelf: 'center', marginTop: 8 }}
-      >
-        {t('review.empty.back')}
-        <Glyph.ChevronR />
-      </button>
+      {/* Keep momentum when the queue is drained: instead of a dead-end
+          countdown, offer the two natural next moves — build fresh wrong notes
+          by practicing, or revisit past mistakes — then a quiet way back. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 280, alignSelf: 'center', marginTop: 8 }}>
+        <button className="btn" onClick={() => nav('/app/study')} style={{ width: '100%' }}>
+          {t('review.empty.practiceNew')}
+          <Glyph.ChevronR />
+        </button>
+        <button className="btn ghost" onClick={() => nav('/app/notes')} style={{ width: '100%' }}>
+          {t('review.empty.browseNotes')}
+        </button>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{ background: 'none', border: 'none', color: 'var(--p-muted)', fontSize: 13, cursor: 'pointer', padding: '6px' }}
+        >
+          {t('review.empty.back')}
+        </button>
+      </div>
     </div>
   );
 }

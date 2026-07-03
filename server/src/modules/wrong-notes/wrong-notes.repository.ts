@@ -207,6 +207,11 @@ export class WrongNotesRepository {
       where: { userId, ...this.buildWhere(query) },
       orderBy: this.buildOrderBy(query),
       include: { problem: { include: { unit: true, subUnit: true, conceptLesson: { select: { chapterCode: true } } } } },
+      // Safety bound: a long-term user can accumulate thousands of wrong notes;
+      // returning them all hangs the mobile grid (no virtualization). 300 covers
+      // every realistic user by the query's sort; power users past that get their
+      // top-300 rather than a crash. (Pagination is the proper follow-up.)
+      take: 300,
     });
     return rows.map((r) => toCardShape(r, lang));
   }
