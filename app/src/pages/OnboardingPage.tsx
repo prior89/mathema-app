@@ -908,6 +908,8 @@ function ScreenGuardian({
   const [err, setErr] = useState<string | null>(null);
   const [waiting, setWaiting] = useState(false);
   const [poll, setPoll] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     if (!poll) return;
@@ -923,6 +925,36 @@ function ScreenGuardian({
     }, 10_000);
     return () => window.clearInterval(id);
   }, [poll, onNext, refreshUser]);
+
+  // Resend cooldown ticker.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = window.setTimeout(() => setCooldown((n) => n - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [cooldown]);
+
+  // Surface a "taking too long?" helper ~45s into waiting so a parent whose
+  // email bounced or was spam-filtered doesn't strand the student on an
+  // otherwise-infinite poll (research: parents click on mobile, mail can drop).
+  useEffect(() => {
+    if (!waiting) { setShowHelp(false); return; }
+    const id = window.setTimeout(() => setShowHelp(true), 45_000);
+    return () => window.clearTimeout(id);
+  }, [waiting]);
+
+  const resend = async () => {
+    if (cooldown > 0 || busy || !parentEmail.trim()) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      await requestGuardianConsent({ parentEmail: parentEmail.trim() });
+      setCooldown(30);
+    } catch (e: any) {
+      setErr(e?.response?.data?.error?.message ?? t('guardianConsent.failed'));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const submit = async () => {
     if (!parentEmail.trim() || typeof age !== 'number') return;
@@ -962,9 +994,30 @@ function ScreenGuardian({
           <p className="subtitle">{t(guardianSubKey)}</p>
         </div>
         {waiting ? (
-          <div className="alert success">
-            {t('guardianConsent.sent', { email: parentEmail })}
-          </div>
+          <>
+            <div className="alert success">
+              {t('guardianConsent.sent', { email: parentEmail })}
+            </div>
+            {showHelp && (
+              <span className="caption" style={{ color: 'var(--p-ink-2)' }}>
+                {t('guardianConsent.waiting.help')}
+              </span>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+              <button className="btn ghost" onClick={resend} disabled={busy || cooldown > 0}>
+                {cooldown > 0
+                  ? t('guardianConsent.resendIn', { n: cooldown })
+                  : t('guardianConsent.resend')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setWaiting(false); setPoll(false); }}
+                style={{ background: 'none', border: 'none', color: 'var(--p-muted)', fontSize: 13, cursor: 'pointer', padding: '6px' }}
+              >
+                {t('guardianConsent.changeEmail')}
+              </button>
+            </div>
+          </>
         ) : (
           <div className="field">
             <label>{t('guardianConsent.parentEmail')}</label>
