@@ -3,7 +3,7 @@ import { AiService } from '../../../infrastructure/ai/ai.service';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { WrongNotesRepository } from '../../wrong-notes/wrong-notes.repository';
 import { Difficulty } from '../../../common/enums/difficulty.enum';
-import { examDifficultyDistribution } from '../../../common/utils/difficulty-matcher.util';
+import { examDifficultyDistribution, productiveStruggleWeight } from '../../../common/utils/difficulty-matcher.util';
 import { NCERT_TO_KR_GRADE } from '../../diagnostic/diagnostic-pool-gate';
 
 /**
@@ -38,7 +38,10 @@ export class AiRecommendExamService {
     }
 
     const target = 20;
-    const weights = masteries.map((m) => ({ unitId: m.unitId, score: m.score, w: Math.max(5, 100 - m.score) }));
+    // Selection weight = productive-struggle (85% rule / ZPD), not pure weakness:
+    // the peak sits on the reachable-weak band, so effort isn't wasted on the
+    // absolute weakest (usually prerequisite-blocked / below productive struggle).
+    const weights = masteries.map((m) => ({ unitId: m.unitId, score: m.score, w: productiveStruggleWeight(m.score) }));
     const totalW = weights.reduce((s, x) => s + x.w, 0);
 
     // Units are shared across the IN/KR curriculum trees, so a unit draw for
@@ -140,26 +143,31 @@ export class AiRecommendExamService {
     }
 
     if (kind === 'mini') {
-      const weakest = await this.prisma.masterySnapshot.findFirst({
-        where: { userId }, orderBy: { score: 'asc' },
-      });
-      if (!weakest) {
+      // Target the highest productive-struggle unit (reachable-weak), NOT the
+      // single lowest-score unit — the latter is usually below productive
+      // struggle (prereqs missing) and teaches little (85% rule / ZPD).
+      const snaps = await this.prisma.masterySnapshot.findMany({ where: { userId } });
+      const target = snaps.length
+        ? snaps.reduce((best, s) =>
+            productiveStruggleWeight(s.score) > productiveStruggleWeight(best.score) ? s : best)
+        : null;
+      if (!target) {
         const fb = await this.fallbackAnyLinked(5, country);
         return { kind, ...fb };
       }
-      const dist = examDifficultyDistribution(weakest.score);
+      const dist = examDifficultyDistribution(target.score);
       const krOnly = country === 'KR' ? { koreanConceptLessonId: { not: null } } : {};
       const problems: Array<{ id: string; source: string; difficulty: string }> = [];
       for (const [diff, ratio] of Object.entries(dist) as [Difficulty, number][]) {
         const n = Math.round(10 * ratio);
         if (n <= 0) continue;
         const ps = await this.prisma.problem.findMany({
-          where: { unitId: weakest.unitId, difficulty: diff as any, ...krOnly }, take: n,
+          where: { unitId: target.unitId, difficulty: diff as any, ...krOnly }, take: n,
         });
         problems.push(...ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })));
       }
       if (problems.length === 0) {
-        const ps = await this.prisma.problem.findMany({ where: { unitId: weakest.unitId, ...krOnly }, take: 10 });
+        const ps = await this.prisma.problem.findMany({ where: { unitId: target.unitId, ...krOnly }, take: 10 });
         if (ps.length > 0) {
           return { kind, problems: ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })) };
         }
