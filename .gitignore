@@ -30,6 +30,9 @@ dist-releases/
 .idea/
 *.iml
 # App — Vite / Playwright / Capacitor build
+# npm workspaces use the root package-lock.json as the single dependency lock.
+# A nested app lockfile is stale-prone and not used by CI.
+app/package-lock.json
 app/dist/
 app/test-results/
 # Repo-root playwright/e2e output (responsive snapshot runs etc.) — never source-controlled
@@ -65,4 +68,3 @@ __pycache__/
 *.pyc
 # Python virtualenvs (per-service isolation, never committed)
 **/.venv/
-

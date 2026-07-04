@@ -1,5 +1,47 @@
 apply plugin: 'com.android.application'
 
+def readDotEnvValue(String key) {
+    def envFiles = [
+        rootProject.file('../../.env'),
+        rootProject.file('../../app/.env'),
+        rootProject.file('../../app/.env.local'),
+        rootProject.file('../../app/.env.production'),
+        rootProject.file('../../app/.env.production.local'),
+    ]
+    for (def envFile : envFiles) {
+        if (!envFile.exists()) continue
+        for (def rawLine : envFile.readLines('UTF-8')) {
+            def line = rawLine.trim()
+            if (!line || line.startsWith('#')) continue
+            def idx = line.indexOf('=')
+            if (idx <= 0) continue
+            if (line.substring(0, idx).trim() != key) continue
+            def value = line.substring(idx + 1).trim()
+            if ((value.startsWith('"') && value.endsWith('"')) ||
+                (value.startsWith("'") && value.endsWith("'"))) {
+                value = value.substring(1, value.length() - 1)
+            }
+            return value
+        }
+    }
+    return ''
+}
+
+def envOrDotEnv(String key) {
+    def value = System.getenv(key)
+    if (value != null && value.trim()) return value.trim()
+    return readDotEnvValue(key).trim()
+}
+
+def buildConfigString(String value) {
+    return '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"'
+}
+
+def googleWebClientId = envOrDotEnv('VITE_GOOGLE_CLIENT_ID')
+if (googleWebClientId == 'dummy-web-client.apps.googleusercontent.com') {
+    googleWebClientId = ''
+}
+
 android {
     namespace = "ai.matheo.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -13,7 +55,7 @@ android {
         // is the cheapest way to stay safe without bumping the file every push.
         versionCode = (System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger()
         versionName "1.0"
-        buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${System.getenv('VITE_GOOGLE_CLIENT_ID') ?: ''}\""
+        buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", buildConfigString(googleWebClientId)
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
