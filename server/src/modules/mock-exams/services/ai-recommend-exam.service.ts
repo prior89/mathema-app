@@ -4,6 +4,7 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { WrongNotesRepository } from '../../wrong-notes/wrong-notes.repository';
 import { Difficulty } from '../../../common/enums/difficulty.enum';
 import { examDifficultyDistribution, productiveStruggleWeight } from '../../../common/utils/difficulty-matcher.util';
+import { recommenderArm, type RecommenderArm } from '../../../common/utils/recommender-cohort.util';
 import { NCERT_TO_KR_GRADE } from '../../diagnostic/diagnostic-pool-gate';
 
 /**
@@ -38,10 +39,12 @@ export class AiRecommendExamService {
     }
 
     const target = 20;
-    // Selection weight = productive-struggle (85% rule / ZPD), not pure weakness:
-    // the peak sits on the reachable-weak band, so effort isn't wasted on the
-    // absolute weakest (usually prerequisite-blocked / below productive struggle).
-    const weights = masteries.map((m) => ({ unitId: m.unitId, score: m.score, w: productiveStruggleWeight(m.score) }));
+    // A/B: 'productive' = reachable-weak (85% rule / ZPD, the shipped default);
+    // 'legacy' = pure weakness. Stable per user; RECOMMENDER_AB_SPLIT controls
+    // the % on the new rule (100 = everyone new, 0 = instant no-deploy revert).
+    const arm = recommenderArm(userId);
+    const weightOf = this.selectionWeight(arm);
+    const weights = masteries.map((m) => ({ unitId: m.unitId, score: m.score, w: weightOf(m.score) }));
     const totalW = weights.reduce((s, x) => s + x.w, 0);
 
     // Units are shared across the IN/KR curriculum trees, so a unit draw for
@@ -64,7 +67,13 @@ export class AiRecommendExamService {
       }
     }
     if (problems.length === 0) return this.fallbackAnyLinked(10, country);
-    return { problems: problems.slice(0, target) };
+    return { problems: problems.slice(0, target), arm };
+  }
+
+  /** Selection weight function for a cohort arm — kept here so the legacy
+   *  pure-weakness rule survives for the A/B and as a no-deploy fallback. */
+  private selectionWeight(arm: RecommenderArm): (score: number) => number {
+    return arm === 'legacy' ? (score: number) => Math.max(5, 100 - score) : productiveStruggleWeight;
   }
 
   private async userCountry(userId: string): Promise<'IN' | 'KR'> {
@@ -143,13 +152,12 @@ export class AiRecommendExamService {
     }
 
     if (kind === 'mini') {
-      // Target the highest productive-struggle unit (reachable-weak), NOT the
-      // single lowest-score unit — the latter is usually below productive
-      // struggle (prereqs missing) and teaches little (85% rule / ZPD).
+      // Target the highest-weight unit for the user's arm (reachable-weak by
+      // default; the single lowest-score unit only under the 'legacy' arm).
+      const weightOf = this.selectionWeight(recommenderArm(userId));
       const snaps = await this.prisma.masterySnapshot.findMany({ where: { userId } });
       const target = snaps.length
-        ? snaps.reduce((best, s) =>
-            productiveStruggleWeight(s.score) > productiveStruggleWeight(best.score) ? s : best)
+        ? snaps.reduce((best, s) => (weightOf(s.score) > weightOf(best.score) ? s : best))
         : null;
       if (!target) {
         const fb = await this.fallbackAnyLinked(5, country);
