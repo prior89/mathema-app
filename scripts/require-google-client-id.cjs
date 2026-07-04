@@ -4,6 +4,7 @@ const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
 const APP = path.join(ROOT, 'app');
+const DUMMY_GOOGLE_CLIENT_ID = 'dummy-web-client.apps.googleusercontent.com';
 const INVALID_VALUES = new Set(['', 'api입력칸']);
 
 function parseEnvFile(filePath) {
@@ -43,7 +44,7 @@ if (process.env.VITE_GOOGLE_CLIENT_ID != null) {
 }
 
 const clientId = (env.VITE_GOOGLE_CLIENT_ID ?? '').trim();
-if (INVALID_VALUES.has(clientId)) {
+if (INVALID_VALUES.has(clientId) || clientId === DUMMY_GOOGLE_CLIENT_ID) {
   console.error(
     '[google-client-id] VITE_GOOGLE_CLIENT_ID is required before building a Capacitor Android bundle.',
   );

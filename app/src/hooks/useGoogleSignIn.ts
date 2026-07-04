@@ -5,13 +5,16 @@ import { GoogleAuth, isNativeGoogleAuthPlatform } from '../native/google-auth-br
 
 type UseGoogleSignInOpts = {
   onCredential: (idToken: string) => void | Promise<void>;
+  onError?: (error: unknown) => void;
   /** When false, skip GIS init (e.g. onboarding step not visible). Default true. */
   enabled?: boolean;
 };
 
-export function useGoogleSignIn({ onCredential, enabled = true }: UseGoogleSignInOpts) {
+export function useGoogleSignIn({ onCredential, onError, enabled = true }: UseGoogleSignInOpts) {
   const callbackRef = useRef(onCredential);
   callbackRef.current = onCredential;
+  const errorRef = useRef(onError);
+  errorRef.current = onError;
 
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -65,6 +68,7 @@ export function useGoogleSignIn({ onCredential, enabled = true }: UseGoogleSignI
         if (idToken) await callbackRef.current(idToken);
       } catch (error) {
         console.warn('Google sign-in was not completed', error);
+        errorRef.current?.(error);
       }
       return;
     }
