@@ -60,6 +60,7 @@ type ProblemSeed = {
   hint: string;
   requiredSkills: string[];
   expectedSolutionSteps: string[];
+  explanation: string;
   processPrompt: string;
   processCorrect: string;
   processDistractors: ChoiceSeed[];
@@ -143,6 +144,28 @@ function uniqueFive(correct: string, candidates: string[]): string[] {
     if (out.length === 5) break;
   }
   return out;
+}
+
+function explainSolution(formula: string, steps: string[], answer: string): string {
+  const lines = [
+    `Key idea: ${formula}`,
+    ...steps.map((step, index) => `${index + 1}. ${step}`),
+    `So the correct answer is ${answer}.`,
+  ];
+  return lines.join('\n');
+}
+
+function answerRationale(type: ChoiceSeed['distractorType']): string {
+  if (type === 'CALC_ERROR') {
+    return 'This option is close, but it comes from a calculation slip. Recheck the signs, arithmetic, or exponent in the last step.';
+  }
+  if (type === 'PROCESS_SKIP') {
+    return 'This comes from stopping one step early. Finish the substitution and simplification before choosing an answer.';
+  }
+  if (type === 'CONCEPT_CONFUSION') {
+    return 'This uses a different concept from the one the question is testing. Match the chapter idea first, then choose the formula.';
+  }
+  return 'This looks like a quick guess. Write the setup first so the option is tied to the question, not just to a familiar number.';
 }
 
 function titleDistractors(chapter: NcertChapter): string[] {
@@ -513,10 +536,11 @@ function makeSeed(chapter: NcertChapter, slot: number): ProblemSeed {
     body,
     answer,
     formula,
-    concept: `${chapter.titleEn}: ${formula}`,
-    hint: `Use the ${chapter.titleEn} formula first, then simplify one step at a time.`,
+    concept: `Key idea for ${chapter.titleEn}: ${formula}`,
+    hint: `Start with the ${chapter.titleEn} idea, write the formula, then simplify carefully.`,
     requiredSkills: skills,
     expectedSolutionSteps: solution,
+    explanation: explainSolution(formula, solution, answer),
     processPrompt: process.prompt,
     processCorrect: process.correct,
     processDistractors: process.distractors,
@@ -531,7 +555,7 @@ function buildSteps(chapter: NcertChapter, seed: ProblemSeed, slot: number) {
       text,
       isCorrect: false,
       distractorType: 'CONCEPT_CONFUSION' as const,
-      rationale: `This belongs to ${text}, not ${chapter.titleEn}.`,
+      rationale: `This belongs to ${text}. This question is asking for ${chapter.titleEn}, so start by matching the concept first.`,
     })),
   ];
 
@@ -544,10 +568,13 @@ function buildSteps(chapter: NcertChapter, seed: ProblemSeed, slot: number) {
   const answerChoices: ChoiceSeed[] = answers.map((text, idx) => ({
     text,
     isCorrect: idx === 0,
-    ...(idx === 0 ? {} : {
-      distractorType: idx % 2 === 0 ? 'CALC_ERROR' as const : 'PROCESS_SKIP' as const,
-      rationale: 'A plausible wrong answer from a common calculation or process slip.',
-    }),
+    ...(idx === 0 ? {} : (() => {
+      const distractorType = idx % 2 === 0 ? 'CALC_ERROR' as const : 'PROCESS_SKIP' as const;
+      return {
+        distractorType,
+        rationale: answerRationale(distractorType),
+      };
+    })()),
   }));
 
   const shuffledConcept = seededShuffle(conceptChoices, `${chapter.chapterCode}:concept:${slot}`);
@@ -595,6 +622,7 @@ async function deleteGeneratedRows(lessonId: string) {
   const ids = existing.map((p) => p.id);
   await prisma.attempt.deleteMany({ where: { problemId: { in: ids } } });
   await prisma.wrongNote.deleteMany({ where: { problemId: { in: ids } } }).catch(() => undefined);
+  await prisma.recommendationLog.deleteMany({ where: { recommendedProblemId: { in: ids } } });
   const deleted = await prisma.problem.deleteMany({ where: { id: { in: ids } } });
   return deleted.count;
 }
@@ -653,7 +681,10 @@ async function ensureChapter(chapter: NcertChapter, lesson: LessonRow) {
         answer: seed.answer,
         hint: seed.hint,
         requiredSkills: seed.requiredSkills,
-        expectedSolutionSteps: { steps: seed.expectedSolutionSteps } as any,
+        expectedSolutionSteps: {
+          steps: seed.expectedSolutionSteps,
+          explanation: seed.explanation,
+        } as any,
         expectedTimeSec: 90 + diff.level * 45,
         steps: {
           create: steps.map((s) => ({

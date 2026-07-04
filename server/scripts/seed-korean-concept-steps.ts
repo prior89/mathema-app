@@ -16,6 +16,7 @@ import {
   KOREAN_CHAPTER_CONTENT,
   KoreanConceptChapterContent,
 } from '../src/common/curriculum/concept-content-ko';
+import { polishKoreanConceptChapterContent } from '../src/common/curriculum/concept-content-polish';
 
 const args = process.argv.slice(2);
 const codeIdx = args.indexOf('--code');
@@ -24,7 +25,7 @@ const specificCode = codeIdx >= 0 ? args[codeIdx + 1] : null;
 /** Convert one chapter's hand-authored content blob → ordered KoreanConceptStep
  *  insert payloads. Optional fields (concrete / pictorial / misconception /
  *  reflect) are skipped when absent so we don't seed empty rows. */
-function buildSteps(content: KoreanConceptChapterContent): Array<{
+function buildSteps(rawContent: KoreanConceptChapterContent): Array<{
   stepIndex: number;
   kind: ConceptStepKind;
   titleKo: string;
@@ -34,6 +35,7 @@ function buildSteps(content: KoreanConceptChapterContent): Array<{
   misconception?: any;
   reflectPrompts?: any;
 }> {
+  const content = polishKoreanConceptChapterContent(rawContent);
   const out: any[] = [];
   let idx = 1;
 

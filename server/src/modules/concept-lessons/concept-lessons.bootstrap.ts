@@ -4,12 +4,16 @@ import { ConceptStepKind } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { NCERT_CHAPTERS } from '../../common/curriculum/ncert-chapters';
 import { CHAPTER_CONTENT, ConceptChapterContent } from '../../common/curriculum/concept-content';
+import {
+  CONCEPT_CONTENT_POLISH_VERSION,
+  polishConceptChapterContent,
+} from '../../common/curriculum/concept-content-polish';
 import { pickSequence } from '../../common/learning/concept-framework';
 
 /** SystemMetadata key for the stable content hash of CHAPTER_CONTENT. Versioned
  *  so an intentional algorithm change (e.g. switching what we feed into the
  *  hash) invalidates every existing prod stamp and forces one re-sync. */
-const CONCEPT_CONTENT_HASH_KEY = 'concept_content_hash_v1';
+const CONCEPT_CONTENT_HASH_KEY = 'concept_content_hash_v2';
 
 /**
  * 부팅 시 ConceptLesson + ConceptStep 을 NCERT_CHAPTERS / CHAPTER_CONTENT 와 자동 동기화.
@@ -170,7 +174,9 @@ export class ConceptLessonsBootstrap implements OnModuleInit {
  *  hashes to the same value. A false-positive change (key reordering, etc.)
  *  costs one ~5s re-sync, never under-syncs. */
 function computeContentHash(): string {
-  return createHash('sha256').update(JSON.stringify(CHAPTER_CONTENT)).digest('hex');
+  return createHash('sha256')
+    .update(JSON.stringify({ content: CHAPTER_CONTENT, polishVersion: CONCEPT_CONTENT_POLISH_VERSION }))
+    .digest('hex');
 }
 
 // ---------- buildSteps (prisma/seed-concepts.ts 와 동일 로직 — production 동기화용) ----------
@@ -193,10 +199,11 @@ interface StepRecord {
 }
 
 function buildSteps(
-  content: ConceptChapterContent | undefined,
+  rawContent: ConceptChapterContent | undefined,
   cognitiveLoad: 0 | 1 | 2 | 3,
   chapterCode: string,
 ): StepRecord[] {
+  const content = rawContent ? polishConceptChapterContent(rawContent) : undefined;
   const seq = pickSequence(cognitiveLoad);
   const steps: StepRecord[] = [];
   const ncert = NCERT_EXCERPTS[chapterCode];
