@@ -142,7 +142,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (e) {
           if (isAuthRejection(e)) {
             tokens.clear();
-            try { sessionStorage.setItem('matheo.loginNotice', 'session_expired'); } catch {}
+            try { sessionStorage.setItem('matheo.loginNotice', 'session_expired'); } catch {
+              // Storage may be unavailable in private or embedded contexts.
+            }
           }
           setReady(true);
           return;
