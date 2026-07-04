@@ -50,8 +50,8 @@ test.describe('billing — 403 paywall redirect', () => {
                       offerId: null,
                       pricingPhases: [
                         {
-                          priceFormatted: '₩9,900',
-                          priceAmountMicros: '9900000000',
+                          priceFormatted: '₩14,900',
+                          priceAmountMicros: '14900000000',
                           currencyCode: 'KRW',
                           billingPeriod: 'P1M',
                           recurrenceMode: 1,
@@ -72,8 +72,8 @@ test.describe('billing — 403 paywall redirect', () => {
                       offerId: null,
                       pricingPhases: [
                         {
-                          priceFormatted: '₩99,000',
-                          priceAmountMicros: '99000000000',
+                          priceFormatted: '₩149,000',
+                          priceAmountMicros: '149000000000',
                           currencyCode: 'KRW',
                           billingPeriod: 'P1Y',
                           recurrenceMode: 1,

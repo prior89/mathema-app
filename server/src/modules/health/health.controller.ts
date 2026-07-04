@@ -7,6 +7,16 @@ import { NCERT_CHAPTERS } from '../../common/curriculum/ncert-chapters';
 import { CHAPTER_CONTENT } from '../../common/curriculum/concept-content';
 import { KOREAN_CHAPTER_CONTENT } from '../../common/curriculum/concept-content-ko';
 
+type ProviderHealthStatus = 'ready' | 'mock' | 'disabled' | 'not_configured' | 'not_implemented';
+
+type ProviderHealthCheck = {
+  id: string;
+  status: ProviderHealthStatus;
+  ready: boolean;
+  required: boolean;
+  message: string;
+};
+
 /**
  * 헬스 엔드포인트 — Azure Container Apps probe 와 1:1 매핑.
  *   /health            기본 호환 (이전 코드 호출용)
@@ -95,5 +105,100 @@ export class HealthController {
     // that can't talk to its DB. Set 503 so probes drain the bad replica.
     if (!ready) res.status(HttpStatus.SERVICE_UNAVAILABLE);
     return { status: ready ? 'ready' : 'degraded', checks, time: new Date().toISOString() };
+  }
+
+  @Public() @Get('providers')
+  providers(@Res({ passthrough: true }) res: Response) {
+    const checks = this.authProviderChecks();
+    const ready = checks.filter((c) => c.required).every((c) => c.ready);
+    if (!ready) res.status(HttpStatus.SERVICE_UNAVAILABLE);
+    return {
+      status: ready ? 'ready' : 'degraded',
+      checks,
+      time: new Date().toISOString(),
+    };
+  }
+
+  private authProviderChecks(): ProviderHealthCheck[] {
+    const prod = process.env.NODE_ENV === 'production';
+    const passEnabled = process.env.GUARDIAN_PASS_ENABLED === 'true';
+    const passProvider = process.env.GUARDIAN_PASS_PROVIDER ?? 'mock';
+    const otpMock = process.env.OTP_AUTH_MOCK === 'true';
+    const otpEnabled = otpMock || process.env.OTP_AUTH_ENABLED === 'true' || this.present(process.env.MSG91_AUTH_KEY);
+    const socialMock = process.env.SOCIAL_AUTH_MOCK === 'true';
+
+    return [
+      this.checkPassProvider({ prod, enabled: passEnabled, provider: passProvider }),
+      {
+        id: 'kr_social_kakao_naver_backend',
+        status: socialMock ? (prod ? 'not_configured' : 'mock') : 'ready',
+        ready: !socialMock || !prod,
+        required: true,
+        message: socialMock
+          ? 'SOCIAL_AUTH_MOCK auto-approves Kakao/Naver identities; use only in local/dev.'
+          : 'Backend verifies Kakao/Naver provider access tokens against provider userinfo APIs. Client SDK wiring is checked in the app build.',
+      },
+      this.checkOtpProvider({ prod, enabled: otpEnabled, mock: otpMock }),
+    ];
+  }
+
+  private checkPassProvider(opts: { prod: boolean; enabled: boolean; provider: string }): ProviderHealthCheck {
+    if (!opts.enabled) {
+      return {
+        id: 'kr_guardian_pass',
+        status: 'disabled',
+        ready: true,
+        required: false,
+        message: 'GUARDIAN_PASS_ENABLED is not true; KR under-14 guardian consent falls back to the non-PASS rail.',
+      };
+    }
+    if (opts.provider === 'mock') {
+      return {
+        id: 'kr_guardian_pass',
+        status: opts.prod ? 'not_configured' : 'mock',
+        ready: !opts.prod,
+        required: true,
+        message: 'GUARDIAN_PASS_PROVIDER=mock auto-approves guardian identity; production must use a real PASS/NICE/PortOne provider.',
+      };
+    }
+    return {
+      id: 'kr_guardian_pass',
+      status: 'not_implemented',
+      ready: false,
+      required: true,
+      message: `GUARDIAN_PASS_PROVIDER=${opts.provider} is selected, but the real provider branch is not wired yet.`,
+    };
+  }
+
+  private checkOtpProvider(opts: { prod: boolean; enabled: boolean; mock: boolean }): ProviderHealthCheck {
+    if (!opts.enabled) {
+      return {
+        id: 'in_phone_otp_truecaller',
+        status: 'disabled',
+        ready: true,
+        required: false,
+        message: 'OTP_AUTH_ENABLED is not true and MSG91_AUTH_KEY is absent; India phone OTP/Truecaller rail should stay hidden.',
+      };
+    }
+    if (opts.mock) {
+      return {
+        id: 'in_phone_otp_truecaller',
+        status: opts.prod ? 'not_configured' : 'mock',
+        ready: !opts.prod,
+        required: true,
+        message: 'OTP_AUTH_MOCK echoes OTP codes and fakes Truecaller identities; production must use real providers.',
+      };
+    }
+    return {
+      id: 'in_phone_otp_truecaller',
+      status: 'not_implemented',
+      ready: false,
+      required: true,
+      message: 'MSG91/Truecaller credentials may be present, but real SMS and Truecaller verification branches are not wired yet.',
+    };
+  }
+
+  private present(value: string | undefined): boolean {
+    return !!value && value.trim().length > 0;
   }
 }

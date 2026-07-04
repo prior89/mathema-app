@@ -14,7 +14,7 @@ describe('billing pricing helpers', () => {
   });
 
   it('formats KRW without decimal places', () => {
-    expect(formatMicros('9900000000', 'KRW', 'ko-KR')).toContain('9,900');
+    expect(formatMicros('14900000000', 'KRW', 'ko-KR')).toContain('14,900');
   });
 
   it('shows the monthly equivalent of an annual price', () => {
@@ -28,7 +28,7 @@ describe('billing pricing helpers', () => {
   });
 
   it('calculates savings against twelve monthly payments', () => {
-    expect(annualSavingsPercent('9900000000', '99000000000')).toBe(17);
+    expect(annualSavingsPercent('14900000000', '149000000000')).toBe(17);
     expect(annualSavingsPercent('10000000', '96000000')).toBe(20);
     expect(annualSavingsPercent('10000000', '120000000')).toBe(0);
   });
