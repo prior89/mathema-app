@@ -46,7 +46,7 @@ Enter these manually in Play Console for both base plans.
 
 | Country / region | Play country code | Currency | Monthly price | Yearly price | Note |
 |---|---:|---:|---:|---:|---|
-| South Korea | KR | KRW | 9,900 | 99,000 | Anchor price requested for the Korean launch |
+| South Korea | KR | KRW | 14,900 | 149,000 | Korean launch anchor for weekly paper-exam PDF, wrong-answer analysis, and parent reports |
 | India | IN | INR | 399 | 3,999 | Local launch price below direct KRW parity |
 | Indonesia | ID | IDR | 69,000 | 690,000 | SEA expansion placeholder; enable distribution only after review |
 | Vietnam | VN | VND | 149,000 | 1,490,000 | SEA expansion placeholder; enable distribution only after review |

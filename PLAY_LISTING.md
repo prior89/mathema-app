@@ -178,7 +178,7 @@ spaced-repetition wrong-note book. Built for Indian students under DPDP
   and yearly subscriptions. A separate one-time, cardless 3-day Premium
   Preview does not auto-renew or charge the user. Regional subscription
   prices are managed in `PLAY_PRICING.md`; the Korean launch anchor is
-  KRW 9,900 monthly / KRW 99,000 yearly, with the final local price shown
+  KRW 14,900 monthly / KRW 149,000 yearly, with the final local price shown
   by Google Play before purchase.
 - **Countries**:
   - Launch wave: **India** and **South Korea**.

@@ -150,7 +150,7 @@ The Service is offered in two tiers:
   subscriptions.
 
 The current launch price table is maintained for Google Play operations. In
-Korea, the current base prices are **KRW 9,900 monthly** and **KRW 99,000
+Korea, the current base prices are **KRW 14,900 monthly** and **KRW 149,000
 yearly**. Other launch and expansion-region prices are configured manually in
 Google Play. Prices and billing periods are shown in Google Play before you
 confirm purchase, and the local Google Play purchase-sheet price controls.

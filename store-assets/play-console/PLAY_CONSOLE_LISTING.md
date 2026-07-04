@@ -53,6 +53,6 @@ Character count: 1717 / 4000
 
 Use `PLAY_PRICING.md` as the Play Console source of truth. The Android app
 renders the live Google Play Billing price; do not paste fixed prices into the
-store description. Current Korean launch anchor: KRW 9,900 monthly / KRW
-99,000 yearly. The 3-day Premium Preview is cardless and is not a Play Billing
+store description. Current Korean launch anchor: KRW 14,900 monthly / KRW
+149,000 yearly. The 3-day Premium Preview is cardless and is not a Play Billing
 free-trial offer.

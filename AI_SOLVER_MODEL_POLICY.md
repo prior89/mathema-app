@@ -4,7 +4,7 @@ Last updated: 2026-06-20
 
 ## Decision
 
-AI Solver should optimize for math accuracy first, then keep launch economics compatible with the KRW 9,900 monthly plan.
+AI Solver should optimize for math accuracy first, then keep launch economics compatible with the KRW 14,900 monthly plan.
 
 | Layer | Default | Fallback | Why |
 |---|---|---|---|
