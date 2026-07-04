@@ -4,12 +4,14 @@ function buildService() {
   const attempts = {
     create: jest.fn().mockResolvedValue({ id: 'attempt-1' }),
   };
+  const redis = { get: jest.fn().mockResolvedValue(null), set: jest.fn().mockResolvedValue(undefined) };
   const service = new MathHelperService(
     {} as any,
     {} as any,
     attempts as any,
     {} as any,
     {} as any,
+    redis as any,
   );
   (service as any).createPracticeProblem = jest.fn().mockResolvedValue('problem-1');
   return { service: service as any, attempts };

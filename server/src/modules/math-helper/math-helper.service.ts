@@ -2,10 +2,16 @@ import { HttpException, HttpStatus, Injectable, Logger, ServiceUnavailableExcept
 import { ConfigService } from '@nestjs/config';
 import { Difficulty } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { RedisService } from '../../infrastructure/redis/redis.service';
 import { OcrService } from '../../infrastructure/ocr/ocr.service';
 import { AttemptsService } from '../attempts/attempts.service';
 import { LlmDraftService } from '../content-ingest/llm-draft.service';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
+import { normalizeProblemBody, problemBodyHash } from '../../common/utils/normalize-problem-body';
+
+/** Solve-cache TTL — a re-uploaded/common problem serves its stored solution
+ *  instead of a fresh LLM call (the flywheel: cheaper, faster, consistent). */
+const SOLVE_CACHE_TTL_SEC = 90 * 24 * 3600;
 
 type DbStudentProfile = {
   weakConcepts: Array<Record<string, unknown>>;
@@ -72,6 +78,7 @@ export class MathHelperService {
     private readonly attempts: AttemptsService,
     private readonly ocr: OcrService,
     private readonly llmDraft: LlmDraftService,
+    private readonly redis: RedisService,
   ) {}
 
   async health() {
@@ -80,20 +87,40 @@ export class MathHelperService {
 
   async solve(userId: string, dto: SolveMathHelperDto) {
     const studentAnswer = this.normalizeStudentAnswer(dto.studentAnswer);
-    const [profile, classLevel] = await Promise.all([
-      this.buildStudentProfile(userId),
-      dto.classLevel ? Promise.resolve(dto.classLevel) : this.defaultClassLevel(userId),
-    ]);
+    const classLevel = dto.classLevel ?? await this.defaultClassLevel(userId);
 
+    // Flywheel: reuse a stored solution for an identical problem (hash of the
+    // OCR-noise-normalized body) instead of re-calling the LLM. Cache hit-rate
+    // rises as the corpus grows → cheaper, faster, and a consistent answer
+    // (competitors' top complaint is inconsistent/uncorrectable answers).
+    const cacheHash = problemBodyHash(dto.question);
     const t0 = Date.now();
-    const response = await this.request('POST', '/solve', this.withoutUndefined({
-      classLevel: classLevel ?? 12,
-      question: dto.question,
-      studentAnswer,
-      studentProfile: profile,
-    })) as SolveHelperResponse;
+    let response: SolveHelperResponse | undefined;
+    let cached = false;
+    let fewShotCount = 0;
+
+    if (cacheHash) {
+      const raw = await this.redis.get(`solve:${cacheHash}`).catch(() => null);
+      if (raw) {
+        try { response = JSON.parse(raw) as SolveHelperResponse; cached = true; } catch { /* fall through */ }
+      }
+    }
+
+    if (!response) {
+      const profile = await this.buildStudentProfile(userId);
+      fewShotCount = profile.fewShotExamples.length;
+      response = await this.request('POST', '/solve', this.withoutUndefined({
+        classLevel: classLevel ?? 12,
+        question: dto.question,
+        studentAnswer,
+        studentProfile: profile,
+      })) as SolveHelperResponse;
+      this.assertUsableSolveResponse(response);
+      if (cacheHash) {
+        await this.redis.set(`solve:${cacheHash}`, JSON.stringify(response), SOLVE_CACHE_TTL_SEC).catch(() => {});
+      }
+    }
     const durationMs = Date.now() - t0;
-    this.assertUsableSolveResponse(response);
 
     // recordSolveAttempt creates the persistent Problem row (when math-helper
     // returned an answer). It creates an Attempt only when the student actually
@@ -114,10 +141,10 @@ export class MathHelperService {
       studentAnswer: studentAnswer ?? null,
       response,
       durationMs,
-      fewShotCount: profile.fewShotExamples.length,
+      fewShotCount,
     }).catch((e) => this.logger.warn(`SolverAttempt log failed: ${(e as Error).message}`));
 
-    return { ...response, problemId };
+    return { ...response, problemId, cached };
   }
 
   async ocrSolve(userId: string, file: Express.Multer.File, dto: Omit<SolveMathHelperDto, 'question'>) {
@@ -444,6 +471,18 @@ export class MathHelperService {
     const answer = response.answer;
     if (!answer) return null;
 
+    // Flywheel dedup: if this exact problem (same normalized body) is already
+    // stored, reuse that row instead of creating a duplicate — the attempt below
+    // still records against it. Same body ⇒ same problem ⇒ same answer.
+    const bodyHash = problemBodyHash(question);
+    if (bodyHash) {
+      const existing = await this.prisma.problem.findFirst({
+        where: { bodyHash },
+        select: { id: true },
+      });
+      if (existing) return existing.id;
+    }
+
     const detected = response.detected ?? {};
     const chapterCode = detected.chapterCode ?? null;
     const conceptCodes = detected.conceptCodes ?? [];
@@ -490,6 +529,8 @@ export class MathHelperService {
         subUnitId,
         difficulty: Difficulty.MIDDLE,
         body: question,
+        normalizedBody: normalizeProblemBody(question),
+        bodyHash,
         concept: conceptText,
         answer,
         difficultyLevel: 3,

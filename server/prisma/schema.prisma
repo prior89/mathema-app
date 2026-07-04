@@ -534,6 +534,15 @@ model Problem {
   imageUrl   String?
   hint       String?    @db.Text
 
+  /// Solve-cache dedup (AI-solver flywheel). normalizedBody = the body with OCR
+  /// noise stripped (LaTeX delimiters, whitespace, case); bodyHash =
+  /// sha256(normalizedBody). On a photo solve we look up an existing Problem by
+  /// bodyHash and reuse its stored solution instead of re-calling the LLM, so a
+  /// growing corpus makes solves cheaper/faster/more consistent. Non-unique on
+  /// purpose — re-solves and rare collisions must never raise a constraint error.
+  normalizedBody String? @db.Text
+  bodyHash       String?
+
   /// Numeric difficulty 1~5 (the spec's difficultyLevel). Separate from the Difficulty enum — used for the recommendation engine's score.
   difficultyLevel       Int         @default(3)
   /// Skills required to solve (the spec's requiredSkills). e.g., ['chain_rule', 'composite_function']
@@ -591,6 +600,7 @@ model Problem {
   @@index([conceptLessonId])
   @@index([koreanConceptLessonId])
   @@index([qualityStatus])
+  @@index([bodyHash])
 }
 
 /// Tier 2 LLM grading outcome for Problem rows. Drives the active-pool
