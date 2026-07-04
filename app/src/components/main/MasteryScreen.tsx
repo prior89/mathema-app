@@ -84,9 +84,20 @@ export function MasteryScreen() {
     enabled: conceptIds.length > 0,
   });
 
+  // Route a weakness to the weakest UNMET prerequisite first (research: sending a
+  // learner into a concept whose prerequisites are missing is undesirable
+  // difficulty — they can't productively struggle). Otherwise, its own chapter.
   const chapterTarget = (conceptId: string): string => {
-    const code = chapterLinks.data?.[conceptId];
-    return code ? `/app/learn/${code}` : '/app/learn';
+    const link = chapterLinks.data?.[conceptId];
+    if (!link) return '/app/learn';
+    if (!link.prereqReady && link.prereqChapterCode) return `/app/learn/${link.prereqChapterCode}`;
+    return link.chapterCode ? `/app/learn/${link.chapterCode}` : '/app/learn';
+  };
+
+  // Whether a card should nudge "shore up the basics first".
+  const prereqUnmet = (conceptId: string): boolean => {
+    const link = chapterLinks.data?.[conceptId];
+    return !!link && !link.prereqReady && !!link.prereqChapterCode;
   };
 
   const hasHeatmap = (balance.data?.perUnit.length ?? 0) > 0;
@@ -139,6 +150,7 @@ export function MasteryScreen() {
               patterns={errorPatterns.data!}
               lang={uiLang}
               onPractice={(p) => nav(chapterTarget(p.conceptId))}
+              isPrereqUnmet={(p) => prereqUnmet(p.conceptId)}
             />
           </>
         )}
