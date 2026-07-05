@@ -1,4 +1,44 @@
-import { stripAnswerLeak } from './problems.service';
+import { stripAnswerLeak, ProblemsService } from './problems.service';
+
+describe('ProblemsService.report → flywheel cache invalidation', () => {
+  function build(problem: any) {
+    const prisma = {
+      problem: {
+        findUnique: jest.fn().mockResolvedValue(problem),
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+    const redis = { del: jest.fn().mockResolvedValue(undefined) };
+    const svc = new ProblemsService({} as any, prisma as any, redis as any);
+    return { svc, redis, prisma };
+  }
+
+  it('purges the solve-cache for a disputed problem that has a bodyHash', async () => {
+    const { svc, redis } = build({
+      id: 'p1', qualityStatus: 'USABLE', qualityCriticalFlags: [], bodyHash: 'abc123',
+    });
+    await svc.report('u1', 'p1', 'wrong answer');
+    expect(redis.del).toHaveBeenCalledWith('solve:abc123');
+  });
+
+  it('does not touch the cache when the problem has no bodyHash', async () => {
+    const { svc, redis } = build({
+      id: 'p1', qualityStatus: 'USABLE', qualityCriticalFlags: [], bodyHash: null,
+    });
+    await svc.report('u1', 'p1', null);
+    expect(redis.del).not.toHaveBeenCalled();
+  });
+
+  it('still records the report even if cache del fails (best-effort)', async () => {
+    const { svc, redis, prisma } = build({
+      id: 'p1', qualityStatus: 'USABLE', qualityCriticalFlags: [], bodyHash: 'h',
+    });
+    redis.del.mockRejectedValueOnce(new Error('redis down'));
+    const res = await svc.report('u1', 'p1', 'x');
+    expect(prisma.problem.update).toHaveBeenCalled();
+    expect(res).toEqual({ ok: true, duplicate: false });
+  });
+});
 
 describe('stripAnswerLeak', () => {
   it('drops steps that state a numeric final answer', () => {

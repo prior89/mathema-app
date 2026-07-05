@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { ProblemsRepository, sanitizeForClient } from './problems.repository';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { RedisService } from '../../infrastructure/redis/redis.service';
 import { recommendedDifficulties } from '../../common/utils/difficulty-matcher.util';
 import { Lang } from '../../common/i18n/current-lang.decorator';
 import {
@@ -37,6 +38,7 @@ export class ProblemsService {
   constructor(
     private readonly repo: ProblemsRepository,
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
   ) {}
   list(q: any, lang: Lang = 'en') { return this.repo.list(q, lang); }
   one(id: string, lang: Lang = 'en') { return this.repo.findById(id, lang); }
@@ -262,7 +264,7 @@ export class ProblemsService {
   async report(userId: string, problemId: string, reason: string | null) {
     const prob = await this.prisma.problem.findUnique({
       where: { id: problemId },
-      select: { id: true, qualityStatus: true, qualityCriticalFlags: true },
+      select: { id: true, qualityStatus: true, qualityCriticalFlags: true, bodyHash: true },
     });
     if (!prob) throw new NotFoundException(`Problem ${problemId} not found`);
 
@@ -292,6 +294,15 @@ export class ProblemsService {
           : [...prob.qualityCriticalFlags, 'STUDENT_REPORTED'],
       },
     });
+
+    // Flywheel self-correction: a disputed problem must not keep serving its
+    // cached solution to the next student who solves the same one. Purge the
+    // solve-cache entry so the next solve re-runs the LLM fresh. (Directly
+    // answers competitors' top accuracy complaint — a wrong answer that "won't
+    // change" — by making a report actually retire the stored answer.)
+    if (prob.bodyHash) {
+      await this.redis.del(`solve:${prob.bodyHash}`).catch(() => {});
+    }
     return { ok: true, duplicate: false };
   }
 }
