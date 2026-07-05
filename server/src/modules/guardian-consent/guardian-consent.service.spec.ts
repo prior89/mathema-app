@@ -27,8 +27,15 @@ function build() {
   const mail = {
     sendGuardianConsent: jest.fn().mockResolvedValue(undefined),
   };
-  const service = new GuardianConsentService(prisma as never, mail as never);
-  return { service, prisma, mail };
+  const pass = {
+    isEnabled: jest.fn().mockReturnValue(true),
+    providerName: jest.fn().mockReturnValue('mock'),
+    isMock: jest.fn().mockReturnValue(true),
+    start: jest.fn().mockResolvedValue({ authUrl: 'http://localhost:5173/guardian-consent/pass?tx=tx' }),
+    verify: jest.fn().mockResolvedValue({ ok: true, name: 'Mock Guardian', isAdult: true, ci: 'CI-1' }),
+  };
+  const service = new GuardianConsentService(prisma as never, mail as never, pass as never);
+  return { service, prisma, mail, pass };
 }
 
 describe('GuardianConsentService flow contract', () => {
@@ -110,5 +117,62 @@ describe('GuardianConsentService flow contract', () => {
       where: { id: 'student-1' },
       data: { guardianConsentVerifiedAt: expect.any(Date) },
     });
+  });
+
+  it('KR PASS: starts a session and returns a txId + provider auth URL', async () => {
+    const { service, prisma, pass } = build();
+    prisma.user.findUnique.mockResolvedValue({
+      name: 'KR Student',
+      role: UserRole.STUDENT,
+      birthDate: new Date(Date.UTC(new Date().getUTCFullYear() - 12, 0, 1)), // under 14
+      guardianConsentVerifiedAt: null,
+      country: 'KR',
+    });
+    prisma.guardianConsentRequest.upsert.mockResolvedValue({ id: 'req-kr', method: GuardianConsentMethod.KR_PASS });
+
+    const res = await service.startPassVerification('kr-student');
+    expect(res).toMatchObject({ method: GuardianConsentMethod.KR_PASS, provider: 'mock' });
+    expect((res as { txId: string }).txId.length).toBeGreaterThanOrEqual(16);
+    expect(pass.start).toHaveBeenCalledTimes(1);
+    expect(prisma.guardianConsentToken.create).toHaveBeenCalled();
+  });
+
+  it('KR PASS: start is rejected when PASS is disabled', async () => {
+    const { service, pass } = build();
+    pass.isEnabled.mockReturnValue(false);
+    await expect(service.startPassVerification('kr-student')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('KR PASS: complete verifies an adult guardian and sets consent', async () => {
+    const { service, prisma } = build();
+    prisma.guardianConsentToken.findUnique.mockResolvedValue({
+      id: 'tok-kr',
+      usedAt: null,
+      expiresAt: new Date(Date.now() + 60_000),
+      request: {
+        id: 'req-kr',
+        studentUserId: 'kr-student',
+        status: GuardianConsentStatus.PENDING,
+        method: GuardianConsentMethod.KR_PASS,
+      },
+    });
+
+    await expect(service.completePassVerification('tx-raw-token-123456')).resolves.toEqual({ ok: true });
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'kr-student' },
+      data: { guardianConsentVerifiedAt: expect.any(Date) },
+    });
+  });
+
+  it('KR PASS: complete rejects a non-adult verification result', async () => {
+    const { service, prisma, pass } = build();
+    pass.verify.mockResolvedValue({ ok: true, name: 'Minor', isAdult: false, ci: 'CI-2' });
+    prisma.guardianConsentToken.findUnique.mockResolvedValue({
+      id: 'tok-kr',
+      usedAt: null,
+      expiresAt: new Date(Date.now() + 60_000),
+      request: { id: 'req-kr', studentUserId: 'kr-student', status: GuardianConsentStatus.PENDING, method: GuardianConsentMethod.KR_PASS },
+    });
+    await expect(service.completePassVerification('tx-raw-token-123456')).rejects.toBeInstanceOf(BadRequestException);
   });
 });

@@ -92,7 +92,7 @@ function build(over: Partial<{
   users: AnyMock; jwt: AnyMock; config: AnyMock; prisma: any;
   redis: AnyMock; mail: AnyMock; privacy: AnyMock;
   events: AnyMock; devices: AnyMock; parentLinks: AnyMock;
-  guardianConsent: AnyMock;
+  guardianConsent: AnyMock; social: AnyMock; otp: AnyMock;
 }> = {}) {
   const users   = over.users   ?? mockUsers();
   const jwt     = over.jwt     ?? mockJwt();
@@ -112,13 +112,24 @@ function build(over: Partial<{
   const parentLinks = over.parentLinks ?? mockParentLinks();
   const guardianConsent = over.guardianConsent ?? mockGuardianConsent();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const social = over.social ?? {
+    isMock: jest.fn().mockReturnValue(true),
+    verify: jest.fn().mockResolvedValue({
+      provider: 'kakao', providerUserId: 'kk1', email: 'kakao_kk1@mock.local', emailVerified: true, name: '카카오 사용자',
+    }),
+  };
+  const otp = over.otp ?? {
+    isMock: jest.fn().mockReturnValue(true),
+    send: jest.fn().mockResolvedValue({ channel: 'mock', devCode: '123456' }),
+    verifyTruecaller: jest.fn().mockResolvedValue({ phone: '+919000000001', name: 'Truecaller User' }),
+  };
   const svc = new AuthService(
     users as any, jwt as any, config as any, prisma,
     redis as any, mail as any, privacy as any,
     events as any, devices as any, parentLinks as any,
-    guardianConsent as any,
+    guardianConsent as any, social as any, otp as any,
   );
-  return { svc, users, jwt, config, prisma, redis, mail, privacy, events, devices, parentLinks, guardianConsent };
+  return { svc, users, jwt, config, prisma, redis, mail, privacy, events, devices, parentLinks, guardianConsent, social, otp };
 }
 
 describe('AuthService', () => {
@@ -185,6 +196,37 @@ describe('AuthService', () => {
       } as any);
       expect(users.create).toHaveBeenCalledWith(expect.objectContaining({ email: 'a@b.com', name: 'A', gradeLevel: null }));
       expect(result).toEqual({ accessToken: 'token-u-new', refreshToken: 'token-u-new' });
+    });
+
+    // KR-first launch park: IN + AE share the un-seeded NCERT bank and are
+    // 'planned' in COUNTRY_CONFIG, so the register API must reject them even
+    // though the DTO whitelists the code. Guards against a re-live regression.
+    it('rejects sign-up for a parked market (country: IN)', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue(null);
+      const { svc } = build({ users });
+      await expect(
+        svc.register({
+          email: 'in@b.com', password: 'pw12345678', name: 'IN', role: 'STUDENT',
+          examDate: '2027-02-14', targetGrade: 2, country: 'IN',
+        } as any),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(users.create).not.toHaveBeenCalled();
+    });
+
+    it('defaults an omitted country to the live KR market', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue(null);
+      users.create.mockResolvedValue({ id: 'u-kr', email: 'k@b.com' });
+      const jwt = mockJwt();
+      jwt.sign.mockImplementation((p) => `token-${(p as any).sub ?? 'x'}`);
+      const prisma = mockPrisma();
+      const { svc } = build({ users, jwt, prisma });
+      await svc.register({
+        email: 'k@b.com', password: 'pw12345678', name: 'K', role: 'STUDENT',
+        examDate: '2027-02-14', targetGrade: 2,
+      } as any);
+      expect(users.create).toHaveBeenCalledWith(expect.objectContaining({ country: 'KR' }));
     });
   });
 
@@ -338,6 +380,56 @@ describe('AuthService', () => {
     });
   });
 
+  describe('phone OTP', () => {
+    it('stores phone OTP state and synthetic email without exposing the raw phone', async () => {
+      const rawPhone = '+91 98123 45678';
+      const rawDigits = '919812345678';
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue(null);
+      users.create.mockResolvedValue({
+        id: 'phone-user',
+        email: 'phone_hash@users.matheo.local',
+        emailVerifiedAt: new Date(),
+      });
+      const jwt = mockJwt();
+      jwt.sign.mockImplementation((p) => `t-${(p as any).sub}`);
+      const redis = mockRedis();
+      const otp = {
+        isMock: jest.fn().mockReturnValue(true),
+        send: jest.fn(async (_phone: string, code: string) => ({ channel: 'mock', devCode: code })),
+        verifyTruecaller: jest.fn(),
+      };
+      const { svc } = build({
+        users,
+        jwt,
+        redis,
+        otp,
+        config: mockConfig({
+          'jwt.accessSecret': 'a'.repeat(48),
+          'jwt.refreshSecret': 'b'.repeat(48),
+          'jwt.accessTtl': '15m',
+          'jwt.refreshTtl': '30d',
+          PHONE_ID_HASH_SECRET: 'phone-hash-secret',
+        }),
+      });
+
+      const started = await svc.startPhoneOtp(rawPhone);
+      const otpSet = redis.set.mock.calls.find(([key]) => String(key).startsWith('otp:phone:'));
+      expect(otpSet).toBeTruthy();
+      expect(String(otpSet![0])).not.toContain(rawDigits);
+      expect(redis.incrWithTtl.mock.calls[0][0]).not.toContain(rawDigits);
+
+      redis.get.mockResolvedValueOnce(otpSet![1]);
+      await expect(svc.verifyPhoneOtp(rawPhone, started.devCode!, { deviceHash: 'dh' }))
+        .resolves.toEqual({ accessToken: 't-phone-user', refreshToken: 't-phone-user' });
+
+      const created = users.create.mock.calls[0][0];
+      expect(created.email).toMatch(/^phone_[0-9a-f]{32}@users\.matheo\.local$/);
+      expect(created.email).not.toContain(rawDigits);
+      expect(created.passwordHash).not.toContain(rawDigits);
+    });
+  });
+
   // ─────── refresh ───────
   describe('refresh', () => {
     it('rejects invalid signature', async () => {
@@ -421,6 +513,42 @@ describe('AuthService', () => {
       const r = await svc.forgotPassword('a@b.com');
       expect(r).toEqual({ ok: true });
       expect(mail.sendPasswordResetEmail).toHaveBeenCalledWith('a@b.com', expect.any(String));
+    });
+  });
+
+  // HIGH-1 (security): a social identity must NOT link into an existing local
+  // account unless the provider asserts the email is verified — else an
+  // attacker's Kakao/Naver identity claiming victim@x could take over the
+  // victim's password account.
+  describe('signInWithSocial account-linking safety', () => {
+    it('does NOT link an UNVERIFIED social email to an existing account (creates a namespaced account)', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockImplementation((e: string) =>
+        e === 'victim@x.com' ? { id: 'victim', emailVerifiedAt: new Date() } : null);
+      users.create.mockResolvedValue({ id: 'social-new' });
+      const jwt = mockJwt(); jwt.sign.mockImplementation((p: any) => `t-${p?.sub}`);
+      const social = {
+        isMock: jest.fn(), providerName: jest.fn(),
+        verify: jest.fn().mockResolvedValue({ provider: 'kakao', providerUserId: 'kk9', email: 'victim@x.com', emailVerified: false, name: 'x' }),
+      };
+      const { svc } = build({ users, jwt, social });
+      await svc.signInWithSocial('kakao', 'tok');
+      // must mint a provider-namespaced account, never return the victim's
+      expect(users.create).toHaveBeenCalledWith(expect.objectContaining({ email: 'kakao_kk9@users.matheo.local' }));
+    });
+
+    it('DOES link a VERIFIED social email to an existing account (no new account)', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockImplementation((e: string) =>
+        e === 'v@x.com' ? { id: 'v', emailVerifiedAt: new Date() } : null);
+      const jwt = mockJwt(); jwt.sign.mockImplementation((p: any) => `t-${p?.sub}`);
+      const social = {
+        isMock: jest.fn(), providerName: jest.fn(),
+        verify: jest.fn().mockResolvedValue({ provider: 'kakao', providerUserId: 'kk1', email: 'v@x.com', emailVerified: true, name: 'x' }),
+      };
+      const { svc } = build({ users, jwt, social });
+      await svc.signInWithSocial('kakao', 'tok');
+      expect(users.create).not.toHaveBeenCalled();
     });
   });
 });

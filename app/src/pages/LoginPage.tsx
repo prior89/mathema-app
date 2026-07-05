@@ -159,6 +159,7 @@ export default function LoginPage() {
                   <GoogleSignInButton
                     mode="continue"
                     onCredential={handleGoogleSignIn}
+                    onError={() => setErr(t('login.google.failed'))}
                     busy={googleBusy}
                     disabled={busy}
                   />

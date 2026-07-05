@@ -251,7 +251,9 @@ api.interceptors.response.use(
               ? code
               : 'session_expired',
           );
-        } catch {}
+        } catch {
+          // Storage may be unavailable in private or embedded contexts.
+        }
         // P5 fix 2026-05-27: emit a custom event instead of forcing a hard
         // page reload. AuthContext listens, clears the QueryClient cache, and
         // performs a React Router navigate(). Falls back to window.location

@@ -157,6 +157,15 @@ export function StudyScreen() {
                 {t('study.pick.emptyMastered.pre')}
                 <strong style={{ color: 'var(--p-ink)' }}>{t('study.pick.emptyMastered.tab')}</strong>
                 {t('study.pick.emptyMastered.post')}
+                {/* Make the nudge actionable instead of a read-only dead-end. */}
+                <button
+                  className="btn ghost"
+                  onClick={() => nav('/app/learn')}
+                  style={{ marginTop: 10, width: '100%', height: 40, fontSize: 13 }}
+                >
+                  {t('study.pick.emptyMastered.cta')}
+                  <Glyph.ChevronR />
+                </button>
               </div>
             )}
 

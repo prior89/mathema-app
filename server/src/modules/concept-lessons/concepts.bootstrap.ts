@@ -94,8 +94,13 @@ export class ConceptsBootstrap implements OnModuleInit {
 
     let linked = 0;
     for (const [unitId, conceptIds] of conceptsByUnit.entries()) {
+      // EXCLUDE KR problems (koreanConceptLessonId != null). All 1720 KR
+      // problems share one unitId, so this NCERT unit-heuristic used to collapse
+      // every one of them onto a single concept (C7-CH01-INTEGERS), destroying
+      // KR per-concept mastery. KR problems are linked chapter-scoped in
+      // syncKoreanConcepts() instead; the unit-heuristic is NCERT-only.
       const problemIds = (await this.prisma.problem.findMany({
-        where: { unitId }, select: { id: true },
+        where: { unitId, koreanConceptLessonId: null }, select: { id: true },
       })).map((p) => p.id);
       if (problemIds.length === 0) continue;
 
@@ -113,6 +118,82 @@ export class ConceptsBootstrap implements OnModuleInit {
       }
     }
     this.logger.log(`ProblemConcept links upserted: ${linked}`);
+
+    // 3) KR side — seed a Concept per KoreanConceptLesson and link KR problems
+    //    to their own chapter concept (symmetric with NCERT, chapter-scoped).
+    await this.syncKoreanConcepts();
+  }
+
+  /**
+   * KoreanConceptLesson → Concept (code = chapterCode) + KR Problem link.
+   *
+   * KR lessons carry no unitId, so the NCERT unit-heuristic above can't (and
+   * must not) reach KR problems. Here each KR problem is linked to exactly its
+   * own chapter's concept, so KR per-concept mastery / weakness / deep-links are
+   * chapter-scoped like the NCERT side. Upsert-only: on a fresh DB no degenerate
+   * link is ever created (the unit-heuristic now skips KR). Existing databases
+   * that were already polluted are cleaned once by
+   * scripts/relink-kr-problems-to-chapter-concepts.ts.
+   */
+  private async syncKoreanConcepts(): Promise<void> {
+    const lessons = await this.prisma.koreanConceptLesson.findMany({
+      select: {
+        id: true, chapterCode: true, titleKo: true, titleEn: true,
+        koreanGrade: true, prerequisiteCodes: true,
+      },
+    });
+    if (lessons.length === 0) return;
+
+    const conceptIdByChapter = new Map<string, string>();
+    for (const l of lessons) {
+      const c = await this.prisma.concept.upsert({
+        where: { code: l.chapterCode },
+        update: {
+          name: l.titleEn ?? l.titleKo, nameKo: l.titleKo, subject: 'math',
+          gradeLevel: krGradeToLevel(l.koreanGrade),
+          prerequisiteConceptIds: l.prerequisiteCodes ?? [],
+        },
+        create: {
+          code: l.chapterCode, name: l.titleEn ?? l.titleKo, nameKo: l.titleKo,
+          subject: 'math', gradeLevel: krGradeToLevel(l.koreanGrade),
+          prerequisiteConceptIds: l.prerequisiteCodes ?? [], relatedConceptIds: [],
+        },
+        select: { id: true },
+      });
+      conceptIdByChapter.set(l.chapterCode, c.id);
+    }
+
+    const krProblems = await this.prisma.problem.findMany({
+      where: { koreanConceptLessonId: { not: null } },
+      select: { id: true, koreanConceptLesson: { select: { chapterCode: true } } },
+    });
+    let linked = 0;
+    for (const p of krProblems) {
+      const code = p.koreanConceptLesson?.chapterCode;
+      const conceptId = code ? conceptIdByChapter.get(code) : undefined;
+      if (!conceptId) continue;
+      await this.prisma.problemConcept.upsert({
+        where: { problemId_conceptId: { problemId: p.id, conceptId } },
+        update: {},
+        create: { problemId: p.id, conceptId, weight: 1.0 },
+      });
+      linked++;
+    }
+    this.logger.log(`KR concepts synced: ${conceptIdByChapter.size}, KR ProblemConcept links: ${linked}`);
+  }
+}
+
+/** KoreanGrade → GradeLevel (Concept.gradeLevel uses the NCERT enum; the
+ * middle/high alignment is what recommendation grade-filtering relies on). */
+function krGradeToLevel(kg: string): GradeLevel {
+  switch (kg) {
+    case 'MIDDLE_1': return GradeLevel.CLASS_7;
+    case 'MIDDLE_2': return GradeLevel.CLASS_8;
+    case 'MIDDLE_3': return GradeLevel.CLASS_9;
+    case 'HIGH_1':   return GradeLevel.CLASS_10;
+    case 'HIGH_2':   return GradeLevel.CLASS_11;
+    case 'HIGH_3':   return GradeLevel.CLASS_12;
+    default:         return GradeLevel.CLASS_12;
   }
 }
 

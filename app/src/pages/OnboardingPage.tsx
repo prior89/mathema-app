@@ -108,10 +108,10 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
   const [age, setAge] = useState<number | ''>('');
   const [parentEmail, setParentEmail] = useState('');
   const [goal, setGoal] = useState<GoalId | ''>('BOARD');
-  // Country defaults to IN. The country step (after welcome) lets the user
-  // flip to KR — picking KR also calls i18n setLang('ko') immediately so the
-  // remaining onboarding screens render in Korean.
-  const [country, setCountry] = useState<CountryId>('IN');
+  // Country defaults to KR — the only live market at the KR-first launch, so
+  // 'goal'/'diagnostic' work even if the user skips the country step. Picking a
+  // country also calls i18n setLang immediately (KR → 'ko').
+  const [country, setCountry] = useState<CountryId>('KR');
   const [consents, setConsents] = useState<ConsentMap>({ ANALYTICS: true, AI_TRAINING: false, MARKETING: false });
   const [notif, setNotif] = useState(true);
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
@@ -357,9 +357,13 @@ function ScreenCountry({
   // list so a later launch is one `active` flip away, but they are filtered out
   // of the render below — users only see live markets, no "Coming soon" chips.
   const COUNTRY_OPTIONS: Array<{ id: CountryId; flag: string; name: string; sub: string; active: boolean }> = [
-    { id: 'IN', flag: '🇮🇳', name: 'India',         sub: 'NCERT / CBSE / JEE',     active: true  },
+    // KR-first launch: KR is the only live market. IN + AE are parked (they
+    // share the NCERT content bank, which is not seeded yet) — keep them here
+    // so a later launch is one `active` flip away. Must stay in sync with the
+    // backend COUNTRY_CONFIG.status gate in country.enum.ts.
     { id: 'KR', flag: '🇰🇷', name: '대한민국',       sub: '2022 개정 교육과정 · 수능', active: true  },
-    { id: 'AE', flag: '🇦🇪', name: 'United Arab Emirates', sub: 'CBSE / NCERT',    active: true  },
+    { id: 'IN', flag: '🇮🇳', name: 'India',         sub: 'NCERT / CBSE / JEE',     active: false },
+    { id: 'AE', flag: '🇦🇪', name: 'United Arab Emirates', sub: 'CBSE / NCERT',    active: false },
     { id: 'US', flag: '🇺🇸', name: 'United States', sub: 'Common Core / SAT',      active: false },
     { id: 'UK', flag: '🇬🇧', name: 'United Kingdom', sub: 'GCSE / A-Level',         active: false },
     { id: 'AU', flag: '🇦🇺', name: 'Australia',     sub: 'ACARA',                  active: false },
@@ -420,7 +424,7 @@ function ScreenCountry({
                   <div style={{ fontSize: 12, color: 'var(--p-muted)', marginTop: 2 }}>{c.sub}</div>
                 </div>
                 {!c.active && (
-                  <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>Coming soon</span>
+                  <span className="chip" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('common.comingSoon')}</span>
                 )}
                 {selected && (
                   <Glyph.ChevronR accent="var(--p-primary)" size={16} />
@@ -625,7 +629,7 @@ function ScreenAuth({
           <input
             type="email" autoComplete="email"
             value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t('onboarding.auth.emailPlaceholder')}
           />
         </div>
         <div className="field">
@@ -669,6 +673,7 @@ function ScreenAuth({
             <GoogleSignInButton
               mode="signup"
               onCredential={handleGoogleSignIn}
+              onError={() => setErr(t('onboarding.auth.google.failed'))}
               busy={googleBusy}
               disabled={busy}
             />
@@ -903,6 +908,8 @@ function ScreenGuardian({
   const [err, setErr] = useState<string | null>(null);
   const [waiting, setWaiting] = useState(false);
   const [poll, setPoll] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     if (!poll) return;
@@ -918,6 +925,36 @@ function ScreenGuardian({
     }, 10_000);
     return () => window.clearInterval(id);
   }, [poll, onNext, refreshUser]);
+
+  // Resend cooldown ticker.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = window.setTimeout(() => setCooldown((n) => n - 1), 1000);
+    return () => window.clearTimeout(id);
+  }, [cooldown]);
+
+  // Surface a "taking too long?" helper ~45s into waiting so a parent whose
+  // email bounced or was spam-filtered doesn't strand the student on an
+  // otherwise-infinite poll (research: parents click on mobile, mail can drop).
+  useEffect(() => {
+    if (!waiting) { setShowHelp(false); return; }
+    const id = window.setTimeout(() => setShowHelp(true), 45_000);
+    return () => window.clearTimeout(id);
+  }, [waiting]);
+
+  const resend = async () => {
+    if (cooldown > 0 || busy || !parentEmail.trim()) return;
+    setErr(null);
+    setBusy(true);
+    try {
+      await requestGuardianConsent({ parentEmail: parentEmail.trim() });
+      setCooldown(30);
+    } catch (e: any) {
+      setErr(e?.response?.data?.error?.message ?? t('guardianConsent.failed'));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const submit = async () => {
     if (!parentEmail.trim() || typeof age !== 'number') return;
@@ -957,9 +994,30 @@ function ScreenGuardian({
           <p className="subtitle">{t(guardianSubKey)}</p>
         </div>
         {waiting ? (
-          <div className="alert success">
-            {t('guardianConsent.sent', { email: parentEmail })}
-          </div>
+          <>
+            <div className="alert success">
+              {t('guardianConsent.sent', { email: parentEmail })}
+            </div>
+            {showHelp && (
+              <span className="caption" style={{ color: 'var(--p-ink-2)' }}>
+                {t('guardianConsent.waiting.help')}
+              </span>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+              <button className="btn ghost" onClick={resend} disabled={busy || cooldown > 0}>
+                {cooldown > 0
+                  ? t('guardianConsent.resendIn', { n: cooldown })
+                  : t('guardianConsent.resend')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setWaiting(false); setPoll(false); }}
+                style={{ background: 'none', border: 'none', color: 'var(--p-muted)', fontSize: 13, cursor: 'pointer', padding: '6px' }}
+              >
+                {t('guardianConsent.changeEmail')}
+              </button>
+            </div>
+          </>
         ) : (
           <div className="field">
             <label>{t('guardianConsent.parentEmail')}</label>

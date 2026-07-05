@@ -3,6 +3,7 @@ import { mathAnswersEqual } from '../../common/utils/normalize-math-answer';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { GradingService } from './grading.service';
 import { initialWrongNoteNextReviewAt } from '../wrong-notes/wrong-note-schedule.constants';
+import { choiceErrorCode } from '../../common/learning/distractor-error-codes';
 
 /**
  * AttemptsRepository — Attempt 1 row 저장 + WrongNote upsert + 이벤트 페이로드 구성.
@@ -95,6 +96,15 @@ export class AttemptsRepository {
       answerText = String(dto.answer ?? '');
     }
 
+    // Unified error code across markets: KR tags distractorErrorCode, IN tags
+    // distractorType. Resolve both to ONE canonical ErrorCode so the weakness
+    // engine and the why-wrong insight behave identically in KR and IN — this
+    // closes the asymmetry where KR wrong-notes had no errorType and IN had no
+    // error-code axis. Only meaningful for a wrong choice-based attempt.
+    const resolvedErrorCode = !isCorrect
+      ? choiceErrorCode({ distractorType, distractorErrorCode })
+      : null;
+
     // 재시도 판정 — 학습 모드에서 같은 (session, problem, stepIndex) 의 이전 attempt 가 있으면 retry.
     const isRetry = !!(dto.studySessionId && typeof dto.stepIndex === 'number'
       && (await this.prisma.attempt.count({
@@ -125,6 +135,15 @@ export class AttemptsRepository {
       problemHasSteps: !!problem.expectedSolutionSteps,
     });
 
+    // H3: fold the resolved distractor error code into Attempt.errorCodes.
+    // grading.analyze only maps IN distractorType, so KR distractorErrorCode
+    // never reached errorCodes — and ErrorPatternProfile.refreshAllStatuses
+    // scans Attempt.errorCodes, so a recurring KR mistake false-RESOLVED after
+    // 5 attempts. Merging here keeps the read path market-symmetric.
+    const attemptErrorCodes = resolvedErrorCode && !errorCodes.includes(resolvedErrorCode)
+      ? [...errorCodes, resolvedErrorCode]
+      : errorCodes;
+
     // tenantId — User 로부터 lookup (denormalize).
     const user = await this.prisma.user.findUnique({
       where: { id: userId }, select: { tenantId: true },
@@ -146,7 +165,7 @@ export class AttemptsRepository {
         hintUsed: dto.hintUsed === true,
         hintCount: typeof dto.hintCount === 'number' ? Math.max(0, Math.floor(dto.hintCount)) : 0,
         stepByStepInput: stepByStepInput ?? undefined,
-        errorCodes,
+        errorCodes: attemptErrorCodes,
         deviceType,
         timeOfDay,
         stepIndex: typeof dto.stepIndex === 'number' ? dto.stepIndex : null,
@@ -164,7 +183,10 @@ export class AttemptsRepository {
         update: { occurrences: { increment: 1 } },
         create: {
           userId, problemId: dto.problemId,
-          errorType: legacyErrorType,
+          // Fall back to the unified error code so KR notes (which tag
+          // distractorErrorCode, not distractorType) still get a specific
+          // errorType → the why-wrong insight names the real mistake.
+          errorType: legacyErrorType ?? resolvedErrorCode,
           insight: '',
           status: 'PENDING',
           intervalDays: 3,
@@ -212,6 +234,11 @@ export class AttemptsRepository {
       // Sprint 1 A3: emitted in attempt.completed payload so listeners can
       // feed ErrorPatternProfile without re-querying ProblemChoice.
       distractorErrorCode,
+      // Canonical cross-market error code (KR distractorErrorCode OR IN
+      // distractorType → one ErrorCode). Listeners prefer this so IN attempts
+      // (which carry distractorType, not distractorErrorCode) still feed the
+      // error-pattern axis.
+      resolvedErrorCode,
       tenantId,
       conceptIds,
       conceptTags: conceptCodes.map((c) => c.code),       // 명세서 §1-2

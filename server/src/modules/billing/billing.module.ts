@@ -5,6 +5,7 @@ import { RedisModule } from '../../infrastructure/redis/redis.module';
 import { BillingController } from './billing.controller';
 import { BillingService } from './billing.service';
 import { FreeTierSolverQuotaGuard } from './free-tier-solver-quota.guard';
+import { OcrDailyQuotaGuard } from './ocr-daily-quota.guard';
 import { PremiumAccessService } from './premium-access.service';
 import { PremiumFeatureGuard } from './premium-feature.guard';
 import { ObfuscatedAccountService } from './obfuscated-account.service';
@@ -26,6 +27,7 @@ import { RtdnService } from './rtdn.service';
     PlayApiClient,
     QuotaService,
     FreeTierSolverQuotaGuard,
+    OcrDailyQuotaGuard,
     PremiumFeatureGuard,
     PremiumAccessService,
     RtdnInboxService,
@@ -39,6 +41,7 @@ import { RtdnService } from './rtdn.service';
     BillingOpsService,
     QuotaService,
     FreeTierSolverQuotaGuard,
+    OcrDailyQuotaGuard,
     PremiumFeatureGuard,
     PremiumAccessService,
     RtdnService,

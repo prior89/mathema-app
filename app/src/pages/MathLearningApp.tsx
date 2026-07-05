@@ -199,11 +199,14 @@ export default function MathLearningApp() {
 
 // ============ DASHBOARD ============
 function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sessionId: string, focus?: string) => void; onGotoWrongNotes: () => void }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const summary = useQuery({ queryKey: ['dashboard'], queryFn: Q.fetchDashboardSummary });
   const mastery = useQuery({ queryKey: ['mastery'], queryFn: Q.fetchMastery });
   const today = useQuery({ queryKey: ['today'], queryFn: Q.fetchToday });
   const recent = useQuery({ queryKey: ['wn-recent'], queryFn: () => Q.fetchRecentMistakes(3) });
+  // Active re-quiz nudge: turn the wrong-note store into a "N due, review now"
+  // prompt (the researched #1 driver — notes get made but never revisited).
+  const due = useQuery({ queryKey: ['wn-due'], queryFn: () => Q.fetchDueWrongNotes(50) });
   const heatmap = useQuery({ queryKey: ['heatmap'], queryFn: () => Q.fetchHeatmap(12) });
   const errorDna = useQuery({ queryKey: ['error-dna'], queryFn: Q.fetchErrorDna });
   const diagnosis = useQuery({ queryKey: ['diagnosis'], queryFn: Q.fetchDiagnosis });
@@ -244,6 +247,32 @@ function DashboardPage({ onStartStudy, onGotoWrongNotes }: { onStartStudy: (sess
 
   return (
     <>
+      {(due.data?.length ?? 0) > 0 && (
+        <button
+          onClick={() => { trackClick('review_due_banner', { count: due.data!.length }); onGotoWrongNotes(); }}
+          className="hover-lift"
+          style={{
+            width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '12px',
+            padding: '14px 18px', marginBottom: '28px', background: '#142850', color: '#EFEBDF',
+            border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ fontSize: '22px' }} aria-hidden>🔁</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, fontSize: '14px' }}>
+              {lang === 'ko'
+                ? `복습할 오답 ${due.data!.length}개가 기다려요`
+                : `${due.data!.length} wrong answer${due.data!.length > 1 ? 's' : ''} due for review`}
+            </div>
+            <div style={{ fontSize: '11.5px', color: '#B9C2D6', marginTop: '2px' }}>
+              {lang === 'ko'
+                ? '변형 문제로 다시 풀 때 진짜 실력이 됩니다 · 지금 복습하기'
+                : 'Re-solve them as fresh variants to lock them in · Review now'}
+            </div>
+          </div>
+          <span style={{ fontSize: '18px' }} aria-hidden>→</span>
+        </button>
+      )}
       <section style={{ marginBottom: '64px' }} className="fade-up">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
           <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#C7791F' }} className="pulse-warm" />
@@ -1458,10 +1487,19 @@ function StudySession({ sessionId, focusProblemId, onClear }: { sessionId: strin
 
 // ============ MOCK EXAM PAGE ============
 function MockExamPage({ onStartExam }: { onStartExam: (exam: M.ExamPackage) => void }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const summary = useQuery({ queryKey: ['mock-summary'], queryFn: Q.fetchMockSummary });
   const trajectory = useQuery({ queryKey: ['mock-trajectory'], queryFn: Q.fetchTrajectory });
   const results = useQuery({ queryKey: ['mock-results'], queryFn: Q.fetchExamResults });
+  // Weakest concepts — surfaced so the AI-recommended exam is visibly framed as
+  // personalized ("targets your N weakest"), since the assembly already
+  // weakness-weights server-side but the UI never said so.
+  const conceptMastery = useQuery({ queryKey: ['mastery', 'trajectory'], queryFn: Q.fetchConceptMastery });
+  const weakest = (conceptMastery.data ?? [])
+    .filter((c) => c.evidenceCount > 0)
+    .sort((a, b) => a.masteryScore - b.masteryScore)
+    .slice(0, 3)
+    .map((c) => (lang === 'ko' ? (c.concept.nameKo ?? c.concept.name) : c.concept.name));
   const [detailResult, setDetailResult] = useState<Q.ExamResult | null>(null);
 
   const handleStarted = (label: string) => (r: M.ExamPackage) => {
@@ -1619,9 +1657,23 @@ function MockExamPage({ onStartExam }: { onStartExam: (exam: M.ExamPackage) => v
           <div style={{ backgroundColor: '#142850', color: '#EFEBDF', borderRadius: '4px', padding: '32px', marginBottom: '16px' }}>
             <div style={{ fontSize: '11px', color: '#D9A055', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '8px' }}>{t('mock.aiRec.label')}</div>
             <h3 className="serif" style={{ fontSize: '22px', fontWeight: 500, marginBottom: '12px' }}>{t('mock.aiRec.title')}</h3>
-            <div style={{ fontSize: '13px', color: '#E0D8C8', lineHeight: 1.65, marginBottom: '20px' }}>
+            <div style={{ fontSize: '13px', color: '#E0D8C8', lineHeight: 1.65, marginBottom: weakest.length > 0 ? '12px' : '20px' }}>
               {t('mock.aiRec.desc')}
             </div>
+            {weakest.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '11px', color: '#D9A055', marginBottom: '6px' }}>
+                  🎯 {lang === 'ko' ? `가장 약한 개념 ${weakest.length}개 집중 공략` : `Targets your ${weakest.length} weakest concept${weakest.length > 1 ? 's' : ''}`}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {weakest.map((n, i) => (
+                    <span key={i} style={{ fontSize: '11px', padding: '3px 9px', backgroundColor: '#ffffff18', border: '1px solid #D9A05540', borderRadius: '999px', color: '#EFEBDF' }}>
+                      {n}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             <button
               onClick={() => recMut.mutate()}
               disabled={recMut.isPending}

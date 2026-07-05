@@ -3,7 +3,8 @@ import { AiService } from '../../../infrastructure/ai/ai.service';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { WrongNotesRepository } from '../../wrong-notes/wrong-notes.repository';
 import { Difficulty } from '../../../common/enums/difficulty.enum';
-import { examDifficultyDistribution } from '../../../common/utils/difficulty-matcher.util';
+import { examDifficultyDistribution, productiveStruggleWeight } from '../../../common/utils/difficulty-matcher.util';
+import { recommenderArm, type RecommenderArm } from '../../../common/utils/recommender-cohort.util';
 import { NCERT_TO_KR_GRADE } from '../../diagnostic/diagnostic-pool-gate';
 
 /**
@@ -29,12 +30,21 @@ export class AiRecommendExamService {
       where: { userId }, include: { unit: true },
     });
     if (masteries.length === 0) {
-      // Cold-start: no mastery yet → fall back to any concept-lesson-linked problems.
-      return this.fallbackAnyLinked(10, country);
+      // Cold-start: no unit mastery yet. Seed the "personalized" exam from the
+      // onboarding diagnostic's placement profile (weak concepts) so a brand-new
+      // user's first recommended exam actually targets their weak areas instead
+      // of a generic recent-problem grab. True generic fallback only if there's
+      // no placement either.
+      return this.coldStartExam(userId, country, 20);
     }
 
     const target = 20;
-    const weights = masteries.map((m) => ({ unitId: m.unitId, score: m.score, w: Math.max(5, 100 - m.score) }));
+    // A/B: 'productive' = reachable-weak (85% rule / ZPD, the shipped default);
+    // 'legacy' = pure weakness. Stable per user; RECOMMENDER_AB_SPLIT controls
+    // the % on the new rule (100 = everyone new, 0 = instant no-deploy revert).
+    const arm = recommenderArm(userId);
+    const weightOf = this.selectionWeight(arm);
+    const weights = masteries.map((m) => ({ unitId: m.unitId, score: m.score, w: weightOf(m.score) }));
     const totalW = weights.reduce((s, x) => s + x.w, 0);
 
     // Units are shared across the IN/KR curriculum trees, so a unit draw for
@@ -57,7 +67,13 @@ export class AiRecommendExamService {
       }
     }
     if (problems.length === 0) return this.fallbackAnyLinked(10, country);
-    return { problems: problems.slice(0, target) };
+    return { problems: problems.slice(0, target), arm };
+  }
+
+  /** Selection weight function for a cohort arm — kept here so the legacy
+   *  pure-weakness rule survives for the A/B and as a no-deploy fallback. */
+  private selectionWeight(arm: RecommenderArm): (score: number) => number {
+    return arm === 'legacy' ? (score: number) => Math.max(5, 100 - score) : productiveStruggleWeight;
   }
 
   private async userCountry(userId: string): Promise<'IN' | 'KR'> {
@@ -66,6 +82,32 @@ export class AiRecommendExamService {
       select: { country: true },
     });
     return user?.country === 'KR' ? 'KR' : 'IN';
+  }
+
+  /** Cold-start (no unit mastery): target the diagnostic-derived weak concepts
+   *  from UserPlacementProfile. Falls back to generic only if there is no
+   *  placement profile or its weak concepts have no linked problems. */
+  private async coldStartExam(userId: string, country: 'IN' | 'KR', target: number) {
+    const placement = await this.prisma.userPlacementProfile.findUnique({
+      where: { userId },
+      select: { weakConceptIds: true },
+    });
+    const weakIds = placement?.weakConceptIds ?? [];
+    if (weakIds.length === 0) return this.fallbackAnyLinked(10, country);
+    const treeFilter = country === 'KR'
+      ? { koreanConceptLessonId: { not: null } }
+      : { conceptLessonId: { not: null } };
+    const ps = await this.prisma.problem.findMany({
+      where: {
+        ...treeFilter,
+        concepts: { some: { conceptId: { in: weakIds } } },
+        steps: { some: { stepIndex: 1 } },
+      },
+      take: target,
+      orderBy: { createdAt: 'desc' },
+    });
+    if (ps.length === 0) return this.fallbackAnyLinked(10, country);
+    return { problems: ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })) };
   }
 
   /** Cold-start fallback: any curriculum-linked problem from the user's
@@ -110,26 +152,30 @@ export class AiRecommendExamService {
     }
 
     if (kind === 'mini') {
-      const weakest = await this.prisma.masterySnapshot.findFirst({
-        where: { userId }, orderBy: { score: 'asc' },
-      });
-      if (!weakest) {
+      // Target the highest-weight unit for the user's arm (reachable-weak by
+      // default; the single lowest-score unit only under the 'legacy' arm).
+      const weightOf = this.selectionWeight(recommenderArm(userId));
+      const snaps = await this.prisma.masterySnapshot.findMany({ where: { userId } });
+      const target = snaps.length
+        ? snaps.reduce((best, s) => (weightOf(s.score) > weightOf(best.score) ? s : best))
+        : null;
+      if (!target) {
         const fb = await this.fallbackAnyLinked(5, country);
         return { kind, ...fb };
       }
-      const dist = examDifficultyDistribution(weakest.score);
+      const dist = examDifficultyDistribution(target.score);
       const krOnly = country === 'KR' ? { koreanConceptLessonId: { not: null } } : {};
       const problems: Array<{ id: string; source: string; difficulty: string }> = [];
       for (const [diff, ratio] of Object.entries(dist) as [Difficulty, number][]) {
         const n = Math.round(10 * ratio);
         if (n <= 0) continue;
         const ps = await this.prisma.problem.findMany({
-          where: { unitId: weakest.unitId, difficulty: diff as any, ...krOnly }, take: n,
+          where: { unitId: target.unitId, difficulty: diff as any, ...krOnly }, take: n,
         });
         problems.push(...ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })));
       }
       if (problems.length === 0) {
-        const ps = await this.prisma.problem.findMany({ where: { unitId: weakest.unitId, ...krOnly }, take: 10 });
+        const ps = await this.prisma.problem.findMany({ where: { unitId: target.unitId, ...krOnly }, take: 10 });
         if (ps.length > 0) {
           return { kind, problems: ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })) };
         }

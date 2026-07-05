@@ -7,6 +7,7 @@ export type GoogleSignInMode = 'continue' | 'signup';
 type GoogleSignInButtonProps = {
   mode?: GoogleSignInMode;
   onCredential: (idToken: string) => void | Promise<void>;
+  onError?: (error: unknown) => void;
   disabled?: boolean;
   busy?: boolean;
   enabled?: boolean;
@@ -16,6 +17,7 @@ type GoogleSignInButtonProps = {
 export function GoogleSignInButton({
   mode = 'continue',
   onCredential,
+  onError,
   disabled = false,
   busy = false,
   enabled = true,
@@ -24,6 +26,7 @@ export function GoogleSignInButton({
   const { t } = useT();
   const { configured, ready, loadError, signIn } = useGoogleSignIn({
     onCredential,
+    onError,
     enabled,
   });
 

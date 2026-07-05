@@ -4,6 +4,7 @@ import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/m
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FreeTierSolverQuotaGuard } from '../billing/free-tier-solver-quota.guard';
+import { OcrDailyQuotaGuard } from '../billing/ocr-daily-quota.guard';
 import { OcrService } from '../../infrastructure/ocr/ocr.service';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
 import { MathHelperService } from './math-helper.service';
@@ -50,11 +51,12 @@ export class MathHelperController {
   // extracted text in 1-3 seconds so the user sees their photo was recognised
   // before the 5-15 second solve LLM call begins.
   //
-  // Quota guard intentionally absent: OCR alone is cheap and offers no
-  // graded value. Only /solve counts against the Free-tier daily limit, so
-  // a misfired upload doesn't burn quota; the user can retake the photo
-  // immediately from the ocr-done phase without losing a credit.
+  // OCR does NOT count against the solver credit — a misfired upload / retake
+  // must not burn a solve. But the endpoint calls paid Mathpix + GPT-vision, so
+  // OcrDailyQuotaGuard applies a separate, much looser daily ceiling (premium
+  // bypasses) purely to stop a logged-in client from looping it unboundedly.
   @Post('ocr')
+  @UseGuards(JwtAuthGuard, OcrDailyQuotaGuard)
   @UseInterceptors(FileInterceptor('file', FILE_INTERCEPTOR_OPTIONS))
   async ocrOnly(@UploadedFile() file: Express.Multer.File | undefined) {
     if (!file) throw new BadRequestException('file is required (multipart field "file")');

@@ -970,8 +970,14 @@ function ResultPhase({
           <div style={{ fontSize: 12, color: 'var(--p-muted)', marginBottom: 8 }}>
             {t('upload.result.reveal.hint')}
           </div>
+          {/* Competitors paywall the step-by-step ("show steps" behind premium)
+              — the #1 complaint in their reviews. Ours is free within the daily
+              quota, so we say so. */}
           <button type="button" className="btn" style={{ width: '100%' }} onClick={() => setSolutionRevealed(true)}>
             {t('upload.result.reveal')}
+            <span className="chip" style={{ marginLeft: 8, background: 'var(--p-success-tint)', color: 'var(--p-success)', fontSize: 10, fontWeight: 700 }}>
+              {t('upload.result.reveal.free')}
+            </span>
           </button>
         </div>
       ) : (

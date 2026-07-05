@@ -3,6 +3,7 @@ import { CountryCode, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from './users.repository';
 import { GuardianConsentService } from '../guardian-consent/guardian-consent.service';
+import { isKrUnder14SignupBlocked } from '../guardian-consent/guardian-consent.util';
 import { daysUntil } from '../../common/utils/date.util';
 import { BCRYPT_COST } from '../../common/utils/auth-constants';
 import { assertPasswordNotBreached } from '../../common/utils/password-breach';
@@ -60,6 +61,20 @@ export class UsersService {
     const countryChanging = dto.country !== undefined && dto.country !== user.country;
     if (countryChanging) {
       data.country = dto.country;
+    }
+
+    // KR PIPA under-14 gate — deferred/corrected-age path. Normally a no-op
+    // (email-OTP consent handles under-14); only fires under the
+    // KR_UNDER14_REQUIRE_PASS opt-in. Only checked when age/country moves.
+    if (user.role === UserRole.STUDENT && (dto.birthDate !== undefined || countryChanging)) {
+      const effectiveBirthDate = dto.birthDate !== undefined ? new Date(dto.birthDate) : user.birthDate;
+      const gateCountry = (dto.country ?? user.country) as CountryCode;
+      if (isKrUnder14SignupBlocked(effectiveBirthDate, gateCountry)) {
+        throw new ForbiddenException({
+          code: 'kr_under14_requires_pass',
+          message: 'KR accounts for under-14s currently require guardian identity verification (PASS), which is being set up.',
+        });
+      }
     }
 
     if (Object.keys(data).length === 0) return this.findOne(id);

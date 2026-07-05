@@ -10,6 +10,7 @@ import { CheckCircle2, Clock, Lightbulb, Sparkles } from 'lucide-react';
 import {
   fetchProblemHint,
   fetchProblemSolution,
+  fetchVariant,
   fetchWrongNote,
   type WrongNoteInsightJson,
 } from '../../lib/queries';
@@ -141,7 +142,17 @@ export function WrongNoteDetailScreen() {
                 type="button"
                 className="btn"
                 style={{ width: '100%' }}
-                onClick={() => nav(`/app/practice/${note.problemId}`)}
+                onClick={async () => {
+                  // Re-solve a fresh same-chapter VARIANT (new numbers) so the
+                  // review can't be gamed by recalling the original's answer.
+                  // Fall back to the original problem if no variant exists.
+                  try {
+                    const v = await fetchVariant(note.problemId);
+                    nav(`/app/practice/${v.id}`);
+                  } catch {
+                    nav(`/app/practice/${note.problemId}`);
+                  }
+                }}
               >
                 {t('wn.detail.practice')}
                 <Glyph.ChevronR />

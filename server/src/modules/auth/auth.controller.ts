@@ -8,6 +8,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { GuestStartDto, GuestUpgradeDto } from './dto/guest.dto';
+import { SocialSignInDto } from './dto/social-sign-in.dto';
+import { OtpStartDto, OtpVerifyDto, TruecallerDto } from './dto/phone-otp.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -110,6 +112,56 @@ export class AuthController {
     const ua = (req?.headers?.['user-agent'] ?? null) as string | null;
     return this.service.signInWithGoogle(dto.idToken, {
       ip: ip ?? undefined, ua: ua ?? undefined,
+      deviceHash: deviceHash || undefined,
+    });
+  }
+
+  // KR social rails. The client obtains a Kakao/Naver access token via their
+  // SDK and posts it here; the backend verifies it provider-side and
+  // find-or-creates the user. New social users default to country KR.
+  @Throttle({ auth: { ttl: 60_000, limit: 10 } })
+  @Public() @Post('kakao')
+  kakao(@Body() dto: SocialSignInDto, @Req() req: any, @Headers('x-device-hash') deviceHash?: string) {
+    return this.service.signInWithSocial('kakao', dto.accessToken, {
+      ip: req?.ip ?? undefined, ua: req?.headers?.['user-agent'] ?? undefined,
+      deviceHash: deviceHash || undefined,
+    });
+  }
+
+  @Throttle({ auth: { ttl: 60_000, limit: 10 } })
+  @Public() @Post('naver')
+  naver(@Body() dto: SocialSignInDto, @Req() req: any, @Headers('x-device-hash') deviceHash?: string) {
+    return this.service.signInWithSocial('naver', dto.accessToken, {
+      ip: req?.ip ?? undefined, ua: req?.headers?.['user-agent'] ?? undefined,
+      deviceHash: deviceHash || undefined,
+    });
+  }
+
+  // India phone-OTP rail. start sends a code; verify exchanges (phone, code)
+  // for a session. Truecaller is the one-tap fast path. Tight per-IP throttle
+  // (the per-phone send cap lives in the service via Redis).
+  @Throttle({ auth: { ttl: 60_000, limit: 5 } })
+  @Public() @Post('otp/start')
+  otpStart(@Body() dto: OtpStartDto, @Req() req: any) {
+    return this.service.startPhoneOtp(dto.phone, {
+      ip: req?.ip ?? undefined, ua: req?.headers?.['user-agent'] ?? undefined,
+    });
+  }
+
+  @Throttle({ auth: { ttl: 60_000, limit: 10 } })
+  @Public() @Post('otp/verify')
+  otpVerify(@Body() dto: OtpVerifyDto, @Req() req: any, @Headers('x-device-hash') deviceHash?: string) {
+    return this.service.verifyPhoneOtp(dto.phone, dto.code, {
+      ip: req?.ip ?? undefined, ua: req?.headers?.['user-agent'] ?? undefined,
+      deviceHash: deviceHash || undefined,
+    });
+  }
+
+  @Throttle({ auth: { ttl: 60_000, limit: 10 } })
+  @Public() @Post('truecaller')
+  truecaller(@Body() dto: TruecallerDto, @Req() req: any, @Headers('x-device-hash') deviceHash?: string) {
+    return this.service.signInWithTruecaller(dto.token, {
+      ip: req?.ip ?? undefined, ua: req?.headers?.['user-agent'] ?? undefined,
       deviceHash: deviceHash || undefined,
     });
   }

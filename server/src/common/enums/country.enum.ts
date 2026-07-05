@@ -48,7 +48,13 @@ export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
       recommended: 'AI Diagnostic Mock',
       wrongRedo: 'Revision Test',
     },
-    status: 'live',
+    // Parked for the KR-first launch: India has zero hand-authored problems
+    // yet, and DPDP under-18 verifiable-consent machinery (enforced 2027-05-13)
+    // is not built. 'planned' hides IN from the onboarding chip AND makes the
+    // register API reject country:'IN', so no minor lands on an empty bank and
+    // no under-18 India PII is collected pre-compliance. Flip back to 'live'
+    // once NCERT content is seeded and the consent flow is verified.
+    status: 'planned',
   },
   KR: {
     code: 'KR',
@@ -108,7 +114,10 @@ export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
     // Indian curriculum content is reused directly for the first launch.
     curriculum: 'NCERT', gradeLabel: 'Grade',
     examNames: { mini: 'Chapter Mini Test', mock: 'Board Mock Exam', recommended: 'AI Diagnostic Mock', wrongRedo: 'Revision Test' },
-    status: 'live',
+    // Parked alongside IN for the KR-first launch: AE reuses the Indian NCERT
+    // content, which is not seeded yet, so a live AE market would land users on
+    // an empty problem bank. Unblocks together with IN.
+    status: 'planned',
   },
   ID: {
     code: 'ID', name: 'Indonesia', defaultLang: 'en',

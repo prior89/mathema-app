@@ -16,6 +16,7 @@ import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import { HeadAvatar } from './HeadAvatar';
 import { FirstAchievementModal } from './FirstAchievementModal';
+import { CoreLoopTutorialModal } from './CoreLoopTutorialModal';
 import { UploadProblemModal } from './UploadProblemModal';
 import { QuotaMeter } from '../QuotaMeter';
 
@@ -358,6 +359,7 @@ export function HomeScreen() {
           <div style={{ height: 16 }} />
         </div>
       </div>
+      <CoreLoopTutorialModal />
       <FirstAchievementModal />
       <TabBar />
     </div>

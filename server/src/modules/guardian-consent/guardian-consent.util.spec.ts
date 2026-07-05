@@ -4,6 +4,7 @@ import {
   requiresGuardianConsent,
   requiresGuardianConsentFromAge,
   resolveConsentMethod,
+  isKrUnder14SignupBlocked,
   GUARDIAN_CONSENT_AGE_THRESHOLD_DEFAULT,
   GUARDIAN_CONSENT_AGE_THRESHOLD_KR,
 } from './guardian-consent.util';
@@ -76,5 +77,57 @@ describe('guardian-consent.util', () => {
 
   it('resolves IN email OTP', () => {
     expect(resolveConsentMethod('IN')).toBe('IN_EMAIL_OTP');
+  });
+
+  // KR PIPA under-14 sign-up gate. Default ALLOW: under-14 onboards through the
+  // decree-compliant email-OTP guardian rail (시행령 제17조의2 method 5). Blocks
+  // only under an explicit KR_UNDER14_REQUIRE_PASS opt-in with no live PASS.
+  describe('isKrUnder14SignupBlocked', () => {
+    const under14 = new Date('2013-06-01'); // age 13 at `now`
+    const over14 = new Date('2012-06-01');  // age 14 at `now`
+    const saved = {
+      enabled: process.env.GUARDIAN_PASS_ENABLED,
+      provider: process.env.GUARDIAN_PASS_PROVIDER,
+      requirePass: process.env.KR_UNDER14_REQUIRE_PASS,
+    };
+    afterEach(() => {
+      // Restore env so tests stay order-independent.
+      for (const [k, v] of [
+        ['GUARDIAN_PASS_ENABLED', saved.enabled],
+        ['GUARDIAN_PASS_PROVIDER', saved.provider],
+        ['KR_UNDER14_REQUIRE_PASS', saved.requirePass],
+      ] as const) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
+    });
+
+    it('ALLOWS a KR under-14 by default (email-OTP consent rail, method 5)', () => {
+      delete process.env.GUARDIAN_PASS_ENABLED;
+      delete process.env.GUARDIAN_PASS_PROVIDER;
+      delete process.env.KR_UNDER14_REQUIRE_PASS;
+      expect(isKrUnder14SignupBlocked(under14, 'KR', now)).toBe(false);
+    });
+
+    it('never blocks KR 14+ or non-KR minors', () => {
+      process.env.KR_UNDER14_REQUIRE_PASS = 'true'; // even under the strict opt-in
+      expect(isKrUnder14SignupBlocked(over14, 'KR', now)).toBe(false);
+      expect(isKrUnder14SignupBlocked(under14, 'IN', now)).toBe(false); // IN uses its own gate
+      expect(isKrUnder14SignupBlocked(null, 'KR', now)).toBe(false);
+    });
+
+    it('blocks under-14 only when PASS is required but not live', () => {
+      process.env.KR_UNDER14_REQUIRE_PASS = 'true';
+      process.env.GUARDIAN_PASS_PROVIDER = 'mock';
+      delete process.env.GUARDIAN_PASS_ENABLED;
+      expect(isKrUnder14SignupBlocked(under14, 'KR', now)).toBe(true);
+    });
+
+    it('allows under-14 when PASS is required AND a real provider is live', () => {
+      process.env.KR_UNDER14_REQUIRE_PASS = 'true';
+      process.env.GUARDIAN_PASS_ENABLED = 'true';
+      process.env.GUARDIAN_PASS_PROVIDER = 'nice';
+      expect(isKrUnder14SignupBlocked(under14, 'KR', now)).toBe(false);
+    });
   });
 });

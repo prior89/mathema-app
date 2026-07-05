@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, BadRequestException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { randomBytes, createHash, randomUUID } from 'crypto';
+import { randomBytes, createHash, createHmac, randomUUID, randomInt, timingSafeEqual } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { OAuth2Client } from 'google-auth-library';
 import { UsersService } from '../users/users.service';
@@ -22,11 +22,24 @@ import { SecurityEventService } from './security-event.service';
 import { AuthDeviceService } from './auth-device.service';
 import { ParentLinksService } from '../parent-links/parent-links.service';
 import { GuardianConsentService } from '../guardian-consent/guardian-consent.service';
+import { isKrUnder14SignupBlocked } from '../guardian-consent/guardian-consent.util';
 import { UserRole } from '@prisma/client';
+import { COUNTRY_CONFIG, CountryCode } from '../../common/enums/country.enum';
+import { SocialProvider, SocialProviderService, SocialIdentity } from './social-provider.service';
+import { OtpProviderService } from './otp-provider.service';
 
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
 const REFRESH_REVOKE_NAMESPACE = 'jwt:refresh:revoked:';
+
+// Phone-OTP hardening.
+const OTP_CODE_TTL_SEC = 300;
+const OTP_MAX_VERIFY_ATTEMPTS = 5;   // per issued code
+const OTP_MAX_SENDS_PER_HOUR = 5;    // per phone
+const OTP_PHONE_LOCK_FAILS = 10;     // persistent per-phone fail lock (survives re-send)
+// Synthetic identifier namespaces — never accepted as a real signup email so a
+// user can't squat a phone/social/guest identity address.
+const RESERVED_EMAIL_DOMAINS = ['users.matheo.local', 'mock.local', 'guest.matheo.invalid'];
 
 @Injectable()
 export class AuthService {
@@ -47,6 +60,8 @@ export class AuthService {
     @Inject(forwardRef(() => ParentLinksService))
     private readonly parentLinks: ParentLinksService,
     private readonly guardianConsent: GuardianConsentService,
+    private readonly social: SocialProviderService,
+    private readonly otp: OtpProviderService,
   ) {
     const cid = this.config.get<string>('GOOGLE_CLIENT_ID');
     if (cid && cid !== 'api입력칸') this.googleClient = new OAuth2Client(cid);
@@ -54,11 +69,43 @@ export class AuthService {
 
   async register(dto: RegisterDto, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
     const email = dto.email.trim().toLowerCase();
+    // Structural isolation of the synthetic identity namespaces: reject them at
+    // signup regardless of secret strength, so no one can pre-register a
+    // phone_/kakao_/guest- address and hijack that identity later.
+    if (RESERVED_EMAIL_DOMAINS.includes(email.split('@')[1] ?? '')) {
+      throw new BadRequestException('this email domain is not allowed');
+    }
     const childEmail = dto.childEmail?.trim().toLowerCase();
     const exists = await this.users.findByEmail(email);
     if (exists) throw new UnauthorizedException('email already used');
 
     const role = dto.role ?? 'STUDENT';
+
+    // ── Market gate: the DTO whitelists every compiled CountryCode, but only
+    // 'live'/'beta' markets have curriculum + locale wired. Reject 'planned'
+    // countries (IN/AE/US/UK/AU/SG/ID at the KR-first launch) server-side so a
+    // crafted register payload can't create a user who lands on an empty bank —
+    // the onboarding chip UI already hides these, this closes the API path.
+    // Default is 'KR' (the only live market) so an omitted country never hits
+    // the reject branch. ──
+    const resolvedCountry = (dto.country ?? 'KR') as CountryCode;
+    if (COUNTRY_CONFIG[resolvedCountry]?.status === 'planned') {
+      throw new BadRequestException(
+        `Sign-up for ${COUNTRY_CONFIG[resolvedCountry].name} is not available yet`,
+      );
+    }
+
+    // KR PIPA under-14 gate. Normally a no-op: under-14 KR onboards via the
+    // decree-compliant email-OTP guardian rail (started after create). Only
+    // fires when an operator opts into PASS-grade assurance (KR_UNDER14_REQUIRE
+    // _PASS) that isn't live yet. 14+ and non-KR unaffected.
+    const birthDateForGate = dto.birthDate ? new Date(dto.birthDate) : null;
+    if (role === 'STUDENT' && isKrUnder14SignupBlocked(birthDateForGate, resolvedCountry)) {
+      throw new BadRequestException({
+        code: 'kr_under14_requires_pass',
+        message: 'KR sign-up for under-14s currently requires guardian identity verification (PASS), which is being set up.',
+      });
+    }
 
     // ── PARENT: 자녀 이메일로 초대 요청 (즉시 연결 금지 — 학생 승인 필요) ──
     let pendingChildUserId: string | null = null;
@@ -91,17 +138,19 @@ export class AuthService {
     // SEC-2 breach check before bcrypt (faster reject on bad password).
     await assertPasswordNotBreached(dto.password);
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
-    const user = await this.users.create({
+    let user: Awaited<ReturnType<typeof this.users.create>>;
+    try {
+      user = await this.users.create({
       email,
       passwordHash,
       name: dto.name,
       role,
       examDate,
       targetGrade,
-      // Country from onboarding country chip. Prisma default is IN so an
-      // omitted value still lands on India behaviour — KR sign-ups must
-      // explicitly send country: 'KR' for curriculum branching to fire.
-      country: (dto.country ?? 'IN') as any,
+      // Country from onboarding country chip. Default to 'KR' — the only live
+      // market at the KR-first launch. (Prisma column default is still IN for
+      // legacy rows; we write an explicit value so branching is unambiguous.)
+      country: resolvedCountry as any,
       // Onboarding may create the account before the class picker runs.
       // Write an explicit null instead of letting Prisma's legacy CLASS_12
       // default leak into diagnostics and ProtectedRoute decisions.
@@ -109,7 +158,16 @@ export class AuthService {
       ...(isStudent && dto.birthDate ? { birthDate: new Date(dto.birthDate) } : {}),
       ...(studyGoal ? { studyGoal } : {}),
       ...(tenantId ? { tenantId } : {}),
-    });
+      });
+    } catch (e) {
+      // A concurrent double-submit can slip past the findByEmail check above and
+      // race into the unique(email) constraint. Convert the raw Prisma P2002
+      // into the same clean "already used" signal instead of surfacing a 500.
+      if ((e as { code?: string })?.code === 'P2002') {
+        throw new UnauthorizedException('email already used');
+      }
+      throw e;
+    }
 
     if (role === 'PARENT' && pendingChildUserId) {
       await this.parentLinks.requestLink({
@@ -135,7 +193,7 @@ export class AuthService {
     if (role === 'STUDENT' && dto.birthDate) {
       const gc = await this.guardianConsent.ensurePendingForStudent({
         studentUserId: user.id,
-        country: (dto.country ?? 'IN') as any,
+        country: resolvedCountry as any,
         ip: ctx.ip,
         ua: ctx.ua,
       });
@@ -232,7 +290,9 @@ export class AuthService {
         name: 'Aarav Sharma',
         examDate: new Date('2027-02-14'),
         targetGrade: 1,
-        country: 'IN' as any,
+        // KR-first: dev-login lands on the live market so local testing hits
+        // the seeded KR curriculum instead of the empty India bank.
+        country: 'KR' as any,
         gradeLevel: 'CLASS_11' as any,
         role: 'STUDENT' as any,
         emailVerifiedAt: new Date(),
@@ -356,7 +416,10 @@ export class AuthService {
         name,
         examDate: placeholderExam,
         targetGrade: 1,
-        country: 'IN' as any,
+        // KR-first launch: new Google accounts start in the only live market.
+        // gradeLevel stays null so ProtectedRoute still routes them to
+        // onboarding, where the country chip can switch to another live market.
+        country: 'KR' as any,
         emailVerifiedAt: new Date(),
       });
     } else if (!(user as any).emailVerifiedAt) {
@@ -370,6 +433,200 @@ export class AuthService {
       userId: verifiedUser.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
     });
     return this.issueTokens(verifiedUser.id, ctx.deviceHash);
+  }
+
+  /**
+   * Kakao / Naver sign-in — the default KR social rails. Verifies the
+   * provider access token (SocialProviderService), then find-or-creates the
+   * user on the same model as Google. New social accounts default to country
+   * KR (these are KR-market rails) with gradeLevel null so ProtectedRoute
+   * routes them through onboarding.
+   */
+  async signInWithSocial(
+    provider: SocialProvider,
+    accessToken: string,
+    ctx: { ip?: string; ua?: string; deviceHash?: string } = {},
+  ) {
+    const identity = await this.social.verify(provider, accessToken);
+    const user = await this.findOrCreateSocialUser(identity);
+    await this.bindAndDisplace({
+      userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
+    });
+    this.events.record('LOGIN_SUCCESS' as any, { userId: user.id, ip: ctx.ip, userAgent: ctx.ua, metadata: { method: provider } });
+    return this.issueTokens(user.id, ctx.deviceHash);
+  }
+
+  private async findOrCreateSocialUser(identity: SocialIdentity) {
+    // SECURITY: only use the provider's email as the account key when the
+    // provider asserts it is verified. Otherwise namespace the account by the
+    // provider user id so an unverified/attacker-chosen social email can never
+    // link into (take over) an existing local email/password or Google account.
+    const accountKey = identity.emailVerified
+      ? identity.email.toLowerCase()
+      : `${identity.provider}_${identity.providerUserId}@users.matheo.local`;
+    let user = await this.users.findByEmail(accountKey);
+    if (!user) {
+      const placeholderExam = new Date();
+      placeholderExam.setFullYear(placeholderExam.getFullYear() + 1);
+      user = await this.users.create({
+        email: accountKey,
+        passwordHash: await bcrypt.hash(`${identity.provider}:${identity.providerUserId}:${Date.now()}`, BCRYPT_COST),
+        name: identity.name,
+        examDate: placeholderExam,
+        targetGrade: 1,
+        country: 'KR' as any,
+        // null (not the prisma CLASS_12 default) so ProtectedRoute routes the
+        // new social user through onboarding to pick their class.
+        gradeLevel: null,
+        emailVerifiedAt: identity.emailVerified ? new Date() : null,
+      });
+    } else if (identity.emailVerified && !(user as any).emailVerifiedAt) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date() },
+      }) as any;
+    }
+    return user!;
+  }
+
+  // ---------- India phone-OTP rail ----------
+
+  /** Digits-only, +country-prefixed key. Bare 10-digit numbers default to +91. */
+  private normalizePhone(raw: string): string {
+    const digits = raw.replace(/[^0-9]/g, '');
+    if (raw.trim().startsWith('+')) return `+${digits}`;
+    // Strip a leading trunk '0' so 09812345678 and 9812345678 map to one
+    // identity before defaulting to +91 (Indian mobiles never start with 0).
+    const local = digits.replace(/^0+/, '');
+    if (local.length === 10) return `+91${local}`;
+    return `+${digits}`;
+  }
+
+  // Dedicated, NON-rotatable secret for phone identity fingerprints. Must NOT
+  // fall back to the JWT refresh secret — rotating JWTs would re-key every
+  // phone user's synthetic email and orphan their account/entitlement. Fails
+  // closed in prod so a world-known constant is never used there.
+  private phoneHashSecret(): string {
+    const s = this.config.get<string>('PHONE_ID_HASH_SECRET') ?? process.env.PHONE_ID_HASH_SECRET;
+    if (s) return s;
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('PHONE_ID_HASH_SECRET is required in production');
+    }
+    return 'dev-phone-id-secret';
+  }
+
+  private phoneFingerprint(phone: string): string {
+    return createHmac('sha256', this.phoneHashSecret())
+      .update(`phone:${phone}`)
+      .digest('hex')
+      .slice(0, 32);
+  }
+
+  private otpCodeHash(phone: string, code: string): string {
+    return createHmac('sha256', this.phoneHashSecret())
+      .update(`otp:${phone}:${code}`)
+      .digest('hex');
+  }
+
+  private hashEquals(a: string, b: string): boolean {
+    const left = Buffer.from(a, 'hex');
+    const right = Buffer.from(b, 'hex');
+    return left.length === right.length && timingSafeEqual(left, right);
+  }
+
+  private otpKey(phone: string): string { return `otp:phone:${this.phoneFingerprint(phone)}`; }
+  private otpSendKey(phone: string): string { return `otp:send:${this.phoneFingerprint(phone)}`; }
+  // Cumulative failed-verify counter that PERSISTS across code re-requests, so
+  // re-sending a fresh code can't reset the brute-force ceiling.
+  private otpFailKey(phone: string): string { return `otp:fail:${this.phoneFingerprint(phone)}`; }
+
+  /**
+   * Send a one-time code to a phone (India default rail). Rate-limited per phone
+   * (sends/hour + a persistent failed-verify lock). The code is delivered BEFORE
+   * it is persisted, so a failed send never leaves a usable code in Redis.
+   */
+  async startPhoneOtp(phone: string, _ctx: { ip?: string; ua?: string } = {}) {
+    const normalized = this.normalizePhone(phone);
+    if (normalized.replace(/[^0-9]/g, '').length < 8) {
+      throw new BadRequestException('invalid phone number');
+    }
+    const fails = Number((await this.redis.get(this.otpFailKey(normalized))) ?? '0');
+    if (fails >= OTP_PHONE_LOCK_FAILS) {
+      throw new BadRequestException({ code: 'otp_locked', message: 'Too many attempts. Try again later.' });
+    }
+    const sends = await this.redis.incrWithTtl(this.otpSendKey(normalized), 3600);
+    if (sends > OTP_MAX_SENDS_PER_HOUR) {
+      throw new BadRequestException({ code: 'otp_rate_limited', message: 'Too many code requests. Try again later.' });
+    }
+    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    // Deliver first; only persist a live code once delivery is accepted.
+    const result = await this.otp.send(normalized, code);
+    await this.redis.set(
+      this.otpKey(normalized),
+      JSON.stringify({ codeHash: this.otpCodeHash(normalized, code), attempts: 0 }),
+      OTP_CODE_TTL_SEC,
+    );
+    return { sent: true, channel: result.channel, expiresInSec: OTP_CODE_TTL_SEC, ...(result.devCode ? { devCode: result.devCode } : {}) };
+  }
+
+  /** Verify a phone code and find-or-create the user (country IN). */
+  async verifyPhoneOtp(phone: string, code: string, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
+    const normalized = this.normalizePhone(phone);
+    // Single generic error for every failure so /verify can't be used to probe
+    // whether a code is currently pending / a number is mid-login.
+    const invalid = () => new UnauthorizedException({ code: 'otp_invalid', message: 'invalid or expired code' });
+    const raw = await this.redis.get(this.otpKey(normalized));
+    if (!raw) throw invalid();
+    const state = JSON.parse(raw) as { codeHash: string; attempts: number };
+    if (state.attempts >= OTP_MAX_VERIFY_ATTEMPTS) {
+      await this.redis.del(this.otpKey(normalized));
+      throw invalid();
+    }
+    if (!this.hashEquals(this.otpCodeHash(normalized, code), state.codeHash)) {
+      await this.redis.set(this.otpKey(normalized), JSON.stringify({ ...state, attempts: state.attempts + 1 }), OTP_CODE_TTL_SEC);
+      const fails = await this.redis.incrWithTtl(this.otpFailKey(normalized), 3600);
+      this.events.record('LOGIN_FAIL' as any, { userId: null, ip: ctx.ip, userAgent: ctx.ua, metadata: { method: 'phone_otp', fails } });
+      throw invalid();
+    }
+    await this.redis.del(this.otpKey(normalized));
+    await this.redis.del(this.otpFailKey(normalized));
+    const user = await this.findOrCreatePhoneUser(normalized);
+    await this.bindAndDisplace({ userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua });
+    this.events.record('LOGIN_SUCCESS' as any, { userId: user.id, ip: ctx.ip, userAgent: ctx.ua, metadata: { method: 'phone_otp' } });
+    return this.issueTokens(user.id, ctx.deviceHash);
+  }
+
+  /** Truecaller one-tap — verify the SDK token, then find-or-create by phone. */
+  async signInWithTruecaller(token: string, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
+    const identity = await this.otp.verifyTruecaller(token);
+    const user = await this.findOrCreatePhoneUser(this.normalizePhone(identity.phone), identity.name);
+    await this.bindAndDisplace({ userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua });
+    this.events.record('LOGIN_SUCCESS' as any, { userId: user.id, ip: ctx.ip, userAgent: ctx.ua, metadata: { method: 'truecaller' } });
+    return this.issueTokens(user.id, ctx.deviceHash);
+  }
+
+  private async findOrCreatePhoneUser(phone: string, name?: string) {
+    // No phone column on User. Use a stable, non-reversible synthetic email as
+    // the identifier so /users/me and exports do not expose the raw phone.
+    const email = `phone_${this.phoneFingerprint(phone)}@users.matheo.local`;
+    let user = await this.users.findByEmail(email);
+    if (!user) {
+      const placeholderExam = new Date();
+      placeholderExam.setFullYear(placeholderExam.getFullYear() + 1);
+      user = await this.users.create({
+        email,
+        passwordHash: await bcrypt.hash(randomBytes(32).toString('hex'), BCRYPT_COST),
+        name: name ?? 'Student',
+        examDate: placeholderExam,
+        targetGrade: 1,
+        country: 'IN' as any,
+        gradeLevel: null,
+        // The verified phone is the identity; stamp emailVerifiedAt so the
+        // (now soft) email gate never nags a phone-first user.
+        emailVerifiedAt: new Date(),
+      });
+    }
+    return user!;
   }
 
   // ---------- Guest (try-first) ----------
@@ -417,7 +674,9 @@ export class AuthService {
       role: 'STUDENT' as any,
       examDate: new Date('2027-02-14'),
       targetGrade: 3,
-      country: (dto.country ?? 'IN') as any,
+      // KR-first: default guests to the only live market when the chip hasn't
+      // sent one yet. The onboarding country step overrides this before content.
+      country: (dto.country ?? 'KR') as any,
       gradeLevel: (dto.gradeLevel ?? null) as any,
       emailVerifiedAt: new Date(),
       isGuest: true,
@@ -470,6 +729,18 @@ export class AuthService {
     const exists = await this.users.findByEmail(email);
     if (exists) throw new BadRequestException('email already used');
 
+    // KR PIPA under-14 gate — same rule as register(): normally a no-op
+    // (email-OTP consent runs after upgrade); only fires under the
+    // KR_UNDER14_REQUIRE_PASS opt-in. Effective country = new value or guest's.
+    const upgradeCountry = (dto.country ?? (me as any).country ?? 'KR') as CountryCode;
+    const upgradeBirthDate = dto.birthDate ? new Date(dto.birthDate) : null;
+    if (isKrUnder14SignupBlocked(upgradeBirthDate, upgradeCountry)) {
+      throw new BadRequestException({
+        code: 'kr_under14_requires_pass',
+        message: 'KR sign-up for under-14s currently requires guardian identity verification (PASS), which is being set up.',
+      });
+    }
+
     await assertPasswordNotBreached(dto.password);
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
     await this.prisma.user.update({
@@ -497,7 +768,7 @@ export class AuthService {
     if (dto.birthDate) {
       const gc = await this.guardianConsent.ensurePendingForStudent({
         studentUserId: userId,
-        country: (dto.country ?? me.country ?? 'IN') as any,
+        country: (dto.country ?? me.country ?? 'KR') as any,
         ip: ctx.ip,
         ua: ctx.ua,
       });

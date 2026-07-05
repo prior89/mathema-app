@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { get } from '../../lib/api';
+import { fetchMockSummary } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
 import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
@@ -54,12 +55,15 @@ const STEP_LABEL_KEY: Record<number, TranslationKey> = {
 export function MockResultDetailScreen() {
   const { resultId } = useParams<{ resultId: string }>();
   const nav = useNavigate();
-  const { t } = useT();
+  const { t, lang } = useT();
   const detail = useQuery({
     queryKey: ['mock-result', resultId],
     queryFn: () => get<ResultDetail>(`/mock-exams/results/${resultId}`),
     enabled: !!resultId,
   });
+  // Shared cache with the Mock tab; used only to show the "your score went up"
+  // moment when THIS result is the most recent one (so scoreDelta applies).
+  const summary = useQuery({ queryKey: ['mock-summary'], queryFn: fetchMockSummary });
 
   const correct = detail.data?.problems.filter((p) => p.allCorrect).length ?? 0;
   const total = detail.data?.problems.length ?? 0;
@@ -106,6 +110,34 @@ export function MockResultDetailScreen() {
               </div>
               <div className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, marginTop: 6 }}>{t('mockResult.outOf')}</div>
             </div>
+
+            {/* Improvement moment — only when this is the most recent result, so
+                the delta genuinely reflects "this exam vs the previous one". */}
+            {(() => {
+              const s = summary.data;
+              if (!s || detail.data.score !== s.lastScore) return null;
+              const delta = s.scoreDelta;
+              const isBest = s.bestScore != null && detail.data.score >= s.bestScore && (s.attemptCount ?? 0) > 1;
+              if ((delta == null || delta <= 0) && !isBest) return null;
+              const ko = lang === 'ko';
+              return (
+                <div className="card" style={{ marginTop: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--p-success-tint)', borderColor: 'var(--p-success)' }}>
+                  <span style={{ fontSize: 22 }} aria-hidden>{isBest ? '🏆' : '📈'}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, color: 'var(--p-success)' }}>
+                      {isBest
+                        ? (ko ? '최고 점수 경신!' : 'New personal best!')
+                        : (ko ? `지난 시험보다 +${delta}점 올랐어요` : `+${delta} pts since your last exam`)}
+                    </div>
+                    {s.improvementSinceFirst != null && s.improvementSinceFirst > 0 && (
+                      <div style={{ fontSize: 11.5, color: 'var(--p-ink-2)', marginTop: 2 }}>
+                        {ko ? `첫 시험 대비 +${s.improvementSinceFirst}점` : `+${s.improvementSinceFirst} pts since your first exam`}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="stat-grid" style={{ marginTop: 10 }}>
               <Cell k={t('mockResult.cell.grade')} v={gradeBand(detail.data.grade)} />
