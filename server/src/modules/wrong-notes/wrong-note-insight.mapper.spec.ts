@@ -30,6 +30,42 @@ describe('buildFallbackInsight (LLM-free why-wrong)', () => {
   it('maps hi -> en for the insight lang enum', () => {
     expect(buildFallbackInsight({ errorTypeRaw: 'CALC' }, 'hi').lang).toBe('en');
   });
+
+  // The goal: the cause must read as specific sentences, not a one-word label.
+  it('gives a rich, multi-sentence, concept-anchored cause (not one word)', () => {
+    const r = buildFallbackInsight({ errorTypeRaw: 'SIGN', problemConcept: '이차방정식의 근' }, 'ko');
+    expect(r.rootCause.length).toBeGreaterThan(40);          // not a one-liner label
+    expect(r.rootCause).toContain('부호');                   // the specific mechanism
+    expect(r.rootCause).toContain('이차방정식의 근');         // anchored to the concept
+    expect(r.rootCause).not.toContain('유형에서 막혔');      // the old thin template is gone
+    // First drill step is the TARGETED remedy for this error, not generic.
+    expect(r.drillSteps[0]).toContain('부호');
+  });
+
+  it('different error codes yield different, specific causes', () => {
+    const codes = ['SIGN', 'CALC', 'CON', 'FORMULA', 'GRAPH', 'UNIT', 'ALG', 'LOGIC'];
+    const causes = codes.map((c) => buildFallbackInsight({ errorTypeRaw: c }, 'ko').rootCause);
+    expect(new Set(causes).size).toBe(codes.length);          // all distinct
+    for (const c of causes) expect(c.length).toBeGreaterThan(30);
+  });
+
+  // The prod WrongNote.errorType is the Prisma ErrorType ENUM, not a mechanism
+  // code. All 220 live notes are CONCEPT_MISUNDERSTANDING or CALCULATION_MISTAKE —
+  // both MUST resolve to a rich, mechanism-specific cause, not the generic fallback.
+  it('resolves the real prod ErrorType enum values to rich, distinct causes', () => {
+    const concept = buildFallbackInsight({ errorTypeRaw: 'CONCEPT_MISUNDERSTANDING' }, 'ko');
+    const calc = buildFallbackInsight({ errorTypeRaw: 'CALCULATION_MISTAKE' }, 'ko');
+    expect(concept.rootCause.length).toBeGreaterThan(40);
+    expect(calc.rootCause.length).toBeGreaterThan(40);
+    expect(concept.rootCause).not.toEqual(calc.rootCause);   // not both the generic template
+    expect(calc.rootCause).not.toContain('유형에서 막혔');    // the old thin label is gone
+  });
+
+  it('even the no-error-code case gives an actionable sentence, not a label', () => {
+    const r = buildFallbackInsight({ problemConcept: '삼각비' }, 'ko');
+    expect(r.rootCause.length).toBeGreaterThan(30);
+    expect(r.rootCause).toContain('삼각비');
+  });
 });
 
 describe('wrong-note-insight.mapper', () => {
