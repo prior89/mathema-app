@@ -55,6 +55,32 @@ export function perDayPrice(
   );
 }
 
+// Human-readable duration of a promo phase: ISO-8601 billingPeriod (e.g. "P1M")
+// multiplied by its billingCycleCount. Used for the launch-offer line
+// ("첫 3개월 …" / "first 3 months …"). Returns null on an unparseable period.
+export function phaseDurationLabel(
+  billingPeriod: string,
+  cycleCount: number,
+  lang: string,
+): string | null {
+  const m = /^P(\d+)([DWMY])$/.exec(billingPeriod);
+  if (!m) return null;
+  const total = Number(m[1]) * (cycleCount > 0 ? cycleCount : 1);
+  const unit = m[2];
+  if (lang === 'ko') {
+    const ko: Record<string, string> = { D: '일', W: '주', M: '개월', Y: '년' };
+    return `${total}${ko[unit] ?? ''}`;
+  }
+  const en: Record<string, [string, string]> = {
+    D: ['day', 'days'],
+    W: ['week', 'weeks'],
+    M: ['month', 'months'],
+    Y: ['year', 'years'],
+  };
+  const [one, many] = en[unit] ?? ['period', 'periods'];
+  return `${total} ${total === 1 ? one : many}`;
+}
+
 export function annualSavingsPercent(
   monthlyMicros: string,
   yearlyMicros: string,

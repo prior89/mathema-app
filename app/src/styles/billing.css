@@ -371,6 +371,16 @@
   font-weight: 700;
 }
 
+.mathema-app .paywall-plan-card-promo {
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--p-accent-ink) 12%, transparent);
+  color: var(--p-accent-ink);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
 .mathema-app .paywall-platform-notice,
 .mathema-app .paywall-load-error,
 .mathema-app .paywall-action-notice {
@@ -572,6 +582,15 @@
   color: var(--p-muted);
   font-size: 10.5px;
   text-align: center;
+}
+
+/* 전자상거래법 disclosure: must stay legible (not tiny/greyed). */
+.mathema-app .paywall-purchase-dock > p.paywall-purchase-terms {
+  margin-top: 8px;
+  color: var(--p-ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .mathema-app .paywall-member {

@@ -5,6 +5,7 @@ import {
   microsToAmount,
   monthlyEquivalent,
   perDayPrice,
+  phaseDurationLabel,
 } from './billing-pricing';
 
 describe('billing pricing helpers', () => {
@@ -31,5 +32,13 @@ describe('billing pricing helpers', () => {
     expect(annualSavingsPercent('9900000000', '99000000000')).toBe(17);
     expect(annualSavingsPercent('10000000', '96000000')).toBe(20);
     expect(annualSavingsPercent('10000000', '120000000')).toBe(0);
+  });
+
+  it('labels a promo phase duration (period × cycles) per language', () => {
+    expect(phaseDurationLabel('P1M', 3, 'ko')).toBe('3개월');
+    expect(phaseDurationLabel('P1M', 3, 'en')).toBe('3 months');
+    expect(phaseDurationLabel('P1M', 1, 'en')).toBe('1 month');
+    expect(phaseDurationLabel('P1Y', 1, 'ko')).toBe('1년');
+    expect(phaseDurationLabel('not-a-period', 3, 'ko')).toBeNull();
   });
 });
