@@ -1365,7 +1365,7 @@ const ko = {
   'paywall.trust.playDesc': 'Matheo는 카드 번호를 직접 저장하지 않습니다.',
   'paywall.trust.cancelTitle': '언제든지 해지 가능',
   'paywall.trust.cancelDesc': '해지해도 이미 결제한 기간이 끝날 때까지 Premium을 이용할 수 있어요.',
-  'paywall.freeStillAvailable': '지금 구독하지 않아도 기본 학습 기능은 계속 사용할 수 있어요.',
+  'paywall.freeStillAvailable': '지금 구독하지 않아도 사진 풀이와 단계별 풀이는 계속 무료로 쓸 수 있어요.',
   'paywall.member.active': 'PREMIUM 이용 중',
   'paywall.member.plan': '현재 {plan}을 이용하고 있어요.',
   'paywall.member.status': '구독 상태',
@@ -1378,6 +1378,16 @@ const ko = {
   'paywall.autoRenew.disclosure':
     '구독은 취소할 때까지 선택한 주기(월/년)마다 자동 갱신됩니다. Google Play 결제를 통해 청구되며, 가격은 Play에서 표시된 지역 가격이 적용됩니다.',
   'paywall.cancel.hint': '해지는 Google Play 구독 센터에서 할 수 있어요.',
+  'paywall.plan.bestValue': '가장 큰 할인',
+  'paywall.plan.promoBadge': '런치 할인',
+  'paywall.plan.promoNote': '첫 {duration} {price}',
+  'paywall.disclosure.recurring': '{price}/{period} 자동결제 · 언제든 해지할 수 있어요.',
+  'paywall.disclosure.promo':
+    '{promo}로 {duration} 이용 후 {base}/{period} 자동결제 · 언제든 해지할 수 있어요.',
+  'paywall.purchase.canceled': '결제를 취소했어요. 준비되면 다시 시도해 주세요.',
+  'paywall.purchase.alreadyOwned': '이미 Premium을 구독 중이에요. ‘복원하기’를 눌러 동기화해 주세요.',
+  'paywall.purchase.pending': '결제가 확인 대기 중이에요. 승인되면 자동으로 Premium이 켜집니다.',
+  'paywall.purchase.succeeded': '결제가 확인되었어요. 이제 Premium이에요! 🎉',
   'paywall.legal.terms': '이용약관',
   'paywall.legal.privacy': '개인정보처리방침',
 };
@@ -2741,7 +2751,7 @@ const en: typeof ko = {
   'paywall.trust.playDesc': 'Matheo never stores your card number.',
   'paywall.trust.cancelTitle': 'Cancel anytime',
   'paywall.trust.cancelDesc': 'After cancellation, Premium remains available until the paid period ends.',
-  'paywall.freeStillAvailable': 'You can keep using the core learning features without subscribing.',
+  'paywall.freeStillAvailable': 'Even without subscribing, photo solving and step-by-step solutions stay free.',
   'paywall.member.active': 'PREMIUM ACTIVE',
   'paywall.member.plan': 'You are currently on the {plan} plan.',
   'paywall.member.status': 'Subscription status',
@@ -2754,6 +2764,16 @@ const en: typeof ko = {
   'paywall.autoRenew.disclosure':
     'Subscriptions renew automatically each billing period (monthly or yearly) until you cancel. You are charged through Google Play at the regional price shown at purchase.',
   'paywall.cancel.hint': 'You can cancel anytime in the Google Play subscriptions center:',
+  'paywall.plan.bestValue': 'Best value',
+  'paywall.plan.promoBadge': 'Launch offer',
+  'paywall.plan.promoNote': '{price} for the first {duration}',
+  'paywall.disclosure.recurring': '{price}/{period}, auto-renews · cancel anytime.',
+  'paywall.disclosure.promo':
+    '{promo} for {duration}, then {base}/{period}, auto-renews · cancel anytime.',
+  'paywall.purchase.canceled': 'Purchase canceled. You can try again whenever you are ready.',
+  'paywall.purchase.alreadyOwned': 'You already have Premium. Tap “Restore” to sync it.',
+  'paywall.purchase.pending': 'Your payment is pending confirmation. Premium turns on automatically once it clears.',
+  'paywall.purchase.succeeded': 'Payment confirmed — you are Premium now! 🎉',
   'paywall.legal.terms': 'Terms of Service',
   'paywall.legal.privacy': 'Privacy Policy',
 };

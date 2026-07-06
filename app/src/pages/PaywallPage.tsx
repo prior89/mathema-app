@@ -19,6 +19,7 @@ import {
   annualSavingsPercent,
   monthlyEquivalent,
   perDayPrice,
+  phaseDurationLabel,
 } from '../lib/billing-pricing';
 import { useBillingUiEnabled } from '../lib/billing-flags';
 import {
@@ -27,6 +28,7 @@ import {
   fetchProducts,
   getServerStatus,
   initBilling,
+  introPhase,
   isBillingAvailable,
   restore,
   selectPaidOffer,
@@ -84,7 +86,11 @@ export default function PaywallPage() {
   const { t, lang } = useT();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [selectedProductId, setSelectedProductId] = useState<ProductId>('premium_yearly');
+  // Default to monthly: the low-commitment entry KR subscribers prefer, and it
+  // avoids pre-selecting the pricier annual plan (a "특정 선택 유도" dark-pattern
+  // risk under the 2025-02-14 전자상거래법 rules). Annual stays one tap away with
+  // an honest savings badge.
+  const [selectedProductId, setSelectedProductId] = useState<ProductId>('premium_monthly');
   const [busyAction, setBusyAction] = useState<BusyAction>(null);
   const [notice, setNotice] = useState<Notice>(null);
 
@@ -120,10 +126,47 @@ export default function PaywallPage() {
   const selectedPlan = selectedProductId === 'premium_yearly' ? yearlyPlan : monthlyPlan;
 
   useEffect(() => {
-    if (selectedProductId === 'premium_yearly' && !yearlyPlan && monthlyPlan) {
+    if (selectedProductId === 'premium_monthly' && !monthlyPlan && yearlyPlan) {
+      setSelectedProductId('premium_yearly');
+    } else if (selectedProductId === 'premium_yearly' && !yearlyPlan && monthlyPlan) {
       setSelectedProductId('premium_monthly');
     }
   }, [monthlyPlan, selectedProductId, yearlyPlan]);
+
+  // The Play sheet's real outcome arrives asynchronously via the billing
+  // listeners (billing.ts), not from buy()'s promise. Reflect it in the notice
+  // so a cancellation isn't left looking like pending success (and celebrate a
+  // confirmed purchase).
+  useEffect(() => {
+    const onPurchase = (e: Event) => {
+      const detail = (e as CustomEvent<{ purchaseState: number }>).detail;
+      setBusyAction(null);
+      setNotice(
+        detail?.purchaseState === 2
+          ? { tone: 'info', text: t('paywall.purchase.pending') }
+          : { tone: 'success', text: t('paywall.purchase.succeeded') },
+      );
+      void queryClient.invalidateQueries({ queryKey: ['billing-status'] });
+    };
+    const onError = (e: Event) => {
+      const detail = (e as CustomEvent<{ responseCode: number }>).detail;
+      setBusyAction(null);
+      // Play BillingResponseCode: 1 = USER_CANCELED, 7 = ITEM_ALREADY_OWNED.
+      if (detail?.responseCode === 1) {
+        setNotice({ tone: 'info', text: t('paywall.purchase.canceled') });
+      } else if (detail?.responseCode === 7) {
+        setNotice({ tone: 'info', text: t('paywall.purchase.alreadyOwned') });
+      } else {
+        setNotice({ tone: 'error', text: t('paywall.purchase.failed') });
+      }
+    };
+    window.addEventListener('matheo:billing-purchase', onPurchase);
+    window.addEventListener('matheo:billing-error', onError);
+    return () => {
+      window.removeEventListener('matheo:billing-purchase', onPurchase);
+      window.removeEventListener('matheo:billing-error', onError);
+    };
+  }, [queryClient, t]);
 
   if (!billingUi) return <Navigate to="/app" replace />;
 
@@ -159,6 +202,18 @@ export default function PaywallPage() {
         locale,
       )
     : null;
+  // Per-day framing suits India/SEA; KR premium positioning uses monthly-equivalent
+  // + savings% instead (research). Only surface per-day outside KR.
+  const showPerDay = locale !== 'ko-KR';
+
+  // Launch/intro promo phase per plan (null when only a base plan is offered).
+  const yearlyIntro = yearlyPlan ? introPhase(yearlyPlan.offer) : null;
+  const monthlyIntro = monthlyPlan ? introPhase(monthlyPlan.offer) : null;
+  const promoNote = (intro: NonNullable<typeof yearlyIntro>): string =>
+    t('paywall.plan.promoNote', {
+      price: intro.priceFormatted,
+      duration: phaseDurationLabel(intro.billingPeriod, intro.billingCycleCount, lang) ?? '',
+    });
 
   const closePaywall = () => {
     if (window.history.length > 1) navigate(-1);
@@ -302,6 +357,26 @@ export default function PaywallPage() {
     selectedProductId === 'premium_yearly'
       ? t('paywall.cta.yearly')
       : t('paywall.cta.monthly');
+
+  // 전자상거래법 (in force 2025-02-14): the recurring price, period, promo→base
+  // conversion, and cancel-anytime must be disclosed adjacent to the CTA, not
+  // behind a toggle. Built from the base recurring phase (+ intro phase if any).
+  const selectedIntro = selectedPlan ? introPhase(selectedPlan.offer) : null;
+  const disclosureText = !selectedPlan
+    ? null
+    : selectedIntro
+      ? t('paywall.disclosure.promo', {
+          promo: selectedIntro.priceFormatted,
+          duration:
+            phaseDurationLabel(selectedIntro.billingPeriod, selectedIntro.billingCycleCount, lang) ??
+            '',
+          base: selectedPlan.phase.priceFormatted,
+          period: selectedPeriod,
+        })
+      : t('paywall.disclosure.recurring', {
+          price: selectedPlan.phase.priceFormatted,
+          period: selectedPeriod,
+        });
 
   return (
     <div className="screen paywall-screen">
@@ -471,7 +546,7 @@ export default function PaywallPage() {
                     onClick={() => setSelectedProductId('premium_yearly')}
                   >
                     <span className="paywall-plan-card-badge">
-                      {t('paywall.plan.recommended')}
+                      {t('paywall.plan.bestValue')}
                     </span>
                     <span className="paywall-plan-card-check" aria-hidden="true">
                       {selectedProductId === 'premium_yearly' && <Check size={12} />}
@@ -481,7 +556,7 @@ export default function PaywallPage() {
                       <strong>{yearlyEquivalent}</strong>
                       <span>/ {t('paywall.monthly.per')}</span>
                     </span>
-                    {yearlyPerDay && (
+                    {yearlyPerDay && showPerDay && (
                       <span className="paywall-plan-card-anchor">
                         {t('paywall.plan.perDay', { price: yearlyPerDay })}
                       </span>
@@ -492,6 +567,11 @@ export default function PaywallPage() {
                     {yearlySaving !== null && yearlySaving > 0 && (
                       <span className="paywall-plan-card-saving">
                         {t('paywall.plan.save', { percent: yearlySaving })}
+                      </span>
+                    )}
+                    {yearlyIntro && (
+                      <span className="paywall-plan-card-promo">
+                        {t('paywall.plan.promoBadge')} · {promoNote(yearlyIntro)}
                       </span>
                     )}
                   </button>
@@ -517,6 +597,11 @@ export default function PaywallPage() {
                     <span className="paywall-plan-card-detail">
                       {t('paywall.plan.monthlyFlex')}
                     </span>
+                    {monthlyIntro && (
+                      <span className="paywall-plan-card-promo">
+                        {t('paywall.plan.promoBadge')} · {promoNote(monthlyIntro)}
+                      </span>
+                    )}
                   </button>
                 )}
               </div>
@@ -601,6 +686,9 @@ export default function PaywallPage() {
             >
               {busyAction === selectedProductId ? t('paywall.purchase.opening') : purchaseLabel}
             </button>
+            {disclosureText && (
+              <p className="paywall-purchase-terms">{disclosureText}</p>
+            )}
             <p>{t('paywall.purchase.confirmHint')}</p>
           </div>
         )}
