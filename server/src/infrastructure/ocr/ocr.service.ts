@@ -26,6 +26,26 @@ type MathpixOcrCallResult =
  */
 const RETRY_AFTER_CAP_MS = 8_000;
 
+/**
+ * Whether OCR'd text warrants the extra vision pass that re-reads a diagram. This
+ * pass adds ~3–8s, so it must fire on real graph/geometry problems but not on
+ * text-only algebra. Two guards over the previous bare-substring regex:
+ *  - word boundaries on the English tokens, so "paragraph"/"configure" no longer
+ *    false-match "graph"/"figure";
+ *  - dropped "axis"/"axes", which fired the vision pass on text-only "axis of
+ *    symmetry" problems that need no diagram — a genuinely graphed problem still
+ *    trips "graph"/"coordinate"/그래프/좌표/도형.
+ * Korean tokens stay substring-matched (\b doesn't apply cleanly to Hangul); they
+ * are specific enough not to false-fire.
+ */
+const DIAGRAM_HINT_KO =
+  /그래프|좌표|기울기|도형|그림|함수의\s*그래프/;
+const DIAGRAM_HINT_EN = /\b(?:graph|slope|coordinate|diagram|figure|intercept)s?\b/i;
+
+export function needsDiagramVision(text: string): boolean {
+  return DIAGRAM_HINT_KO.test(text) || DIAGRAM_HINT_EN.test(text);
+}
+
 const OCR_PROMPT =
   'Extract every piece of mathematical content from this image as clean ' +
   "LaTeX (or plain text where math notation isn't appropriate). " +
@@ -349,7 +369,7 @@ export class OcrService {
 
   private shouldEnhanceWithVision(result: OcrResult): boolean {
     if (process.env.OCR_GRAPH_ENHANCEMENT === 'false') return false;
-    return /(?:\uADF8\uB798\uD504|\uC88C\uD45C|\uAE30\uC6B8\uAE30|\uB3C4\uD615|\uADF8\uB9BC|\uD568\uC218\uC758\s*\uADF8\uB798\uD504|graph|slope|coordinate|diagram|figure|intercept|axis|axes)/i.test(result.text);
+    return needsDiagramVision(result.text);
   }
 
   private shouldRetryStatus(status: number): boolean {
