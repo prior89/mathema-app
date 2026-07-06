@@ -248,12 +248,16 @@ test.describe('billing — 403 paywall redirect', () => {
     await expect(plans).toHaveCount(2);
     await expect(page.getByText('월간 결제 대비 17% 절약')).toBeVisible();
 
-    // Yearly is pre-selected, so the purchase dock CTA starts as the yearly one.
-    const yearlyCta = page.getByRole('button', { name: '연간 구독 시작' });
-    await expect(yearlyCta).toHaveCount(1);
-
-    await page.getByRole('button', { name: /월간 구독/ }).click();
+    // Monthly is the default now — the low-commitment entry, and pre-selecting the
+    // pricier annual is a "특정 선택 유도" dark-pattern risk. Dock CTA starts monthly.
     await expect(page.getByRole('button', { name: '월간 구독 시작' })).toBeVisible();
+
+    // The recurring-payment disclosure sits next to the CTA (전자상거래법).
+    await expect(page.getByText(/자동결제 · 언제든 해지/)).toBeVisible();
+
+    // Choosing the annual card switches the CTA to the yearly one.
+    await page.getByRole('button', { name: /연간 구독/ }).click();
+    await expect(page.getByRole('button', { name: '연간 구독 시작' })).toBeVisible();
     await expect(
       page.getByText('이 버튼만 눌러서는 결제되지 않으며 Google Play에서 한 번 더 확인합니다.'),
     ).toBeVisible();
