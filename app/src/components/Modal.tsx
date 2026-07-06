@@ -31,9 +31,9 @@ export default function Modal({ open, onClose, title, subtitle, width = 640, chi
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
-        backgroundColor: 'rgba(31,26,20,0.55)',
+        backgroundColor: 'var(--p-overlay)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 'clamp(12px, 4vw, 24px)', fontFamily: 'var(--font-body, inherit)',
+        padding: 'clamp(12px, 4vw, 24px)', fontFamily: 'var(--font-ui)',
         animation: 'fadeIn 0.18s ease-out',
       }}
     >
@@ -43,18 +43,19 @@ export default function Modal({ open, onClose, title, subtitle, width = 640, chi
         style={{
           width, maxWidth: '100%', maxHeight: '90vh', overflow: 'auto',
           backgroundColor: 'var(--p-surface)', border: '1px solid var(--p-border)',
-          borderRadius: 16, padding: 'clamp(20px, 5vw, 28px)', position: 'relative',
+          borderRadius: 'var(--radius-lg)', padding: 'clamp(20px, 5vw, 28px)', position: 'relative',
           color: 'var(--p-ink)',
-          boxShadow: '0 20px 60px rgba(31,26,20,0.25)',
+          boxShadow: 'var(--p-shadow-lg)',
         }}
       >
         <button
           onClick={onClose}
           aria-label={t('common.close')}
           style={{
-            position: 'absolute', top: 16, right: 16,
+            position: 'absolute', top: 10, right: 10,
+            width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--p-ink-2)', padding: 4,
+            color: 'var(--p-ink-2)', padding: 0,
           }}
         >
           <X size={18} />

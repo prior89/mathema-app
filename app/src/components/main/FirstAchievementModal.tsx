@@ -55,7 +55,15 @@ export function FirstAchievementModal() {
       title={copy.title}
       width={480}
     >
-      <p style={{ fontSize: 15, lineHeight: 1.55, color: 'var(--p-ink-2)', margin: '0 0 20px' }}>
+      <div style={{ position: 'relative', marginBottom: 8 }}>
+        <div className="fb-confetti" aria-hidden>
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <span key={i} className={`fb-confetti-bit b${i}`} />
+          ))}
+        </div>
+        <div className="fb-icon celebrate" aria-hidden>🎉</div>
+      </div>
+      <p style={{ fontSize: 15, lineHeight: 1.55, color: 'var(--p-ink-2)', margin: '0 0 20px', textAlign: 'center' }}>
         {copy.body}
       </p>
       <button
