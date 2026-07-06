@@ -14,6 +14,7 @@ import {
   UploadAnalysisResult,
 } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
+import { compressImageForUpload } from '../../lib/image-compress';
 import { useBillingUiEnabled } from '../../lib/billing-flags';
 import MathText from '../MathText';
 import { Glyph } from '../onboarding/Glyph';
@@ -144,7 +145,10 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     setOcrResult(null);
     setEditedOcrText('');
     try {
-      const ocr = await extractProblemText(file);
+      // Downscale the raw phone photo before upload — cuts mobile upload time and
+      // the vision tile count with no OCR accuracy loss (falls back to original).
+      const toSend = await compressImageForUpload(file);
+      const ocr = await extractProblemText(toSend);
       if (requestSeq !== requestSeqRef.current) return;
       setOcrResult(ocr);
       setEditedOcrText(ocr.text);
