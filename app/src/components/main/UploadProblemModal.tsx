@@ -256,7 +256,12 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
           <button
             onClick={onClose}
             aria-label={t('upload.closeAria')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--p-ink-2)', fontSize: 22, lineHeight: 1, padding: 4 }}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--p-ink-2)',
+              fontSize: 22, lineHeight: 1, padding: 0,
+              width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginRight: -10,
+            }}
           >×</button>
         </div>
 
@@ -1002,7 +1007,7 @@ function ResultPhase({
                   borderTop: '1px solid var(--p-border)',
                   fontSize: 12.5,
                   lineHeight: 1.55,
-                  color: 'var(--p-ink-3)',
+                  color: 'var(--p-muted)',
                   fontStyle: 'italic',
                   whiteSpace: 'pre-wrap',
                 }}>

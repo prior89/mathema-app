@@ -31,9 +31,9 @@ export default function Modal({ open, onClose, title, subtitle, width = 640, chi
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 100,
-        backgroundColor: 'rgba(31,26,20,0.55)',
+        backgroundColor: 'var(--p-overlay)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 24, fontFamily: '"Pretendard", sans-serif',
+        padding: 'clamp(12px, 4vw, 24px)', fontFamily: 'var(--font-ui)',
         animation: 'fadeIn 0.18s ease-out',
       }}
     >
@@ -42,18 +42,20 @@ export default function Modal({ open, onClose, title, subtitle, width = 640, chi
         onClick={(e) => e.stopPropagation()}
         style={{
           width, maxWidth: '100%', maxHeight: '90vh', overflow: 'auto',
-          backgroundColor: '#F8F4E9', border: '1px solid #14285020',
-          borderRadius: 6, padding: 32, position: 'relative', color: '#142850',
-          boxShadow: '0 20px 60px rgba(31,26,20,0.25)',
+          backgroundColor: 'var(--p-surface)', border: '1px solid var(--p-border)',
+          borderRadius: 'var(--radius-lg)', padding: 'clamp(20px, 5vw, 28px)', position: 'relative',
+          color: 'var(--p-ink)',
+          boxShadow: 'var(--p-shadow-lg)',
         }}
       >
         <button
           onClick={onClose}
           aria-label={t('common.close')}
           style={{
-            position: 'absolute', top: 16, right: 16,
+            position: 'absolute', top: 10, right: 10,
+            width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'none', border: 'none', cursor: 'pointer',
-            color: '#5C6B85', padding: 4,
+            color: 'var(--p-ink-2)', padding: 0,
           }}
         >
           <X size={18} />
@@ -61,14 +63,14 @@ export default function Modal({ open, onClose, title, subtitle, width = 640, chi
         {(title || subtitle) && (
           <div style={{ marginBottom: 20 }}>
             {subtitle && (
-              <div style={{ fontSize: 11, letterSpacing: '0.2em', color: '#8B95AB', textTransform: 'uppercase', marginBottom: 6 }}>
+              <div style={{ fontSize: 11, letterSpacing: '0.2em', color: 'var(--p-muted)', textTransform: 'uppercase', marginBottom: 6 }}>
                 {subtitle}
               </div>
             )}
             {title && (
               <h2 style={{
-                fontSize: 24, fontWeight: 500, letterSpacing: '-0.02em', margin: 0,
-                fontFamily: 'Fraunces, "Noto Serif KR", serif',
+                fontSize: 'clamp(19px, 5vw, 23px)', fontWeight: 600, letterSpacing: '-0.02em', margin: 0,
+                fontFamily: 'var(--font-display)', color: 'var(--p-ink)',
               }}>
                 {title}
               </h2>
