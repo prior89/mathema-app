@@ -294,14 +294,17 @@ export function MockExamPlayScreen() {
                 // Exam = one-shot: after submit (feedback set) all choices lock.
                 const lockedNow = busy || feedback !== null;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={c.id}
                     className={cls}
+                    aria-pressed={sel}
+                    disabled={lockedNow}
                     onClick={() => !lockedNow && setPickedId(c.id)}
                   >
                     <div className="letter">{letters[i] ?? c.choiceIndex}</div>
                     <span className="text"><MathText text={c.text} /></span>
-                  </div>
+                  </button>
                 );
               })}
             </div>

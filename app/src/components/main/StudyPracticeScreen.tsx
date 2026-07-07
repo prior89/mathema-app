@@ -64,6 +64,9 @@ export function StudyPracticeScreen() {
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [result, setResult] = useState<AttemptResponse | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  // A submit that fails on the network/server is NOT a wrong answer — track it
+  // separately so we show a retry, not a red "incorrect" (Nielsen #9).
+  const [submitError, setSubmitError] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
   const [questionNum, setQuestionNum] = useState(0);
@@ -168,14 +171,15 @@ export function StudyPracticeScreen() {
       qc.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: () => {
-      setResult({ isCorrect: false, selectedChoice: null, correctChoice: null });
-      setSheetOpen(true);
+      // Do NOT fake a wrong result — surface a distinct, retryable error.
+      setSubmitError(true);
       hapticResult(false);
     },
   });
 
   function onSubmit() {
     if (!pickedId || submit.isPending) return;
+    setSubmitError(false);
     submit.mutate();
   }
 
@@ -414,19 +418,22 @@ export function StudyPracticeScreen() {
               const isWrongPick = result && !result.isCorrect && isPicked;
               const cls = isRevealedCorrect ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
               return (
-                <div
+                <button
+                  type="button"
                   key={c.id}
                   className={cls}
+                  aria-pressed={isPicked}
                   onClick={() => {
                     if (locked) return;
                     if (result && !result.isCorrect) setResult(null);
+                    setSubmitError(false);
                     hapticSelect();
                     setPickedId(c.id);
                   }}
                 >
                   <div className="letter">{LETTERS[i] ?? c.choiceIndex}</div>
                   <span className="text"><MathText text={c.text} /></span>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -440,6 +447,17 @@ export function StudyPracticeScreen() {
           + result (canvas stays, so working isn't lost). After a check the
           verdict arrives in the feedback sheet; the footer doubles as the
           fallback action row when the sheet is dismissed to review work. */}
+      {submitError && (
+        <div role="alert" style={{
+          margin: '0 16px 8px', background: 'var(--p-danger-tint)', color: 'var(--p-danger-ink)',
+          border: '1px solid var(--p-danger)', borderRadius: 8, padding: '10px 12px',
+          fontSize: 14, lineHeight: 1.45,
+        }}>
+          {t('lesson.feedback.submitError')}
+          <br />
+          <span style={{ fontSize: 12.5, color: 'var(--p-ink-2)' }}>{t('lesson.feedback.submitErrorHint')}</span>
+        </div>
+      )}
       <div className="screen-foot" style={{ paddingTop: 6 }}>
         {!result ? (
           <button

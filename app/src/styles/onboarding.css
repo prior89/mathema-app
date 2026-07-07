@@ -308,8 +308,16 @@
   display: flex; align-items: center; gap: 12px; padding: 14px;
   border-radius: 14px; border: 1.5px solid var(--p-border); background: var(--p-surface);
   cursor: pointer; transition: all .12s ease; min-width: 0; touch-action: pan-y;
+  /* Rendered as a native <button> for keyboard + screen-reader access (WCAG
+     2.1.1 / 4.1.2); reset the button chrome so it still looks like the card. */
+  width: 100%; margin: 0; text-align: left; font: inherit; color: var(--p-ink);
+  appearance: none; -webkit-appearance: none;
 }
 .mathema-app .choice:hover { border-color: var(--p-border-strong); }
+.mathema-app .choice:focus-visible {
+  outline: 2px solid var(--p-primary); outline-offset: 2px;
+}
+.mathema-app .choice:disabled { cursor: default; }
 .mathema-app .choice .letter {
   width: 28px; height: 28px; border-radius: 8px; border: 1.5px solid var(--p-border-strong);
   display: flex; align-items: center; justify-content: center;
