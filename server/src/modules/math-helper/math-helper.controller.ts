@@ -4,6 +4,7 @@ import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/m
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { FreeTierSolverQuotaGuard } from '../billing/free-tier-solver-quota.guard';
+import { SolverQuotaRefundInterceptor } from '../billing/solver-quota-refund.interceptor';
 import { OcrDailyQuotaGuard } from '../billing/ocr-daily-quota.guard';
 import { OcrService } from '../../infrastructure/ocr/ocr.service';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
@@ -42,6 +43,7 @@ export class MathHelperController {
   // populated when the quota guard reads it.
   @Post('solve')
   @UseGuards(JwtAuthGuard, FreeTierSolverQuotaGuard)
+  @UseInterceptors(SolverQuotaRefundInterceptor)
   solve(@CurrentUser('id') userId: string, @Body() dto: SolveMathHelperDto) {
     return this.service.solve(userId, dto);
   }
@@ -73,7 +75,7 @@ export class MathHelperController {
 
   @Post('ocr-solve')
   @UseGuards(JwtAuthGuard, FreeTierSolverQuotaGuard)
-  @UseInterceptors(FileInterceptor('file', FILE_INTERCEPTOR_OPTIONS))
+  @UseInterceptors(FileInterceptor('file', FILE_INTERCEPTOR_OPTIONS), SolverQuotaRefundInterceptor)
   ocrSolve(
     @CurrentUser('id') userId: string,
     @UploadedFile() file: Express.Multer.File | undefined,

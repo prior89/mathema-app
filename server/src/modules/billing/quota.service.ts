@@ -46,6 +46,18 @@ export class QuotaService {
     return v ? parseInt(v, 10) : 0;
   }
 
+  /** Give back a solver credit charged for a solve that then failed. The quota
+   * guard increments before the handler runs, so a downstream solver failure
+   * would otherwise cost a free user a credit for a solve they never got. Only
+   * decrements when the counter is positive so a refund can't drive it negative
+   * (which would hand out extra free solves). Best-effort. */
+  async refundSolver(userId: string): Promise<void> {
+    const key = this.redisKey(userId, this.dayKey());
+    const v = await this.redis.get(key);
+    const n = v ? parseInt(v, 10) : 0;
+    if (n > 0) await this.redis.decr(key);
+  }
+
   /** Separate, looser daily counter for the OCR-only endpoint. Same INCR+TTL
    * pattern as the solver counter but a distinct key namespace so OCR never
    * consumes a solve credit. */
