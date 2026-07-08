@@ -34,6 +34,7 @@ import {
   selectPaidOffer,
   startPremiumPreview,
 } from '../lib/billing';
+import { track } from '../lib/analytics';
 import { useT } from '../lib/i18n';
 import { openPlaySubscriptionManage } from '../lib/play-subscription';
 import type { BillingProductDetails } from '../native/billing-bridge';
@@ -100,6 +101,16 @@ export default function PaywallPage() {
 
   useEffect(() => {
     void initBilling();
+  }, []);
+
+  // Conversion funnel: view once per mount (reason/feature from gate entry).
+  useEffect(() => {
+    track('paywall.view', {
+      reason: reason ?? null,
+      feature: premiumFeature ?? null,
+      platform: isAndroidBilling ? 'android' : 'web',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once on entry
   }, []);
 
   const products = useQuery({
@@ -224,6 +235,7 @@ export default function PaywallPage() {
     if (!selectedPlan || busyAction) return;
     setNotice(null);
     setBusyAction(selectedPlan.productId);
+    track('paywall.cta', { action: 'purchase', productId: selectedPlan.productId, reason: reason ?? null });
     try {
       await buy(selectedPlan.productId, selectedPlan.offer.offerToken);
       setNotice({ tone: 'info', text: t('paywall.purchase.opened') });
@@ -241,6 +253,7 @@ export default function PaywallPage() {
     if (busyAction) return;
     setNotice(null);
     setBusyAction('preview');
+    track('paywall.cta', { action: 'preview', reason: reason ?? null });
     try {
       await startPremiumPreview();
       await queryClient.invalidateQueries({ queryKey: ['billing-status'] });
@@ -256,6 +269,7 @@ export default function PaywallPage() {
     if (busyAction) return;
     setNotice(null);
     setBusyAction('restore');
+    track('paywall.cta', { action: 'restore', reason: reason ?? null });
     try {
       const restored = await restore();
       await queryClient.invalidateQueries({ queryKey: ['billing-status'] });
@@ -438,6 +452,16 @@ export default function PaywallPage() {
             <span className="paywall-eyebrow">{t('paywall.eyebrow')}</span>
             <h1>{t('paywall.headline')}</h1>
             <p>{t('paywall.tagline')}</p>
+            {reason === 'quota' && (
+              <p className="paywall-outcome-line" style={{ marginTop: 10, fontSize: 14, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
+                {t('paywall.outcome.quota')}
+              </p>
+            )}
+            {reason === 'premium' && premiumFeature === 'full_mastery_sets' && (
+              <p className="paywall-outcome-line" style={{ marginTop: 10, fontSize: 14, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
+                {t('paywall.outcome.mastery')}
+              </p>
+            )}
           </section>
 
           <section className="paywall-benefits" aria-labelledby="paywall-benefits-title">

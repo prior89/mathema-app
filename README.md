@@ -25,7 +25,7 @@ Monorepo:
 > - 🟢 Math-helper sidecar live (internal ingress, called from server).
 > - 🟢 Signed Android AAB workflow ready (Capacitor 8 + Play Billing 8.0.0 native plugin).
 > - 🟢 Google Play Billing: Subscription Prisma model + Play Developer API v3 server verify + RTDN webhook + Free-tier gates + paywall UI. All wired; **Play Console product verification + Internal Testing track release are the operator's last steps.**
-> - 🟡 Pricing: Free chapter learning includes 5 problems; a cardless 3-day Premium Preview unlocks the remaining 20-problem set without auto-renewal or charge. Premium monthly/yearly subscriptions use Google Play Billing and the regional launch table in `PLAY_PRICING.md` (KR anchor: KRW 9,900/mo, KRW 99,000/yr).
+> - 🟡 Pricing: Free chapter learning includes **10** of the 20 mastery problems; a cardless 3-day Premium Preview unlocks the full set without auto-renewal or charge. Premium monthly/yearly subscriptions use Google Play Billing and the regional launch table in `PLAY_PRICING.md` (KR anchor: KRW 9,900/mo, KRW 99,000/yr). Free mastery cap must stay in sync with `FREE_TIER_MASTERY_PROBLEMS` in `server/src/modules/billing/billing.constants.ts` and the FE gate in `ConceptLessonScreen`.
 > - 🟡 Family plan: deferred to v1.
 > - 🟡 Network hardening (VNet + private endpoints for PG/KV): deferred to a follow-up sprint — currently `publicNetworkAccess: Enabled` with KV `defaultAction: Allow` since ACA shared-pool egress isn't on Microsoft's trusted-services list.
 >

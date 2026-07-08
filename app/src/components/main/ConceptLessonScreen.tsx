@@ -28,8 +28,14 @@ import { DEFAULT_STEP_TONE, STEP_TONE } from '../../lib/step-tone';
 import { useBillingStatus } from '../../hooks/useBillingStatus';
 import { startPremiumPreview } from '../../lib/billing';
 
-const FREE_MASTERY_PROBLEMS = 5;
+/** Keep in sync with server FREE_TIER_MASTERY_PROBLEMS (billing.constants.ts). */
+const FREE_MASTERY_PROBLEMS = 10;
 const FULL_MASTERY_PROBLEMS = 20;
+
+function goMasteryPaywall(nav: ReturnType<typeof useNavigate>) {
+  track('paywall.gate_hit', { feature: 'full_mastery_sets', freeCap: FREE_MASTERY_PROBLEMS });
+  nav('/app/paywall?reason=premium&feature=full_mastery_sets');
+}
 
 /* Scaffold policy (2026-06-12 audit, expertise-reversal effect): every
  * practice problem serves the ANSWER step directly. The CONCEPT→PROCESS
@@ -105,7 +111,7 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
         setPhase('practice');
         return;
       }
-      nav('/app/paywall?reason=premium&feature=full_mastery_sets');
+      goMasteryPaywall(nav);
     },
   });
 
@@ -274,7 +280,7 @@ function NcertConceptLessonScreen({ code }: { code: string | undefined }) {
             previewLoading: billing.isLoading || preview.isPending,
             previewError: preview.isError,
             onStartPreview: () => preview.mutate(),
-            onViewPremium: () => nav('/app/paywall?reason=premium&feature=full_mastery_sets'),
+            onViewPremium: () => goMasteryPaywall(nav),
           } : undefined}
         />
       )}
@@ -910,7 +916,7 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
         setPhase('practice');
         return;
       }
-      nav('/app/paywall?reason=premium&feature=full_mastery_sets');
+      goMasteryPaywall(nav);
     },
   });
 
@@ -969,7 +975,7 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
             previewLoading: billing.isLoading || preview.isPending,
             previewError: preview.isError,
             onStartPreview: () => preview.mutate(),
-            onViewPremium: () => nav('/app/paywall?reason=premium&feature=full_mastery_sets'),
+            onViewPremium: () => goMasteryPaywall(nav),
           } : undefined}
         />
       </Shell>

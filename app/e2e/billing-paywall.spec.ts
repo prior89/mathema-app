@@ -239,9 +239,11 @@ test.describe('billing — 403 paywall redirect', () => {
     await page.goto('/app/paywall?reason=quota');
 
     await expect(
-      page.getByRole('heading', { name: '막힌 부분을 놓치지 않고 공부를 이어가세요' }),
+      page.getByRole('heading', { name: '무료 10문제 다음, 단원을 끝까지 마스터하세요' }),
     ).toBeVisible();
-    await expect(page.getByText('Premium에서 달라지는 점')).toBeVisible();
+    await expect(page.getByText('Premium에서 달라지는 결과')).toBeVisible();
+    // Outcome framing for quota entry (H4 conversion).
+    await expect(page.getByText(/AI 풀이 한도|한도 없이/)).toBeVisible();
     await expect(page.getByText('먼저 3일 무료로 써볼까요?')).toBeVisible();
 
     const plans = page.locator('.paywall-plan-card');

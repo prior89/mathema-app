@@ -1,6 +1,6 @@
 # Matheo Premium Pricing
 
-Last updated: 2026-06-20
+Last updated: 2026-07-09
 
 This is the source of truth for Google Play Console subscription prices.
 The app does not hardcode production prices; `PaywallPage` renders the
@@ -20,8 +20,10 @@ Official references:
 
 - Keep Premium broad at launch: no graph-specific credit cap or separate
   high-cost solver bucket.
-- Free users get the first 5 chapter-learning problems. Premium Preview and
-  Premium open the full 20-problem chapter set.
+- Free users get the first **10** chapter-learning (mastery) problems of each
+  20-problem set (`FREE_TIER_MASTERY_PROBLEMS` in `billing.constants.ts`; FE
+  gate in `ConceptLessonScreen` must match). Premium Preview and Premium open
+  the full 20-problem chapter set.
 - Free AI Solver remains quota-gated at 8 solves per day after the launch
   grace period. The current server grace is 16 solves per day for the first
   7 days after signup.

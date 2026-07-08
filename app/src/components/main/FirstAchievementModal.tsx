@@ -53,7 +53,7 @@ export function FirstAchievementModal() {
       onClose={() => celebrate.mutate(pending.kind)}
       subtitle={t('achievement.modal.eyebrow')}
       title={copy.title}
-      width={480}
+      width={360}
     >
       <div style={{ position: 'relative', marginBottom: 8 }}>
         <div className="fb-confetti" aria-hidden>
