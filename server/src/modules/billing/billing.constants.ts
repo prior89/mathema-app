@@ -16,8 +16,13 @@
  *  (`project_matheo_pricing_india`). */
 export const FREE_TIER_SOLVER_LIMIT = 8;
 
-/** Free-tier cap on problems visible per chapter mastery set (of 20 frozen). */
-export const FREE_TIER_MASTERY_PROBLEMS = 5;
+/** Free-tier cap on problems visible per chapter mastery set (of 20 frozen).
+ *  Raised 5→10 (2026-07-07): mastery practice is the free tier's core habit
+ *  builder — 5 problems is below the threshold to reach the "it's working"
+ *  moment or build any chapter mastery, and was the widest deviation from
+ *  competitors (Photomath/Khan/Gauth keep core practice generous). The
+ *  personalized ORDERING/sequencing of these problems stays premium. */
+export const FREE_TIER_MASTERY_PROBLEMS = 10;
 
 /** Daily cap on the OCR-only endpoint (/math-helper/ocr).
  *

@@ -4,6 +4,7 @@ import {
   GRACE_SOLVER_LIMIT,
 } from './billing.constants';
 import { computeSolverGraceState } from './solver-quota-grace.util';
+import { QuotaService } from './quota.service';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -38,5 +39,32 @@ describe('computeSolverGraceState', () => {
     const state = computeSolverGraceState(createdAt, now);
     expect(state.inGrace).toBe(false);
     expect(state.limit).toBe(FREE_TIER_SOLVER_LIMIT);
+  });
+});
+
+describe('QuotaService.refundSolver', () => {
+  function build(counter: string | null) {
+    const decr = jest.fn().mockResolvedValue(0);
+    const redis = { get: jest.fn().mockResolvedValue(counter), decr };
+    const svc = new QuotaService(redis as any, {} as any);
+    return { svc, decr };
+  }
+
+  it('gives a credit back when the daily counter is positive', async () => {
+    const { svc, decr } = build('3');
+    await svc.refundSolver('u1');
+    expect(decr).toHaveBeenCalledTimes(1);
+  });
+
+  it('never drives the counter negative when it is already zero', async () => {
+    const { svc, decr } = build('0');
+    await svc.refundSolver('u1');
+    expect(decr).not.toHaveBeenCalled();
+  });
+
+  it('is a no-op when no counter exists for the day', async () => {
+    const { svc, decr } = build(null);
+    await svc.refundSolver('u1');
+    expect(decr).not.toHaveBeenCalled();
   });
 });
