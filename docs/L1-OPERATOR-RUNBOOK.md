@@ -10,11 +10,11 @@ This runbook is the **minimum path** to Internal Testing GO. Do not invent paral
 
 ## 0. Before you start
 
-- [ ] Latest `main` deployed (backend ACA + frontend SWA green on GitHub Actions)
-- [ ] AAB built: `gh workflow run android-release.yml --ref main` (or download latest artifact)
-- [ ] Confirm dual flags for **production / internal**:
-  - Server: `BILLING_UI_ENABLED=true`
-  - AAB/SWA build: `VITE_BILLING_ENABLED=true` (usually from same GH secret)
+- [x] Latest `main` deployed (backend ACA + frontend SWA) — **2026-07-09**, `gitSha=83e592c` (PR #65)
+- [x] AAB built — artifact run `28971643679` (local copy: `dist-releases/l1-aab-83e592c/app-release.aab`)
+- [x] Dual flags (prod observed):
+  - Server `billingUiEnabled=true` via `GET /billing/status` (smoke user, 2026-07-09)
+  - AAB/SWA build injects `VITE_BILLING_ENABLED` from GH secret `BILLING_UI_ENABLED`
 
 ---
 
@@ -27,7 +27,12 @@ npm run billing:preflight
 # Smoke (learner account that can login; guest fallback if unverified)
 bash scripts/smoke-prod.sh <BACKEND_URL> <EMAIL> <PASSWORD> [ADMIN_EMAIL] [ADMIN_PASSWORD]
 
-# Admin JWT required
+# Learner billing UI probe (no admin needed)
+node scripts/check-billing-status.mjs
+
+# Admin readiness (needs ADMIN password matching ADMIN_EMAILS allowlist)
+node scripts/check-billing-readiness.mjs
+# or:
 curl -s -H "Authorization: Bearer $ADMIN_JWT" \
   "$BACKEND_URL/api/v1/admin/billing/readiness"
 # Expect: "g1": { "ready": true, ... }
@@ -35,15 +40,26 @@ curl -s -H "Authorization: Bearer $ADMIN_JWT" \
 
 | Check | Pass | Record |
 |-------|------|--------|
-| preflight exit 0 | ⬜ | date: |
-| smoke fail_count = 0 | ⬜ | date: |
-| g1.ready true | ⬜ | date: |
+| preflight exit 0 | ✅ | 2026-07-09 local `server/.env` |
+| smoke fail_count = 0 | ✅ | 2026-07-09 — 10 pass / 0 fail / 2 skip @ `83e592c` |
+| `billingUiEnabled` true | ✅ | 2026-07-09 `/billing/status` |
+| g1.ready true | ⬜ | needs admin password (demo pass ≠ prod admin) |
 
 **Warning:** `g2.ready: true` only means RTDN inbox ORPHAN/RETRYABLE empty. It does **not** mean license-tester purchase E2E passed.
 
 ---
 
-## 2. Play Console (manual)
+## 2. Play Console (manual) — **you are here**
+
+### AAB ready to upload
+
+| Field | Value |
+|-------|--------|
+| Path | `dist-releases/l1-aab-83e592c/app-release.aab` |
+| Re-download | `gh run download 28971643679 -n matheo-aab -D dist-releases/l1-aab-83e592c` |
+| SHA256 | `AD74A2113EA18C43F00871285EC098285914D71A8E1AE2820EC7D3972B479B58` |
+| Size | 8 528 918 bytes |
+| Notes | See `dist-releases/l1-aab-83e592c/UPLOAD.txt` |
 
 | # | Task | Pass |
 |---|------|------|
@@ -52,7 +68,7 @@ curl -s -H "Authorization: Bearer $ADMIN_JWT" \
 | 2.3 | RTDN → Pub/Sub → `POST /api/v1/billing/rtdn` | ⬜ |
 | 2.4 | Send **test notification** → inbox PROCESSED (admin or logs) | ⬜ |
 | 2.5 | Data Safety / Privacy / Terms URLs match live domain | ⬜ |
-| 2.6 | Internal testing: upload AAB, publish, invite testers | ⬜ |
+| 2.6 | Internal testing: upload AAB above, publish, invite testers | ⬜ |
 
 ---
 

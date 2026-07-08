@@ -8,8 +8,8 @@
 | # | Criterion | Evidence | Owner | Status |
 |---|-----------|----------|-------|--------|
 | 1 | G0 smoke required + L1 extensions PASS | `bash scripts/smoke-prod.sh …` log (12 steps; 8–9 optional) | Agent / Operator | ✅ 2026-07-09 post-deploy — **10 pass / 0 fail / 2 skip**. Prod `gitSha=83e592c` (PR #65). Catalog empty NOTE (Curriculum seed gap, non-blocking). |
-| 2 | Billing G1 automated ready | `npm run billing:preflight` exit 0 **and** `GET /admin/billing/readiness` → `g1.ready: true` | Agent / Operator | 🟡 preflight ✅ local. **g1.ready** still needs admin JWT (no SMOKE_ADMIN_* in env). |
-| 3 | AAB on Internal testing track | Play Console version code published | Operator | 🟡 AAB artifact built ✅ (run [28971643679](https://github.com/prior89/mathema-app/actions/runs/28971643679)) — **Play Console upload still operator**. |
+| 2 | Billing G1 automated ready | `npm run billing:preflight` exit 0 **and** `GET /admin/billing/readiness` → `g1.ready: true` | Agent / Operator | 🟡 preflight ✅; prod `billingUiEnabled=true` ✅; **g1.ready** blocked — admin login 401 with demo password (need real admin password in `~/.matheo-smoke-creds` as `SMOKE_ADMIN_EMAIL` / `SMOKE_ADMIN_PASSWORD`). |
+| 3 | AAB on Internal testing track | Play Console version code published | Operator | 🟡 AAB file ready locally `dist-releases/l1-aab-83e592c/app-release.aab` (run [28971643679](https://github.com/prior89/mathema-app/actions/runs/28971643679), SHA256 in UPLOAD.txt) — **Play upload still operator**. |
 | 4 | G2 min: purchase + restore | License tester notes | Operator | ⬜ |
 | 5 | Device core loop | Register → learn → practice → wrong-note → (optional) solve → paywall | Operator | ⬜ (web SWA live; device after Internal install) |
 | 6 | Code/docs alignment | Free mastery **10** FE+BE+README+PLAY_PRICING; dual billing flags documented | Agent | ✅ merged #65 |
