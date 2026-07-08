@@ -443,6 +443,62 @@
 .mathema-app .bottom-sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--p-surface); border-radius: 24px 24px 0 0; padding: 12px 22px 18px; z-index: 11; box-shadow: 0 -8px 24px oklch(0 0 0 / 0.06); max-height: 72%; display: flex; flex-direction: column; }
 .mathema-app .bottom-sheet .grip { width: 36px; height: 4px; border-radius: 2px; background: var(--p-border-strong); margin: 0 auto 4px; }
 
+/* First-run core-loop guide — bottom sheet (not centered Modal).
+   Sized for the phone frame (≤428px): full-width primary CTA, onboarding
+   step bars, and no accidental backdrop dismiss. */
+.mathema-app .tutorial-backdrop {
+  position: absolute; inset: 0; z-index: 20;
+  background: var(--p-overlay);
+  animation: fb-fade 0.18s ease-out;
+}
+.mathema-app .tutorial-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 21;
+  background: var(--p-surface);
+  border-radius: 24px 24px 0 0;
+  padding: 10px 22px calc(18px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 28px oklch(0 0 0 / 0.12);
+  display: flex; flex-direction: column;
+  max-height: min(78%, 560px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-top: 3px solid var(--p-primary);
+  animation: fb-slide-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  font-family: var(--font-ui);
+  color: var(--p-ink);
+}
+.mathema-app .tutorial-sheet .grip {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--p-border-strong); margin: 0 auto 10px;
+}
+.mathema-app .tutorial-hero {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+}
+.mathema-app .tutorial-icon {
+  width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.mathema-app .tutorial-title {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 600; line-height: 1.25;
+  letter-spacing: -0.02em; color: var(--p-ink);
+  margin: 0 0 8px;
+}
+.mathema-app .tutorial-body {
+  font-size: 15px; line-height: 1.6; color: var(--p-ink-2);
+  margin: 0 0 8px; text-wrap: pretty;
+}
+.mathema-app .tutorial-actions {
+  display: flex; flex-direction: column; gap: 6px; margin-top: 4px;
+}
+.mathema-app .tutorial-secondary {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 44px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mathema-app .tutorial-backdrop,
+  .mathema-app .tutorial-sheet { animation: none; }
+}
+
 /* Answer feedback sheet — post-check verdict panel (Study practice).
    Anchored inside .screen (position:relative), slides over the footer +
    tab bar so the verdict and the next action arrive in one gesture zone. */
