@@ -7,12 +7,12 @@
 
 | # | Criterion | Evidence | Owner | Status |
 |---|-----------|----------|-------|--------|
-| 1 | G0 smoke required + L1 extensions PASS | `bash scripts/smoke-prod.sh …` log (12 steps; 8–9 optional) | Agent / Operator | ✅ 2026-07-09 — **10 pass / 0 fail / 2 skip** (admin+az optional). Prod gitSha was still `56fa477` (pre-PR). Catalog empty NOTE (Curriculum seed gap, non-blocking). |
-| 2 | Billing G1 automated ready | `npm run billing:preflight` exit 0 **and** `GET /admin/billing/readiness` → `g1.ready: true` | Agent / Operator | 🟡 preflight ✅ local `server/.env` 2026-07-09. **g1.ready** still needs admin JWT against prod. |
-| 3 | AAB on Internal testing track | Play Console version code published | Operator | ⬜ |
+| 1 | G0 smoke required + L1 extensions PASS | `bash scripts/smoke-prod.sh …` log (12 steps; 8–9 optional) | Agent / Operator | ✅ 2026-07-09 post-deploy — **10 pass / 0 fail / 2 skip**. Prod `gitSha=83e592c` (PR #65). Catalog empty NOTE (Curriculum seed gap, non-blocking). |
+| 2 | Billing G1 automated ready | `npm run billing:preflight` exit 0 **and** `GET /admin/billing/readiness` → `g1.ready: true` | Agent / Operator | 🟡 preflight ✅ local. **g1.ready** still needs admin JWT (no SMOKE_ADMIN_* in env). |
+| 3 | AAB on Internal testing track | Play Console version code published | Operator | 🟡 AAB artifact built ✅ (run [28971643679](https://github.com/prior89/mathema-app/actions/runs/28971643679)) — **Play Console upload still operator**. |
 | 4 | G2 min: purchase + restore | License tester notes | Operator | ⬜ |
-| 5 | Device core loop | Register → learn → practice → wrong-note → (optional) solve → paywall | Operator | ⬜ after PR merge + AAB |
-| 6 | Code/docs alignment | Free mastery **10** FE+BE+README+PLAY_PRICING; dual billing flags documented | Agent | ✅ PR #65 |
+| 5 | Device core loop | Register → learn → practice → wrong-note → (optional) solve → paywall | Operator | ⬜ (web SWA live; device after Internal install) |
+| 6 | Code/docs alignment | Free mastery **10** FE+BE+README+PLAY_PRICING; dual billing flags documented | Agent | ✅ merged #65 |
 
 **GO rule:** 1–2 + 6 are code/ops-automatable. 3–5 require Play Console + device. Do **not** treat `g2.ready: true` alone as G2 complete (it only means RTDN inbox clear).
 
