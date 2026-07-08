@@ -96,7 +96,11 @@ export function WrongNoteDetailScreen() {
             type="button"
             onClick={() => nav('/app/notes')}
             aria-label={t('review.back')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              width: 44, height: 44, marginLeft: -10, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
           >
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>

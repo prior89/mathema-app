@@ -82,7 +82,7 @@ export default function GuardianConsentVerifyPage() {
 
               {sameDevice && status !== 'failed' && (
                 <>
-                  <div className="alert" style={{ background: 'var(--p-warn-tint, #fff4d6)', color: 'var(--p-ink)', border: '1px solid var(--p-warn, #d39517)' }}>
+                  <div className="alert" style={{ background: 'var(--p-warning-tint)', color: 'var(--p-warning-ink)', border: '1px solid var(--p-warning)' }}>
                     <strong>{t('guardianConsent.verify.alreadyLoggedIn.title')}</strong>
                   </div>
                   <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--p-ink-2)' }}>

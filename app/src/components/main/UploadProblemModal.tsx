@@ -229,7 +229,11 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
 
   return (
     <div
-      onClick={onClose}
+      // Backdrop dismiss ONLY on the initial pick phase (nothing to lose). Once
+      // OCR/solve is running or a result/error is shown, an accidental tap on the
+      // backdrop must NOT close the modal and throw away a result the user waited
+      // for and spent a solve credit on — they close explicitly with the ✕ button.
+      onClick={phase === 'pick' ? onClose : undefined}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         backgroundColor: 'var(--p-overlay)',

@@ -590,7 +590,10 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
       qc.invalidateQueries({ queryKey: ['heatmap'] });
       qc.invalidateQueries({ queryKey: ['chapter-progress'] });
     },
-    onError: () => setResult({ isCorrect: false, selectedChoice: null, correctChoice: null }),
+    // A submit failure is NOT a wrong answer — flag it so the UI shows a distinct
+    // retry state instead of gaslighting the learner into thinking they missed
+    // (mirrors the KO branch fix; Nielsen #9 error recovery).
+    onError: () => setResult({ isCorrect: false, selectedChoice: null, correctChoice: null, error: true }),
   });
 
   const letters = ['A', 'B', 'C', 'D', 'E'];
@@ -637,19 +640,31 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
             const isWrongPick = result && !result.isCorrect && isPicked;
             const cls = isRevealedCorrect ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
             return (
-              <div
+              <button
+                type="button"
                 key={c.id}
                 className={cls}
+                aria-pressed={isPicked}
                 onClick={() => pickChoice(c.id)}
               >
                 <div className="letter">{letters[i] ?? c.choiceIndex}</div>
                 <span className="text"><MathText text={c.text} /></span>
-              </div>
+              </button>
             );
           })}
         </div>
 
-        {result && <FeedbackCard result={result} />}
+        {result && result.error ? (
+          <div role="alert" style={{
+            background: 'var(--p-danger-tint)', color: 'var(--p-danger-ink)',
+            border: '1px solid var(--p-danger)', borderRadius: 8,
+            padding: '10px 12px', fontSize: 14, lineHeight: 1.45, marginTop: 12,
+          }}>
+            {t('lesson.feedback.submitError')}
+            <br />
+            <span style={{ fontSize: 12.5, color: 'var(--p-ink-2)' }}>{t('lesson.feedback.submitErrorHint')}</span>
+          </div>
+        ) : result ? <FeedbackCard result={result} /> : null}
       </div>
 
       {/* Pinned footer (2026-06-12 audit): the Check CTA was scrolling out of
@@ -667,6 +682,11 @@ function PracticePhase({ problem, step, stepIdx, stepTotal, problemIdx, problemT
               </button>
             )}
           </>
+        ) : result.error ? (
+          <button className="btn" disabled={submit.isPending} onClick={() => submit.mutate()}>
+            {submit.isPending ? t('solo.checking') : t('solo.checkAnswer')}
+            <Glyph.ChevronR />
+          </button>
         ) : result.isCorrect ? (
           <button className="btn" onClick={onNext}>
             {stepIdx < stepTotal
@@ -1226,14 +1246,16 @@ function KoreanPracticePhase({
               const isWrongPick = result && !result.isCorrect && isPicked;
               const cls = isRevealedCorrect ? 'choice correct' : isWrongPick ? 'choice wrong' : isPicked ? 'choice selected' : 'choice';
               return (
-                <div
+                <button
+                  type="button"
                   key={c.id}
                   className={cls}
+                  aria-pressed={isPicked}
                   onClick={() => pickChoice(c.id)}
                 >
                   <div className="letter">{letters[i] ?? c.choiceIndex}</div>
                   <span className="text"><MathText text={c.text} /></span>
-                </div>
+                </button>
               );
             })}
           </div>
