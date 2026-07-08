@@ -143,6 +143,9 @@ def _fast_response_from_deterministic(req: SolveRequest, det: Dict[str, Any]) ->
     is_student_correct: Optional[bool] = None
     if req.studentAnswer:
         is_student_correct = compare_answers(det["answer"], req.studentAnswer)
+    # `steps` MUST be present — UploadProblemModal renders MathText per step.
+    # Previously steps were only copied into `hints`/`explanation`, so the UI
+    # showed an empty step list and looked like "formulas are broken".
     return {
         "detected": {
             "classLevel": req.classLevel or 8,
@@ -156,6 +159,8 @@ def _fast_response_from_deterministic(req: SolveRequest, det: Dict[str, Any]) ->
         "answer": det["answer"],
         "isStudentCorrect": is_student_correct,
         "explanation": " ".join(steps) if steps else "Solved using the standard step-by-step method.",
+        "steps": list(steps),
+        "stepRationales": [""] * len(steps),
         "personalizedLearning": None,
         "mistakeDiagnosis": det.get("mistake_diagnosis"),
         "hints": steps[:4],
@@ -167,5 +172,6 @@ def _fast_response_from_deterministic(req: SolveRequest, det: Dict[str, Any]) ->
             "confidence": det.get("confidence", 0.98),
             "verifiedAnswer": det["answer"],
             "attempts": 1,
+            "caution": None,
         },
     }

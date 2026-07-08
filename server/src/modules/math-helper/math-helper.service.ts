@@ -208,9 +208,16 @@ export class MathHelperService {
       this.logger.warn(
         `Math helper returned unusable solve response: method=${method ?? 'unknown'} issues=${issues.join('; ') || 'none'} answer=${response.answer ? 'present' : 'empty'}`,
       );
+      // Prefer the helper's student-facing explanation over an opaque code —
+      // the app maps SolverUnavailable → upload.error.solverUnavailable, but
+      // a concrete "AI service temporarily unreachable" line is more actionable.
+      const detail =
+        (typeof response.explanation === 'string' && response.explanation.trim())
+        || (typeof response.verification?.caution === 'string' && response.verification.caution.trim())
+        || 'SolverUnavailable';
       throw new ServiceUnavailableException({
         code: 'SolverUnavailable',
-        message: 'SolverUnavailable',
+        message: detail,
       });
     }
   }
