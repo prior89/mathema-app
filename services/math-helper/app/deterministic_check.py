@@ -45,12 +45,19 @@ def clean_question(question: str) -> str:
     q = re.sub(r"\\div", "/", q)
     q = re.sub(r"\s+", " ", q).strip()
     # Strip common imperative prefixes the per-equation checkers don't want:
-    #   "Solve for x:", "Solve x =", "Find x:", "Find the value of x:", "Solve:",
-    #   "Find the roots of:" etc. Idempotent — leaves bare equations untouched.
+    #   "Solve for x:", "Solve:", "Find the value of x:", "Find the roots of:"
+    # Critical: do NOT match a lone letter that begins the equation itself —
+    # the previous pattern `\s+[a-zA-Z]` ate the leading `x` from
+    # "Solve x^2-5x+6=0" → "^2-5x+6=0", which broke every quadratic OCR
+    # path that started with "Solve x…". Only strip a variable name when it
+    # is clearly a target ("for x" / "x:") not part of an expression.
     q = re.sub(
         r"^(?:solve|find|compute|evaluate|determine|calculate)"
-        r"(?:\s+(?:for|the\s+(?:value|roots?|zeros?)\s+of))?"
-        r"(?:\s+[a-zA-Z](?:\s*=\s*[^,]+)?)?"  # optional " x" or " x = 0" target
+        r"(?:"
+        r"\s+for\s+[a-zA-Z]\b"  # "Solve for x"
+        r"|\s+the\s+(?:value|roots?|zeros?)\s+of(?:\s+[a-zA-Z]\b)?"  # "Find the roots of x"
+        r"|\s+[a-zA-Z]\s*(?=:)"  # "Solve x:" — letter only when followed by colon
+        r")?"
         r"\s*[:\-]?\s*",
         "",
         q,
@@ -542,12 +549,25 @@ def check_quadratic_roots(
     question: str,
     student_answer: str | None = None,
 ) -> dict[str, Any] | None:
+    # Keyword check on the *raw* question — clean_question() strips "Solve …"
+    # prefixes, so checking after clean would reject every "Solve x^2…=0" case.
+    raw = question or ""
+    has_keyword = bool(
+        re.search(r"(solve|roots|zeroes|zeros|factor)", raw, re.IGNORECASE)
+    )
+
     q = clean_question(question).rstrip("?")
 
-    if not re.search(r"(solve|roots|zeroes|zeros)", q, re.IGNORECASE):
+    if "=" not in q:
         return None
 
-    if "=" not in q:
+    # Bare ax^2+bx+c=0 (common OCR / typed form) is enough once we confirm
+    # degree-2 poly below; keyword is only required when the text is prose.
+    left_probe, _, right_probe = q.partition("=")
+    looks_like_quadratic = bool(
+        re.search(r"[a-zA-Z]\s*(?:\^|\*\*)\s*2|[a-zA-Z]²", left_probe + right_probe)
+    )
+    if not has_keyword and not looks_like_quadratic:
         return None
 
     q = re.sub(
