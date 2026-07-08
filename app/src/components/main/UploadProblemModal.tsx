@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   extractProblemText,
   solveExtractedText,
+  reportProblem,
   OcrResult,
   UploadAnalysisResult,
 } from '../../lib/queries';
@@ -18,6 +19,7 @@ import { compressImageForUpload } from '../../lib/image-compress';
 import { useBillingUiEnabled } from '../../lib/billing-flags';
 import MathText from '../MathText';
 import { Glyph } from '../onboarding/Glyph';
+import { toast } from '../Toast';
 
 type Props = {
   open: boolean;
@@ -889,6 +891,26 @@ function ResultPhase({
     ? Math.round(Math.max(0, Math.min(1, verification.confidence)) * 100)
     : null;
 
+  // "This solution looks off" — reachable right here on the result, not only
+  // from the Practice screen. Reporting retires the cached solution (server
+  // invalidates it) so the next solve re-solves — a direct answer to the #1
+  // trust complaint about solver apps ("the AI won't admit it's wrong").
+  const problemId = solve.problemId;
+  const [reporting, setReporting] = useState(false);
+  const onReport = async () => {
+    if (!problemId || reporting) return;
+    if (!window.confirm(t('upload.result.report.confirm'))) return;
+    setReporting(true);
+    try {
+      await reportProblem(problemId);
+      toast(t('upload.result.report.done'), 'success');
+    } catch {
+      toast(t('upload.result.report.failed'), 'error');
+    } finally {
+      setReporting(false);
+    }
+  };
+
   return (
     <div>
       {/* PROBLEM card -- matches the Mastery / Study problem card style */}
@@ -1067,6 +1089,21 @@ function ResultPhase({
           </button>
         )}
       </div>
+
+      {problemId && (
+        <button
+          type="button"
+          onClick={onReport}
+          disabled={reporting}
+          style={{
+            display: 'block', margin: '10px auto 0', background: 'none', border: 'none',
+            color: 'var(--p-muted)', fontSize: 12, cursor: 'pointer', padding: '6px 8px',
+            textDecoration: 'underline', textUnderlineOffset: 2,
+          }}
+        >
+          {reporting ? t('upload.result.report.working') : t('upload.result.report.cta')}
+        </button>
+      )}
     </div>
   );
 }
