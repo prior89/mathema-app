@@ -44,9 +44,9 @@ export class FcmService {
 
   /**
    * Streak 리마인더 — 오늘 학습 안 한 사용자(streak ≥ 3일) 에게 푸시.
-   * 매일 IST 19:00 자동 실행 (인도 표준시).
+   * 매일 KST 19:00 자동 실행 (KR-first — 한국 사용자 기준 저녁 시간).
    */
-  @Cron('0 19 * * *', { name: 'streak-reminders', timeZone: 'Asia/Kolkata' })
+  @Cron('0 19 * * *', { name: 'streak-reminders', timeZone: 'Asia/Seoul' })
   async triggerStreakReminders() {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
@@ -65,8 +65,8 @@ export class FcmService {
     let total = 0;
     for (const userId of targetUserIds) {
       const r = await this.sendToUser(userId, {
-        title: 'Keep your streak alive 🔥',
-        body: "Just one problem today keeps your learning streak going.",
+        title: '연속 학습이 끊길라 🔥',
+        body: '오늘 한 문제만 풀어도 연속 기록이 이어져요.',
         data: { type: 'streak.reminder' },
       });
       total += r.sent;
@@ -77,16 +77,16 @@ export class FcmService {
 
   /**
    * WrongNote due reminder — ReviewScheduler unified due set per user.
-   * 매일 IST 08:00 자동 실행.
+   * 매일 KST 08:00 자동 실행 (KR-first — 한국 사용자 기준 아침 시간).
    */
-  @Cron('0 8 * * *', { name: 'due-wrong-notes', timeZone: 'Asia/Kolkata' })
+  @Cron('0 8 * * *', { name: 'due-wrong-notes', timeZone: 'Asia/Seoul' })
   async triggerDueWrongNotes() {
     const due = await this.scheduler.getDueCountsByUser();
     let total = 0;
     for (const d of due) {
       const r = await this.sendToUser(d.userId, {
-        title: 'Time to revise',
-        body: `${d.count} wrong note${d.count > 1 ? 's are' : ' is'} due for review.`,
+        title: '복습할 시간이에요',
+        body: `복습할 오답 ${d.count}개가 기다리고 있어요.`,
         data: { type: 'wrongnote.due', count: String(d.count) },
       });
       total += r.sent;
