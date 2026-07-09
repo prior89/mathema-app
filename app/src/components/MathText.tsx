@@ -65,16 +65,77 @@ function maybeWrapBareLatex(src: string): string {
   return src;
 }
 
+/**
+ * Mathpix / Korean exam OCR often drops Hangul *inside* math delimiters without
+ * `\text{…}` — e.g. `ab의 \text{ 값은? }` or `일 때`. KaTeX then either
+ * errors (strict) or paints broken glyphs (ignore). Wrap bare Hangul runs in
+ * `\text{…}`, preserving already-protected `\text`/`\mathrm`/`\textrm` spans.
+ */
+function wrapHangulInTex(tex: string): string {
+  if (!tex || !/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(tex)) return tex;
+  const protectedChunks =
+    /(\\(?:text|mathrm|textrm|textbf|textit)\{[^}]*\})/g;
+  const parts = tex.split(protectedChunks);
+  return parts
+    .map((part, i) => {
+      // Odd indices are the protected command spans from the capturing split.
+      if (i % 2 === 1) return part;
+      // Match runs that include at least one Hangul syllable (may start with
+      // latin like "ab의" or include spaces/punctuation common in KR exam copy).
+      return part.replace(
+        /[A-Za-z0-9]*[가-힣ㄱ-ㅎㅏ-ㅣ][가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9\s?？!！,，.。:：;；'"‘’“”\[\]()（）0-9]*/g,
+        (m) => `\\text{${m}}`,
+      );
+    })
+    .join('');
+}
+
+/**
+ * Pull trailing Korean prose that OCR glued into a display-math block back out
+ * so the equation stays pure math. Common Mathpix KR-exam pattern:
+ *   \[ \lim … = b g(1) \text{ 일 때, } ab의 값은? [4점] \]
+ * → keep lim in math, put "일 때…" as normal text after.
+ */
+function splitKoreanProseOutOfDisplayMath(src: string): string {
+  return src.replace(/\\\[([\s\S]*?)\\\]/g, (_full, body: string) => {
+    // Prefer an explicit \text{…일 때…} boundary; else last Hangul-heavy tail.
+    const textIlTtae = body.search(/\\text\{\s*일\s*때/);
+    if (textIlTtae > 0) {
+      const math = body.slice(0, textIlTtae).trim();
+      const prose = body.slice(textIlTtae).trim();
+      // Strip surrounding \text{ } wrappers for the prose side so it renders as UI text.
+      const prosePlain = prose
+        .replace(/\\text\{([^}]*)\}/g, '$1')
+        .replace(/\\\[|\\\]/g, '')
+        .trim();
+      return `\\[${math}\\]\n${prosePlain}`;
+    }
+    // Hangul after a relation (= / ≈) near the end — treat as glued question text.
+    const m = body.match(
+      /^([\s\S]*?(?:=|\\approx|\\leq|\\geq)\s*[^\n가-힣]{0,80}?)(\s*(?:\\text\{)?[가-힣][\s\S]*)$/,
+    );
+    if (m && m[1].trim().length > 8) {
+      const prosePlain = m[2]
+        .replace(/\\text\{([^}]*)\}/g, '$1')
+        .trim();
+      return `\\[${m[1].trim()}\\]\n${prosePlain}`;
+    }
+    return `\\[${body}\\]`;
+  });
+}
+
 function renderInline(src: string): string {
-  const tokens = maybeWrapBareLatex(src).split(MATH_RE);
+  const prepared = splitKoreanProseOutOfDisplayMath(maybeWrapBareLatex(src));
+  const tokens = prepared.split(MATH_RE);
   const parts: string[] = [];
   for (const tk of tokens) {
     if (!tk) continue;
     const cls = classify(tk);
     if (cls) {
       try {
+        const tex = wrapHangulInTex(cls.tex);
         parts.push(
-          katex.renderToString(cls.tex, {
+          katex.renderToString(tex, {
             displayMode: cls.display,
             throwOnError: false,
             strict: 'ignore',

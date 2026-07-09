@@ -210,6 +210,15 @@ If the input contains labelled sub-problems — e.g. (1), (2), (가), (나), (i)
   "answer": "(1) n(n+1)(4n+3)/2\\n(2) 1977400"
 Do NOT silently drop a part. If you only solve one part, the response is considered wrong.
 
+IMPORTANT — Korean / CSAT-style "find ab" limit problems:
+When the question gives two limit conditions on f and g (often labelled (가)/(나)) and asks for the value of ab (or a+b, a·b, a/b, …):
+1. A finite limit of the form lim (x→c) F(x)/(x−c) forces F(c)=0 and equals F'(c) when F is differentiable.
+2. From lim (f−g)/(x−1)=5 you get f(1)=g(1) and f'(1)−g'(1)=5.
+3. From lim (f+g−2f(1))/(x−1)=7 you get f'(1)+g'(1)=7 (using f(1)=g(1)).
+4. Then f'(1)=6, g'(1)=1. For lim (f−a)/(x−1)=b·g(1) to be finite, a=f(1); the left side is f'(1)=6, so a·b=b·g(1)=6 when g(1)=a.
+5. NEVER answer "cannot be determined" when these two limits uniquely fix ab. Commit to a concrete number.
+If multiple-choice options ①–⑤ (or 1–5) are present, put the chosen value in `answer` (e.g. "6"), not only the option number.
+
 Sequence-vs-calculus reminder:
 If the question gives the sum of the first n terms S_n of a sequence, the individual terms are recovered by **subtraction**: a_n = S_n − S_(n−1) for n ≥ 2, and a_1 = S_1. Never differentiate S_n with respect to n — these are discrete sequences, not continuous functions.
 
