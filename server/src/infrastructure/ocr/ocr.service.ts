@@ -106,15 +106,47 @@ export class OcrService {
       throw new ServiceUnavailableException(`Mathpix OCR failed (${result.status}): ${result.errorText.slice(0, 300)}`);
     }
 
-    const text = this.firstNonEmptyString(result.json?.text, result.json?.latex_styled, result.json?.markdown);
-    if (!text) throw new BadRequestException('Could not read this image clearly. Try a sharper photo.');
-    const latex = this.firstNonEmptyString(result.json?.latex_styled, result.json?.text);
+    const raw = this.firstNonEmptyString(result.json?.text, result.json?.latex_styled, result.json?.markdown);
+    if (!raw) throw new BadRequestException('Could not read this image clearly. Try a sharper photo.');
+    const text = this.normalizeKoreanExamOcr(raw);
+    const latexRaw = this.firstNonEmptyString(result.json?.latex_styled, result.json?.text);
+    const latex = latexRaw ? this.normalizeKoreanExamOcr(latexRaw) : text;
     return {
       text,
       latex,
       confidence: this.normalizeConfidence(result.json?.confidence_rate ?? result.json?.confidence),
       source: 'mathpix',
     };
+  }
+
+  /**
+   * Mathpix KR exam OCR often glues Korean question prose into display-math:
+   *   \[ \lim … = b g(1) \text{ 일 때, } ab의 값은? [4점] \]
+   * Pull the "일 때 / 값은?" tail out so the editable OCR card and MathText
+   * preview stay readable. Safe no-op for pure-English / pure-math bodies.
+   */
+  private normalizeKoreanExamOcr(src: string): string {
+    if (!src || !/[가-힣]/.test(src)) return src;
+    return src.replace(/\\\[([\s\S]*?)\\\]/g, (_full, body: string) => {
+      const idx = body.search(/\\text\{\s*일\s*때/);
+      if (idx > 0) {
+        const math = body.slice(0, idx).trim();
+        const prose = body
+          .slice(idx)
+          .replace(/\\text\{([^}]*)\}/g, '$1')
+          .replace(/\s+/g, ' ')
+          .trim();
+        return `\\[${math}\\]\n${prose}`;
+      }
+      // Bare Hangul after a relation without \text wrapper.
+      const m = body.match(
+        /^([\s\S]*?(?:=|\\approx|\\leq|\\geq)\s*[^가-힣\n]{0,100}?)(\s+[가-힣][\s\S]*)$/,
+      );
+      if (m && m[1].trim().length > 8) {
+        return `\\[${m[1].trim()}\\]\n${m[2].trim()}`;
+      }
+      return `\\[${body}\\]`;
+    });
   }
 
   private async callMathpixOcr(file: Express.Multer.File, base64: string): Promise<MathpixOcrCallResult> {
@@ -196,9 +228,10 @@ export class OcrService {
       this.graphOcrModels(),
       4096,
     );
+    const normalized = this.normalizeKoreanExamOcr(text);
     return {
-      text,
-      latex: text,
+      text: normalized,
+      latex: normalized,
       confidence: mathpix.confidence ?? null,
       source: 'mathpix+openai',
     };
@@ -214,7 +247,8 @@ export class OcrService {
       this.ocrModels(),
       4096,
     );
-    return { text, latex: text, confidence: null, source: 'openai' };
+    const normalized = this.normalizeKoreanExamOcr(text);
+    return { text: normalized, latex: normalized, confidence: null, source: 'openai' };
   }
 
   private async openAiText(
