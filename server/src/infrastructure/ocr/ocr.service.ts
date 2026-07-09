@@ -120,30 +120,84 @@ export class OcrService {
   }
 
   /**
-   * Mathpix KR exam OCR often glues Korean question prose into display-math:
-   *   \[ \lim … = b g(1) \text{ 일 때, } ab의 값은? [4점] \]
-   * Pull the "일 때 / 값은?" tail out so the editable OCR card and MathText
-   * preview stay readable. Safe no-op for pure-English / pure-math bodies.
+   * Mathpix KR exam OCR glue — keep in sync with app/src/lib/korean-exam-math.ts
+   * (client MathText). Covers:
+   *  - \[ \text{필수 예제 12.4} \] → plain title
+   *  - mid-block \text{에 대해…} / \text{일 때…}
+   *  - bare Hangul after =
    */
   private normalizeKoreanExamOcr(src: string): string {
     if (!src || !/[가-힣]/.test(src)) return src;
-    return src.replace(/\\\[([\s\S]*?)\\\]/g, (_full, body: string) => {
-      const idx = body.search(/\\text\{\s*일\s*때/);
-      if (idx > 0) {
-        const math = body.slice(0, idx).trim();
-        const prose = body
-          .slice(idx)
-          .replace(/\\text\{([^}]*)\}/g, '$1')
-          .replace(/\s+/g, ' ')
-          .trim();
-        return `\\[${math}\\]\n${prose}`;
+
+    const unwrapText = (s: string) =>
+      s
+        .replace(/\\text\{([^}]*)\}/g, '$1')
+        .replace(/\\(?:quad|qquad)/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const isKoreanOnly = (body: string) => {
+      const stripped = body
+        .replace(/\\text\{[^}]*\}/g, '')
+        .replace(/\\(?:quad|qquad| |,|;|!)/g, ' ')
+        .replace(/[{}]/g, '')
+        .trim();
+      if (!/[가-힣]/.test(body)) return false;
+      if (
+        /[=+\-*/^_∑∫√∞]|\\(?:frac|sum|lim|int|sqrt|partial)/.test(
+          body.replace(/\\text\{[^}]*\}/g, ''),
+        )
+      ) {
+        return false;
       }
-      // Bare Hangul after a relation without \text wrapper.
-      const m = body.match(
+      return stripped.length === 0 || !/[A-Za-z0-9]/.test(stripped);
+    };
+
+    const isInstructional = (inner: string) => {
+      const t = inner.trim();
+      if (!/[가-힣]/.test(t)) return false;
+      if (/^[\s(（]*[가-힣0-9]{1,2}[)）\s.．]*$/.test(t)) return false;
+      return (
+        /일\s*때|값은|구하여|구하라|에\s*대해|대하여|다음|물음|지금|이면|이고|부터|까지/.test(t) ||
+        t.length >= 4
+      );
+    };
+
+    return src.replace(/\\\[([\s\S]*?)\\\]/g, (_full, body: string) => {
+      if (isKoreanOnly(body)) return unwrapText(body);
+
+      const ilTtae = body.search(/\\text\{\s*일\s*때/);
+      if (ilTtae > 0) {
+        const math = body.slice(0, ilTtae).trim();
+        const prose = unwrapText(body.slice(ilTtae));
+        return math ? `\\[${math}\\]\n${prose}` : prose;
+      }
+
+      const textCmdRe = /\\text\{([^}]*)\}/g;
+      let match: RegExpExecArray | null;
+      let pivot: { start: number; end: number; inner: string } | null = null;
+      while ((match = textCmdRe.exec(body)) !== null) {
+        if (isInstructional(match[1])) {
+          pivot = { start: match.index, end: match.index + match[0].length, inner: match[1] };
+          break;
+        }
+      }
+      if (pivot) {
+        const before = body.slice(0, pivot.start).trim();
+        const after = body.slice(pivot.end).trim();
+        const prose = unwrapText(pivot.inner);
+        const parts: string[] = [];
+        if (before) parts.push(`\\[${before}\\]`);
+        parts.push(prose);
+        if (after) parts.push(`\\[${after}\\]`);
+        return parts.join('\n');
+      }
+
+      const bare = body.match(
         /^([\s\S]*?(?:=|\\approx|\\leq|\\geq)\s*[^가-힣\n]{0,100}?)(\s+[가-힣][\s\S]*)$/,
       );
-      if (m && m[1].trim().length > 8) {
-        return `\\[${m[1].trim()}\\]\n${m[2].trim()}`;
+      if (bare && bare[1].trim().length > 8) {
+        return `\\[${bare[1].trim()}\\]\n${bare[2].trim()}`;
       }
       return `\\[${body}\\]`;
     });
