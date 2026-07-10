@@ -67,6 +67,16 @@ TOKEN=$(printf '%s' "$AUTH_RESP" | python3 -c "import json,sys; print(json.load(
   || { printf "auth failed: %s\n" "$AUTH_RESP"; fail "auth"; }
 printf "  token len %d\n" "${#TOKEN}"
 
+if [ "$CLEANUP" = "1" ]; then
+  PROFILE_RESP=$(curl -sS --max-time 20 -X PATCH "$API/users/me" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"birthDate":"2000-01-01T00:00:00.000Z","gradeLevel":"CLASS_11","country":"IN"}' \
+    -w "\nHTTP_CODE:%{http_code}")
+  PROFILE_CODE=$(printf '%s' "$PROFILE_RESP" | tail -1 | sed 's/HTTP_CODE://')
+  printf "  profile HTTP %s\n" "$PROFILE_CODE"
+fi
+
 SOLVE_RESP=$(curl -sS --max-time 90 -X POST "$API/math-helper/solve" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \

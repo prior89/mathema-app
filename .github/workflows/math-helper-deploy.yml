@@ -120,6 +120,15 @@ jobs:
               echo "attempt $i -> auth failed"
               continue
             fi
+            if [ "$cleanup" = "1" ]; then
+              profile=$(curl -sS --max-time 20 -X PATCH "$API/users/me" \
+                -H "Authorization: Bearer $token" \
+                -H "Content-Type: application/json" \
+                -d '{"birthDate":"2000-01-01T00:00:00.000Z","gradeLevel":"CLASS_11","country":"IN"}' \
+                -w "\nHTTP_CODE:%{http_code}" || true)
+              profile_code=$(printf '%s' "$profile" | tail -1 | sed 's/HTTP_CODE://')
+              echo "attempt $i -> profile HTTP $profile_code"
+            fi
             body=$(curl -sS --max-time 90 -X POST "$API/math-helper/solve" \
               -H "Authorization: Bearer $token" \
               -H "Content-Type: application/json" \
