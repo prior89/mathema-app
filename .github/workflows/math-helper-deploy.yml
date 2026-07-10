@@ -1,4 +1,4 @@
-name: Math-helper — build & deploy to Azure Container Apps
+name: Math-helper build and deploy to Azure Container Apps
 
 # Build the Python FastAPI image, push to ACR, update the
 # mathema-math-helper Container App revision. Triggered on pushes to main
@@ -22,7 +22,6 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # OIDC federation — same pattern as backend-deploy.yml.
     permissions:
       id-token: write
       contents: read
@@ -43,9 +42,7 @@ jobs:
         id: tag
         run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      # Build context = repo root so the Dockerfile can COPY both
-      # services/math-helper/ and services/data/.
-      - name: Docker build & push
+      - name: Docker build and push
         run: |
           docker build \
             -f services/math-helper/Dockerfile \
@@ -58,10 +55,26 @@ jobs:
       - name: Install containerapp extension
         run: az extension add --name containerapp --upgrade -y
 
-      # math-helper's llm.py is OpenAI-only: gpt-5.4-mini primary, gpt-5.5
-      # only for transient provider-failure fallback.
-      # OPENAI_API_KEY is wired by the Bicep template. Set model policy
-      # explicitly so the live app matches AI_SOLVER_MODEL_POLICY.md.
+      - name: Ensure OpenAI secret reference
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -n "$OPENAI_API_KEY" ]; then
+            az containerapp secret set \
+              --name ${{ env.CONTAINER_APP }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --secrets "openai-api-key=$OPENAI_API_KEY"
+          else
+            KV_NAME=$(az keyvault list \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --query "[?starts_with(name, 'mathema-kv-')].name | [0]" -o tsv)
+            KV_URI=$(az keyvault show --name "$KV_NAME" --query properties.vaultUri -o tsv)
+            az containerapp secret set \
+              --name ${{ env.CONTAINER_APP }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --secrets "openai-api-key=keyvaultref:${KV_URI}secrets/openai-api-key,identityref:system"
+          fi
+
       - name: Container App revision update
         run: |
           az containerapp update \
@@ -69,34 +82,52 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
             --set-env-vars \
+              OPENAI_API_KEY=secretref:openai-api-key \
               MATH_HELPER_MODEL=gpt-5.4-mini \
               MATH_HELPER_FALLBACK_MODEL=gpt-5.5
 
-      # math-helper has internal ingress (external: false), so GitHub
-      # runners can't curl it directly. We verify health by polling
-      # backend's /api/v1/math-helper/health which proxies through the
-      # internal URL — this also confirms NestJS → Python wiring works.
-      - name: Smoke test (via backend proxy)
+      # The math-helper app has internal ingress, so GitHub runners cannot curl
+      # it directly. A 401 from /math-helper/health only proves the NestJS guard
+      # ran. This smoke test registers a temporary user and solves a problem
+      # that requires the LLM path, so stale OpenAI secrets fail the workflow.
+      - name: Smoke test LLM solve via backend proxy
         run: |
           BACKEND_FQDN=$(az containerapp show \
             -n mathema-backend -g ${{ env.RESOURCE_GROUP }} \
             --query "properties.configuration.ingress.fqdn" -o tsv)
+          API="https://$BACKEND_FQDN/api/v1"
           ok=0
           for i in $(seq 1 18); do
             sleep 10
-            # /api/v1/math-helper/health requires JWT, so 401 = backend up
-            # and routing the request (which means proxy module loaded).
-            # 200 = math-helper up and replying. 502/503 = math-helper down.
-            code=$(curl -s -o /dev/null --max-time 8 -w "%{http_code}" \
-              "https://$BACKEND_FQDN/api/v1/math-helper/health" || echo "000")
+            email="math-helper-smoke-${GITHUB_RUN_ID}-${i}@matheo.test"
+            password="Smoke!${GITHUB_RUN_ID}${i}"
+            reg=$(curl -sS --max-time 20 -X POST "$API/auth/register" \
+              -H "Content-Type: application/json" \
+              -d "{\"email\":\"$email\",\"password\":\"$password\",\"name\":\"MathHelperSmoke\",\"role\":\"STUDENT\",\"gradeLevel\":\"CLASS_11\"}" || true)
+            token=$(REG_JSON="$reg" python3 -c 'import json, os; print((json.loads(os.environ.get("REG_JSON", "{}")).get("data") or {}).get("accessToken") or "")' 2>/dev/null || true)
+            if [ -z "$token" ]; then
+              echo "attempt $i -> register failed"
+              continue
+            fi
+            body=$(curl -sS --max-time 90 -X POST "$API/math-helper/solve" \
+              -H "Authorization: Bearer $token" \
+              -H "Content-Type: application/json" \
+              -d '{"classLevel":11,"question":"Find the derivative of x^2."}' \
+              -w "\nHTTP_CODE:%{http_code}" || true)
+            curl -sS --max-time 10 -X DELETE "$API/users/me" \
+              -H "Authorization: Bearer $token" >/dev/null || true
+            code=$(printf '%s' "$body" | tail -1 | sed 's/HTTP_CODE://')
             echo "attempt $i -> HTTP $code"
-            if [ "$code" = "200" ] || [ "$code" = "401" ]; then ok=1; break; fi
+            if [ "$code" = "200" ] || [ "$code" = "201" ]; then
+              ok=1
+              break
+            fi
           done
           if [ "$ok" = "1" ]; then
-            echo "::notice::math-helper revision is up (HTTP $code from /math-helper/health proxy)."
+            echo "::notice::math-helper revision solved an LLM problem (HTTP $code)."
             exit 0
           fi
-          echo "::error::math-helper did not become healthy within 3 min — dumping container logs"
+          echo "::error::math-helper did not solve an LLM smoke problem within 3 min -- dumping container logs"
           az containerapp logs show \
             --name ${{ env.CONTAINER_APP }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \

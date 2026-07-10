@@ -720,6 +720,7 @@ function OcrReviewPhase({
   const norm = normalizeOcrConfidence(ocrResult.confidence);
   const showLowWarning = norm == null || norm < 0.7;
   const canSolve = editedText.trim().length > 0;
+  const [sourceOpen, setSourceOpen] = useState(showLowWarning);
 
   return (
     <div>
@@ -762,23 +763,35 @@ function OcrReviewPhase({
         </div>
       </div>
 
-      <label style={{ ...fieldLabel, marginTop: 12 }}>
-        {t('upload.ocrReview.editLabel')}
-        <textarea
-          value={editedText}
-          onChange={(e) => onEditedText(e.target.value)}
-          placeholder={t('upload.ocrReview.placeholder')}
-          rows={5}
-          style={{
-            ...inputStyle,
-            minHeight: 120,
-            resize: 'vertical',
-            fontFamily: 'var(--font-mono)',
-            lineHeight: 1.5,
-            textTransform: 'none',
-          }}
-        />
-      </label>
+      <div style={{ marginTop: 12 }}>
+        <button
+          type="button"
+          className="btn outline"
+          onClick={() => setSourceOpen((open) => !open)}
+          style={{ width: '100%', minHeight: 40, fontSize: 13 }}
+        >
+          {sourceOpen ? '원문 수정 닫기' : '수식이 이상하면 원문 수정하기'}
+        </button>
+        {sourceOpen && (
+          <label style={{ ...fieldLabel, marginTop: 10 }}>
+            {t('upload.ocrReview.editLabel')}
+            <textarea
+              value={editedText}
+              onChange={(e) => onEditedText(e.target.value)}
+              placeholder={t('upload.ocrReview.placeholder')}
+              rows={5}
+              style={{
+                ...inputStyle,
+                minHeight: 120,
+                resize: 'vertical',
+                fontFamily: 'var(--font-mono)',
+                lineHeight: 1.5,
+                textTransform: 'none',
+              }}
+            />
+          </label>
+        )}
+      </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
         <button

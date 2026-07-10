@@ -1,82 +1,82 @@
 /**
- * Shared sanitizer for Mathpix / Korean exam OCR that glues Hangul into LaTeX.
- * Used by MathText (client render) and kept in sync with server OCR normalize.
- *
- * Patterns handled:
- *  1. \[ \text{필수 예제 12.4} \]  → plain Korean title (not display math)
- *  2. \[ … \text{ 일 때, } ab의 값은? \]  → pure math + prose after
- *  3. \[ (2) S_n \text{에 대해, 지금 } S_n = … \]  → split mid-block Korean
- *  4. Bare Hangul inside math without \text  → wrap with \text{…}
+ * Shared sanitizer for Mathpix / Korean exam OCR that glues Korean prose into
+ * LaTeX. Keep the Hangul ranges as unicode escapes so this file survives
+ * Windows/editor encoding changes.
  */
 
+const HANGUL_RANGE = '\\uAC00-\\uD7A3\\u3131-\\u318E\\u1100-\\u11FF';
+const HANGUL_RE = /[\uAC00-\uD7A3\u3131-\u318E\u1100-\u11FF]/;
 const DISPLAY_MATH_RE = /\\\[([\s\S]*?)\\\]/g;
+const TEXT_STYLE_COMMAND_RE = /\\(?:text|mathrm|textrm|textbf|textit)\{([^{}]*)\}/g;
+const TEXT_STYLE_PROTECTED_RE = /(\\(?:text|mathrm|textrm|textbf|textit)\{[^{}]*\})/g;
+const TEXT_COMMAND_RE = /\\text\{([^{}]*)\}/g;
+const SHORT_LABEL_RE = new RegExp(
+  `^\\s*[(\\[]?\\s*(?:[${HANGUL_RANGE}]{1,2}|[0-9]{1,2}|[A-Za-z])\\s*[)\\].]?\\s*$`,
+);
+const BARE_HANGUL_AFTER_RELATION_RE = new RegExp(
+  `^([\\s\\S]*?(?:=|\\\\approx|\\\\leq|\\\\geq)\\s*[^${HANGUL_RANGE}\\n]{0,100}?)(\\s+[${HANGUL_RANGE}][\\s\\S]*)$`,
+);
+const HANGUL_RUN_RE = new RegExp(
+  `[${HANGUL_RANGE}][${HANGUL_RANGE}0-9\\s.,?!~:;'"()\\[\\]\\-\\/·]*`,
+  'g',
+);
 
-/** True when a display-math body is only Korean labels (no real formula). */
-function isKoreanOnlyMathBody(body: string): boolean {
-  // Strip \text{…} and common spacing commands; if nothing math-like remains, demote.
-  const stripped = body
-    .replace(/\\text\{[^}]*\}/g, '')
-    .replace(/\\(?:quad|qquad| |,|;|!)/g, ' ')
-    .replace(/[{}]/g, '')
-    .trim();
-  if (!/[가-힣]/.test(body)) return false;
-  // Remaining tokens should not look like algebra (letters used as variables, =, sum, etc.)
-  if (/[=+\-*/^_∑∫√∞]|\\(?:frac|sum|lim|int|sqrt|partial)/.test(body.replace(/\\text\{[^}]*\}/g, ''))) {
-    return false;
-  }
-  // Pure title / instruction block
-  return stripped.length === 0 || !/[A-Za-z0-9]/.test(stripped);
+function hasHangul(s: string): boolean {
+  HANGUL_RE.lastIndex = 0;
+  return HANGUL_RE.test(s);
+}
+
+function stripTextCommands(s: string): string {
+  return s.replace(TEXT_STYLE_COMMAND_RE, '$1');
 }
 
 function unwrapTextCommands(s: string): string {
-  return s
-    .replace(/\\text\{([^}]*)\}/g, '$1')
-    .replace(/\\(?:quad|qquad)/g, ' ')
+  return stripTextCommands(s)
+    .replace(/\\(?:quad|qquad|,|;|!)/g, ' ')
+    .replace(/\\ /g, ' ')
+    .replace(/[{}]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-/**
- * Korean instructional phrase inside \text{…} that should leave math mode.
- * Labels like \text{(가) } stay inside math.
- */
+function hasMathSignal(body: string): boolean {
+  const noText = body.replace(TEXT_STYLE_COMMAND_RE, '');
+  return /[=+\-*/^_∑∫√∞]|\\(?:frac|sum|lim|int|sqrt|partial|binom|cdot|times|leq|geq|approx)\b/.test(
+    noText,
+  );
+}
+
+/** True when a display-math body is actually a Korean title/instruction. */
+function isKoreanOnlyMathBody(body: string): boolean {
+  if (!hasHangul(body)) return false;
+  return !hasMathSignal(body);
+}
+
 function isInstructionalKoreanText(inner: string): boolean {
   const t = inner.trim();
-  if (!/[가-힣]/.test(t)) return false;
-  // Keep short part labels: (가), (나), (1)
-  if (/^[\s(（]*[가-힣0-9]{1,2}[)）\s.．]*$/.test(t)) return false;
-  if (/^(가|나|다|라|마)\s*$/.test(t)) return false;
-  // Instructional / question glue
+  if (!hasHangul(t)) return false;
+  if (SHORT_LABEL_RE.test(t)) return false;
+
   return (
-    /일\s*때|값은|구하여|구하라|에\s*대해|대하여|다음|물음|일\s*때|지금|이면|이고|이고|부터|까지|중의|중에서/.test(
+    /(?:\uAD6C\uD558|\uB2E4\uC74C|\uBB3C\uC74C|\uC77C\s*\uB54C|\uB300\uD558|\uC9C0\uAE08|\uC774\uBA74|\uB77C\uBA74|\uB54C|\uC911|\uB2F5\uD558|\uC120\uD0DD|\uC5B4\uB5A4|\uC5BC\uB9C8|\uC5D0\s*\uB300)/.test(
       t,
     ) || t.length >= 4
   );
 }
 
 /**
- * Demote pure-Korean display math and split instructional Korean out of formulas.
+ * Demote pure-Korean display math and split instructional Korean out of
+ * display formulas. The output still uses \[...\] for real math blocks.
  */
 export function normalizeKoreanExamMath(src: string): string {
-  if (!src || !/[가-힣]/.test(src)) return src;
+  if (!src || !hasHangul(src)) return src;
 
   return src.replace(DISPLAY_MATH_RE, (_full, body: string) => {
-    // 1) Title-only blocks: \[ \text{필수 예제 12.4} \]
     if (isKoreanOnlyMathBody(body)) {
       return unwrapTextCommands(body);
     }
 
-    // 2) Explicit \text{ 일 때 … } tail (previous fix)
-    const ilTtae = body.search(/\\text\{\s*일\s*때/);
-    if (ilTtae > 0) {
-      const math = body.slice(0, ilTtae).trim();
-      const prose = unwrapTextCommands(body.slice(ilTtae));
-      return math ? `\\[${math}\\]\n${prose}` : prose;
-    }
-
-    // 3) Mid-block instructional \text{에 대해…} / \text{…구하여…}
-    //    Split into: leading math | prose | trailing math
-    const textCmdRe = /\\text\{([^}]*)\}/g;
+    const textCmdRe = new RegExp(TEXT_COMMAND_RE);
     let match: RegExpExecArray | null;
     const splits: Array<{ start: number; end: number; inner: string }> = [];
     while ((match = textCmdRe.exec(body)) !== null) {
@@ -90,28 +90,18 @@ export function normalizeKoreanExamMath(src: string): string {
     }
 
     if (splits.length > 0) {
-      // Use the first instructional span as the prose pivot
       const pivot = splits[0];
       const before = body.slice(0, pivot.start).trim();
       const after = body.slice(pivot.end).trim();
       const prose = unwrapTextCommands(pivot.inner);
       const parts: string[] = [];
-      if (before) {
-        // Keep part labels like (2)\quad with following math if any
-        parts.push(`\\[${before}\\]`);
-      }
-      parts.push(prose);
-      if (after) {
-        // Trailing pure math (e.g. S_n = 2n^3 - 6000)
-        parts.push(`\\[${after}\\]`);
-      }
+      if (before) parts.push(`\\[${before}\\]`);
+      if (prose) parts.push(prose);
+      if (after) parts.push(`\\[${after}\\]`);
       return parts.join('\n');
     }
 
-    // 4) Bare Hangul after a relation (no \text wrapper)
-    const bare = body.match(
-      /^([\s\S]*?(?:=|\\approx|\\leq|\\geq)\s*[^가-힣\n]{0,100}?)(\s+[가-힣][\s\S]*)$/,
-    );
+    const bare = body.match(BARE_HANGUL_AFTER_RELATION_RE);
     if (bare && bare[1].trim().length > 8) {
       return `\\[${bare[1].trim()}\\]\n${bare[2].trim()}`;
     }
@@ -121,21 +111,19 @@ export function normalizeKoreanExamMath(src: string): string {
 }
 
 /**
- * Wrap bare Hangul runs inside a TeX body with \text{…}.
- * Preserves existing \text/\mathrm/\textrm spans.
+ * Wrap bare Korean runs inside a TeX body with \text{...}. Existing text-style
+ * commands are preserved so we do not double-wrap.
  */
 export function wrapHangulInTex(tex: string): string {
-  if (!tex || !/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(tex)) return tex;
-  const protectedChunks =
-    /(\\(?:text|mathrm|textrm|textbf|textit)\{[^}]*\})/g;
-  const parts = tex.split(protectedChunks);
+  if (!tex || !hasHangul(tex)) return tex;
+  const parts = tex.split(TEXT_STYLE_PROTECTED_RE);
   return parts
     .map((part, i) => {
       if (i % 2 === 1) return part;
-      return part.replace(
-        /[A-Za-z0-9]*[가-힣ㄱ-ㅎㅏ-ㅣ][가-힣ㄱ-ㅎㅏ-ㅣA-Za-z0-9\s?？!！,，.。:：;；'"‘’“”\[\]()（）0-9]*/g,
-        (m) => `\\text{${m}}`,
-      );
+      return part.replace(HANGUL_RUN_RE, (match) => {
+        const trailingSpace = /\s+$/.test(match) ? ' ' : '';
+        return `\\text{${match.trim()}}${trailingSpace}`;
+      });
     })
     .join('');
 }
