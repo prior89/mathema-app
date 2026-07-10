@@ -44,18 +44,28 @@ for i in $(seq 1 24); do
   [ "$state" = "Running" ] && break
 done
 
-step "3. End-to-end LLM solve: register -> solve -> cleanup"
+step "3. End-to-end LLM solve: auth -> solve -> cleanup"
 API="$BACKEND_URL/api/v1"
 TS=$(date +%s)
 EMAIL="solve-verify-$TS@mathema.test"
 PW="Verify!$TS"
 
-REG_RESP=$(curl -sS --max-time 20 -X POST "$API/auth/register" \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"$EMAIL\",\"password\":\"$PW\",\"name\":\"VerifyTest\",\"role\":\"STUDENT\",\"gradeLevel\":\"CLASS_11\"}")
-TOKEN=$(printf '%s' "$REG_RESP" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['accessToken'])" 2>/dev/null) \
-  || { printf "register failed: %s\n" "$REG_RESP"; fail "register"; }
-printf "  registered %s (token len %d)\n" "$EMAIL" "${#TOKEN}"
+if [ -n "${SMOKE_USER_EMAIL:-}" ] && [ -n "${SMOKE_USER_PASSWORD:-}" ]; then
+  AUTH_RESP=$(curl -sS --max-time 20 -X POST "$API/auth/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":\"$SMOKE_USER_EMAIL\",\"password\":\"$SMOKE_USER_PASSWORD\"}")
+  CLEANUP=0
+  printf "  logged in smoke user (email len %d)\n" "${#SMOKE_USER_EMAIL}"
+else
+  AUTH_RESP=$(curl -sS --max-time 20 -X POST "$API/auth/register" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":\"$EMAIL\",\"password\":\"$PW\",\"name\":\"VerifyTest\",\"role\":\"STUDENT\",\"gradeLevel\":\"CLASS_11\"}")
+  CLEANUP=1
+  printf "  registered %s\n" "$EMAIL"
+fi
+TOKEN=$(printf '%s' "$AUTH_RESP" | python3 -c "import json,sys; print(json.load(sys.stdin)['data']['accessToken'])" 2>/dev/null) \
+  || { printf "auth failed: %s\n" "$AUTH_RESP"; fail "auth"; }
+printf "  token len %d\n" "${#TOKEN}"
 
 SOLVE_RESP=$(curl -sS --max-time 90 -X POST "$API/math-helper/solve" \
   -H "Authorization: Bearer $TOKEN" \
@@ -70,8 +80,12 @@ printf "  body (head):\n"
 printf '%s\n' "$BODY" | python3 -m json.tool 2>/dev/null | head -25 || printf "%s\n" "$BODY"
 
 step "4. Cleanup test user"
-curl -sS --max-time 10 -X DELETE "$API/users/me" -H "Authorization: Bearer $TOKEN" >/dev/null || true
-printf "  deleted %s\n" "$EMAIL"
+if [ "$CLEANUP" = "1" ]; then
+  curl -sS --max-time 10 -X DELETE "$API/users/me" -H "Authorization: Bearer $TOKEN" >/dev/null || true
+  printf "  deleted %s\n" "$EMAIL"
+else
+  printf "  kept configured smoke user\n"
+fi
 
 # This prompt intentionally requires the LLM path, not the deterministic solver,
 # so stale OpenAI secrets are caught.

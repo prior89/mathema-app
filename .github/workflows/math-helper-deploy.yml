@@ -91,6 +91,9 @@ jobs:
       # ran. This smoke test registers a temporary user and solves a problem
       # that requires the LLM path, so stale OpenAI secrets fail the workflow.
       - name: Smoke test LLM solve via backend proxy
+        env:
+          SMOKE_USER_EMAIL: ${{ secrets.SMOKE_USER_EMAIL }}
+          SMOKE_USER_PASSWORD: ${{ secrets.SMOKE_USER_PASSWORD }}
         run: |
           BACKEND_FQDN=$(az containerapp show \
             -n mathema-backend -g ${{ env.RESOURCE_GROUP }} \
@@ -99,14 +102,22 @@ jobs:
           ok=0
           for i in $(seq 1 18); do
             sleep 10
-            email="math-helper-smoke-${GITHUB_RUN_ID}-${i}@matheo.test"
-            password="Smoke!${GITHUB_RUN_ID}${i}"
-            reg=$(curl -sS --max-time 20 -X POST "$API/auth/register" \
-              -H "Content-Type: application/json" \
-              -d "{\"email\":\"$email\",\"password\":\"$password\",\"name\":\"MathHelperSmoke\",\"role\":\"STUDENT\",\"gradeLevel\":\"CLASS_11\"}" || true)
-            token=$(REG_JSON="$reg" python3 -c 'import json, os; print((json.loads(os.environ.get("REG_JSON", "{}")).get("data") or {}).get("accessToken") or "")' 2>/dev/null || true)
+            if [ -n "$SMOKE_USER_EMAIL" ] && [ -n "$SMOKE_USER_PASSWORD" ]; then
+              auth=$(curl -sS --max-time 20 -X POST "$API/auth/login" \
+                -H "Content-Type: application/json" \
+                -d "{\"email\":\"$SMOKE_USER_EMAIL\",\"password\":\"$SMOKE_USER_PASSWORD\"}" || true)
+              cleanup=0
+            else
+              email="math-helper-smoke-${GITHUB_RUN_ID}-${i}@matheo.test"
+              password="Smoke!${GITHUB_RUN_ID}${i}"
+              auth=$(curl -sS --max-time 20 -X POST "$API/auth/register" \
+                -H "Content-Type: application/json" \
+                -d "{\"email\":\"$email\",\"password\":\"$password\",\"name\":\"MathHelperSmoke\",\"role\":\"STUDENT\",\"gradeLevel\":\"CLASS_11\"}" || true)
+              cleanup=1
+            fi
+            token=$(AUTH_JSON="$auth" python3 -c 'import json, os; print((json.loads(os.environ.get("AUTH_JSON", "{}")).get("data") or {}).get("accessToken") or "")' 2>/dev/null || true)
             if [ -z "$token" ]; then
-              echo "attempt $i -> register failed"
+              echo "attempt $i -> auth failed"
               continue
             fi
             body=$(curl -sS --max-time 90 -X POST "$API/math-helper/solve" \
@@ -114,10 +125,14 @@ jobs:
               -H "Content-Type: application/json" \
               -d '{"classLevel":11,"question":"Find the derivative of x^2."}' \
               -w "\nHTTP_CODE:%{http_code}" || true)
-            curl -sS --max-time 10 -X DELETE "$API/users/me" \
-              -H "Authorization: Bearer $token" >/dev/null || true
+            if [ "$cleanup" = "1" ]; then
+              curl -sS --max-time 10 -X DELETE "$API/users/me" \
+                -H "Authorization: Bearer $token" >/dev/null || true
+            fi
             code=$(printf '%s' "$body" | tail -1 | sed 's/HTTP_CODE://')
             echo "attempt $i -> HTTP $code"
+            printf '%s' "$body" | sed '$d' | head -c 600
+            echo
             if [ "$code" = "200" ] || [ "$code" = "201" ]; then
               ok=1
               break
