@@ -1133,6 +1133,11 @@ const ko = {
 
   // ===== Report Screen =====
   'reportScreen.weekly': '주간 리포트',
+  'reportScreen.outcome.up': '정답률 {from}% → {to}% (+{delta}%p) 📈',
+  'reportScreen.outcome.upSub': '지난주보다 정확해졌어요 — 약점 연습이 효과를 내고 있어요. 이 흐름을 이어가요.',
+  'reportScreen.outcome.down': '정답률 {from}% → {to}%',
+  'reportScreen.outcome.downSub': '이번 주는 조금 흔들렸어요. 틀린 문제만 골라 복습하면 금방 되돌릴 수 있어요.',
+  'reportScreen.outcome.review': '약점 복습 시작',
   'reportScreen.summary': '이번 주 한눈에 보기',
   'reportScreen.hello': '안녕하세요, ',
   'reportScreen.stat.studyTime': '학습 시간',
@@ -2542,6 +2547,11 @@ const en: typeof ko = {
 
   // Report Screen
   'reportScreen.weekly': 'Weekly report',
+  'reportScreen.outcome.up': 'Accuracy {from}% → {to}% (+{delta}%p) 📈',
+  'reportScreen.outcome.upSub': 'More accurate than last week — your weak-spot practice is paying off. Keep the streak going.',
+  'reportScreen.outcome.down': 'Accuracy {from}% → {to}%',
+  'reportScreen.outcome.downSub': 'A wobbly week. Reviewing just the problems you missed brings it right back.',
+  'reportScreen.outcome.review': 'Start weak-spot review',
   'reportScreen.summary': 'Your week at a glance',
   'reportScreen.hello': 'Hello, ',
   'reportScreen.stat.studyTime': 'Study time',

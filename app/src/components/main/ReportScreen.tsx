@@ -52,7 +52,7 @@ export function ReportScreen() {
     <div className="screen">
       <div className="prob-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button onClick={() => nav('/app/me')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} aria-label={t('lesson.back')}>
+          <button onClick={() => nav('/app/me')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: 44, height: 44, marginLeft: -10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-label={t('lesson.back')}>
             <Glyph.ArrowL accent="var(--p-ink-2)" size={20} />
           </button>
           <div>
@@ -69,6 +69,51 @@ export function ReportScreen() {
           </div>
 
           <EfficacyCard compact />
+
+          {/* Outcome headline — the report's actual sales pitch. The accuracy
+              delta was buried as a tiny chip in the stat grid; a parent or
+              self-directed learner decides "the money/effort is working" from
+              exactly this one legible line ("52% → 58%"). Shown only when the
+              sample is big enough (≥5 attempts) and the move is real (≥3%p). */}
+          {cur.data?.hasData &&
+            cur.data.attemptCount >= 5 &&
+            Math.abs(cur.data.accuracyDelta) >= 3 &&
+            cur.data.accuracyPct - cur.data.accuracyDelta > 0 && (
+              cur.data.accuracyDelta > 0 ? (
+                <div className="card" style={{ padding: 14, marginBottom: 12, background: 'var(--p-success-tint)', borderColor: 'transparent' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--p-success-ink)' }}>
+                    {t('reportScreen.outcome.up', {
+                      from: cur.data.accuracyPct - cur.data.accuracyDelta,
+                      to: cur.data.accuracyPct,
+                      delta: cur.data.accuracyDelta,
+                    })}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--p-ink-2)', marginTop: 4, lineHeight: 1.5 }}>
+                    {t('reportScreen.outcome.upSub')}
+                  </div>
+                </div>
+              ) : (
+                <div className="card" style={{ padding: 14, marginBottom: 12, background: 'var(--p-warning-tint)', borderColor: 'transparent' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--p-warning-ink)' }}>
+                    {t('reportScreen.outcome.down', {
+                      from: cur.data.accuracyPct - cur.data.accuracyDelta,
+                      to: cur.data.accuracyPct,
+                    })}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--p-ink-2)', marginTop: 4, lineHeight: 1.5 }}>
+                    {t('reportScreen.outcome.downSub')}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn outline"
+                    style={{ marginTop: 10, height: 40 }}
+                    onClick={() => nav('/app/review')}
+                  >
+                    {t('reportScreen.outcome.review')}
+                  </button>
+                </div>
+              )
+            )}
 
           {/* 4 stats */}
           <div className="stat-grid">
