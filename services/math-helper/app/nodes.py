@@ -1,9 +1,16 @@
+import re
+
 from pydantic import BaseModel, Field, field_validator
 from typing import List
 from llm import structured
 from deterministic_check import compare_answers, deterministic_check, normalize
 from curriculum_data import retrieve_context
 from student_store import get_student_profile, record_attempt
+
+
+def _question_is_korean(question: str) -> bool:
+    """Language routing for user-facing strings the LLM does not generate."""
+    return bool(re.search(r"[가-힣]", question or ""))
 
 
 class Classification(BaseModel):
@@ -313,6 +320,8 @@ Example format:
 
 Do not copy the previous answer unless it is actually correct. Recompute from the original question.
 
+LANGUAGE: Write `steps`, `stepRationales` and `explanation` in the same language as the question. Korean question → Korean. English question → English. Hindi question → Hindi. Mathematical notation stays as LaTeX in every language.
+
 Chapter: {detected["chapter"]}
 Topic: {detected["topic"]}
 Concepts: {detected["concepts"]}
@@ -406,6 +415,12 @@ Example format:
   "correctedAnswer": null
 }}
 
+Rules:
+- Write `issues` in the same language as the question (Korean question → Korean issues).
+- `correctedAnswer` must be ONLY the corrected final answer value (e.g. "6" or "x = 2"),
+  never working, reasoning, or commentary. Use null when you cannot state a confident
+  corrected value.
+
 Question:
 {state["question"]}
 
@@ -438,12 +453,20 @@ async def format_response(state):
     draft = state["solutionDraft"]
     verification = state["verification"]
 
-    answer = verification.get("verifiedAnswer") or draft["answer"]
-    if not verification.get("isVerified"):
-        verification = {
-            **verification,
-            "caution": "I could not verify the answer confidently after retrying. Review the method before relying on the final answer.",
-        }
+    # Only let the verifier override the answer when it actually VERIFIED the
+    # solution. A failed verification's correctedAnswer is untrusted by
+    # definition — using it replaced a clean draft answer ("6") with the
+    # verifier's critique essay in a reported prod incident.
+    if verification.get("isVerified"):
+        answer = verification.get("verifiedAnswer") or draft["answer"]
+    else:
+        answer = draft["answer"]
+        caution = (
+            "재검토 후에도 답을 확신하기 어려워요. 최종 답을 쓰기 전에 풀이 과정을 한 번 확인해 주세요."
+            if _question_is_korean(state.get("question", ""))
+            else "I could not verify the answer confidently after retrying. Review the method before relying on the final answer."
+        )
+        verification = {**verification, "caution": caution}
 
     student_answer = state.get("studentAnswer")
     is_correct = None
@@ -456,7 +479,11 @@ async def format_response(state):
     if student_answer and not is_correct:
         mistake = _mistake_diagnosis(state)
     elif student_answer and is_correct:
-        mistake = "Your answer matches the verified answer."
+        mistake = (
+            "입력하신 답이 검증된 답과 일치해요."
+            if _question_is_korean(state.get("question", ""))
+            else "Your answer matches the verified answer."
+        )
 
     context = state.get("curriculumContext", {})
     matched_problem = context.get("matchedProblem") or {}
