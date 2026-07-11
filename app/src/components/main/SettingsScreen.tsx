@@ -134,11 +134,15 @@ export function SettingsScreen() {
         <div className="card" style={{ padding: 14 }}>
           <Row k={t('settingsScreen.row.name')} v={me.data?.name ?? '—'} />
           <Row k={t('settingsScreen.row.email')} v={me.data?.email ?? '—'} />
-          <Row k={t('settingsScreen.row.role')} v={me.data?.role ?? t('me.role.default')} />
-          <Row k={t('settingsScreen.row.class')} v={({
-            CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
-            CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
-          } as Record<string, string>)[me.data?.gradeLevel ?? ''] ?? me.data?.gradeLevel ?? '—'} last />
+          <Row
+            k={t('settingsScreen.row.role')}
+            v={!me.data?.role || me.data.role === 'STUDENT' ? t('me.role.default') : me.data.role}
+          />
+          <Row
+            k={t('settingsScreen.row.class')}
+            v={me.data?.gradeLevel ? t(`grade.${me.data.gradeLevel}`) : '—'}
+            last
+          />
         </div>
 
         {/* Parent invite — student-side referral loop. The child shares their

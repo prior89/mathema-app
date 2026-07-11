@@ -286,9 +286,12 @@ export class MockExamsService {
       select: { masteredAt: true },
     });
     if (!progress?.masteredAt) {
-      throw new ForbiddenException(
-        `Finish the concept lesson for ${chapterCode} in Mastery before practising.`,
-      );
+      throw new ForbiddenException({
+        // Stable code — the app maps it to localized copy instead of showing
+        // this English sentence (and an internal chapter code) to students.
+        code: 'LessonNotMastered',
+        message: `Finish the concept lesson for ${chapterCode} in Mastery before practising.`,
+      });
     }
 
     // "Never show the same problem twice" applies only to Study/practice
@@ -388,9 +391,12 @@ export class MockExamsService {
       select: { masteredAt: true },
     });
     if (!progress?.masteredAt) {
-      throw new ForbiddenException(
-        `Finish the concept lesson for ${chapterCode} in Mastery before practising.`,
-      );
+      throw new ForbiddenException({
+        // Stable code — the app maps it to localized copy instead of showing
+        // this English sentence (and an internal chapter code) to students.
+        code: 'LessonNotMastered',
+        message: `Finish the concept lesson for ${chapterCode} in Mastery before practising.`,
+      });
     }
 
     let chosenId = await this.pickStudyProblemId({
@@ -459,9 +465,12 @@ export class MockExamsService {
       select: { masteredAt: true },
     });
     if (!progress?.masteredAt) {
-      throw new ForbiddenException(
-        `Finish the concept lesson for ${chapterCode} in Mastery before practising.`,
-      );
+      throw new ForbiddenException({
+        // Stable code — the app maps it to localized copy instead of showing
+        // this English sentence (and an internal chapter code) to students.
+        code: 'LessonNotMastered',
+        message: `Finish the concept lesson for ${chapterCode} in Mastery before practising.`,
+      });
     }
 
     const chosenId = await this.pickStudyProblemId({

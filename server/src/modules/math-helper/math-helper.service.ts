@@ -113,6 +113,9 @@ export class MathHelperService {
         classLevel: classLevel ?? 12,
         question: dto.question,
         studentAnswer,
+        // KR accounts get Korean steps/hints even for bare-symbol equations
+        // the language sniffer can't classify (solver-side gate).
+        language: await this.userLanguage(userId),
         studentProfile: profile,
       })) as SolveHelperResponse;
       this.assertUsableSolveResponse(response);
@@ -183,7 +186,10 @@ export class MathHelperService {
       const payload = this.parseJson(text);
       if (!res.ok) {
         const detail = this.formatRemoteError(payload?.detail ?? payload?.message ?? (text || res.statusText));
-        throw new HttpException({ message: `Solver failed: ${detail}` }, res.status);
+        this.logger.warn(`Math helper ${method} ${path} upstream ${res.status}: ${detail}`);
+        // code SolverUnavailable → the app renders its localized copy instead
+        // of leaking pydantic validation paths / raw upstream errors to users.
+        throw new HttpException({ code: 'SolverUnavailable', message: `Solver failed: ${detail}` }, res.status);
       }
       return payload;
     } catch (err) {
@@ -192,7 +198,7 @@ export class MathHelperService {
       const name = err instanceof Error ? err.name : 'Error';
       this.logger.warn(`Math helper ${method} ${path} failed at ${baseUrl}: ${name}: ${message}`);
       throw new HttpException(
-        { message: `Solver request failed: ${name}: ${message}` },
+        { code: 'SolverUnavailable', message: `Solver request failed: ${name}: ${message}` },
         HttpStatus.SERVICE_UNAVAILABLE,
       );
     } finally {
@@ -220,6 +226,15 @@ export class MathHelperService {
         message: detail,
       });
     }
+  }
+
+  /** Solver output language for this account — 'ko' for KR users. */
+  private async userLanguage(userId: string): Promise<string | undefined> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { country: true },
+    });
+    return user?.country === 'KR' ? 'ko' : undefined;
   }
 
   private async defaultClassLevel(userId: string): Promise<number | undefined> {

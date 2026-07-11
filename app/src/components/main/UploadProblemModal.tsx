@@ -414,7 +414,9 @@ function SolutionStepsList({
 
 function isQuotaExceededError(e: unknown): boolean {
   const data = (e as { response?: { data?: any } })?.response?.data;
-  return data?.error === 'QuotaExceeded';
+  // HttpExceptionFilter wraps the guard payload as { error: { error: 'QuotaExceeded', … } };
+  // the bare shape is kept for safety with unwrapped responses.
+  return data?.error === 'QuotaExceeded' || data?.error?.error === 'QuotaExceeded';
 }
 
 function extractErrorMessage(e: unknown, t: Translate): string | null {
@@ -744,7 +746,7 @@ function OcrReviewPhase({
           before committing to the quota-gated solve. If it looks broken they can edit the source below. */}
       <div style={{ marginTop: 12 }}>
         <div style={{ fontSize: 10, color: 'var(--p-muted)', marginBottom: 4 }}>
-          {t('upload.ocrReview.previewLabel') || 'Recognized problem (preview — check that formulas look right)'}
+          {t('upload.ocrReview.previewLabel')}
         </div>
         <div
           className="math-big"
@@ -770,7 +772,7 @@ function OcrReviewPhase({
           onClick={() => setSourceOpen((open) => !open)}
           style={{ width: '100%', minHeight: 40, fontSize: 13 }}
         >
-          {sourceOpen ? '원문 수정 닫기' : '수식이 이상하면 원문 수정하기'}
+          {sourceOpen ? t('upload.ocrReview.closeSource') : t('upload.ocrReview.openSource')}
         </button>
         {sourceOpen && (
           <label style={{ ...fieldLabel, marginTop: 10 }}>

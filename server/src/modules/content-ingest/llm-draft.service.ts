@@ -254,7 +254,15 @@ export class LlmDraftService {
 
     const prompt = `${ctxLine ? ctxLine + '\n\n' : ''}${styleHint ? styleHint + '\n\n' : ''}Source problem:\n"""\n${input.text}\n"""\n\nReturn the strict JSON draft now.`;
 
-    const system = mode === 'multi-step' ? SYSTEM_PROMPT_MULTI_STEP : SYSTEM_PROMPT_SINGLE_STEP;
+    // The base prompts target NCERT/English. A Korean source problem (KR AI-solve
+    // uploads) must yield Korean student-facing strings, or the practice step /
+    // wrong-answer rationale comes back in English for a Korean student.
+    const koreanSource = /[가-힣]/.test(input.text);
+    const system =
+      (mode === 'multi-step' ? SYSTEM_PROMPT_MULTI_STEP : SYSTEM_PROMPT_SINGLE_STEP) +
+      (koreanSource
+        ? '\n\nThe source problem is KOREAN: write ALL student-facing strings (prompt, choice text, rationale, hint, concept) in natural Korean. JSON keys and LaTeX notation stay unchanged.'
+        : '');
     // Single-step payload is ~1/3 the token budget of multi-step.
     const maxTokens = mode === 'multi-step' ? 4000 : 1500;
 

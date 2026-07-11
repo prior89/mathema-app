@@ -126,7 +126,14 @@ export function StudyPracticeScreen() {
       setQuestionNum((n) => n + 1);
     },
     onError: (e: any) => {
-      setError(e?.response?.data?.error?.message ?? t('practice.fetch.failed'));
+      // Server messages are English dev-strings (with internal chapter codes) —
+      // map known codes to localized copy, fall back to the localized generic.
+      const code = e?.response?.data?.error?.code;
+      setError(
+        code === 'LessonNotMastered'
+          ? t('practice.lessonNotMastered')
+          : t('practice.fetch.failed'),
+      );
     },
   });
 

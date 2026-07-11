@@ -4,6 +4,7 @@ from langgraph.graph import StateGraph, START, END
 from schemas import SolveRequest
 from deterministic_check import deterministic_check, compare_answers
 from nodes import (
+    _question_is_korean,
     classify,
     retrieve_curriculum,
     retrieve_student_profile,
@@ -78,8 +79,14 @@ async def solve_math_problem(req: SolveRequest):
     a polite degraded response instead of a 500 so the UI can render
     something the student can act on.
     """
+    # The deterministic fast-path's steps/hints/explanation templates are
+    # English — fine for IN, but a Korean user must get Korean working. For
+    # Korean requests we fall through to the LLM pipeline (which writes Korean
+    # steps); the deterministic solver still guards correctness inside
+    # verify(), where its answer overrides the draft.
+    wants_korean = (req.language or "").lower() == "ko" or _question_is_korean(req.question)
     deterministic = deterministic_check(req.question, req.studentAnswer)
-    if deterministic:
+    if deterministic and not wants_korean:
         return _fast_response_from_deterministic(req, deterministic)
     try:
         result = await graph.ainvoke(req.model_dump())

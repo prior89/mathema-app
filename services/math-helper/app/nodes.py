@@ -1,3 +1,4 @@
+import logging
 import re
 
 from pydantic import BaseModel, Field, field_validator
@@ -7,10 +8,20 @@ from deterministic_check import compare_answers, deterministic_check, normalize
 from curriculum_data import retrieve_context
 from student_store import get_student_profile, record_attempt
 
+_logger = logging.getLogger(__name__)
+
 
 def _question_is_korean(question: str) -> bool:
     """Language routing for user-facing strings the LLM does not generate."""
     return bool(re.search(r"[가-힣]", question or ""))
+
+
+def _wants_korean(state) -> bool:
+    """Korean output wanted — by explicit request language (KR accounts, covers
+    bare-symbol equations with no detectable language) or by the question."""
+    if (state.get("language") or "").lower() == "ko":
+        return True
+    return _question_is_korean(state.get("question", ""))
 
 
 class Classification(BaseModel):
@@ -68,6 +79,10 @@ Example format:
 }}
 
 If you are not confident about a code, return null for that code instead of inventing it.
+
+If the question is written in Korean, write `chapter`, `topic` and `concepts` in
+Korean (Korean high-school curriculum naming, e.g. "미분", "함수의 극한") — these
+labels are shown to the student. Codes stay in the NCERT format or null.
 
 Given classLevel: {state.get("classLevel")}
 Question: {state["question"]}
@@ -150,8 +165,13 @@ async def solve(state):
     # (e.g. "2x+7=15" matched "2x+5=17" and answered x=6 instead of x=4).
     # Hand-rolled solvers in deterministic_check.py operate on the actual
     # equation and are exact when they can parse it.
+    # Deterministic / NCERT-stored drafts carry ENGLISH steps and explanations,
+    # so Korean requests skip them and let the LLM write Korean working — the
+    # deterministic answer still overrides inside verify() for correctness.
+    wants_korean = _wants_korean(state)
+
     deterministic = deterministic_check(state["question"])
-    if deterministic and not personalized_context.get("hasProfile"):
+    if deterministic and not personalized_context.get("hasProfile") and not wants_korean:
         steps = deterministic.get("steps", []) or []
         concepts = ", ".join(deterministic.get("concepts", []) or [])
         explanation_lines = []
@@ -167,7 +187,7 @@ async def solve(state):
             }
         }
 
-    if matched_problem and matched_problem.get("solution") and not personalized_context.get("hasProfile"):
+    if matched_problem and matched_problem.get("solution") and not personalized_context.get("hasProfile") and not wants_korean:
         solution = matched_problem["solution"]
         ncert_steps = solution.get("steps", []) or []
         return {
@@ -184,7 +204,9 @@ async def solve(state):
     # verified worked solutions so the LLM grounds its answer in our own
     # quality-graded corpus instead of generic web priors. Empty list when no
     # APPROVED neighbour exists → falls back to zero-shot behaviour.
-    few_shot = (student_profile or {}).get("fewShotExamples") or []
+    # Few-shot anchors come from the English NCERT bank — injecting them into a
+    # Korean solve drags the output language back to English. Skip for Korean.
+    few_shot = [] if wants_korean else ((student_profile or {}).get("fewShotExamples") or [])
     few_shot_block = ""
     if few_shot:
         rendered = []
@@ -362,17 +384,19 @@ async def verify(state):
     if deterministic:
         verified_answer = deterministic["answer"]
         same = normalize(draft_answer) == normalize(verified_answer)
+        # `issues` is rendered verbatim to the student — internal reconciliation
+        # notes ("Draft answer X did not match…") are developer diagnostics and
+        # must not appear there. The answer is already corrected via
+        # verifiedAnswer; log the mismatch for ourselves instead.
+        if not same:
+            _logger.info(
+                "deterministic override: draft %r -> %r", draft_answer, verified_answer
+            )
         return {
             "verification": {
                 "isVerified": True,  # deterministic IS the source of truth — skip retry
                 "method": "deterministic",
-                "issues": (
-                    []
-                    if same
-                    else [
-                        f"Draft answer {draft_answer} did not match deterministic answer {verified_answer} — using deterministic."
-                    ]
-                ),
+                "issues": [],
                 "confidence": deterministic["confidence"],
                 "verifiedAnswer": verified_answer,
                 "attempts": attempts,
@@ -386,17 +410,17 @@ async def verify(state):
     if matched_problem and matched_problem.get("answer"):
         verified_answer = matched_problem["answer"]
         same = normalize(draft_answer) == normalize(verified_answer)
+        if not same:
+            _logger.info(
+                "ncert-json mismatch: draft %r vs stored %r", draft_answer, verified_answer
+            )
         return {
             "verification": {
                 "isVerified": same,
                 "method": "ncert-json",
-                "issues": (
-                    []
-                    if same
-                    else [
-                        f"Draft answer {draft_answer} did not match stored answer {verified_answer}"
-                    ]
-                ),
+                # Dev-only reconciliation detail stays out of the student-facing
+                # issues list (rendered verbatim in the UI).
+                "issues": [],
                 "confidence": 0.7,  # similarity match — not as trustworthy as deterministic
                 "verifiedAnswer": verified_answer,
                 "attempts": attempts,
@@ -502,15 +526,28 @@ async def format_response(state):
             ),
             "personalizedLearning": _personalized_learning_summary(state),
             "mistakeDiagnosis": mistake,
-            "hints": [
-                *stored_hints[:2],
-                f"Identify the topic: {detected['topic']}.",
-                (
-                    draft["steps"][0]
-                    if draft["steps"]
-                    else "Start by writing the known values."
-                ),
-            ][:4],
+            # Hints are student-facing: Korean requests get Korean templates and
+            # skip the stored NCERT-bank hints (those are English).
+            "hints": (
+                [
+                    f"핵심 주제: {detected['topic']}",
+                    (
+                        draft["steps"][0]
+                        if draft["steps"]
+                        else "주어진 값과 조건을 먼저 정리해 보세요."
+                    ),
+                ]
+                if _wants_korean(state)
+                else [
+                    *stored_hints[:2],
+                    f"Identify the topic: {detected['topic']}.",
+                    (
+                        draft["steps"][0]
+                        if draft["steps"]
+                        else "Start by writing the known values."
+                    ),
+                ]
+            )[:4],
             "nextPractice": _next_practice(state),
             "verification": verification,
         }
