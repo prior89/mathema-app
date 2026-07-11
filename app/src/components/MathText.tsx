@@ -17,7 +17,7 @@ import { normalizeKoreanExamMath, wrapHangulInTex } from '../lib/korean-exam-mat
  * before KaTeX (see korean-exam-math.ts).
  */
 export default function MathText({ text, className }: { text: string; className?: string }) {
-  const html = useMemo(() => renderInline(text ?? ''), [text]);
+  const html = useMemo(() => renderMathHtml(text ?? ''), [text]);
   return (
     <span
       className={className}
@@ -47,21 +47,16 @@ function classify(tk: string): { tex: string; display: boolean } | null {
   return null;
 }
 
-// IN-side problems often store body / option text as bare LaTeX without
-// any of the four delimiters. Heuristic: if the string contains a LaTeX
-// command AND none of the four delimiters fire, wrap in \[..\].
+// Signals that a chunk is really TeX even though no delimiter pair fired —
+// either bare LaTeX (IN-side problem bodies) or an OCR-dropped closing
+// delimiter. Handled per line by renderTextOrRescue below; the old
+// whole-string \[..\] wrap pushed prose INTO the math and rendered stray
+// delimiter fragments as red errors.
 const LATEX_COMMAND_RE = /\\[a-zA-Z]+|\^{|_{|\\\\/;
-function maybeWrapBareLatex(src: string): string {
-  if (!src) return src;
-  MATH_RE.lastIndex = 0;
-  if (MATH_RE.test(src)) return src;
-  if (LATEX_COMMAND_RE.test(src)) return `\\[${src}\\]`;
-  return src;
-}
 
-function renderInline(src: string): string {
-  // Order: KR-exam normalize first (rewrites \[…\] blocks), then bare-latex wrap.
-  const prepared = maybeWrapBareLatex(normalizeKoreanExamMath(src));
+/** Exported for unit tests — the component is a thin wrapper around this. */
+export function renderMathHtml(src: string): string {
+  const prepared = normalizeKoreanExamMath(src);
   const tokens = prepared.split(MATH_RE);
   const parts: string[] = [];
   for (const tk of tokens) {
@@ -82,10 +77,43 @@ function renderInline(src: string): string {
         parts.push(escapeHtml(tk));
       }
     } else {
-      parts.push(renderTextPart(tk));
+      parts.push(renderTextOrRescue(tk));
     }
   }
   return parts.join('');
+}
+
+/** OCR frequently drops a closing delimiter (\] or a paired $), so a chunk
+ *  that is really TeX falls through tokenizing and used to show as raw LaTeX
+ *  source — the classic "수식이 깨져요" report. Rescue per line: lines that
+ *  still smell like TeX render as display math (stray delimiter fragments
+ *  stripped); prose lines stay text. */
+function renderTextOrRescue(s: string): string {
+  if (!LATEX_COMMAND_RE.test(s)) return renderTextPart(s);
+  const out: string[] = [];
+  for (const rawLine of s.split('\n')) {
+    // Stray delimiter fragments (the orphaned half of a dropped pair) would
+    // render as literal "\[" — drop them before classifying the line.
+    const line = rawLine.replace(/\\[[\]()]/g, ' ');
+    if (LATEX_COMMAND_RE.test(line)) {
+      try {
+        out.push(
+          katex.renderToString(wrapHangulInTex(line.trim()), {
+            displayMode: true,
+            throwOnError: false,
+            strict: 'ignore',
+            output: 'html',
+          }),
+        );
+      } catch {
+        out.push(renderTextPart(rawLine) + '<br/>');
+      }
+    } else if (line.trim()) {
+      out.push(renderTextPart(line.trim()) + '<br/>');
+    }
+    // blank lines dropped — display blocks carry their own vertical margins.
+  }
+  return out.join('').replace(/<br\/>$/, '');
 }
 
 function renderTextPart(s: string): string {
