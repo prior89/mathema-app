@@ -32,3 +32,22 @@ export function scoreToHeatmapStyle(score: number, studied: boolean): HeatmapCel
 export function scoreToColor(score: number): string {
   return scoreToHeatmapStyle(score, true).bg;
 }
+
+/** Named mastery tiers (Khan-style ladder) layered over the raw 0-100 score so
+ *  each band reads as a legible milestone instead of an opaque number. Bands
+ *  deliberately mirror scoreToHeatmapStyle so tint and label always agree. */
+export type MasteryTierKey =
+  | 'mastery.tier.notStarted'
+  | 'mastery.tier.started'
+  | 'mastery.tier.practicing'
+  | 'mastery.tier.proficient'
+  | 'mastery.tier.mastered';
+
+export function scoreToTierKey(score: number, studied: boolean): MasteryTierKey {
+  if (!studied) return 'mastery.tier.notStarted';
+  const s = Math.max(0, Math.min(100, score));
+  if (s < 40) return 'mastery.tier.started';
+  if (s < 60) return 'mastery.tier.practicing';
+  if (s < 80) return 'mastery.tier.proficient';
+  return 'mastery.tier.mastered';
+}

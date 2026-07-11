@@ -46,8 +46,13 @@ export default function RegisterPage() {
   // /auth/guest/upgrade so the existing userId (and all progress) is kept.
   const upgradeMode = searchParams.get('upgrade') === '1' && user?.isGuest === true;
 
+  // Parent-invite deep link (student referral email): /register?role=parent&
+  // childEmail=… lands the parent on a prefilled parent-role form so the
+  // invite → register → link-request rail is one tap, not a form hunt.
+  const invitedAsParent = searchParams.get('role')?.toLowerCase() === 'parent';
+
   const [step, setStep] = useState<0 | 1 | 2>(0);
-  const [role, setRole] = useState<RegisterRole>('STUDENT');
+  const [role, setRole] = useState<RegisterRole>(invitedAsParent ? 'PARENT' : 'STUDENT');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -57,7 +62,7 @@ export default function RegisterPage() {
   const [examDate, setExamDate] = useState('2027-02-14');
   const [targetGrade, setTargetGrade] = useState('3');
 
-  const [childEmail, setChildEmail] = useState('');
+  const [childEmail, setChildEmail] = useState(invitedAsParent ? (searchParams.get('childEmail') ?? '') : '');
   const [tenantCode, setTenantCode] = useState('');
   const [country, setCountry] = useState<'IN' | 'KR'>('KR');
 

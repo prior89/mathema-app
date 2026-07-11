@@ -34,6 +34,69 @@ export class ParentLinksService {
     return !!link;
   }
 
+  /** Student-initiated parent invite (the referral / K-factor loop).
+   *
+   *  No DB row yet — the invite email deep-links the parent into
+   *  /register?role=parent&childEmail=…, and parent registration fires the
+   *  existing requestLink → student-approval rail. This method only validates,
+   *  sends the email, and records the event for K-factor instrumentation. */
+  async inviteParent(
+    childUserId: string,
+    parentEmail: string,
+    ctx: { ip?: string; ua?: string } = {},
+  ) {
+    const child = await this.prisma.user.findUnique({
+      where: { id: childUserId },
+      select: { id: true, role: true, email: true, name: true, isGuest: true },
+    });
+    if (!child || child.role !== UserRole.STUDENT) {
+      throw new BadRequestException('only students can invite a parent');
+    }
+    if (child.isGuest) {
+      throw new BadRequestException('guest accounts cannot invite a parent — register first');
+    }
+    const normalized = parentEmail.trim().toLowerCase();
+    if (!normalized || normalized === child.email.toLowerCase()) {
+      throw new BadRequestException('invalid parent email');
+    }
+
+    // If this parent already exists AND is already linked/pending with this
+    // student, re-sending a register invite would be confusing — surface that.
+    const existingParent = await this.prisma.user.findUnique({
+      where: { email: normalized },
+      select: { id: true, role: true },
+    });
+    if (existingParent?.role === UserRole.PARENT) {
+      const link = await this.prisma.parentChildLink.findUnique({
+        where: {
+          parentUserId_childUserId: {
+            parentUserId: existingParent.id,
+            childUserId: child.id,
+          },
+        },
+      });
+      if (link?.status === ParentLinkStatus.APPROVED) {
+        return { sent: false, alreadyLinked: true };
+      }
+    }
+
+    await this.mail.sendParentInvite(normalized, {
+      childName: child.name,
+      childEmail: child.email,
+    });
+
+    this.events.record('PARENT_LINK_REQUESTED', {
+      userId: child.id,
+      ip: ctx.ip ?? null,
+      userAgent: ctx.ua ?? null,
+      // studentInvited distinguishes the referral loop from the parent-signup
+      // flow in analytics — this metadata IS the K-factor numerator.
+      metadata: { studentInvited: true },
+    });
+
+    return { sent: true };
+  }
+
   /** Create a pending link and email the student an approval link. */
   async requestLink(opts: {
     parentUserId: string;
