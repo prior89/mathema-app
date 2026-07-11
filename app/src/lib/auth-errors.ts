@@ -53,5 +53,10 @@ export function formatAuthError(e: unknown, opts: FormatAuthErrorOpts): string {
       : 'This email is already registered. Please sign in instead.';
   }
   const fb = FALLBACK[opts.context];
-  return rawMsg ?? (kr ? fb.ko : fb.en);
+  // Korean UI never shows raw server messages — they are English dev-strings
+  // ("Account deactivated", "No adaptive diagnostic problems available…").
+  // Known cases are mapped above; everything else gets the Korean fallback.
+  // English UI keeps the (often more specific) raw message.
+  if (kr) return fb.ko;
+  return rawMsg ?? fb.en;
 }

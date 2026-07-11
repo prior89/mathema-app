@@ -7,6 +7,10 @@ class SolveRequest(BaseModel):
     classLevel: Optional[int] = Field(default=None, ge=7, le=12)
     question: str = Field(min_length=3, max_length=4000)
     studentAnswer: Optional[str] = None
+    # User-facing output language ('ko' for KR accounts). A bare-symbol
+    # equation has no detectable language, so hangul-sniffing the question
+    # alone is not enough — NestJS passes the account's language explicitly.
+    language: Optional[str] = None
     # Supplied by the main NestJS backend from Prisma. When present, the
     # LangGraph service stays stateless and does not use its local JSON store.
     studentProfile: Optional[dict[str, Any]] = None

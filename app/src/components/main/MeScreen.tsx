@@ -9,10 +9,7 @@ import { TabBar } from './TabBar';
 import { EfficacyCard } from './EfficacyCard';
 import { BillingPlanCard } from '../BillingPlanCard';
 
-const GRADE_LABEL: Record<string, string> = {
-  CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
-  CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
-};
+// Grade labels come from i18n (grade.CLASS_*) so KR reads 중1~고3, not "Class 7".
 
 export function MeScreen() {
   const nav = useNavigate();
@@ -40,10 +37,12 @@ export function MeScreen() {
               <div style={{ fontSize: 16, fontWeight: 700 }}>{userName}</div>
               <div style={{ fontSize: 12, color: 'var(--p-muted)' }}>{me.data?.email ?? '—'}</div>
               <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                <span className="chip primary" style={{ fontSize: 10.5 }}>{me.data?.role ?? t('me.role.default')}</span>
+                <span className="chip primary" style={{ fontSize: 10.5 }}>
+                  {!me.data?.role || me.data.role === 'STUDENT' ? t('me.role.default') : me.data.role}
+                </span>
                 {me.data?.gradeLevel && (
                   <span className="chip" style={{ fontSize: 10.5 }}>
-                    {GRADE_LABEL[me.data.gradeLevel] ?? me.data.gradeLevel}
+                    {t(`grade.${me.data.gradeLevel}`)}
                   </span>
                 )}
               </div>

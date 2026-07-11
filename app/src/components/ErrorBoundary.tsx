@@ -29,6 +29,14 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.error) return this.props.children;
 
+    // Class component outside the i18n provider — read the stored language
+    // directly so the crash screen isn't English-only for KR users.
+    let ko = true;
+    try {
+      const pref = localStorage.getItem('mathema.lang');
+      ko = pref ? pref === 'ko' : true; // KR-first default
+    } catch { /* private mode — keep KR default */ }
+
     return (
       <div
         style={{
@@ -45,9 +53,13 @@ export class ErrorBoundary extends Component<Props, State> {
         }}
       >
         <BrandLogo size="md" />
-        <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Something went wrong</h1>
+        <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>
+          {ko ? '문제가 발생했어요' : 'Something went wrong'}
+        </h1>
         <p style={{ margin: 0, maxWidth: 360, lineHeight: 1.5, opacity: 0.85 }}>
-          An unexpected error occurred. You can try again or reload the app.
+          {ko
+            ? '예상치 못한 오류가 발생했어요. 다시 시도하거나 앱을 새로고침해 주세요.'
+            : 'An unexpected error occurred. You can try again or reload the app.'}
         </p>
         <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
           <button
@@ -63,7 +75,7 @@ export class ErrorBoundary extends Component<Props, State> {
               fontWeight: 500,
             }}
           >
-            Try again
+            {ko ? '다시 시도' : 'Try again'}
           </button>
           <button
             type="button"
@@ -78,7 +90,7 @@ export class ErrorBoundary extends Component<Props, State> {
               fontWeight: 500,
             }}
           >
-            Reload
+            {ko ? '새로고침' : 'Reload'}
           </button>
         </div>
       </div>

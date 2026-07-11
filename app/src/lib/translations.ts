@@ -697,6 +697,7 @@ const ko = {
   'practice.done.backStudy': '문제풀이로 돌아가기',
   'practice.done.openNotes': '오답노트 열기',
   'practice.fetch.failed': '다음 문제를 불러올 수 없었어요',
+  'practice.lessonNotMastered': '이 단원은 Mastery 탭에서 개념 학습을 먼저 마치면 연습할 수 있어요.',
   'practice.firstLoad.title': '첫 문제를 만드는 중…',
   'practice.firstLoad.desc': '새 문제를 만들고 있어요 — 보통 30초 이내에 완료돼요. 그 다음 문제부터는 단원 문제 풀에서 즉시 제공됩니다.',
 
@@ -723,7 +724,7 @@ const ko = {
   // ===== Me Screen =====
   'me.tab.label': 'Profile',
   'me.tab.title': '내정보',
-  'me.role.default': 'STUDENT',
+  'me.role.default': '학생',
   'me.billing.section': '플랜',
   'me.billing.loading.title': '플랜 확인 중',
   'me.billing.loading.sub': '구독 상태를 불러오고 있어요.',
@@ -944,6 +945,8 @@ const ko = {
   'upload.ocrDone.retake': '다시 찍기',
   'upload.ocrReview.title': '인식 결과 확인',
   'upload.ocrReview.previewLabel': '인식된 문제 미리보기 — 수식이 제대로 보이는지 확인하세요',
+  'upload.ocrReview.openSource': '수식이 이상하면 원문 수정하기',
+  'upload.ocrReview.closeSource': '원문 수정 닫기',
   'upload.ocrReview.editLabel': '원문 텍스트 — 여기 보이는 수식 기호는 위 미리보기처럼 표시돼요',
   'upload.ocrReview.placeholder': '숫자나 글자가 틀리면 여기서 직접 고쳐 주세요',
   'upload.ocrReview.confidence.high': '인식 신뢰도 높음 ({pct}%)',
@@ -2111,6 +2114,7 @@ const en: typeof ko = {
   'practice.done.backStudy': 'Back to Study',
   'practice.done.openNotes': 'Open Notes',
   'practice.fetch.failed': 'Could not fetch the next problem',
+  'practice.lessonNotMastered': 'Finish this chapter\'s concept lesson in Mastery first, then practise here.',
   'practice.firstLoad.title': 'Building your first question…',
   'practice.firstLoad.desc': "A new problem is being assembled — usually under 30 seconds. The next ones come from your chapter's shared pool and arrive instantly.",
 
@@ -2137,7 +2141,7 @@ const en: typeof ko = {
   // Me Screen
   'me.tab.label': 'Profile',
   'me.tab.title': 'Me',
-  'me.role.default': 'STUDENT',
+  'me.role.default': 'Student',
   'me.billing.section': 'Plan',
   'me.billing.loading.title': 'Checking plan',
   'me.billing.loading.sub': 'Loading your billing status.',
@@ -2358,6 +2362,8 @@ const en: typeof ko = {
   'upload.ocrDone.retake': 'Retake photo',
   'upload.ocrReview.title': 'Check recognition',
   'upload.ocrReview.previewLabel': 'Recognized problem (preview — check that formulas look right)',
+  'upload.ocrReview.openSource': 'Formula looks wrong? Edit the source',
+  'upload.ocrReview.closeSource': 'Close source editor',
   'upload.ocrReview.editLabel': 'Source text — the math symbols here display as the preview above',
   'upload.ocrReview.placeholder': 'Fix any misread numbers or wording here before solving',
   'upload.ocrReview.confidence.high': 'High recognition confidence ({pct}%)',

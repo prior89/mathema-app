@@ -12,7 +12,7 @@ import { EfficacyCard } from './EfficacyCard';
 
 export function ReportScreen() {
   const nav = useNavigate();
-  const { t } = useT();
+  const { t, lang } = useT();
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
   const cur = useQuery({ queryKey: ['report-current'], queryFn: fetchReportCurrent });
   const tva = useQuery({ queryKey: ['tva'], queryFn: () => fetchTimeVsAccuracy() });
@@ -31,6 +31,10 @@ export function ReportScreen() {
       const we = new Date(cur.data.weekEnd);
       // weekEnd is exclusive (next Monday 00:00), so show the inclusive last day.
       const weDisplay = new Date(we.getTime() - 86400000);
+      // Month label follows the UI language — "6월 16 – 22" for KR, "16 – 22 Jun" for EN.
+      if (lang === 'ko') {
+        return `${weDisplay.toLocaleDateString('ko-KR', { month: 'short' })} ${ws.getDate()} – ${weDisplay.getDate()}`;
+      }
       return `${ws.getDate()} – ${weDisplay.getDate()} ${weDisplay.toLocaleDateString('en-US', { month: 'short' })}`;
     }
     return '';
