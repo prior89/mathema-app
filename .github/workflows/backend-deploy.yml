@@ -195,6 +195,10 @@ jobs:
           ENV_VARS="$ENV_VARS FEATURE_FIRST_SESSION_ACHIEVEMENT_PCT=100"
           ENV_VARS="$ENV_VARS FEATURE_KR_COLD_START_PCT=100"
           ENV_VARS="$ENV_VARS FEATURE_STUDENT_EFFICACY_CARD_PCT=100"
+          # Guest-first onboarding (try-first) — launch checklist #2. Recovers
+          # ~25pt of activation vs the signup wall. Server-served flag: the app
+          # reads it at runtime, so flipping it only needs a backend deploy.
+          ENV_VARS="$ENV_VARS FEATURE_GUEST_MODE_PCT=100"
           if [ -n "${{ secrets.FIREBASE_PROJECT_ID }}" ]; then
             ENV_VARS="$ENV_VARS FIREBASE_PROJECT_ID=secretref:firebase-project-id"
             ENV_VARS="$ENV_VARS FIREBASE_CLIENT_EMAIL=secretref:firebase-client-email"
