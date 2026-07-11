@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { get, post, patch, del, downloadExport } from '../../lib/api';
-import { fetchMe, type Me } from '../../lib/queries';
+import { fetchMe, inviteParent, type Me } from '../../lib/queries';
+import { toast } from '../Toast';
 import { useT, type Lang } from '../../lib/i18n';
 import {
   getLangPreference,
@@ -49,6 +50,21 @@ export function SettingsScreen() {
       else await post(`/privacy/consents/${c.kind.toLowerCase()}`, {});
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['consents'] }),
+  });
+
+  // Parent-invite (student referral loop) — see the section markup below.
+  const [parentInviteEmail, setParentInviteEmail] = useState('');
+  const inviteMut = useMutation({
+    mutationFn: (email: string) => inviteParent(email),
+    onSuccess: (r) => {
+      if (r.alreadyLinked) {
+        toast(t('settingsScreen.parentInvite.alreadyLinked'), 'info');
+      } else {
+        toast(t('settingsScreen.parentInvite.sent'), 'success');
+        setParentInviteEmail('');
+      }
+    },
+    onError: () => toast(t('settingsScreen.parentInvite.failed'), 'error'),
   });
 
   const pushReminders = me.data?.pushRemindersEnabled !== false;
@@ -124,6 +140,46 @@ export function SettingsScreen() {
             CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
           } as Record<string, string>)[me.data?.gradeLevel ?? ''] ?? me.data?.gradeLevel ?? '—'} last />
         </div>
+
+        {/* Parent invite — student-side referral loop. The child shares their
+            progress; the parent registers via the emailed link; the child then
+            approves the connection (existing approval rail). Students only. */}
+        {me.data?.role === 'STUDENT' && !me.data?.isGuest && (
+          <>
+            <div className="section-h">
+              <span className="label">{t('settingsScreen.parentInvite.section')}</span>
+            </div>
+            <div className="card" style={{ padding: 14 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--p-ink-2)', lineHeight: 1.55, marginBottom: 10 }}>
+                {t('settingsScreen.parentInvite.hint')}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="email"
+                  value={parentInviteEmail}
+                  onChange={(e) => setParentInviteEmail(e.target.value)}
+                  placeholder={t('settingsScreen.parentInvite.placeholder')}
+                  style={{
+                    flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 10,
+                    border: '1px solid var(--p-border)', background: 'var(--p-surface)',
+                    color: 'var(--p-ink)', font: 'inherit', fontSize: 13.5,
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn"
+                  style={{ width: 'auto', padding: '0 16px', height: 44 }}
+                  disabled={inviteMut.isPending || !parentInviteEmail.includes('@')}
+                  onClick={() => inviteMut.mutate(parentInviteEmail.trim())}
+                >
+                  {inviteMut.isPending
+                    ? t('settingsScreen.parentInvite.sending')
+                    : t('settingsScreen.parentInvite.cta')}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Region · curriculum */}
         <div className="section-h">

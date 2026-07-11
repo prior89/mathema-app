@@ -17,6 +17,7 @@ import {
   type ReviewScheduleRow,
 } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
+import { scoreToTierKey } from '../../lib/palette';
 import { pickConceptName } from '../../lib/concept-name';
 import { TabBar } from './TabBar';
 import { MasteryHeatmap } from '../mastery/MasteryHeatmap';
@@ -224,6 +225,7 @@ function ReviewConceptCard({ row, lang, onClick }: { row: ReviewScheduleRow; lan
 }
 
 function ConceptStatusCard({ row, lang, onClick }: { row: ConceptMastery; lang: 'ko' | 'en' | 'hi'; onClick?: () => void }) {
+  const { t } = useT();
   const score = Math.round(row.masteryScore);
   const lowEvidence = row.evidenceCount < 3;
   return (
@@ -246,9 +248,18 @@ function ConceptStatusCard({ row, lang, onClick }: { row: ConceptMastery; lang: 
                   : (lang === 'ko' ? '안정' : lang === 'hi' ? 'स्थिर' : 'Stable')}
           </div>
         </div>
-        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: masteryColor(score) }}>
-          {lowEvidence ? '—' : score}
-        </span>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: masteryColor(score) }}>
+            {lowEvidence ? '—' : score}
+          </span>
+          {/* Named tier (Khan-style ladder) so the number reads as a milestone,
+              not an opaque score. Hidden while evidence is too thin to judge. */}
+          {!lowEvidence && (
+            <div style={{ fontSize: 10, color: 'var(--p-muted)', marginTop: 1 }}>
+              {t(scoreToTierKey(score, true))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

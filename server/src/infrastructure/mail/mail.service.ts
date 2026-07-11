@@ -309,6 +309,46 @@ ${this.ctaButton(approveLink, 'Approve parent access')}
     );
   }
 
+  /** Student-initiated parent invite — the K-factor loop. The parent registers
+   *  via the prefilled link; registration then fires the normal link-request →
+   *  student-approval rail, so no new approval surface is needed. */
+  async sendParentInvite(
+    to: string,
+    opts: { childName: string; childEmail: string },
+  ): Promise<void> {
+    const registerLink = `${this.appUrl()}/register?role=parent&childEmail=${encodeURIComponent(opts.childEmail)}`;
+    const bodyHtml = `
+<h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 16px 0;line-height:1.35;">${opts.childName} invited you to Matheo</h1>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;"><strong>${opts.childName}</strong> wants to share their math progress with you — which chapters they've mastered, where they keep slipping, and how their accuracy is moving week to week.</p>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">Create a free parent account to see their learning report. ${opts.childName} approves the connection, so nothing is shared without their consent.</p>
+${this.ctaButton(registerLink, 'Create a parent account')}
+<p style="font-size:13px;line-height:1.6;color:#9ca3af;margin:24px 0 0 0;">If you don't know this student, you can ignore this email — no account is created and nothing is shared.</p>`;
+    const text = [
+      `${opts.childName} invited you to Matheo`,
+      '',
+      `${opts.childName} wants to share their math learning report with you.`,
+      'Create a free parent account:',
+      registerLink,
+      '',
+      `${opts.childName} approves the connection, so nothing is shared without their consent.`,
+      "If you don't know this student, ignore this email.",
+      '',
+      '--',
+      'Matheo',
+      this.appUrl(),
+    ].join('\n');
+    await this.deliver(
+      'parent-invite',
+      to,
+      `${opts.childName} wants to share their Matheo progress with you`,
+      text,
+      this.htmlLayout({
+        preheader: `${opts.childName} invited you to follow their math progress on Matheo.`,
+        bodyHtml,
+      }),
+    );
+  }
+
   async sendNewDeviceLoginAlert(to: string, opts: { ip?: string | null; ua?: string | null; at?: Date }): Promise<void> {
     const when = (opts.at ?? new Date()).toISOString();
     const resetLink = `${this.appUrl()}/forgot-password`;

@@ -905,6 +905,12 @@ export const startAdaptiveSession = (mode: 'daily' | 'chapter' = 'daily', chapte
 export const reportProblem = (problemId: string, reason?: string) =>
   post<{ ok: true; duplicate: boolean }>(`/problems/${problemId}/report`, { reason });
 
+/** Student invites a parent by email (referral loop) — server emails a
+ *  prefilled /register?role=parent link; the link request itself fires when
+ *  the parent registers, and the student approves it. */
+export const inviteParent = (parentEmail: string) =>
+  post<{ sent: boolean; alreadyLinked?: boolean }>('/parent-links/invite', { parentEmail });
+
 /** Public policy document — surfaces on /privacy and /terms before login.
  *  Backend Privacy controller marks `policy` as @Public so the SPA can fetch
  *  without a token (Play Store + DPDP require a public Privacy URL). */
