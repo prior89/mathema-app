@@ -51,6 +51,18 @@ describe('renderMathHtml — KR exam OCR', () => {
     expect(html).toContain('다음을 구하시오.');
   });
 
+  it('keeps English prose readable inside a math block (math mode eats spaces)', () => {
+    // A prod incident rendered "if these exist" as "iftheseexist" — English
+    // prose glued into a \[...\] block loses all spacing in math mode unless
+    // \text{}-wrapped like Hangul.
+    const html = renderMathHtml('\\[a = f(1), then the limit equals f\'(1) = 6\\]');
+    // KaTeX renders \text spaces as NBSP — normalize before asserting.
+    const visible = html.replace(/<[^>]+>/g, '').replace(/ /g, ' ');
+    expect(visible).toContain('then the limit equals');
+    expect(visible).not.toContain('thenthelimitequals');
+    expect(html).not.toContain('katex-error');
+  });
+
   it('leaves pure prose (with markdown bold) untouched by the rescue', () => {
     const html = renderMathHtml('오늘의 **핵심** 개념을 확인하세요.\n내일 다시 봐요.');
     expect(html).toContain('<strong>핵심</strong>');

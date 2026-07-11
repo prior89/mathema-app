@@ -110,20 +110,36 @@ export function normalizeKoreanExamMath(src: string): string {
   });
 }
 
+// Runs of 2+ consecutive multi-letter Latin words — English prose glued into a
+// math body. Math mode eats the spaces between them ("if these exist" →
+// "iftheseexist"), so they must be \text{}-wrapped like Hangul. Guards:
+//  - each word needs ≥2 letters, so variables ("a", "b") and "let A" stay math;
+//  - the run must contain a ≥3-letter word, so "dx dy"-style pairs stay math;
+//  - a leading backslash (LaTeX command like \lim) never starts a run.
+const ENGLISH_PROSE_RUN_RE = /(?<![\\A-Za-z])[A-Za-z]{2,}(?:[ ]+[A-Za-z]{2,})+/g;
+
 /**
- * Wrap bare Korean runs inside a TeX body with \text{...}. Existing text-style
- * commands are preserved so we do not double-wrap.
+ * Wrap bare Korean runs — and glued English prose runs — inside a TeX body
+ * with \text{...}. Existing text-style commands are preserved so we do not
+ * double-wrap.
  */
 export function wrapHangulInTex(tex: string): string {
-  if (!tex || !hasHangul(tex)) return tex;
+  if (!tex) return tex;
   const parts = tex.split(TEXT_STYLE_PROTECTED_RE);
   return parts
     .map((part, i) => {
       if (i % 2 === 1) return part;
-      return part.replace(HANGUL_RUN_RE, (match) => {
-        const trailingSpace = /\s+$/.test(match) ? ' ' : '';
-        return `\\text{${match.trim()}}${trailingSpace}`;
-      });
+      let out = part;
+      if (hasHangul(out)) {
+        out = out.replace(HANGUL_RUN_RE, (match) => {
+          const trailingSpace = /\s+$/.test(match) ? ' ' : '';
+          return `\\text{${match.trim()}}${trailingSpace}`;
+        });
+      }
+      out = out.replace(ENGLISH_PROSE_RUN_RE, (match) =>
+        /[A-Za-z]{3,}/.test(match) ? `\\text{${match}}` : match,
+      );
+      return out;
     })
     .join('');
 }

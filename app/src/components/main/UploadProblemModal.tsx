@@ -957,7 +957,9 @@ function ResultPhase({
                 ? t('upload.result.verification.verified')
                 : t('upload.result.verification.unverified')}
             </span>
-            {confidencePct != null && (
+            {/* Confidence is only meaningful for a PASSED verification — showing
+                "97%" beside "검증 미완료" read as a contradiction and eroded trust. */}
+            {verification.isVerified && confidencePct != null && (
               <span className="chip" style={{ fontSize: 10.5 }}>
                 {t('upload.result.verification.confidence', { pct: confidencePct })}
               </span>
