@@ -16,6 +16,9 @@ import {
 } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
 import { compressImageForUpload } from '../../lib/image-compress';
+import {
+  CropRect, FULL_CROP, MIN_CROP_EDGE, cropImageFile, isEffectivelyFullCrop,
+} from '../../lib/image-crop';
 import { useBillingUiEnabled } from '../../lib/billing-flags';
 import MathText from '../MathText';
 import { Glyph } from '../onboarding/Glyph';
@@ -55,6 +58,10 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
   const [quotaBlocked, setQuotaBlocked] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Problem-region selection over the ORIGINAL picked photo (normalized).
+  // Cropping before OCR is the structural misread fix: the problem gets the
+  // full pixel budget instead of 1/3 of a page shot.
+  const [cropRect, setCropRect] = useState<CropRect>(FULL_CROP);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const [editedOcrText, setEditedOcrText] = useState('');
   const [result, setResult] = useState<UploadAnalysisResult | null>(null);
@@ -77,6 +84,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       setError(null);
       setQuotaBlocked(false);
       setStudentAnswer('');
+      setCropRect(FULL_CROP);
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
         setPreviewUrl(null);
@@ -144,6 +152,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     setError(null);
     setOcrResult(null);
     setResult(null);
+    setCropRect(FULL_CROP);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     if (f.type.startsWith('image/')) {
       setPreviewUrl(URL.createObjectURL(f));
@@ -163,10 +172,13 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     try {
       // Downscale the raw phone photo before upload — cuts mobile upload time
       // with no OCR accuracy loss (falls back to original).
-      const toSend = await compressImageForUpload(file);
-      // From here on, show the COMPRESSED image everywhere: it is what OCR
-      // actually received (honest comparison target for spotting misreads) and
-      // decodes ~4x cheaper than a 12MP original on low-end WebViews.
+      // Crop to the selected problem region first (no-op on a full selection),
+      // then compress: the crop gets the whole pixel budget of MAX_EDGE.
+      const source = previewUrl ? await cropImageFile(file, cropRect) : file;
+      const toSend = await compressImageForUpload(source);
+      // From here on, show the CROPPED+COMPRESSED image everywhere: it is what
+      // OCR actually received (honest comparison target for spotting misreads)
+      // and decodes ~4x cheaper than a 12MP original on low-end WebViews.
       if (toSend !== file && requestSeq === requestSeqRef.current) {
         // The previous (full-res) URL is revoked by the [previewUrl] effect cleanup.
         setPreviewUrl(URL.createObjectURL(toSend));
@@ -225,6 +237,17 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     nav(`/app/practice/${problemId}`);
   };
 
+  /** Back on the picker the crop overlay must sit on the ORIGINAL photo again —
+   *  runOcr may have swapped previewUrl to the cropped/compressed variant, and
+   *  cropRect math is defined over the original file. */
+  const restorePickPreview = () => {
+    setCropRect(FULL_CROP);
+    if (file?.type.startsWith('image/')) {
+      // The swapped URL is revoked by the [previewUrl] effect cleanup.
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
   const retry = () => {
     requestSeqRef.current += 1;
     setPhase('pick');
@@ -233,6 +256,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     setOcrResult(null);
     setEditedOcrText('');
     setResult(null);
+    restorePickPreview();
   };
 
   const goUpgrade = () => {
@@ -248,6 +272,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     setEditedOcrText('');
     setResult(null);
     setError(null);
+    restorePickPreview();
   };
 
   return (
@@ -296,6 +321,8 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
           <PickPhase
             file={file}
             previewUrl={previewUrl}
+            cropRect={cropRect}
+            onCropRect={setCropRect}
             onPick={onPick}
             onAnalyze={runOcr}
             studentAnswer={studentAnswer}
@@ -453,11 +480,109 @@ function extractErrorMessage(e: unknown, t: Translate): string | null {
   return typeof message === 'string' ? message : null;
 }
 
+const clamp01 = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+type CropDragMode = 'move' | 'tl' | 'tr' | 'bl' | 'br';
+
+function applyCropDrag(mode: CropDragMode, start: CropRect, dx: number, dy: number): CropRect {
+  if (mode === 'move') {
+    return {
+      ...start,
+      x: clamp01(start.x + dx, 0, 1 - start.w),
+      y: clamp01(start.y + dy, 0, 1 - start.h),
+    };
+  }
+  let x1 = start.x;
+  let y1 = start.y;
+  let x2 = start.x + start.w;
+  let y2 = start.y + start.h;
+  if (mode === 'tl' || mode === 'bl') x1 = clamp01(x1 + dx, 0, x2 - MIN_CROP_EDGE);
+  if (mode === 'tr' || mode === 'br') x2 = clamp01(x2 + dx, x1 + MIN_CROP_EDGE, 1);
+  if (mode === 'tl' || mode === 'tr') y1 = clamp01(y1 + dy, 0, y2 - MIN_CROP_EDGE);
+  if (mode === 'bl' || mode === 'br') y2 = clamp01(y2 + dy, y1 + MIN_CROP_EDGE, 1);
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+}
+
+/** Problem-region selector over the pick-phase preview (Photomath pattern).
+ *  Defaults to the full photo so it costs zero taps when the shot is already
+ *  tight; one drag on a full-page shot is the structural misread fix. Pointer
+ *  events cover touch and mouse; drag deltas are normalized against this
+ *  overlay's own box (inset:0 == the displayed image box). */
+function CropOverlay({ rect, onRect }: { rect: CropRect; onRect: (r: CropRect) => void }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ mode: CropDragMode; startX: number; startY: number; start: CropRect } | null>(null);
+
+  const begin = (mode: CropDragMode) => (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    dragRef.current = { mode, startX: e.clientX, startY: e.clientY, start: rect };
+  };
+  const move = (e: React.PointerEvent) => {
+    const drag = dragRef.current;
+    const root = rootRef.current;
+    if (!drag || !root) return;
+    const bounds = root.getBoundingClientRect();
+    if (bounds.width < 1 || bounds.height < 1) return;
+    const dx = (e.clientX - drag.startX) / bounds.width;
+    const dy = (e.clientY - drag.startY) / bounds.height;
+    onRect(applyCropDrag(drag.mode, drag.start, dx, dy));
+  };
+  const end = () => { dragRef.current = null; };
+
+  const pct = (v: number) => `${v * 100}%`;
+  const handleBase: React.CSSProperties = {
+    position: 'absolute', width: 22, height: 22, borderRadius: '50%',
+    background: 'var(--p-primary)', border: '2px solid var(--p-primary-fg)',
+    touchAction: 'none', cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.35)',
+  };
+  const handles: Array<{ mode: CropDragMode; style: React.CSSProperties }> = [
+    { mode: 'tl', style: { left: -11, top: -11, cursor: 'nwse-resize' } },
+    { mode: 'tr', style: { right: -11, top: -11, cursor: 'nesw-resize' } },
+    { mode: 'bl', style: { left: -11, bottom: -11, cursor: 'nesw-resize' } },
+    { mode: 'br', style: { right: -11, bottom: -11, cursor: 'nwse-resize' } },
+  ];
+
+  return (
+    <div ref={rootRef} style={{ position: 'absolute', inset: 0, borderRadius: 8, overflow: 'hidden' }}>
+      <div
+        role="presentation"
+        onPointerDown={begin('move')}
+        onPointerMove={move}
+        onPointerUp={end}
+        onPointerCancel={end}
+        style={{
+          position: 'absolute',
+          left: pct(rect.x), top: pct(rect.y), width: pct(rect.w), height: pct(rect.h),
+          border: '2px solid var(--p-primary)', borderRadius: 6,
+          // Dim everything OUTSIDE the selection (clipped by the overflow:hidden root).
+          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.45)',
+          touchAction: 'none', cursor: 'move', boxSizing: 'border-box',
+        }}
+      >
+        {handles.map(({ mode, style }) => (
+          <div
+            key={mode}
+            role="presentation"
+            onPointerDown={begin(mode)}
+            onPointerMove={move}
+            onPointerUp={end}
+            onPointerCancel={end}
+            style={{ ...handleBase, ...style }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PickPhase({
-  file, previewUrl, onPick, onAnalyze, studentAnswer, onStudentAnswer, fileInputRef,
+  file, previewUrl, cropRect, onCropRect, onPick, onAnalyze, studentAnswer, onStudentAnswer, fileInputRef,
 }: {
   file: File | null;
   previewUrl: string | null;
+  cropRect: CropRect;
+  onCropRect: (rect: CropRect) => void;
   onPick: (f: File | null) => void;
   onAnalyze: () => void;
   studentAnswer: string;
@@ -500,11 +625,14 @@ function PickPhase({
         }}
       >
         {previewUrl ? (
-          <img
-            src={previewUrl}
-            alt={file?.name ?? 'preview'}
-            style={{ maxWidth: '100%', maxHeight: 240, borderRadius: 8, objectFit: 'contain' }}
-          />
+          <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', lineHeight: 0 }}>
+            <img
+              src={previewUrl}
+              alt={file?.name ?? 'preview'}
+              style={{ maxWidth: '100%', maxHeight: 280, borderRadius: 8, objectFit: 'contain', display: 'block' }}
+            />
+            <CropOverlay rect={cropRect} onRect={onCropRect} />
+          </div>
         ) : file ? (
           <div>
             <div style={{ fontSize: 13, fontWeight: 600 }}>{file.name}</div>
@@ -518,6 +646,12 @@ function PickPhase({
           </div>
         )}
       </div>
+
+      {previewUrl && (
+        <p style={{ fontSize: 11.5, color: 'var(--p-muted)', margin: '6px 0 0', textAlign: 'center' }}>
+          {t('upload.pick.cropHint')}
+        </p>
+      )}
 
       <label style={{ ...fieldLabel, marginTop: 12 }}>{t('upload.pick.answer.label')}
         <input
