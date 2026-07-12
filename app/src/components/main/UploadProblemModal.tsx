@@ -294,6 +294,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
         {phase === 'ocr-review' && ocrResult && (
           <OcrReviewPhase
             ocrResult={ocrResult}
+            previewUrl={previewUrl}
             editedText={editedOcrText}
             onEditedText={setEditedOcrText}
             onRetake={retakePhoto}
@@ -710,9 +711,10 @@ function OcrConfidenceBadge({ confidence }: { confidence: number | null | undefi
 
 /** PR-16 — user verifies/edits OCR text before quota-gated solve starts. */
 function OcrReviewPhase({
-  ocrResult, editedText, onEditedText, onRetake, onSolve,
+  ocrResult, previewUrl, editedText, onEditedText, onRetake, onSolve,
 }: {
   ocrResult: OcrResult;
+  previewUrl: string | null;
   editedText: string;
   onEditedText: (value: string) => void;
   onRetake: () => void;
@@ -730,6 +732,22 @@ function OcrReviewPhase({
         <div className="eyebrow" style={{ fontSize: 10 }}>{t('upload.ocrReview.title')}</div>
         <OcrConfidenceBadge confidence={ocrResult.confidence} />
       </div>
+
+      {/* Original photo beside the recognized text — without it the user has no
+          way to SPOT an OCR misread (a real incident: "−600n" was read as
+          "−6000" and the solver faithfully solved the wrong problem while
+          verification passed — it can only check the solution against the
+          *received* text, never against the photo). */}
+      {previewUrl && (
+        <img
+          src={previewUrl}
+          alt={t('upload.ocrReview.photoAlt')}
+          style={{
+            width: '100%', maxHeight: 180, objectFit: 'contain', marginTop: 10,
+            borderRadius: 10, border: '1px solid var(--p-border)', background: 'var(--p-surface-2)',
+          }}
+        />
+      )}
 
       {showLowWarning && (
         <div style={{
