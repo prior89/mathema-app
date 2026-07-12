@@ -36,7 +36,7 @@ import {
 } from '../lib/billing';
 import { track } from '../lib/analytics';
 import { useT } from '../lib/i18n';
-import { openPlaySubscriptionManage } from '../lib/play-subscription';
+import { openPlaySubscriptionManage, playStoreListingUrl } from '../lib/play-subscription';
 import type { BillingProductDetails } from '../native/billing-bridge';
 import type { TranslationKey } from '../lib/translations';
 import '../styles/billing.css';
@@ -538,9 +538,29 @@ export default function PaywallPage() {
             </div>
 
             {!isAndroidBilling && (
-              <div className="paywall-platform-notice">
-                <ShieldCheck size={19} />
-                <span>{t('paywall.androidOnly')}</span>
+              // Web can't open the Play purchase sheet — but "a small manage
+              // link" is not a purchase path. Give web visitors the real one:
+              // install/open the Android app, where the ₩ price and one-tap
+              // Play sheet live.
+              <div className="paywall-platform-notice" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ShieldCheck size={19} />
+                  <span>{t('paywall.androidOnly')}</span>
+                </div>
+                <button
+                  type="button"
+                  className="paywall-primary-button"
+                  onClick={() => {
+                    track('paywall.cta', { action: 'get_app', reason: reason ?? null });
+                    window.open(playStoreListingUrl(), '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  <ExternalLink size={17} />
+                  {t('paywall.web.getApp')}
+                </button>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--p-muted)', textAlign: 'center' }}>
+                  {t('paywall.web.getAppHint')}
+                </p>
               </div>
             )}
 
@@ -548,7 +568,14 @@ export default function PaywallPage() {
               <div className="paywall-loading">{t('paywall.loading')}</div>
             )}
 
-            {isAndroidBilling && products.isError && (
+            {/* Empty product list (fetch OK but store returned nothing — wrong
+                signature, not installed via Play, listing not live) previously
+                rendered NOTHING: no cards, no CTA, only the tiny manage link.
+                Treat it exactly like a load failure so there is always a next
+                action on screen. */}
+            {isAndroidBilling
+              && (products.isError
+                || (products.isSuccess && !yearlyPlan && !monthlyPlan)) && (
               <div className="paywall-load-error">
                 <CircleAlert size={18} />
                 <span>{t('paywall.loadFailed')}</span>
