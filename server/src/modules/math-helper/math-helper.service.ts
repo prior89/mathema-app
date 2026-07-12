@@ -12,6 +12,11 @@ import { normalizeProblemBody, problemBodyHash } from '../../common/utils/normal
 /** Solve-cache TTL — a re-uploaded/common problem serves its stored solution
  *  instead of a fresh LLM call (the flywheel: cheaper, faster, consistent). */
 const SOLVE_CACHE_TTL_SEC = 90 * 24 * 3600;
+/** Cache-key version — bump whenever solver OUTPUT semantics change (prompt
+ *  language overhaul, response shape). With a 90-day TTL, un-versioned keys
+ *  kept replaying pre-fix English solutions to KR users for weeks after the
+ *  Korean-output deploy. v2 = language-scoped keys, 2026-07-12. */
+const SOLVE_CACHE_VER = 'v2';
 
 type DbStudentProfile = {
   weakConcepts: Array<Record<string, unknown>>;
@@ -94,13 +99,18 @@ export class MathHelperService {
     // rises as the corpus grows → cheaper, faster, and a consistent answer
     // (competitors' top complaint is inconsistent/uncorrectable answers).
     const cacheHash = problemBodyHash(dto.question);
+    // Language is part of the cache identity: the same problem body must serve
+    // a Korean solution to a KR account and English elsewhere. A shared key
+    // replayed whichever language solved first (prod incident 2026-07-12).
+    const language = (await this.userLanguage(userId)) ?? 'en';
+    const cacheKey = cacheHash ? `solve:${SOLVE_CACHE_VER}:${language}:${cacheHash}` : null;
     const t0 = Date.now();
     let response: SolveHelperResponse | undefined;
     let cached = false;
     let fewShotCount = 0;
 
-    if (cacheHash) {
-      const raw = await this.redis.get(`solve:${cacheHash}`).catch(() => null);
+    if (cacheKey) {
+      const raw = await this.redis.get(cacheKey).catch(() => null);
       if (raw) {
         try { response = JSON.parse(raw) as SolveHelperResponse; cached = true; } catch { /* fall through */ }
       }
@@ -115,12 +125,12 @@ export class MathHelperService {
         studentAnswer,
         // KR accounts get Korean steps/hints even for bare-symbol equations
         // the language sniffer can't classify (solver-side gate).
-        language: await this.userLanguage(userId),
+        language,
         studentProfile: profile,
       })) as SolveHelperResponse;
       this.assertUsableSolveResponse(response);
-      if (cacheHash) {
-        await this.redis.set(`solve:${cacheHash}`, JSON.stringify(response), SOLVE_CACHE_TTL_SEC).catch(() => {});
+      if (cacheKey) {
+        await this.redis.set(cacheKey, JSON.stringify(response), SOLVE_CACHE_TTL_SEC).catch(() => {});
       }
     }
     const durationMs = Date.now() - t0;
@@ -496,10 +506,19 @@ export class MathHelperService {
     // Flywheel dedup: if this exact problem (same normalized body) is already
     // stored, reuse that row instead of creating a duplicate — the attempt below
     // still records against it. Same body ⇒ same problem ⇒ same answer.
+    // EXCLUDED rows (student-reported) must NOT be reused: reporting retired
+    // their solution, so the fresh solve gets a fresh row (bodyHash is a
+    // non-unique index, duplicates are fine).
     const bodyHash = problemBodyHash(question);
     if (bodyHash) {
       const existing = await this.prisma.problem.findFirst({
-        where: { bodyHash },
+        // qualityStatus is nullable and Prisma's `not` is NULL-unsafe (SQL <>),
+        // so spell out "null OR not-excluded" — AI-solve rows are created with
+        // qualityStatus null and must keep deduping.
+        where: {
+          bodyHash,
+          OR: [{ qualityStatus: null }, { qualityStatus: { not: 'EXCLUDED' } }],
+        },
         select: { id: true },
       });
       if (existing) return existing.id;

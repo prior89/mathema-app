@@ -307,7 +307,14 @@ export class ProblemsService {
     // answers competitors' top accuracy complaint — a wrong answer that "won't
     // change" — by making a report actually retire the stored answer.)
     if (prob.bodyHash) {
-      await this.redis.del(`solve:${prob.bodyHash}`).catch(() => {});
+      // Keys are versioned + language-scoped (see math-helper.service.ts
+      // SOLVE_CACHE_VER); a disputed problem must retire every variant, plus
+      // the legacy un-versioned key from before v2.
+      await Promise.all(
+        ['ko', 'en', 'hi'].map((lang) =>
+          this.redis.del(`solve:v2:${lang}:${prob.bodyHash}`).catch(() => {}),
+        ).concat(this.redis.del(`solve:${prob.bodyHash}`).catch(() => {})),
+      );
     }
     return { ok: true, duplicate: false };
   }

@@ -1340,6 +1340,8 @@ const ko = {
 
   // ===== Paywall Page =====
   'paywall.androidOnly': '프리미엄 구독은 Matheo Android 앱에서만 이용할 수 있어요.',
+  'paywall.web.getApp': 'Google Play에서 앱 받고 구독하기',
+  'paywall.web.getAppHint': '앱에서 요금제와 가격을 확인하고 Google Play로 안전하게 결제할 수 있어요.',
   'paywall.already': '이미 프리미엄 회원이에요',
   'paywall.renewAt': '{date}에 자동 갱신',
   'paywall.previewEndsAt': '{date}까지 Premium Preview 이용 가능',
@@ -2763,6 +2765,8 @@ const en: typeof ko = {
 
   // Paywall Page
   'paywall.androidOnly': 'Premium subscription is available only on the Matheo Android app.',
+  'paywall.web.getApp': 'Get the app on Google Play to subscribe',
+  'paywall.web.getAppHint': 'See plans and prices in the app and pay securely through Google Play.',
   'paywall.already': "You're already a Premium member",
   'paywall.renewAt': 'Renews on {date}',
   'paywall.previewEndsAt': 'Premium Preview ends on {date}',
