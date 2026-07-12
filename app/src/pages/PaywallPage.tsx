@@ -533,8 +533,12 @@ export default function PaywallPage() {
           <section className="paywall-plans" aria-labelledby="paywall-plan-title">
             <div className="paywall-section-heading">
               <span>{t('paywall.step.plan')}</span>
-              <h2 id="paywall-plan-title">{t('paywall.plan.title')}</h2>
-              <p>{t('paywall.plan.subtitle')}</p>
+              {/* Web shows no plan cards, so "choose a billing period" reads as
+                  a dead instruction there — point at the real next step instead. */}
+              <h2 id="paywall-plan-title">
+                {t(isAndroidBilling ? 'paywall.plan.title' : 'paywall.plan.title.web')}
+              </h2>
+              <p>{t(isAndroidBilling ? 'paywall.plan.subtitle' : 'paywall.plan.subtitle.web')}</p>
             </div>
 
             {!isAndroidBilling && (
