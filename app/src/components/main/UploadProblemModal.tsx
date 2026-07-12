@@ -100,6 +100,11 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
     const onPaste = (e: ClipboardEvent) => {
+      // Pick phase only. Once OCR/solve state exists, a stray Ctrl+V (e.g. while
+      // the source-edit textarea is focused, or a leftover clipboard image on
+      // the result) must not onPick-reset the modal and throw away a result the
+      // user spent a solve credit on — same invariant as the backdrop guard.
+      if (phase !== 'pick') return;
       const pasted = Array.from(e.clipboardData?.files ?? []).find((item) => item.type.startsWith('image/'));
       if (pasted) onPick(pasted);
     };
@@ -110,7 +115,16 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
       document.removeEventListener('paste', onPaste);
       document.body.style.overflow = '';
     };
-  }, [open, onClose, previewUrl]);
+  }, [open, onClose, previewUrl, phase]);
+
+  // Unmount safety net: the !open branch above revokes the object URL when the
+  // modal closes normally, but practiceNow()/goUpgrade() navigate away and
+  // unmount the whole tree while open — without this the multi-MB photo URL
+  // leaks until page reload. Revoking an already-revoked URL is a no-op, so
+  // this coexists with the manual revokes at the set sites.
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
 
   if (!open) return null;
 
@@ -147,9 +161,16 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
     setOcrResult(null);
     setEditedOcrText('');
     try {
-      // Downscale the raw phone photo before upload — cuts mobile upload time and
-      // the vision tile count with no OCR accuracy loss (falls back to original).
+      // Downscale the raw phone photo before upload — cuts mobile upload time
+      // with no OCR accuracy loss (falls back to original).
       const toSend = await compressImageForUpload(file);
+      // From here on, show the COMPRESSED image everywhere: it is what OCR
+      // actually received (honest comparison target for spotting misreads) and
+      // decodes ~4x cheaper than a 12MP original on low-end WebViews.
+      if (toSend !== file && requestSeq === requestSeqRef.current) {
+        // The previous (full-res) URL is revoked by the [previewUrl] effect cleanup.
+        setPreviewUrl(URL.createObjectURL(toSend));
+      }
       const ocr = await extractProblemText(toSend);
       if (requestSeq !== requestSeqRef.current) return;
       setOcrResult(ocr);
@@ -710,6 +731,46 @@ function OcrConfidenceBadge({ confidence }: { confidence: number | null | undefi
   );
 }
 
+/** Misread-comparison photo, shared by ocr-review and result. A full-page
+    textbook shot fitted into a ~180px box cannot distinguish "−600n" from
+    "−6000" — the exact incident this exists for — so tapping toggles a
+    pannable 1:1 view. */
+function ProblemPhotoView({ previewUrl, maxHeight, background }: {
+  previewUrl: string;
+  maxHeight: number;
+  background: string;
+}) {
+  const { t } = useT();
+  const [zoomed, setZoomed] = useState(false);
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button
+        type="button"
+        aria-expanded={zoomed}
+        onClick={() => setZoomed((z) => !z)}
+        style={{
+          display: 'block', width: '100%', padding: 0,
+          cursor: zoomed ? 'zoom-out' : 'zoom-in',
+          borderRadius: 10, border: '1px solid var(--p-border)', background,
+          overflow: 'auto', maxHeight: zoomed ? 320 : maxHeight,
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        <img
+          src={previewUrl}
+          alt={t('upload.ocrReview.photoAlt')}
+          style={zoomed
+            ? { display: 'block', maxWidth: 'none' }
+            : { display: 'block', width: '100%', maxHeight, objectFit: 'contain' }}
+        />
+      </button>
+      <div style={{ fontSize: 10.5, color: 'var(--p-muted)', marginTop: 4, textAlign: 'center' }}>
+        {zoomed ? t('upload.photo.zoomOutHint') : t('upload.photo.zoomInHint')}
+      </div>
+    </div>
+  );
+}
+
 /** PR-16 — user verifies/edits OCR text before quota-gated solve starts. */
 function OcrReviewPhase({
   ocrResult, previewUrl, editedText, onEditedText, onRetake, onSolve,
@@ -740,14 +801,7 @@ function OcrReviewPhase({
           verification passed — it can only check the solution against the
           *received* text, never against the photo). */}
       {previewUrl && (
-        <img
-          src={previewUrl}
-          alt={t('upload.ocrReview.photoAlt')}
-          style={{
-            width: '100%', maxHeight: 180, objectFit: 'contain', marginTop: 10,
-            borderRadius: 10, border: '1px solid var(--p-border)', background: 'var(--p-surface-2)',
-          }}
-        />
+        <ProblemPhotoView previewUrl={previewUrl} maxHeight={180} background="var(--p-surface-2)" />
       )}
 
       {showLowWarning && (
@@ -765,7 +819,9 @@ function OcrReviewPhase({
           before committing to the quota-gated solve. If it looks broken they can edit the source below. */}
       <div style={{ marginTop: 12 }}>
         <div style={{ fontSize: 10, color: 'var(--p-muted)', marginBottom: 4 }}>
-          {t('upload.ocrReview.previewLabel')}
+          {/* PDF uploads have no photo above — don't tell the user to compare
+              against one that isn't there. */}
+          {t(previewUrl ? 'upload.ocrReview.previewLabel' : 'upload.ocrReview.previewLabelNoPhoto')}
         </div>
         <div
           className="math-big"
@@ -961,24 +1017,18 @@ function ResultPhase({
           <>
             <button
               type="button"
+              aria-expanded={photoOpen}
               onClick={() => setPhotoOpen((open) => !open)}
               style={{
                 marginTop: 8, background: 'none', border: 'none', cursor: 'pointer',
-                color: 'var(--p-muted)', fontSize: 11.5, padding: '4px 0',
+                color: 'var(--p-muted)', fontSize: 11.5, padding: '10px 0',
                 textDecoration: 'underline', textUnderlineOffset: 2,
               }}
             >
               {photoOpen ? t('upload.result.photo.hide') : t('upload.result.photo.show')}
             </button>
             {photoOpen && (
-              <img
-                src={previewUrl}
-                alt={t('upload.ocrReview.photoAlt')}
-                style={{
-                  width: '100%', maxHeight: 220, objectFit: 'contain', marginTop: 6,
-                  borderRadius: 10, border: '1px solid var(--p-border)', background: 'var(--p-surface)',
-                }}
-              />
+              <ProblemPhotoView previewUrl={previewUrl} maxHeight={220} background="var(--p-surface)" />
             )}
           </>
         )}
