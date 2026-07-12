@@ -294,6 +294,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
         {phase === 'ocr-review' && ocrResult && (
           <OcrReviewPhase
             ocrResult={ocrResult}
+            previewUrl={previewUrl}
             editedText={editedOcrText}
             onEditedText={setEditedOcrText}
             onRetake={retakePhoto}
@@ -311,6 +312,7 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
         {phase === 'result' && result && (
           <ResultPhase
             result={result}
+            previewUrl={previewUrl}
             onRetry={retry}
             onClose={onClose}
             onPracticeNow={result.result.problemId ? practiceNow : undefined}
@@ -710,9 +712,10 @@ function OcrConfidenceBadge({ confidence }: { confidence: number | null | undefi
 
 /** PR-16 — user verifies/edits OCR text before quota-gated solve starts. */
 function OcrReviewPhase({
-  ocrResult, editedText, onEditedText, onRetake, onSolve,
+  ocrResult, previewUrl, editedText, onEditedText, onRetake, onSolve,
 }: {
   ocrResult: OcrResult;
+  previewUrl: string | null;
   editedText: string;
   onEditedText: (value: string) => void;
   onRetake: () => void;
@@ -730,6 +733,22 @@ function OcrReviewPhase({
         <div className="eyebrow" style={{ fontSize: 10 }}>{t('upload.ocrReview.title')}</div>
         <OcrConfidenceBadge confidence={ocrResult.confidence} />
       </div>
+
+      {/* Original photo beside the recognized text — without it the user has no
+          way to SPOT an OCR misread (a real incident: "−600n" was read as
+          "−6000" and the solver faithfully solved the wrong problem while
+          verification passed — it can only check the solution against the
+          *received* text, never against the photo). */}
+      {previewUrl && (
+        <img
+          src={previewUrl}
+          alt={t('upload.ocrReview.photoAlt')}
+          style={{
+            width: '100%', maxHeight: 180, objectFit: 'contain', marginTop: 10,
+            borderRadius: 10, border: '1px solid var(--p-border)', background: 'var(--p-surface-2)',
+          }}
+        />
+      )}
 
       {showLowWarning && (
         <div style={{
@@ -887,9 +906,10 @@ function SolveRunningPhase({
 }
 
 function ResultPhase({
-  result, onRetry, onClose, onPracticeNow,
+  result, previewUrl, onRetry, onClose, onPracticeNow,
 }: {
   result: UploadAnalysisResult;
+  previewUrl: string | null;
   onRetry: () => void;
   onClose: () => void;
   onPracticeNow?: () => void;
@@ -901,6 +921,9 @@ function ResultPhase({
   const hints = (solve.hints ?? []).filter(Boolean);
   const [revealedHintCount, setRevealedHintCount] = useState(0);
   const [solutionRevealed, setSolutionRevealed] = useState(false);
+  // Late misread-catch net: keep the photo one tap away on the result too, so
+  // "wait, the book says −600n" can be verified without re-photographing.
+  const [photoOpen, setPhotoOpen] = useState(false);
   const verification = solve.verification;
   const confidencePct = verification
     ? Math.round(Math.max(0, Math.min(1, verification.confidence)) * 100)
@@ -934,6 +957,31 @@ function ResultPhase({
         <div className="math-big" style={{ fontSize: 15, marginTop: 6, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
           <MathText text={result.extractedText} />
         </div>
+        {previewUrl && (
+          <>
+            <button
+              type="button"
+              onClick={() => setPhotoOpen((open) => !open)}
+              style={{
+                marginTop: 8, background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--p-muted)', fontSize: 11.5, padding: '4px 0',
+                textDecoration: 'underline', textUnderlineOffset: 2,
+              }}
+            >
+              {photoOpen ? t('upload.result.photo.hide') : t('upload.result.photo.show')}
+            </button>
+            {photoOpen && (
+              <img
+                src={previewUrl}
+                alt={t('upload.ocrReview.photoAlt')}
+                style={{
+                  width: '100%', maxHeight: 220, objectFit: 'contain', marginTop: 6,
+                  borderRadius: 10, border: '1px solid var(--p-border)', background: 'var(--p-surface)',
+                }}
+              />
+            )}
+          </>
+        )}
       </div>
 
       {/* Concept chip */}

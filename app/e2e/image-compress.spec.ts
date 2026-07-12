@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
  * Chromium (imported live from the Vite dev server) against a real large photo.
  */
 test.describe('compressImageForUpload (real Chromium)', () => {
-  test('downscales a 3000×2000 photo to 1600px longest edge and shrinks bytes', async ({ page }) => {
+  test('downscales a 3000×2000 photo to 2200px longest edge and shrinks bytes', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     const r = await page.evaluate(async () => {
@@ -44,14 +44,14 @@ test.describe('compressImageForUpload (real Chromium)', () => {
     });
 
     expect(r.changed).toBe(true);
-    expect(Math.max(r.outW, r.outH)).toBeLessThanOrEqual(1600);
-    expect(r.outW).toBe(1600); // 3000 longest → 1600
-    expect(r.outH).toBe(1067); // 2000 × (1600/3000) rounded
+    expect(Math.max(r.outW, r.outH)).toBeLessThanOrEqual(2200);
+    expect(r.outW).toBe(2200); // 3000 longest → 2200
+    expect(r.outH).toBe(1467); // 2000 × (2200/3000) rounded
     expect(r.outType).toBe('image/jpeg');
     expect(r.outSize).toBeLessThan(r.inSize); // genuinely smaller payload
   });
 
-  test('leaves an already-small (≤1600px) image untouched', async ({ page }) => {
+  test('leaves an already-small (≤2200px) image untouched', async ({ page }) => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     const sameRef = await page.evaluate(async () => {
