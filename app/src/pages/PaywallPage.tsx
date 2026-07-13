@@ -159,6 +159,10 @@ export default function PaywallPage() {
           : { tone: 'success', text: t('paywall.purchase.succeeded') },
       );
       void queryClient.invalidateQueries({ queryKey: ['billing-status'] });
+      // Entitlement-gated content is server-truncated for free users — drop it
+      // so "I paid but the lesson still ends at problem 10" can't happen.
+      void queryClient.invalidateQueries({ queryKey: ['practice-problems'] });
+      void queryClient.invalidateQueries({ queryKey: ['ko-practice'] });
     };
     const onError = (e: Event) => {
       const detail = (e as CustomEvent<{ responseCode: number }>).detail;

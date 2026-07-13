@@ -7,6 +7,7 @@ import { Lang } from '../../common/i18n/current-lang.decorator';
 import {
   PROBLEM_EN, SOURCE_EN, CONCEPT_EN, FORMULA_EN, STEP_PROMPT_EN, CHOICE_EN,
 } from '../../common/i18n/content-en';
+import { SOLVE_CACHE_VER, SOLVE_CACHE_LANGS } from '../math-helper/math-helper.service';
 
 /**
  * Drop walkthrough steps that state the final answer. The prompt forbids it,
@@ -71,7 +72,18 @@ export class ProblemsService {
     });
     const exclude = [id, ...recent.map((r) => r.problemId)];
 
-    const base = { ...lessonFilter, steps: { some: { stepIndex: 1 } } };
+    // Same serving whitelist as Study/Adaptive/Mastery: a student-reported
+    // (EXCLUDED) or mismatched problem must not come back as someone's
+    // review variant — that would violate the report contract.
+    const base = {
+      ...lessonFilter,
+      steps: { some: { stepIndex: 1 } },
+      conceptMismatch: { not: true },
+      OR: [
+        { qualityStatus: null },
+        { qualityStatus: { in: ['APPROVED', 'USABLE'] as any } },
+      ],
+    };
     let pool = await this.prisma.problem.findMany({
       where: { ...base, id: { notIn: exclude } },
       select: { id: true, difficulty: true },
@@ -307,12 +319,12 @@ export class ProblemsService {
     // answers competitors' top accuracy complaint — a wrong answer that "won't
     // change" — by making a report actually retire the stored answer.)
     if (prob.bodyHash) {
-      // Keys are versioned + language-scoped (see math-helper.service.ts
-      // SOLVE_CACHE_VER); a disputed problem must retire every variant, plus
-      // the legacy un-versioned key from before v2.
+      // Keys are versioned + language-scoped — imported from the writer so a
+      // future SOLVE_CACHE_VER bump can't silently turn this purge into a
+      // no-op. Legacy un-versioned key still purged for pre-v2 entries.
       await Promise.all(
-        ['ko', 'en', 'hi'].map((lang) =>
-          this.redis.del(`solve:v2:${lang}:${prob.bodyHash}`).catch(() => {}),
+        SOLVE_CACHE_LANGS.map((lang) =>
+          this.redis.del(`solve:${SOLVE_CACHE_VER}:${lang}:${prob.bodyHash}`).catch(() => {}),
         ).concat(this.redis.del(`solve:${prob.bodyHash}`).catch(() => {})),
       );
     }

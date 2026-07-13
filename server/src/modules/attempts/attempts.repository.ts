@@ -193,6 +193,18 @@ export class AttemptsRepository {
           nextReviewAt: initialWrongNoteNextReviewAt(),
         },
       });
+      // Relapse re-opens a graduated note: a fresh wrong answer proves the
+      // problem is NOT mastered anymore, but the upsert above only bumps
+      // occurrences — without this, a MASTERED note is invisible to the
+      // review queue / due list forever while the mistake keeps repeating.
+      await this.prisma.wrongNote.updateMany({
+        where: { userId, problemId: dto.problemId, status: 'MASTERED' },
+        data: {
+          status: 'PENDING',
+          masteredAt: null,
+          nextReviewAt: initialWrongNoteNextReviewAt(),
+        },
+      });
     }
 
     // Auto-MASTERED policy.

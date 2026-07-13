@@ -236,6 +236,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokens.clear();
     sessionStorage.clear();
     try { clearPendingRealExams(localStorage); } catch { /* ignore */ }
+    // Account-scoped, not device-scoped: a stale completed-flag waves the NEXT
+    // account on this device past onboarding (gradeLevel never collected).
+    localStorage.removeItem('mathema.onboarding');
     queryClient.clear();
     setUser(null);
     await revokeRefreshToken(refreshToken).catch(() => {});
@@ -247,6 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokens.clear();
     sessionStorage.clear();
     try { clearPendingRealExams(localStorage); } catch { /* ignore */ }
+    localStorage.removeItem('mathema.onboarding');
     queryClient.clear();
     setUser(null);
     // The account deletion transaction already removes the server push token.

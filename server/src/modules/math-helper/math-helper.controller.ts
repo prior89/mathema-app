@@ -75,7 +75,11 @@ export class MathHelperController {
 
   @Post('ocr-solve')
   @UseGuards(JwtAuthGuard, FreeTierSolverQuotaGuard)
-  @UseInterceptors(FileInterceptor('file', FILE_INTERCEPTOR_OPTIONS), SolverQuotaRefundInterceptor)
+  // Refund interceptor FIRST (= outermost). The quota guard charges BEFORE any
+  // interceptor runs, so a multer rejection (oversized/invalid file) must still
+  // pass through the refund's catchError — with FileInterceptor outermost its
+  // throw bypassed the refund and the user paid a credit for a failed upload.
+  @UseInterceptors(SolverQuotaRefundInterceptor, FileInterceptor('file', FILE_INTERCEPTOR_OPTIONS))
   ocrSolve(
     @CurrentUser('id') userId: string,
     @UploadedFile() file: Express.Multer.File | undefined,

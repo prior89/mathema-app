@@ -196,9 +196,16 @@ export function SoloProblemScreen() {
   const graduate = useMutation({
     mutationFn: () => masterWrongNoteByProblem(graduateProblemId!),
     onSuccess: () => {
+      // Same full set as ReviewQueueScreen's onMastered: a MASTERED flip also
+      // moves Home dashboard counts, heatmap, due list, and chapter progress.
       qc.invalidateQueries({ queryKey: ['wn-list'] });
       qc.invalidateQueries({ queryKey: ['wn-stats'] });
+      qc.invalidateQueries({ queryKey: ['wn-recent'] });
+      qc.invalidateQueries({ queryKey: ['wn-due'] });
       qc.invalidateQueries({ queryKey: ['queue-next'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['heatmap'] });
+      qc.invalidateQueries({ queryKey: ['chapter-progress'] });
     },
   });
 
@@ -461,6 +468,7 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
   const explanation = solution.data?.explanation ?? null;
   const concept = solution.data?.concept ?? null;
 
+  const qc = useQueryClient();
   const check = useMutation({
     mutationFn: () => post<{ isCorrect: boolean }>('/attempts', {
       problemId,
@@ -470,6 +478,16 @@ function NoStepsReview({ problemId, problemBody }: { problemId: string; problemB
     }),
     onSuccess: (r) => {
       setFeedback({ kind: r.isCorrect ? 'correct' : 'wrong' });
+      // A correct single-shot answer auto-MASTERs the wrong note server-side
+      // (no stepIndex, no suppress flag) — without these, "Back to notes"
+      // still shows the note un-mastered from cache.
+      qc.invalidateQueries({ queryKey: ['wn-list'] });
+      qc.invalidateQueries({ queryKey: ['wn-stats'] });
+      qc.invalidateQueries({ queryKey: ['wn-recent'] });
+      qc.invalidateQueries({ queryKey: ['wn-due'] });
+      qc.invalidateQueries({ queryKey: ['queue-next'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['heatmap'] });
     },
     onError: () => {
       setFeedback({ kind: 'wrong' });

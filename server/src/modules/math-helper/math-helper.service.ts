@@ -8,6 +8,7 @@ import { AttemptsService } from '../attempts/attempts.service';
 import { LlmDraftService } from '../content-ingest/llm-draft.service';
 import { SolveMathHelperDto } from './dto/solve-math-helper.dto';
 import { normalizeProblemBody, problemBodyHash } from '../../common/utils/normalize-problem-body';
+import { mathAnswersEqual } from '../../common/utils/normalize-math-answer';
 
 /** Solve-cache TTL — a re-uploaded/common problem serves its stored solution
  *  instead of a fresh LLM call (the flywheel: cheaper, faster, consistent). */
@@ -15,8 +16,13 @@ const SOLVE_CACHE_TTL_SEC = 90 * 24 * 3600;
 /** Cache-key version — bump whenever solver OUTPUT semantics change (prompt
  *  language overhaul, response shape). With a 90-day TTL, un-versioned keys
  *  kept replaying pre-fix English solutions to KR users for weeks after the
- *  Korean-output deploy. v2 = language-scoped keys, 2026-07-12. */
-const SOLVE_CACHE_VER = 'v2';
+ *  Korean-output deploy. v2 = language-scoped keys, 2026-07-12.
+ *  Exported so report-invalidation (problems.service) can never drift from
+ *  the writer's key format. */
+export const SOLVE_CACHE_VER = 'v2';
+/** Every language value userLanguage() can produce (+ 'hi' for safety) —
+ *  report-invalidation must purge each variant. */
+export const SOLVE_CACHE_LANGS = ['ko', 'en', 'hi'] as const;
 
 type DbStudentProfile = {
   weakConcepts: Array<Record<string, unknown>>;
@@ -130,8 +136,22 @@ export class MathHelperService {
       })) as SolveHelperResponse;
       this.assertUsableSolveResponse(response);
       if (cacheKey) {
-        await this.redis.set(cacheKey, JSON.stringify(response), SOLVE_CACHE_TTL_SEC).catch(() => {});
+        // Never cache per-student verdicts: isStudentCorrect was computed for
+        // THIS student's answer; replaying it to the next student who uploads
+        // the same problem (with a different or no answer) shows them someone
+        // else's grading for up to 90 days.
+        const shareable = { ...response, isStudentCorrect: null };
+        await this.redis.set(cacheKey, JSON.stringify(shareable), SOLVE_CACHE_TTL_SEC).catch(() => {});
       }
+    }
+    // Cache hits carry no verdict (stripped above; legacy entries may carry a
+    // stale one) — grade THIS student's answer against the cached final answer
+    // with the same comparator the attempt recorder uses.
+    if (cached) {
+      response.isStudentCorrect =
+        studentAnswer && response.answer
+          ? mathAnswersEqual(studentAnswer, response.answer)
+          : null;
     }
     const durationMs = Date.now() - t0;
 
