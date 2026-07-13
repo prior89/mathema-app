@@ -118,14 +118,16 @@ export class MathHelperService {
     if (cacheKey) {
       const raw = await this.redis.get(cacheKey).catch(() => null);
       if (raw) {
-        try { response = JSON.parse(raw) as SolveHelperResponse; cached = true; } catch { /* fall through */ }
+        // Sanitize cache reads too: entries written before the control-char
+        // strip below can replay poisoned steps for up to 90 days.
+        try { response = this.stripControlChars(JSON.parse(raw) as SolveHelperResponse); cached = true; } catch { /* fall through */ }
       }
     }
 
     if (!response) {
       const profile = await this.buildStudentProfile(userId);
       fewShotCount = profile.fewShotExamples.length;
-      response = await this.request('POST', '/solve', this.withoutUndefined({
+      response = this.stripControlChars(await this.request('POST', '/solve', this.withoutUndefined({
         classLevel: classLevel ?? 12,
         question: dto.question,
         studentAnswer,
@@ -133,7 +135,7 @@ export class MathHelperService {
         // the language sniffer can't classify (solver-side gate).
         language,
         studentProfile: profile,
-      })) as SolveHelperResponse;
+      })) as SolveHelperResponse);
       this.assertUsableSolveResponse(response);
       if (cacheKey) {
         // Never cache per-student verdicts: isStudentCorrect was computed for
@@ -431,6 +433,28 @@ export class MathHelperService {
       })),
       fewShotExamples,
     };
+  }
+
+  /** The LLM's structured JSON output occasionally leaks literal U+0000 runs
+   *  (botched LaTeX escapes like \( inside JSON strings). Postgres rejects NUL
+   *  in text/jsonb, so one poisoned step makes createPracticeProblem throw →
+   *  problemId null → no "Practice now" / WrongNote path for that solve
+   *  (prod repro 2026-07-13). Strip C0 controls except \t \n \r from every
+   *  string in the response, recursively. */
+  private stripControlChars<T>(value: T): T {
+    if (typeof value === 'string') {
+      // eslint-disable-next-line no-control-regex
+      return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '') as unknown as T;
+    }
+    if (Array.isArray(value)) {
+      return value.map((v) => this.stripControlChars(v)) as unknown as T;
+    }
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, this.stripControlChars(v)]),
+      ) as T;
+    }
+    return value;
   }
 
   private withoutUndefined<T extends Record<string, unknown>>(value: T): T {
