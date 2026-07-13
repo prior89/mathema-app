@@ -7,7 +7,7 @@
  */
 import { useMemo, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchProblem, fetchProblemSolution, reportProblem } from '../../lib/queries';
 import { masterWrongNoteByProblem } from '../../lib/mutations';
 import { post } from '../../lib/api';
@@ -40,6 +40,13 @@ type StepResult = {
 
 export function SoloProblemScreen() {
   const { problemId } = useParams<{ problemId: string }>();
+  const [searchParams] = useSearchParams();
+  // Variant re-quiz: the wrong-note "practice again" button serves a fresh
+  // same-chapter problem (different id), so a perfect cycle must graduate the
+  // SOURCE problem's note — the one the student is actually reviewing. Without
+  // this, masterByProblem(variantId) matches zero notes and the note never
+  // leaves the list (prod report 2026-07-13).
+  const graduateProblemId = searchParams.get('graduate') ?? problemId;
   const nav = useNavigate();
   const qc = useQueryClient();
   const { t } = useT();
@@ -187,7 +194,7 @@ export function SoloProblemScreen() {
   // across every step). Backend flips every un-mastered wrong note for this
   // user × problem to MASTERED. Idempotent.
   const graduate = useMutation({
-    mutationFn: () => masterWrongNoteByProblem(problemId!),
+    mutationFn: () => masterWrongNoteByProblem(graduateProblemId!),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wn-list'] });
       qc.invalidateQueries({ queryKey: ['wn-stats'] });
@@ -208,7 +215,7 @@ export function SoloProblemScreen() {
     // Wrong notes for this problem flip to MASTERED. Any mistake during
     // the cycle blocks graduation; the user can re-enter the note later
     // and try for a clean run.
-    if (problemId && mistakesThisCycle === 0) {
+    if (graduateProblemId && mistakesThisCycle === 0) {
       graduate.mutate();
     }
   }

@@ -150,9 +150,11 @@ export function WrongNoteDetailScreen() {
                   // Re-solve a fresh same-chapter VARIANT (new numbers) so the
                   // review can't be gamed by recalling the original's answer.
                   // Fall back to the original problem if no variant exists.
+                  // `graduate` carries the SOURCE problem id: a perfect cycle
+                  // must master THIS note, not look for one on the variant.
                   try {
                     const v = await fetchVariant(note.problemId);
-                    nav(`/app/practice/${v.id}`);
+                    nav(`/app/practice/${v.id}?graduate=${note.problemId}`);
                   } catch {
                     nav(`/app/practice/${note.problemId}`);
                   }
