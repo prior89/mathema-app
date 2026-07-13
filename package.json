@@ -38,7 +38,7 @@
     "billing:rtdn-setup": "node scripts/billing-g1-rtdn-setup.cjs"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.2.4"
   },
   "engines": {
     "node": ">=20.0.0",
