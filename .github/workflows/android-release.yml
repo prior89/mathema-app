@@ -11,6 +11,10 @@ on:
         description: 'Release note (e.g. internal-testing G1)'
         required: false
         default: 'Internal testing build'
+      version_code:
+        description: 'Play versionCode (must be > the largest code already uploaded)'
+        required: true
+        type: string
   push:
     tags:
       - 'v*'
@@ -48,6 +52,38 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         run: npm run android:require-google-client-id
 
+      - name: Resolve and validate Play versionCode
+        shell: bash
+        env:
+          DISPATCH_VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          version_code="$DISPATCH_VERSION_CODE"
+          if [[ -z "$version_code" && "$GITHUB_REF_TYPE" == "tag" ]]; then
+            # Tag builds must use v<semver>+<versionCode>, for example:
+            # v1.0.1+2026071501
+            version_code="${GITHUB_REF_NAME##*+}"
+          fi
+          if [[ ! "$version_code" =~ ^[1-9][0-9]{0,9}$ ]]; then
+            echo "Invalid/missing versionCode. Dispatch with version_code or tag as v<semver>+<versionCode>." >&2
+            exit 1
+          fi
+          if (( version_code <= 2026062102 || version_code > 2100000000 )); then
+            echo "versionCode must be > 2026062102 and <= 2100000000; got $version_code." >&2
+            exit 1
+          fi
+          echo "ANDROID_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+
+      - name: Require Firebase Android config
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          test -n "$GOOGLE_SERVICES_JSON_BASE64" || {
+            echo "GOOGLE_SERVICES_JSON_BASE64 is required for FCM-enabled release builds." >&2
+            exit 1
+          }
+          printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > app/android/app/google-services.json
+          node -e "const f=require('./app/android/app/google-services.json'); const p=f.client?.flatMap(c=>c.client_info?.android_client_info?.package_name?[c.client_info.android_client_info.package_name]:[])??[]; if(!p.includes('ai.matheo.app')) throw new Error('google-services.json does not contain ai.matheo.app')"
+
       - name: Build Vite SPA
         env:
           # Capacitor Android bundles the SPA into the AAB. Without this
@@ -81,9 +117,10 @@ jobs:
           MATHEO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           MATHEO_KEY_ALIAS: matheo
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          # build.gradle reads this and falls back to 1 locally. Play Console
-          # refuses duplicate codes, so every signed AAB needs its own.
-          ANDROID_VERSION_CODE: ${{ github.run_number }}
+          # Resolved above from an explicit dispatch input or a numeric tag
+          # suffix. github.run_number is intentionally not used: the live Play
+          # track already has date-based codes in the 2,026,xxx,xxx range.
+          ANDROID_VERSION_CODE: ${{ env.ANDROID_VERSION_CODE }}
         run: |
           # gradlew loses its +x bit when committed from Windows; restore it.
           chmod +x gradlew

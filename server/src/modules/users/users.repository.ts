@@ -50,9 +50,18 @@ export class UsersRepository {
       this.prisma.dailyActivity.deleteMany({ where: { userId: id } }),
       this.prisma.masterySnapshot.deleteMany({ where: { userId: id } }),
       this.prisma.weeklyReport.deleteMany({ where: { userId: id } }),
+      this.prisma.conceptProgress.deleteMany({ where: { userId: id } }),
+      this.prisma.koreanConceptProgress.deleteMany({ where: { userId: id } }),
+      this.prisma.contentIngestJob.deleteMany({ where: { uploadedById: id } }),
       // Tokens that hold userId without a relation — cascade them manually.
       this.prisma.passwordResetToken.deleteMany({ where: { userId: id } }),
       this.prisma.emailVerificationToken.deleteMany({ where: { userId: id } }),
+      // These tables intentionally have no User FK. Purge them explicitly so
+      // identifiers, answers, model-job metadata, IPs, and device fingerprints
+      // cannot survive the user's account-deletion request.
+      this.prisma.solverAttempt.deleteMany({ where: { userId: id } }),
+      this.prisma.lLMAnalysisJob.deleteMany({ where: { userId: id } }),
+      this.prisma.securityEvent.deleteMany({ where: { userId: id } }),
       // Cascade-marked tables (Consent, DeviceToken, ConceptProgress,
       // MasteryTrajectory, MasteryEvent, ErrorPatternProfile, LLMAnalysisLog,
       // RecommendationLog, Feedback, TeacherOverride) are wiped automatically
@@ -69,25 +78,54 @@ export class UsersRepository {
    * Prisma include 사용 — 추가 모델 생기면 여기 한곳에서 확장.
    */
   async exportAll(id: string) {
-    return this.prisma.user.findUnique({
-      where: { id },
-      include: {
-        attempts: { take: 10000, orderBy: { createdAt: 'desc' } },
-        wrongNotes: { take: 10000, orderBy: { createdAt: 'desc' } },
-        studySessions: { take: 5000, orderBy: { startedAt: 'desc' } },
-        mockExamResults: { take: 1000, orderBy: { takenAt: 'desc' } },
-        activities: { take: 5000, orderBy: { date: 'desc' } },
-        masteries: true,
-        weeklyReports: { take: 200, orderBy: { generatedAt: 'desc' } },
-        analyticsEvents: { take: 5000, orderBy: { createdAt: 'desc' } },
-        deviceTokens: true,
-        subscription: {
-          include: {
-            events: { take: 500, orderBy: { receivedAt: 'desc' } },
-            purchaseTokens: { orderBy: { createdAt: 'asc' } },
+    const [user, solverAttempts, llmAnalysisJobs, securityEvents] = await this.prisma.$transaction([
+      this.prisma.user.findUnique({
+        where: { id },
+        include: {
+          attempts: { take: 10000, orderBy: { createdAt: 'desc' } },
+          wrongNotes: { take: 10000, orderBy: { createdAt: 'desc' } },
+          studySessions: { take: 5000, orderBy: { startedAt: 'desc' } },
+          mockExamResults: { take: 1000, orderBy: { takenAt: 'desc' } },
+          activities: { take: 5000, orderBy: { date: 'desc' } },
+          masteries: true,
+          masteryTrajectories: true,
+          masteryEvents: { take: 10000, orderBy: { createdAt: 'desc' } },
+          errorPatterns: true,
+          weeklyReports: { take: 200, orderBy: { generatedAt: 'desc' } },
+          conceptProgress: true,
+          koreanConceptProgress: true,
+          analyticsEvents: { take: 5000, orderBy: { createdAt: 'desc' } },
+          recommendationLogs: { take: 5000, orderBy: { createdAt: 'desc' } },
+          llmAnalysisLogs: { take: 5000, orderBy: { createdAt: 'desc' } },
+          feedbacks: { take: 1000, orderBy: { createdAt: 'desc' } },
+          consents: { orderBy: { grantedAt: 'desc' } },
+          authDevices: true,
+          deviceTokens: true,
+          placementProfile: true,
+          firstSessionPlan: true,
+          achievements: true,
+          parentChildLinksAsParent: true,
+          parentChildLinksAsChild: true,
+          guardianConsentRequest: true,
+          subscription: {
+            include: {
+              events: { take: 500, orderBy: { receivedAt: 'desc' } },
+              purchaseTokens: { orderBy: { createdAt: 'asc' } },
+            },
           },
         },
-      },
-    });
+      }),
+      this.prisma.solverAttempt.findMany({
+        where: { userId: id }, take: 5000, orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.lLMAnalysisJob.findMany({
+        where: { userId: id }, take: 5000, orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.securityEvent.findMany({
+        where: { userId: id }, take: 5000, orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+    if (!user) return null;
+    return { ...user, solverAttempts, llmAnalysisJobs, securityEvents };
   }
 }

@@ -20,6 +20,7 @@ const topic = process.env.RTDN_TOPIC ?? 'play-rtdn-matheo';
 const pushSa = map.get('RTDN_SERVICE_ACCOUNT_EMAIL') ?? 'matheo-rtdn-push@matheo-prod.iam.gserviceaccount.com';
 const audience = map.get('RTDN_AUDIENCE') ?? '<set RTDN_AUDIENCE in server/.env>';
 const subscription = `${topic}-push`;
+const playPublisher = 'google-play-developer-notifications@system.gserviceaccount.com';
 
 console.log('Matheo G1 — RTDN Pub/Sub setup (run in Cloud Shell or gcloud CLI)\n');
 console.log(`Project:     ${project}`);
@@ -30,14 +31,25 @@ console.log(`Subscription:${subscription}\n`);
 
 const cmds = [
   `gcloud config set project ${project}`,
+  `gcloud services enable pubsub.googleapis.com`,
   `gcloud iam service-accounts create matheo-rtdn-push --display-name="Matheo RTDN push" || true`,
   `# If SA email differs, update RTDN_SERVICE_ACCOUNT_EMAIL in server/.env`,
   `gcloud pubsub topics create ${topic} || true`,
-  `gcloud pubsub subscriptions create ${subscription} \\`,
-  `  --topic=${topic} \\`,
+  `gcloud pubsub topics add-iam-policy-binding ${topic} \\`,
+  `  --member="serviceAccount:${playPublisher}" \\`,
+  `  --role="roles/pubsub.publisher"`,
+  `PROJECT_NUMBER=$(gcloud projects describe ${project} --format='value(projectNumber)')`,
+  `gcloud projects add-iam-policy-binding ${project} \\`,
+  `  --member="serviceAccount:service-\${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com" \\`,
+  `  --role="roles/iam.serviceAccountTokenCreator"`,
+  `gcloud pubsub subscriptions describe ${subscription} >/dev/null 2>&1 || \\`,
+  `  gcloud pubsub subscriptions create ${subscription} --topic=${topic}`,
+  `gcloud pubsub subscriptions modify-push-config ${subscription} \\`,
   `  --push-endpoint="${audience}" \\`,
   `  --push-auth-service-account=${pushSa} \\`,
   `  --push-auth-token-audience="${audience}"`,
+  `gcloud pubsub subscriptions describe ${subscription} \\`,
+  `  --format='yaml(name,topic,pushConfig.pushEndpoint,pushConfig.oidcToken.serviceAccountEmail,pushConfig.oidcToken.audience)'`,
   `# Play Console → Monetize → Monetization setup → Real-time notifications`,
   `#   Link topic: projects/${project}/topics/${topic}`,
   `# Send test notification → expect HTTP 200 on ${audience}`,

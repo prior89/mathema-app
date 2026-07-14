@@ -657,9 +657,9 @@ model ProblemChoice {
 /// few-shot example curation (high-confidence rows feed Lv 2 RAG),
 /// and downstream fine-tune dataset extraction.
 ///
-/// No FK to User/Problem — log rows must outlive user/problem deletion
-/// for retrospective analysis, and skipping FKs makes the insert cheap
-/// (single roundtrip, no constraint check).
+/// This table has no User FK so logging stays off the request's constraint
+/// path. UsersRepository.hardDelete must delete rows by userId so question and
+/// answer content does not outlive an account-deletion request.
 model SolverAttempt {
   id              String    @id @default(uuid())
   userId          String?
@@ -1070,9 +1070,8 @@ model AdminAccessLog {
 /// "where is my account logged in?" UX needs fast per-user lookups, and
 /// AdminAccessLog is admin-only.
 ///
-/// Survives account deletion (audit retention) via onDelete: NoAction on the
-/// userId FK — the row keeps the original userId as a dangling pointer so a
-/// deleted account's history is still queryable for dispute / abuse review.
+/// Known-user rows are deleted by UsersRepository.hardDelete so IP, user-agent,
+/// device hash, and email metadata do not survive account deletion.
 model SecurityEvent {
   id        String            @id @default(uuid())
   userId    String? // nullable — failed logins with unknown email have no user FK
@@ -1743,7 +1742,9 @@ model LLMAnalysisLog {
 
 /// DB tracking for BullMQ LLM analysis jobs — persistent record separate from queue state.
 ///   1 LLMAnalysisJob ↔ 0..1 LLMAnalysisLog (Log is created only on success)
-///   When retryCount > maxRetries → FAILED, kept permanently in dead-letter (admin reprocessing target).
+///   When retryCount > maxRetries, FAILED is retained for reprocessing only
+///   while the account exists.
+/// UsersRepository.hardDelete removes them by userId.
 model LLMAnalysisJob {
   id             String       @id @default(uuid())
   attemptId      String       @unique           // 1:1 — prevents duplicate enqueue of the same attempt.

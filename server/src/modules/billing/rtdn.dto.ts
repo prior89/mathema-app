@@ -1,4 +1,10 @@
-import { IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 /** Inner Pub/Sub message envelope. `data` is base64-encoded JSON whose
@@ -7,16 +13,38 @@ export class RtdnPubsubMessage {
   @IsString()
   data!: string;
 
+  @IsOptional()
+  @IsObject()
+  attributes?: Record<string, string>;
+
   @IsString()
   messageId!: string;
+
+  /** Pub/Sub wrapped pushes include this legacy alias alongside messageId. */
+  @IsOptional()
+  @IsString()
+  message_id?: string;
 
   @IsOptional()
   @IsString()
   publishTime?: string;
+
+  /** Pub/Sub wrapped pushes include this legacy alias alongside publishTime. */
+  @IsOptional()
+  @IsString()
+  publish_time?: string;
+
+  @IsOptional()
+  @IsString()
+  orderingKey?: string;
 }
 
 /** Pub/Sub push HTTP body. */
 export class RtdnRequestDto {
+  @IsOptional()
+  @IsInt()
+  deliveryAttempt?: number;
+
   @ValidateNested()
   @Type(() => RtdnPubsubMessage)
   @IsObject()

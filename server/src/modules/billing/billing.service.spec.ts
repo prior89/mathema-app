@@ -1,6 +1,10 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { BillingService } from './billing.service';
-import { PREMIUM_PREVIEW_DAYS, PREMIUM_PREVIEW_PRODUCT_ID } from './billing.constants';
+import {
+  PREMIUM_PREVIEW_DAYS,
+  PREMIUM_PREVIEW_PRODUCT_ID,
+  PREMIUM_REVIEW_PRODUCT_ID,
+} from './billing.constants';
 import { RtdnRetryableError } from './rtdn.errors';
 
 function mockPrisma() {
@@ -126,6 +130,21 @@ describe('BillingService', () => {
         startTime: new Date(),
       });
       await expect(svc.isPremium('u1')).resolves.toBe(true);
+    });
+
+    it('identifies the dedicated Play reviewer entitlement without calling it a purchase', async () => {
+      const { svc, prisma } = build();
+      prisma.subscription.findUnique.mockResolvedValue({
+        status: 'ACTIVE',
+        expiryTime: new Date(Date.now() + 86_400_000),
+        productId: PREMIUM_REVIEW_PRODUCT_ID,
+        startTime: new Date(),
+      });
+
+      const ent = await svc.getEntitlement('u1');
+      expect(ent.premium).toBe(true);
+      expect(ent.source).toBe('REVIEW');
+      expect(ent.preview).toBeNull();
     });
 
     it('returns preview eligibility when no subscription row', async () => {

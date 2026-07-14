@@ -157,7 +157,9 @@ export class UsersService {
   async exportSelf(id: string) {
     const data = await this.repo.exportAll(id);
     if (!data) throw new NotFoundException('User not found');
-    const { passwordHash, ...rest } = data;
+    // Password verifiers and MFA seed material are authentication secrets,
+    // not portable profile data. Never return either in a data export.
+    const { passwordHash, totpSecret, ...rest } = data;
     return {
       generatedAt: new Date().toISOString(),
       schemaVersion: '1.0',

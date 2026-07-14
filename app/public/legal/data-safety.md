@@ -4,7 +4,20 @@ This document explains what data Matheo collects, why it is collected, and
 which trusted service providers may process it. It is intended to mirror the
 Google Play Data Safety disclosures for the Android app.
 
-Last updated: 2026-06-20 (Premium pricing + AI Solver OCR routing aligned)
+Last updated: 2026-07-15 (production-console declaration audit)
+
+For Google Play's form, Matheo declares **collection: Yes** and **sharing:
+No**. Transfers to Mathpix, OpenAI, Google, Sentry, and Microsoft are limited
+to processors acting on VeraStudy's instructions or to a user-initiated
+action. Google Play excludes those transfers from its "sharing" definition.
+They are still disclosed below for transparency.
+
+The selected Play data types are: name, email address, user IDs, phone number
+(optional guardian flow), other personal info, purchase history, photos,
+files and documents, app interactions, other user-generated content, other
+actions, crash logs, diagnostics, and device or other IDs. Location, payment
+card/bank data, health, messages, contacts, audio, installed apps, browsing
+history, and advertising data are not collected.
 
 ---
 
@@ -19,8 +32,10 @@ still works (degraded for the relevant feature).
 
 | Field | Where | Purpose | Req / Opt | Shared with 3P |
 |---|---|---|---|---|
-| Email | `User.email` | Account management, login, password reset | Required | Sentry (in crash context only) |
+| Email | `User.email` | Account management, login, password reset | Required | — |
 | Name | `User.name` | Account management, personalised greeting | Required | — |
+| User ID | `User.id`, Google `sub` when Google sign-in is used | Account management, security | Required | Google sign-in is user initiated |
+| Guardian contact | `GuardianConsentRequest.parentName`, `parentEmail`, optional `parentPhone` | Guardian verification | Optional | Email delivery provider |
 | Other (school level, grade level, study goal, country, target grade, exam date) | `User.gradeLevel`, `User.schoolLevel`, `User.studyGoal`, `User.country`, `User.targetGrade`, `User.examDate` | App functionality — NCERT curriculum mapping, recommendation tailoring | Required | — |
 | Parent-child link (parent's account references the student's user id) | `User.childOfUserId` | App functionality — PARENT role dashboards | Optional (only PARENT users) | — |
 | Password hash | `User.passwordHash` | Account management (bcrypt, never reversible) | Required | — |
@@ -52,6 +67,11 @@ preference, not location data.
 
 ### 1.5 App activity
 
+User-selected solver photos and PDFs are transmitted for OCR and processed in
+memory. Matheo does not retain the uploaded bytes after the request, although
+the extracted question text, answer, and solver result can be retained as
+account-linked learning/quality records.
+
 | Field | Where | Purpose | Req / Opt | Shared with 3P |
 |---|---|---|---|---|
 | Problem attempts (answer, isCorrect, durationSec, confidence, hintUsed, errorCodes, deviceType, timeOfDay) | `Attempt` model | App functionality — grading, mastery, recommendation | Required | OpenAI (LLM analysis on `AI_TRAINING` consent only) |
@@ -73,7 +93,7 @@ preference, not location data.
 
 | Field | Where | Purpose | Req / Opt | Shared with 3P |
 |---|---|---|---|---|
-| Crash logs (stack traces, breadcrumbs, user id) | Sentry (`@sentry/react` + `@sentry/node`) | Diagnostics | Optional (anonymisable; `ANALYTICS` consent recommended) | Sentry |
+| Crash logs (stack traces and breadcrumbs, without a stable Matheo user ID) | Sentry (`@sentry/react` + `@sentry/node`) | Diagnostics | Required when diagnostics are enabled | Sentry |
 | Performance telemetry (route timing, server latency, request volume) | Azure Application Insights | Diagnostics | Optional (anonymous) | Microsoft |
 | Server-side audit (admin actions, auth events) | `AdminAccessLog`, `LLMAnalysisLog`, `LLMAnalysisJob` | App functionality — operational audit, AI cost tracking | Required (admin/system level — not user data) | — |
 
@@ -98,7 +118,7 @@ notifications, diagnostics, and billing-related features.
 | **OpenAI (gpt-5.4-mini / gpt-5.5 fallback)** | Math-helper solver, graph/diagram OCR repair, AI hint walkthrough, LLM analysis (wrong-note diagnostic) | Problem body, OCR text, student step-by-step input, student answer, wrong-note context; photo/PDF image bytes only for OCR fallback or graph/diagram repair | `AI_TRAINING` (analysis) - fallback to rule-based when absent; math-helper `/solve` always uses OpenAI when enabled; upload action gates OCR |
 | **Google OAuth 2.0** | Sign-in flow | Email, name, Google `sub` id | User-initiated sign-in |
 | **Firebase Cloud Messaging** | Push notification delivery | `DeviceToken.token`, message payload | `MARKETING` consent + OS-level permission |
-| **Sentry** | Crash + error capture | Stack trace, user id, breadcrumb, environment | `ANALYTICS` recommended; engineering-only viewers |
+| **Sentry** | Crash + error capture | Stack trace, breadcrumb, environment; no stable Matheo user ID | Operational diagnostics; engineering-only viewers |
 | **Microsoft Azure Application Insights** | Backend performance telemetry | Request path, latency, response size, anonymised user id | Required (operational) |
 | **Google Play Developer API** | Subscription purchase verification and renewal handling | Product id + purchase token, no payment instrument | User-initiated purchase via Google Play Billing |
 
@@ -115,9 +135,10 @@ notifications, diagnostics, and billing-related features.
 - **Auth tokens**: JWT access (short-lived) + refresh (Redis-backed
   blacklist for revocation, `jwt:refresh:revoked:*`). Reset / verification
   tokens are stored as SHA-256 hashes in DB, never plaintext.
-- **Account deletion**: `DELETE /users/me` cascades through every owned row
-  (Attempt, WrongNote, StudySession, MockExamResult, Consent, etc.). Backed
-  by Prisma `onDelete: Cascade` on every `User` relation.
+- **Account deletion**: `DELETE /users/me` immediately removes the User and
+  all account-linked records. Non-FK audit/AI tables (`SolverAttempt`,
+  `LLMAnalysisJob`, and `SecurityEvent`) are explicitly purged in the same
+  transaction; aggregate analytics survive only after `userId` is null.
 - **Data export**: `GET /users/me/export` returns the full per-user dataset
   as JSON for portability (DPDP §13 / GDPR Art. 20).
 - **Consent revocation**: `DELETE /privacy/consents/:kind`. `DATA_PROCESSING`

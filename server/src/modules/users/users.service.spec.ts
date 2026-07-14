@@ -8,6 +8,7 @@ import { UsersService } from './users.service';
 type RepoMock = {
   findById: jest.Mock;
   update: jest.Mock;
+  exportAll: jest.Mock;
 };
 
 function mockUser(over: Partial<{
@@ -32,6 +33,7 @@ function build(over: { user?: ReturnType<typeof mockUser> | null } = {}) {
   const repo: RepoMock = {
     findById: jest.fn().mockResolvedValue(over.user === null ? null : (over.user ?? mockUser())),
     update: jest.fn().mockResolvedValue(undefined),
+    exportAll: jest.fn().mockResolvedValue(null),
   };
   const guardianConsent = {
     ensurePendingForStudent: jest.fn().mockResolvedValue({ required: false }),
@@ -118,5 +120,28 @@ describe('UsersService.updateProfile', () => {
     await expect(
       svc.updateProfile('user-1', { birthDate: '2010-03-15T00:00:00.000Z' }),
     ).rejects.toMatchObject({ response: { code: 'birth_date_immutable' } });
+  });
+});
+
+describe('UsersService.exportSelf', () => {
+  it('never exports password hashes or TOTP seed material', async () => {
+    const { svc, repo } = build();
+    repo.exportAll.mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+      passwordHash: 'bcrypt-hash',
+      totpSecret: 'base32-seed',
+      name: 'User',
+    });
+
+    const result = await svc.exportSelf('user-1');
+
+    expect(result.user).toEqual({
+      id: 'user-1',
+      email: 'user@example.com',
+      name: 'User',
+    });
+    expect(result.user).not.toHaveProperty('passwordHash');
+    expect(result.user).not.toHaveProperty('totpSecret');
   });
 });

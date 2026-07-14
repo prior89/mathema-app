@@ -35,7 +35,7 @@ BILLING_UI_ENABLED=true
 
 ### Play Console (manual)
 
-1. **Monetize → Products → Subscriptions**: `premium_monthly`, `premium_yearly` base plans live with the 5-country launch prices from `PLAY_PRICING.md`.
+1. **Monetize → Products → Subscriptions**: `premium_monthly` is P1M/KRW 9,900 and `premium_yearly` is P1Y/KRW 99,000 for the KR-first launch; match `PLAY_PRICING.md`.
 2. **License testers**: add Google accounts under Settings → License testing.
 3. **RTDN**: Pub/Sub push subscription → `POST /billing/rtdn`; send **test notification** (expect 200 + inbox PROCESSED).
 4. **AAB**: GitHub Actions → **Android Release (AAB)** → download artifact → Internal testing → Create release.

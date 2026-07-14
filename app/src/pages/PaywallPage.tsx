@@ -75,7 +75,8 @@ function getPlan(
   productId: ProductId,
 ): PlanView | null {
   const product = products?.find((item) => item.productId === productId);
-  const offer = product ? selectPaidOffer(product) : undefined;
+  const expectedPeriod = productId === 'premium_yearly' ? 'P1Y' : 'P1M';
+  const offer = product ? selectPaidOffer(product, expectedPeriod) : undefined;
   const phase = offer ? displayRecurringPhase(offer) : undefined;
   if (!product || !offer || !phase) return null;
   return { productId, product, offer, phase };

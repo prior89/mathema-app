@@ -42,17 +42,20 @@ Official references:
 | `premium_monthly` | `monthly` | P1M | Main public monthly subscription |
 | `premium_yearly` | `yearly` | P1Y | About 10 monthly payments, shown as annual savings in the paywall |
 
-## 5-Country Launch Price Table
+## KR-first production launch
 
-Enter these manually in Play Console for both base plans.
+Only South Korea is enabled for the first production release, matching the
+country choices currently enabled in onboarding. Do not activate another
+country merely because a placeholder price exists below; expand distribution
+only after its onboarding, guardian-consent, tax, support, and store-copy
+review is complete.
 
 | Country / region | Play country code | Currency | Monthly price | Yearly price | Note |
 |---|---:|---:|---:|---:|---|
-| South Korea | KR | KRW | 9,900 | 99,000 | Anchor price requested for the Korean launch |
-| India | IN | INR | 399 | 3,999 | Local launch price below direct KRW parity |
-| Indonesia | ID | IDR | 69,000 | 690,000 | SEA expansion placeholder; enable distribution only after review |
-| Vietnam | VN | VND | 149,000 | 1,490,000 | SEA expansion placeholder; enable distribution only after review |
-| United Arab Emirates | AE | AED | 24.99 | 249.99 | Gulf expansion placeholder; enable distribution only after review |
+| South Korea | KR | KRW | 9,900 | 99,000 | Active KR-first production price |
+
+Future-market planning values (inactive): India INR 399/3,999; Indonesia IDR
+69,000/690,000; Vietnam VND 149,000/1,490,000; UAE AED 24.99/249.99.
 
 For countries not in this table, use Google Play's generated local prices as
 a starting point, then review manually before enabling distribution.
@@ -62,10 +65,11 @@ nearest supported tier and update this file before G1 sign-off.
 ## Play Console Checklist
 
 1. Go to **Monetize -> Products -> Subscriptions**.
-2. Open `premium_monthly` and set the active base-plan price for KR, IN, ID,
-   VN, and AE from the table above.
-3. Open `premium_yearly` and set the active base-plan price for the same
-   countries.
+2. Open `premium_monthly` and confirm a **P1M** auto-renewing plan at KRW
+   9,900 in South Korea only.
+3. Open `premium_yearly` and confirm a **P1Y** auto-renewing plan at KRW
+   99,000 in South Korea only. The product name is not proof of the period;
+   inspect the base plan's billing period.
 4. Confirm there is no active Play free-trial or introductory-price offer.
 5. Install the Internal Testing build as a license tester and confirm the
    paywall renders the local monthly/yearly prices from Google Play.
