@@ -14,11 +14,11 @@ import type { BillingProductDetails } from '../native/billing-bridge';
 type Phase = BillingProductDetails['offers'][number]['pricingPhases'][number];
 type Offer = BillingProductDetails['offers'][number];
 
-const infinitePhase = (micros: string): Phase => ({
+const infinitePhase = (micros: string, billingPeriod = 'P1M'): Phase => ({
   priceFormatted: '₩4,900',
   priceAmountMicros: micros,
   currencyCode: 'KRW',
-  billingPeriod: 'P1M',
+  billingPeriod,
   recurrenceMode: 1, // INFINITE_RECURRING = base/renewal phase
   billingCycleCount: 0,
 });
@@ -65,6 +65,18 @@ const freeTrial: Offer = {
   offerId: 'trial',
   pricingPhases: [freeTrialPhase(), infinitePhase('4900000000')],
 };
+const misconfiguredYearlyMonthly: Offer = {
+  offerToken: 'tok-yearly-but-monthly',
+  basePlanId: 'yearly',
+  offerId: null,
+  pricingPhases: [infinitePhase('99000000000', 'P1M')],
+};
+const realYearly: Offer = {
+  offerToken: 'tok-real-yearly',
+  basePlanId: 'annual-2026',
+  offerId: null,
+  pricingPhases: [infinitePhase('99000000000', 'P1Y')],
+};
 
 const product = (offers: Offer[]): BillingProductDetails => ({
   productId: 'premium_monthly',
@@ -96,6 +108,19 @@ describe('selectPaidOffer', () => {
   it('among multiple promos, picks the cheapest first phase', () => {
     const chosen = selectPaidOffer(product([launchPromo, cheaperPromo, basePlan]));
     expect(chosen.offerId).toBe('launch-90');
+  });
+
+  it('refuses a yearly product whose recurring phase is actually monthly', () => {
+    expect(selectPaidOffer(product([misconfiguredYearlyMonthly]), 'P1Y')).toBeUndefined();
+  });
+
+  it('selects only the real annual offer when both periods are active', () => {
+    const chosen = selectPaidOffer(
+      product([misconfiguredYearlyMonthly, realYearly]),
+      'P1Y',
+    );
+    expect(chosen?.offerToken).toBe('tok-real-yearly');
+    expect(displayRecurringPhase(chosen!)?.billingPeriod).toBe('P1Y');
   });
 });
 

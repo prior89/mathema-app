@@ -29,7 +29,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       Sentry.withScope((scope) => {
         scope.setExtra('path', req.url);
         scope.setExtra('method', req.method);
-        scope.setUser({ id: req.user?.id ?? 'anonymous' });
+        // Never forward a stable Matheo user ID to the crash processor. The
+        // exception, route, release, and environment are enough for diagnosis.
+        scope.setUser(null);
         Sentry.captureException(exception);
       });
     }

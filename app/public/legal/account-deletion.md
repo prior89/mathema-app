@@ -18,6 +18,8 @@ minutes):
   concept-lesson progress, daily-activity log, mastery snapshots and
   trajectories, weekly reports, recommendation logs, error-pattern
   profile, feedback entries, teacher overrides (if any).
+- AI solver request/response logs, queued AI-analysis jobs, and per-account
+  security events (including their IP, user-agent, and device-hash metadata).
 - Push notification device tokens.
 - DPDP consent records (Data Processing / Analytics / AI Training /
   Marketing).

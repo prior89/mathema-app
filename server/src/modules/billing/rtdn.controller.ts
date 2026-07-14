@@ -7,6 +7,7 @@ import {
   Post,
   UnauthorizedException,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { RtdnRequestDto } from './rtdn.dto';
 import { RtdnService } from './rtdn.service';
 
@@ -28,6 +29,9 @@ export class RtdnController {
 
   @Post('rtdn')
   @HttpCode(200)
+  // Pub/Sub retries are already authenticated with Google OIDC. Do not put
+  // this machine-to-machine webhook in the shared unauthenticated-IP bucket.
+  @SkipThrottle()
   async receive(
     @Headers('authorization') auth: string | undefined,
     @Body() body: RtdnRequestDto,

@@ -15,9 +15,12 @@ export function initSentry() {
 
 // Play Families / DPDP: id only — never ship email (possibly a minor's) to a
 // third-party crash reporter. The id is enough to correlate with our own DB.
-export function tagSentryUser(user: { id: string }) {
+export function tagSentryUser(_user: { id: string }) {
   if (!import.meta.env.VITE_SENTRY_DSN) return;
-  Sentry.setUser({ id: user.id });
+  // Do not attach a stable account identifier to a third-party crash report.
+  // Routes, stack traces, release, and environment are sufficient to diagnose
+  // client failures and this keeps minors' account IDs out of Sentry.
+  Sentry.setUser(null);
 }
 
 export function clearSentryUser() {

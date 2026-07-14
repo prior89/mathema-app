@@ -49,6 +49,15 @@ export const GRACE_PERIOD_DAYS = 7;
 export const PREMIUM_PREVIEW_PRODUCT_ID = 'premium_preview_3d';
 export const PREMIUM_PREVIEW_DAYS = 3;
 
+/** Non-purchasable entitlement reserved for the Google Play review account.
+ *
+ * Reviewers cannot be required to buy a subscription or start a trial. This
+ * marker lets the dedicated, non-user reviewer account keep access to every
+ * paid surface without pretending that its entitlement came from Google Play.
+ * It must only be provisioned through the audited reviewer script.
+ */
+export const PREMIUM_REVIEW_PRODUCT_ID = 'premium_review';
+
 export const PLAY_PRODUCT_IDS = ['premium_monthly', 'premium_yearly'] as const;
 export type PlayProductId = (typeof PLAY_PRODUCT_IDS)[number];
 

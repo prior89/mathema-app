@@ -5,6 +5,7 @@ import {
   MONETIZATION_STRATEGY,
   PREMIUM_PREVIEW_DAYS,
   PREMIUM_PREVIEW_PRODUCT_ID,
+  PREMIUM_REVIEW_PRODUCT_ID,
 } from './billing.constants';
 import { ObfuscatedAccountService } from './obfuscated-account.service';
 import { PlayApiClient } from './play-api-client.service';
@@ -87,6 +88,10 @@ export class BillingService {
     return productId === PREMIUM_PREVIEW_PRODUCT_ID;
   }
 
+  private isReviewProduct(productId: string | null | undefined): boolean {
+    return productId === PREMIUM_REVIEW_PRODUCT_ID;
+  }
+
   /** Returns true iff the user is currently entitled.
    *
    * Google Play subscription states that grant entitlement until `expiryTime`:
@@ -115,10 +120,11 @@ export class BillingService {
     const sub = await this.getSubscription(userId);
     const premium = this.isEntitled(sub);
     const preview = this.isPreviewProduct(sub?.productId);
+    const review = this.isReviewProduct(sub?.productId);
     return {
       premium,
       tier: premium ? 'PREMIUM' : 'FREE',
-      source: premium ? (preview ? 'PREVIEW' : 'PLAY') : null,
+      source: premium ? (preview ? 'PREVIEW' : review ? 'REVIEW' : 'PLAY') : null,
       preview: preview
         ? {
             active: premium,

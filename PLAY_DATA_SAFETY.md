@@ -5,9 +5,54 @@ this document before every store submission — when a new field is added to
 `server/prisma/schema.prisma` or a new 3rd-party SDK lands, the corresponding
 row here MUST be updated, otherwise the listing falls out of compliance.
 
-Last updated: 2026-06-20 (Premium pricing + AI Solver OCR routing aligned)
+Last updated: 2026-07-15 (production-console audit, deletion and billing review)
 Backend reference: `server/prisma/schema.prisma`
 Frontend reference: `app/src/lib/{api,analytics,queries,mutations}.ts`
+
+## 0. Exact Play Console declaration matrix
+
+This matrix uses Google Play's definitions, not a generic privacy-policy
+taxonomy. "Collected" means transmitted off the device. "Shared" excludes
+processors acting on VeraStudy's instructions and user-initiated transfers,
+as allowed by the Play Data Safety service-provider and user-action
+exceptions. Keep the vendor DPAs and no-training/retention controls current;
+otherwise the sharing answers must be revisited.
+
+| Play data type | Collected | Shared in Play form | Required / optional | Purposes |
+|---|---|---|---|---|
+| Name | Yes | No | Required | App functionality, account management, personalization |
+| Email address | Yes | No | Required | App functionality, account management, developer communications |
+| User IDs | Yes | No | Required | App functionality, account management, fraud prevention/security |
+| Phone number | Yes | No | Optional | Guardian verification and account management |
+| Other personal info | Yes | No | Required | Birth date/age gate, country, grade, school level, goals; app functionality and personalization |
+| Purchase history | Yes | No | Optional | Subscription entitlement, account management, fraud prevention/security |
+| Photos | Yes | No | Optional; ephemeral | User-initiated OCR/solver app functionality |
+| Files and docs | Yes | No | Optional; ephemeral | User-initiated PDF OCR/solver app functionality |
+| App interactions | Yes | No | Required | Learning progress, app functionality, analytics, personalization |
+| Other user-generated content | Yes | No | Required | Answers, workings, feedback, and solver questions; app functionality and personalization |
+| Other actions | Yes | No | Required | Attempts, hint use, confidence, study/review actions; app functionality, analytics, personalization |
+| Crash logs | Yes when diagnostics are enabled | No | Required when enabled | Analytics/diagnostics |
+| Diagnostics | Yes | No | Required | Reliability, security, and performance diagnostics |
+| Device or other IDs | Yes | No | Required | Session/device security; optional FCM token also uses this category |
+
+Do **not** select: location, payment-card data, health/fitness, messages,
+audio, contacts, calendar, installed apps, web-browsing history, or advertising
+data. `User.country` is a profile/curriculum choice, not a GPS/IP-derived
+physical location. Google Play handles payment instruments; Matheo receives
+only purchase history and an opaque purchase token.
+
+Per-type handling rules:
+
+- Photos and PDFs are processed in memory for the user-requested OCR operation;
+  Matheo does not persist the uploaded bytes.
+- Mathpix, OpenAI, Google Play/FCM, Sentry, and Microsoft Azure are processors
+  or user-initiated services, not advertising/data-sale recipients.
+- A data type must be marked **Required** if any currently distributed app
+  version or user flow requires it. Do not label core learning attempts as
+  optional merely because analytics consent is optional.
+- Account deletion immediately removes account-linked rows, including
+  `SolverAttempt`, `LLMAnalysisJob`, and `SecurityEvent`; aggregate
+  `AnalyticsEvent` rows survive only after `userId` is set to null.
 
 ---
 

@@ -84,8 +84,16 @@ function firstPhasePriceMicros(offer: BillingProductDetails['offers'][number]): 
   return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
 }
 
-export function selectPaidOffer(product: BillingProductDetails) {
-  const paid = product.offers.filter((offer) => !isFreeTrialOffer(offer));
+export function selectPaidOffer(
+  product: BillingProductDetails,
+  expectedBillingPeriod?: 'P1M' | 'P1Y',
+) {
+  const periodSafeOffers = expectedBillingPeriod
+    ? product.offers.filter(
+        (offer) => displayRecurringPhase(offer)?.billingPeriod === expectedBillingPeriod,
+      )
+    : product.offers;
+  const paid = periodSafeOffers.filter((offer) => !isFreeTrialOffer(offer));
   // Prefer a promotional offer (non-empty offerId). Play only returns offers the
   // current user is *eligible* for, so a launch/intro offer present in this list
   // is valid and applies its discounted price; among several, take the cheapest
@@ -99,7 +107,10 @@ export function selectPaidOffer(product: BillingProductDetails) {
       firstPhasePriceMicros(offer) < firstPhasePriceMicros(best) ? offer : best,
     );
   }
-  return paid.find((offer) => !offer.offerId) ?? paid[0] ?? product.offers[0];
+  // Never fall back to an offer with the wrong billing period. A missing plan
+  // is safer than charging a product named "yearly" every month because of a
+  // Play Console base-plan mistake.
+  return paid.find((offer) => !offer.offerId) ?? paid[0];
 }
 
 /** The base (post-promo) recurring price to disclose — the infinite recurring phase. */
