@@ -214,6 +214,13 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 .mathema-app .btn.google:disabled { opacity: 0.55; }
+.mathema-app .google-signin-control { display: grid; gap: 7px; }
+.mathema-app .google-signin-status {
+  color: var(--p-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+}
 
 .mathema-app .auth-divider {
   display: flex;

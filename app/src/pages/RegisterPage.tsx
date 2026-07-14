@@ -23,7 +23,6 @@ import { BrandLogo } from '../components/Brand';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
-import { isGoogleSignInConfigured } from '../lib/google-client-id';
 import { LAUNCH_STUDENT_ONLY } from '../lib/launch-config';
 import { detectOnboardingLang, langForCountry } from '../lib/onboarding-locale';
 import '../styles/onboarding.css';
@@ -410,7 +409,7 @@ function StepRoleAndCredentials({
           })}
         </div>
       </div>
-      {!hideGoogle && isGoogleSignInConfigured() && (
+      {!hideGoogle && (
         <>
           <AuthDivider labelKey="reg.or" />
           <GoogleSignInButton

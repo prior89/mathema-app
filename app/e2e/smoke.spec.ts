@@ -21,8 +21,20 @@ test.describe('matheo — public smoke', () => {
     await expect(
       page.getByRole('button', { name: /sign in|로그인|साइन इन/i }),
     ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Google로 계속하기|Continue with Google/i }),
+    ).toBeVisible();
     // BrandLockup exposes one stable accessible name while its cropped image is decorative.
     await expect(page.getByLabel('Matheo', { exact: true })).toBeVisible();
+  });
+
+  test('onboarding keeps Google sign-up visible', async ({ page }) => {
+    await page.goto('/onboarding');
+    await page.getByRole('button', { name: /내 수학 코스 만들기|Build my math path/i }).click();
+    await page.getByRole('button', { name: /계속하기|Continue/i }).click();
+    await expect(
+      page.getByRole('button', { name: /Google로 가입하기|Sign up with Google/i }),
+    ).toBeVisible();
   });
 
   test('privacy page renders without login', async ({ page }) => {

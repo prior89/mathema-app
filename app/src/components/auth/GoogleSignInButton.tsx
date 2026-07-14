@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { useGoogleSignIn } from '../../hooks/useGoogleSignIn';
 import { Glyph } from '../onboarding/Glyph';
 import { useT } from '../../lib/i18n';
@@ -24,27 +25,39 @@ export function GoogleSignInButton({
   className = '',
 }: GoogleSignInButtonProps) {
   const { t } = useT();
+  const statusId = useId();
   const { configured, ready, loadError, signIn } = useGoogleSignIn({
     onCredential,
     onError,
     enabled,
   });
 
-  if (!configured) return null;
-
   const labelKey = mode === 'signup' ? 'auth.google.signup' : 'auth.google.continue';
-  const isDisabled = disabled || busy || !ready || loadError;
+  const isDisabled = disabled || busy || !configured || !ready || loadError;
+  const statusMessage = !configured
+    ? t('auth.google.unavailable')
+    : loadError
+      ? t('auth.google.loadFailed')
+      : null;
 
   return (
-    <button
-      type="button"
-      className={`btn outline google ${className}`.trim()}
-      disabled={isDisabled}
-      onClick={signIn}
-      aria-busy={busy || undefined}
-    >
-      <Glyph.Google />
-      <span>{busy ? t('auth.google.busy') : t(labelKey)}</span>
-    </button>
+    <div className="google-signin-control">
+      <button
+        type="button"
+        className={`btn outline google ${className}`.trim()}
+        disabled={isDisabled}
+        onClick={signIn}
+        aria-busy={busy || undefined}
+        aria-describedby={statusMessage ? statusId : undefined}
+      >
+        <Glyph.Google />
+        <span>{busy ? t('auth.google.busy') : t(labelKey)}</span>
+      </button>
+      {statusMessage && (
+        <div id={statusId} className="google-signin-status" role="status">
+          {statusMessage}
+        </div>
+      )}
+    </div>
   );
 }

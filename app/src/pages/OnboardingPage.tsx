@@ -27,7 +27,6 @@ import { isLikelyEmail } from '../lib/email';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
-import { isGoogleSignInConfigured } from '../lib/google-client-id';
 import {
   birthDateFromAge,
   requiresGuardianConsentFromAge,
@@ -667,18 +666,14 @@ function ScreenAuth({
           <Glyph.ChevronR />
         </button>
 
-        {isGoogleSignInConfigured() && (
-          <>
-            <AuthDivider labelKey="onboarding.auth.or" />
-            <GoogleSignInButton
-              mode="signup"
-              onCredential={handleGoogleSignIn}
-              onError={() => setErr(t('onboarding.auth.google.failed'))}
-              busy={googleBusy}
-              disabled={busy}
-            />
-          </>
-        )}
+        <AuthDivider labelKey="onboarding.auth.or" />
+        <GoogleSignInButton
+          mode="signup"
+          onCredential={handleGoogleSignIn}
+          onError={() => setErr(t('onboarding.auth.google.failed'))}
+          busy={googleBusy}
+          disabled={busy}
+        />
 
         {guestModeEnabled && onGuest && (
           <button

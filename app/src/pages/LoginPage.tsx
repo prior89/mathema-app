@@ -15,7 +15,6 @@ import { LearningOrbit } from '../components/design/LearningOrbit';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
-import { isGoogleSignInConfigured } from '../lib/google-client-id';
 import '../styles/onboarding.css';
 
 export default function LoginPage() {
@@ -168,18 +167,14 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {isGoogleSignInConfigured() && (
-                <>
-                  <AuthDivider labelKey="login.or" />
-                  <GoogleSignInButton
-                    mode="continue"
-                    onCredential={handleGoogleSignIn}
-                    onError={() => setErr(t('login.google.failed'))}
-                    busy={googleBusy}
-                    disabled={busy}
-                  />
-                </>
-              )}
+              <AuthDivider labelKey="login.or" />
+              <GoogleSignInButton
+                mode="continue"
+                onCredential={handleGoogleSignIn}
+                onError={() => setErr(t('login.google.failed'))}
+                busy={googleBusy}
+                disabled={busy}
+              />
 
                 <div className="signup-prompt">
                   <span>{t('login.signupPrompt')}</span>
