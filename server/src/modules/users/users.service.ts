@@ -159,7 +159,9 @@ export class UsersService {
     if (!data) throw new NotFoundException('User not found');
     // Password verifiers and MFA seed material are authentication secrets,
     // not portable profile data. Never return either in a data export.
-    const { passwordHash, totpSecret, ...rest } = data;
+    const rest = { ...data };
+    Reflect.deleteProperty(rest, 'passwordHash');
+    Reflect.deleteProperty(rest, 'totpSecret');
     return {
       generatedAt: new Date().toISOString(),
       schemaVersion: '1.0',
