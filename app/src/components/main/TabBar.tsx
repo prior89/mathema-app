@@ -11,24 +11,23 @@
  *             profile in the top bar.
  */
 import { useNavigate, useLocation } from 'react-router-dom';
+import { BookOpen, Dumbbell, Home, NotebookTabs, RefreshCw } from 'lucide-react';
 import { useT } from '../../lib/i18n';
 import type { TranslationKey } from '../../lib/translations';
 
 type TabId = 'home' | 'learn' | 'study' | 'notes' | 'test' | 'me';
 
-const TABS: Array<{ id: TabId; labelKey: TranslationKey; path: string; icon: (c: string) => JSX.Element }> = [
+const TABS: Array<{ id: TabId; labelKey: TranslationKey; path: string; icon: typeof Home }> = [
   { id: 'home', labelKey: 'tabbar.home', path: '/app',
-    icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><path d="M 3 11 L 12 4 L 21 11 V 20 H 14 V 14 H 10 V 20 H 3 Z" fill="none" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/></svg> },
+    icon: Home },
   { id: 'learn', labelKey: 'tabbar.learn', path: '/app/learn',
-    icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><path d="M 4 6 C 4 5, 5 4, 6 4 H 11 V 20 H 6 C 5 20, 4 19, 4 18 Z M 20 6 C 20 5, 19 4, 18 4 H 13 V 20 H 18 C 19 20, 20 19, 20 18 Z" fill="none" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg> },
+    icon: BookOpen },
   { id: 'study', labelKey: 'tabbar.study', path: '/app/study',
-    /* pencil over a horizontal line — "do practice" glyph */
-    icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><path d="M 4 19 H 20 M 14 6 L 18 10 L 8 20 L 4 20 L 4 16 Z" fill="none" stroke={c} strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"/></svg> },
+    icon: Dumbbell },
   { id: 'notes', labelKey: 'tabbar.notes', path: '/app/notes',
-    icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><path d="M 6 3 H 16 L 19 6 V 21 H 6 Z M 8 8 H 17 M 8 12 H 17 M 8 16 H 14" fill="none" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg> },
+    icon: NotebookTabs },
   { id: 'test', labelKey: 'tabbar.test', path: '/app/test',
-    /* clipboard with check — "scheduled review" glyph */
-    icon: (c) => <svg viewBox="0 0 24 24" width="22" height="22"><rect x="5" y="4" width="14" height="17" rx="2" fill="none" stroke={c} strokeWidth="1.7"/><path d="M 9 3 H 15 V 6 H 9 Z" fill="none" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/><path d="M 9 13 L 11 15 L 15 11" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+    icon: RefreshCw },
 ];
 
 export function TabBar() {
@@ -52,6 +51,7 @@ export function TabBar() {
     <nav className="tabbar" aria-label={t('tabbar.aria') || 'Main navigation'}>
       {TABS.map((tab) => {
         const isActive = active === tab.id;
+        const Icon = tab.icon;
         return (
           <button
             key={tab.id}
@@ -61,9 +61,7 @@ export function TabBar() {
             aria-label={t(tab.labelKey)}
             onClick={() => nav(tab.path)}
           >
-            <div className="icon">
-              {tab.icon(isActive ? 'var(--p-primary)' : 'var(--p-muted)')}
-            </div>
+            <span className="icon"><Icon size={21} strokeWidth={isActive ? 2.5 : 2} /></span>
             <span>{t(tab.labelKey)}</span>
           </button>
         );

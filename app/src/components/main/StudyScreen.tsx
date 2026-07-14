@@ -13,6 +13,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { ArrowRight, BookOpenCheck, Dumbbell, NotebookTabs, Target } from 'lucide-react';
 import {
   fetchConceptLessons, fetchKoreanConceptLessons, fetchMe,
 } from '../../lib/queries';
@@ -95,8 +96,8 @@ export function StudyScreen() {
   }
 
   return (
-    <div className="screen">
-      <div style={{ flex: 1, overflow: 'auto' }}>
+    <div className="screen tabbed-screen study-screen">
+      <div className="app-scroll" style={{ flex: 1, overflow: 'auto' }}>
         <div className="app-head" style={{ paddingBottom: 0 }}>
           <div>
             <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('study.tab.label')}</div>
@@ -105,14 +106,22 @@ export function StudyScreen() {
           <HeadAvatar />
         </div>
 
-        <div style={{ padding: '12px 22px 0' }}>
+        <div className="content-rail" style={{ padding: '12px 22px 0' }}>
+          <div className="practice-intro">
+            <div>
+              <span className="story-kicker"><Target size={14} />{t('study.hero.kicker')}</span>
+              <h2>{t('study.hero.title')}</h2>
+              <p>{t('study.hero.desc')}</p>
+            </div>
+            <span className="practice-orb" aria-hidden="true"><Dumbbell size={30} /></span>
+          </div>
           <div className="section-h">
             <span className="label">{t('study.pick.section')}</span>
             <span className="more">{t('study.pick.more')}</span>
           </div>
 
           <div
-            className="card"
+            className="card practice-launch-card"
             style={{ background: 'var(--p-accent-tint)', borderColor: 'transparent' }}
           >
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
@@ -176,7 +185,7 @@ export function StudyScreen() {
               style={{ marginTop: 12, height: 46, fontSize: 14 }}
             >
               {t('study.pick.startBtn')}
-              <Glyph.ChevronR />
+              <ArrowRight size={17} />
             </button>
           </div>
 
@@ -185,13 +194,10 @@ export function StudyScreen() {
           <div className="section-h">
             <span className="label">{t('study.howThis.section')}</span>
           </div>
-          <div className="card" style={{ padding: 14, fontSize: 13, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
-            <strong style={{ color: 'var(--p-ink)' }}>{t('study.howThis.bStart')}</strong>
-            {t('study.howThis.body.mid')}
-            <strong style={{ color: 'var(--p-ink)' }}>{t('study.howThis.bMastery')}</strong>
-            {t('study.howThis.body.post')}
-            <strong style={{ color: 'var(--p-ink)' }}>{t('study.howThis.bNotes')}</strong>
-            {t('study.howThis.body.tail')}
+          <div className="practice-steps">
+            <div><BookOpenCheck size={20} /><b>{t('study.steps.one.title')}</b><span>{t('study.steps.one.desc')}</span></div>
+            <div><Dumbbell size={20} /><b>{t('study.steps.two.title')}</b><span>{t('study.steps.two.desc')}</span></div>
+            <div><NotebookTabs size={20} /><b>{t('study.steps.three.title')}</b><span>{t('study.steps.three.desc')}</span></div>
           </div>
 
           <div style={{ height: 16 }} />

@@ -4,16 +4,20 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { post, patch, tokens, get } from '../lib/api';
+import { ArrowRight, Camera, Lightbulb, Route, Sparkles } from 'lucide-react';
+import { post, patch, tokens } from '../lib/api';
 import { Glyph } from '../components/onboarding/Glyph';
 import MathText from '../components/MathText';
-import { BrandLogo } from '../components/Brand';
-import type {
-  AdaptiveDiagnosticAnswer,
-  AdaptiveDiagnosticStart,
-  DiagnosticProblem,
-  DiagnosticResult,
-  Me,
+import { BrandLockup } from '../components/Brand';
+import { LearningOrbit } from '../components/design/LearningOrbit';
+import {
+  type AdaptiveDiagnosticAnswer,
+  type AdaptiveDiagnosticStart,
+  type DiagnosticProblem,
+  type DiagnosticResult,
+  type Me,
+  fetchGuardianConsentStatus,
+  requestGuardianConsent,
 } from '../lib/queries';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag, useFeatureFlags } from '../hooks/useFeatureFlags';
@@ -31,7 +35,6 @@ import {
 import { LAUNCH_STUDENT_ONLY } from '../lib/launch-config';
 import { detectOnboardingLang, langForCountry } from '../lib/onboarding-locale';
 import { AgeGate } from '../components/onboarding/AgeGate';
-import { fetchGuardianConsentStatus, requestGuardianConsent } from '../lib/queries';
 import '../styles/onboarding.css';
 
 type StepKey = 'welcome' | 'country' | 'auth' | 'role' | 'profile' | 'guardian' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
@@ -74,7 +77,7 @@ export default function OnboardingPage() {
   // via <I18nCountrySync /> in App.tsx — when a KR account is detected and
   // no explicit lang preference is set, lang switches to 'ko' there.
   return (
-    <div className="mathema-app">
+    <div className="mathema-app onboarding-shell">
       <div className="mathema-viewport">
         <div className="mathema-phone">
           <Flow onFinish={(r) => navigate(homePathForRole(r ?? user?.role))} />
@@ -307,42 +310,39 @@ function TopScaffold({
 function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () => void }) {
   const { t } = useT();
   return (
-    <div className="screen">
-      <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <BrandLogo size="sm" />
-        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>{t('onboarding.classLabel')}</span>
-      </div>
-      <div className="screen-body" style={{ paddingTop: 28, gap: 24 }}>
-        <div className="hero-glyph">
-          <div className="grid-bg" />
-          <div style={{ position: 'absolute', inset: 0, padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', opacity: 0.8 }}>{t('onboarding.welcome.figureLabel')}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.6 }}>{t('onboarding.welcome.figureSub')}</span>
-            </div>
-            <div style={{ flex: 1, marginTop: -8 }}>
-              <Glyph.WelcomeHero accent="var(--p-primary-fg)" />
-            </div>
-          </div>
-        </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-          <span className="eyebrow">{t('onboarding.welcome.eyebrow')}</span>
-          <h1 className="display" style={{ marginTop: 10 }}>
+    <div className="screen welcome-screen">
+      <header className="welcome-brand-row">
+        <BrandLockup />
+        <span className="age-pill">{t('onboarding.classLabel')}</span>
+      </header>
+      <div className="welcome-layout">
+        <section className="welcome-copy">
+          <span className="story-kicker"><Sparkles size={15} />{t('onboarding.welcome.eyebrow')}</span>
+          <h1 className="display">
             {t('onboarding.welcome.title.line1')}<br />{t('onboarding.welcome.title.line2')} <em>{t('onboarding.welcome.title.em')}</em>{t('onboarding.welcome.title.line3')}<br />{t('onboarding.welcome.title.line4')}
           </h1>
-          <p className="subtitle" style={{ maxWidth: 320 }}>
-            {t('onboarding.welcome.tagline')}
-          </p>
-        </div>
-      </div>
-      <div className="screen-foot">
-        <button className="btn" onClick={onNext}>
-          {t('onboarding.welcome.cta.start')}
-          <Glyph.ChevronR />
-        </button>
-        <button className="btn text" onClick={onSignIn}>
-          {t('onboarding.welcome.cta.signin')}
-        </button>
+          <p className="subtitle">{t('onboarding.welcome.tagline')}</p>
+          <div className="welcome-benefits">
+            <span><Camera size={18} /><b>{t('onboarding.welcome.benefit.photo.title')}</b><small>{t('onboarding.welcome.benefit.photo.sub')}</small></span>
+            <span><Route size={18} /><b>{t('onboarding.welcome.benefit.path.title')}</b><small>{t('onboarding.welcome.benefit.path.sub')}</small></span>
+            <span><Lightbulb size={18} /><b>{t('onboarding.welcome.benefit.coach.title')}</b><small>{t('onboarding.welcome.benefit.coach.sub')}</small></span>
+          </div>
+          <div className="welcome-actions">
+            <button className="btn" onClick={onNext}>
+              {t('onboarding.welcome.cta.start')}<ArrowRight size={18} />
+            </button>
+            <button className="btn text" onClick={onSignIn}>{t('onboarding.welcome.cta.signin')}</button>
+          </div>
+        </section>
+        <section className="welcome-visual" aria-hidden="true">
+          <div className="welcome-visual-label">{t('onboarding.welcome.visual.label')}</div>
+          <LearningOrbit variant="teal" />
+          <div className="welcome-loop">
+            <span>{t('onboarding.welcome.loop.one')}</span><i />
+            <span>{t('onboarding.welcome.loop.two')}</span><i />
+            <span>{t('onboarding.welcome.loop.three')}</span>
+          </div>
+        </section>
       </div>
     </div>
   );

@@ -15,14 +15,14 @@ test.describe('matheo — public smoke', () => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/login/);
 
-    // Labels are sibling <label> nodes (no htmlFor) — use placeholder/role instead.
+    // Keep the public entry points and primary action visible.
     await expect(page.getByPlaceholder('you@example.com')).toBeVisible();
     await expect(page.locator('input[type="password"]')).toBeVisible();
     await expect(
       page.getByRole('button', { name: /sign in|로그인|साइन इन/i }),
     ).toBeVisible();
-    // LoginPage renders two BrandLogo images (header + hero).
-    await expect(page.getByRole('img', { name: 'Matheo' }).first()).toBeVisible();
+    // BrandLockup exposes one stable accessible name while its cropped image is decorative.
+    await expect(page.getByLabel('Matheo', { exact: true })).toBeVisible();
   });
 
   test('privacy page renders without login', async ({ page }) => {

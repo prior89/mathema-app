@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { NotebookPen, Sparkles } from 'lucide-react';
 import { fetchActivePatterns, fetchWrongNotes, fetchWrongNotesStats, fetchPatterns } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
 import type { TranslationKey } from '../../lib/translations';
@@ -40,7 +41,7 @@ export function NotesListScreen() {
   });
 
   return (
-    <div className="screen" style={{ position: 'relative' }}>
+    <div className="screen tabbed-screen notes-screen" style={{ position: 'relative' }}>
       {/* Mixed scroll model — header + 4-stat row stay pinned at top (those
           are quick orientation signals: total/analyzed/mastered/retry). AI
           pattern banner + filter chips + cards grid share one scroll surface
@@ -56,7 +57,11 @@ export function NotesListScreen() {
         </div>
         <HeadAvatar />
       </div>
-      <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
+      <div className="content-rail notes-overview" style={{ padding: '12px 22px 0', flexShrink: 0 }}>
+        <div className="notes-intro">
+          <span className="notes-intro-icon"><NotebookPen size={24} /></span>
+          <div><span><Sparkles size={13} />{t('notes.hero.kicker')}</span><b>{t('notes.hero.title')}</b><small>{t('notes.hero.desc')}</small></div>
+        </div>
         {/* 4 stats compact — stays pinned alongside the header. */}
         <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
           <StatMini k={t('notes.stat.total')} v={stats.data?.total ?? 0} />
@@ -67,8 +72,8 @@ export function NotesListScreen() {
       </div>
 
       {/* Scroll surface — banner + chips + grid all ride here together. */}
-      <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        <div style={{ padding: '12px 22px 0' }}>
+      <div className="app-scroll" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div className="content-rail" style={{ padding: '12px 22px 0' }}>
         {/* Error DNA L2 — active patterns (PR-25); L1 ai-coach fallback */}
         {activePatterns.data && activePatterns.data.length > 0 ? (
           <ActiveErrorPatternBanner
@@ -93,20 +98,22 @@ export function NotesListScreen() {
             what still needs work without scrolling past every MASTERED card. */}
         <div className="filter-row" style={{ marginTop: 10, marginBottom: 4 }}>
           {FILTERS.map((f) => (
-            <span
+            <button
+              type="button"
               key={f.id}
               className={`filter-chip ${filter === f.id ? 'active' : ''}`}
+              aria-pressed={filter === f.id}
               style={{ flex: '0 0 calc((100% - 12px) / 3)', textAlign: 'center' }}
               onClick={() => setFilter(f.id)}
             >
               {t(f.labelKey)}
-            </span>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Cards grid — rides inside the same scroll surface as the top strip. */}
-      <div style={{ padding: '8px 22px' }}>
+      <div className="content-rail" style={{ padding: '8px 22px' }}>
         {notes.isLoading && <Empty msg={t('notes.loading')} />}
         {notes.data && notes.data.length === 0 && <Empty msg={t('notes.empty.none')} />}
         {notes.data && notes.data.length > 0 && visibleNotes.length === 0 && (
@@ -120,7 +127,8 @@ export function NotesListScreen() {
         )}
         <div className="notes-grid">
           {visibleNotes.map((n) => (
-            <div
+            <button
+              type="button"
               key={n.id}
               className="note-card"
               onClick={() => nav(`/app/notes/${n.id}`)}
@@ -154,7 +162,7 @@ export function NotesListScreen() {
                   })()}
                   <span style={{ fontSize: 10.5, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)' }}>{n.diff}</span>
                 </div>
-              </div>
+              </button>
             ))}
         </div>
         <div style={{ height: 90 }} />

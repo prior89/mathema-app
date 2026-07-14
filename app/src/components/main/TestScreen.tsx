@@ -8,10 +8,10 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Clock3, RotateCcw, Sparkles, Trophy } from 'lucide-react';
 import { fetchReviewQueueNext } from '../../lib/queries';
 import * as M from '../../lib/mutations';
 import { useT } from '../../lib/i18n';
-import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import { HeadAvatar } from './HeadAvatar';
 
@@ -56,8 +56,8 @@ export function TestScreen() {
   }
 
   return (
-    <div className="screen">
-      <div style={{ flex: 1, overflow: 'auto' }}>
+    <div className="screen tabbed-screen review-screen">
+      <div className="app-scroll" style={{ flex: 1, overflow: 'auto' }}>
         <div className="app-head" style={{ paddingBottom: 0 }}>
           <div>
             <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('test.tab.label')}</div>
@@ -66,13 +66,14 @@ export function TestScreen() {
           <HeadAvatar />
         </div>
 
-        <div style={{ padding: '12px 22px 0' }}>
+        <div className="content-rail" style={{ padding: '12px 22px 0' }}>
           <div
-            className="card"
+            className="card review-hero"
             style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent' }}
           >
+            <span className="review-hero-icon" aria-hidden="true">{hasPending ? <RotateCcw size={28} /> : <Clock3 size={28} />}</span>
             <div style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', color: 'var(--p-primary)', fontWeight: 700 }}>
-              {t('test.queue.eyebrow')}
+              <Sparkles size={12} />{t('test.queue.eyebrow')}
             </div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, marginTop: 4, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
               {queue.isLoading
@@ -95,7 +96,7 @@ export function TestScreen() {
               style={{ marginTop: 12, height: 44, fontSize: 13 }}
             >
               {hasPending ? t('test.queue.start') : t('test.queue.nothing')}
-              <Glyph.ChevronR />
+              <ArrowRight size={17} />
             </button>
           </div>
 
@@ -103,7 +104,7 @@ export function TestScreen() {
           <div className="section-h">
             <span className="label">{t('test.how.section')}</span>
           </div>
-          <div className="card" style={{ padding: 14, fontSize: 13, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
+          <div className="card review-explainer" style={{ padding: 14, fontSize: 13, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>
             {t('test.how.body.pre')}
             <strong style={{ color: 'var(--p-ink)' }}>{t('test.how.body.threeDays')}</strong>
             {t('test.how.body.mid')}
@@ -117,7 +118,8 @@ export function TestScreen() {
           <div className="section-h">
             <span className="label">{t('test.mock.section')}</span>
           </div>
-          <div className="card">
+          <div className="card mock-challenge-card">
+            <span className="mock-icon"><Trophy size={22} /></span>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
               {t('test.mock.title')}
             </div>
@@ -136,7 +138,7 @@ export function TestScreen() {
               style={{ marginTop: 12, height: 44, fontSize: 13 }}
             >
               {startMock.isPending ? t('test.mock.starting') : t('test.mock.start')}
-              <Glyph.ChevronR />
+              <ArrowRight size={17} />
             </button>
           </div>
 

@@ -38,7 +38,8 @@
     "billing:rtdn-setup": "node scripts/billing-g1-rtdn-setup.cjs"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "eslint-plugin-react-hooks": "^7.1.1"
   },
   "engines": {
     "node": ">=20.0.0",
@@ -46,5 +47,8 @@
   },
   "dependencies": {
     "lodash": "4.18.1"
+  },
+  "overrides": {
+    "picomatch": "4.0.4"
   }
 }

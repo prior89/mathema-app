@@ -10,6 +10,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { BookOpenCheck, Sparkles } from 'lucide-react';
 import {
   fetchConceptLessons, fetchMe,
   fetchKoreanConceptLessons,
@@ -87,7 +88,7 @@ function KoreanLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
   const grouped = groupBySubject(lessons.data ?? []);
 
   return (
-    <div className="screen">
+    <div className="screen tabbed-screen learn-screen">
       <div className="app-head" style={{ paddingBottom: 0, flexShrink: 0 }}>
         <div>
           <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>
@@ -99,22 +100,30 @@ function KoreanLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
         </div>
         <HeadAvatar />
       </div>
-      <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
+      <div className="learn-intro">
+        <span><Sparkles size={14} />{t('learn.hero.kicker')}</span>
+        <h2>{t('learn.hero.title')}</h2>
+        <p>{t('learn.hero.desc')}</p>
+        <div className="learn-loop"><BookOpenCheck size={18} />{t('learn.hero.loop')}</div>
+      </div>
+      <div className="content-rail learn-filters" style={{ padding: '12px 22px 0', flexShrink: 0 }}>
         <div className="filter-row">
           {grades.map((g) => (
-            <span
+            <button
+              type="button"
               key={g}
               className={`filter-chip ${grade === g ? 'active' : ''}`}
+              aria-pressed={grade === g}
               style={{ flex: '0 0 calc((100% - 30px) / 6)', textAlign: 'center' }}
               onClick={() => setGrade(g)}
             >
               {KOREAN_GRADE_LABEL[g]}
-            </span>
+            </button>
           ))}
         </div>
       </div>
 
-      <div style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '0 22px' }}>
+      <div className="app-scroll content-rail" style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '0 22px' }}>
         {lessons.isLoading && <Empty msg={t('learn.loading')} />}
         {lessons.data && lessons.data.length === 0 && <Empty msg={t('learn.empty')} />}
 
@@ -124,11 +133,12 @@ function KoreanLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
               <span className="label">{KOREAN_SUBJECT_LABEL[subject]}</span>
               <span className="more">{items.length}단원</span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="chapter-path" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {items.map((l) => (
-                <div
+                <button
+                  type="button"
                   key={l.chapterCode}
-                  className="plan-card"
+                  className="plan-card chapter-node"
                   onClick={() => nav(`/app/learn/${l.chapterCode}`)}
                 >
                   {/* L5: mastered 챕터는 숫자 대신 ✓ 표시 (사용자 spec 2026-05-24).
@@ -147,7 +157,7 @@ function KoreanLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
                     <div className="sub">{l.bigIdeaKo}</div>
                   </div>
                   <Glyph.ChevronR accent="var(--p-muted)" size={16} />
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -194,7 +204,7 @@ function NcertLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
   const classes: NcertClass[] = ['CLASS_7', 'CLASS_8', 'CLASS_9', 'CLASS_10', 'CLASS_11', 'CLASS_12'];
 
   return (
-    <div className="screen">
+    <div className="screen tabbed-screen learn-screen">
       <div className="app-head" style={{ paddingBottom: 0, flexShrink: 0 }}>
         <div>
           <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('learn.tab.label')}</div>
@@ -202,12 +212,20 @@ function NcertLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
         </div>
         <HeadAvatar />
       </div>
-      <div style={{ padding: '12px 22px 0', flexShrink: 0 }}>
+      <div className="learn-intro">
+        <span><Sparkles size={14} />{t('learn.hero.kicker')}</span>
+        <h2>{t('learn.hero.title')}</h2>
+        <p>{t('learn.hero.desc')}</p>
+        <div className="learn-loop"><BookOpenCheck size={18} />{t('learn.hero.loop')}</div>
+      </div>
+      <div className="content-rail learn-filters" style={{ padding: '12px 22px 0', flexShrink: 0 }}>
         <div className="filter-row">
           {classes.map((c) => (
-            <span
+            <button
+              type="button"
               key={c}
               className={`filter-chip ${ncertClass === c ? 'active' : ''}`}
+              aria-pressed={ncertClass === c}
               style={{
                 flex: '0 0 calc((100% - 18px) / 4)',
                 textAlign: 'center',
@@ -215,18 +233,18 @@ function NcertLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
               onClick={() => setNcertClass(c)}
             >
               {CLASS_LABEL[c]}
-            </span>
+            </button>
           ))}
         </div>
       </div>
 
-      <div style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '0 22px' }}>
+      <div className="app-scroll content-rail" style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '0 22px' }}>
         {lessons.isLoading && <Empty msg={t('learn.loading')} />}
         {lessons.data && lessons.data.length === 0 && <Empty msg={t('learn.empty')} />}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+        <div className="chapter-path" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
           {(lessons.data ?? []).map((l) => (
-            <div key={l.chapterCode} className="plan-card" onClick={() => nav(`/app/learn/${l.chapterCode}`)}>
+            <button type="button" key={l.chapterCode} className="plan-card chapter-node" onClick={() => nav(`/app/learn/${l.chapterCode}`)}>
               {/* L5: mastered chapter는 숫자 → ✓ (KR/NCERT 통일). */}
               <div
                 className="badge"
@@ -242,7 +260,7 @@ function NcertLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
                 <div className="sub">{l.bigIdea}</div>
               </div>
               <Glyph.ChevronR accent="var(--p-muted)" size={16} />
-            </div>
+            </button>
           ))}
         </div>
 

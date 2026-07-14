@@ -6,6 +6,7 @@
  */
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { HomeScreen } from '../components/main/HomeScreen';
 import { MasteryScreen } from '../components/main/MasteryScreen';
 import { LearnScreen } from '../components/main/LearnScreen';
@@ -29,6 +30,7 @@ import { AdminDraftEditorScreen } from '../components/admin/AdminDraftEditorScre
 import { AdminKoreanStudyProblemNewScreen } from '../components/admin/AdminKoreanStudyProblemNewScreen';
 import { AdminMasterySetScreen } from '../components/admin/AdminMasterySetScreen';
 import { AdminReportsScreen } from '../components/admin/AdminReportsScreen';
+import { fetchMe } from '../lib/queries';
 import '../styles/onboarding.css';
 
 const PaywallPage = lazy(() => import('./PaywallPage'));
@@ -39,8 +41,16 @@ export default function MainAppPage() {
   // forced *every* /app entry into Korean — even India users with
   // country='IN'. App.tsx <I18nCountrySync /> is now the single source of
   // truth (country='KR'→ko, otherwise→en), so this override is removed.
+  const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
+  const age = me.data?.birthDate
+    ? Math.floor((Date.now() - new Date(me.data.birthDate).getTime()) / 31_557_600_000)
+    : null;
+  // Unknown age defaults to the calmer Focus expression. Younger learners
+  // get a little more colour and motion, without changing navigation or copy.
+  const expression = age != null && age <= 12 ? 'age-play' : 'age-focus';
+
   return (
-    <div className="mathema-app">
+    <div className={`mathema-app main-shell ${expression}`}>
       <div className="mathema-viewport">
         <div className="mathema-phone">
           <Routes>
