@@ -67,6 +67,32 @@ export class AuthService {
     if (cid && cid !== 'api입력칸') this.googleClient = new OAuth2Client(cid);
   }
 
+  private assertMarketAvailable(rawCountry: string): CountryCode {
+    const country = rawCountry as CountryCode;
+    const market = COUNTRY_CONFIG[country];
+    if (!market || market.status === 'planned') {
+      throw new BadRequestException({
+        code: 'country_unavailable',
+        message: market
+          ? `Sign-up for ${market.name} is not available yet`
+          : 'This country curriculum is not available.',
+      });
+    }
+    return country;
+  }
+
+  private assertGuestModeEnabled() {
+    const pct = Number.parseInt(this.config.get<string>('FEATURE_GUEST_MODE_PCT') ?? '0', 10);
+    // Pre-auth feature evaluation has no stable user bucket, so the public
+    // flags service also treats guest mode as an explicit 0/100 kill switch.
+    if (!Number.isFinite(pct) || pct < 100) {
+      throw new BadRequestException({
+        code: 'guest_mode_disabled',
+        message: 'Guest mode is not available.',
+      });
+    }
+  }
+
   async register(dto: RegisterDto, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
     const email = dto.email.trim().toLowerCase();
     // Structural isolation of the synthetic identity namespaces: reject them at
@@ -88,12 +114,7 @@ export class AuthService {
     // the onboarding chip UI already hides these, this closes the API path.
     // Default is 'KR' (the only live market) so an omitted country never hits
     // the reject branch. ──
-    const resolvedCountry = (dto.country ?? 'KR') as CountryCode;
-    if (COUNTRY_CONFIG[resolvedCountry]?.status === 'planned') {
-      throw new BadRequestException(
-        `Sign-up for ${COUNTRY_CONFIG[resolvedCountry].name} is not available yet`,
-      );
-    }
+    const resolvedCountry = this.assertMarketAvailable(dto.country ?? 'KR');
 
     // KR PIPA under-14 gate. Normally a no-op: under-14 KR onboards via the
     // decree-compliant email-OTP guardian rail (started after create). Only
@@ -104,6 +125,17 @@ export class AuthService {
       throw new BadRequestException({
         code: 'kr_under14_requires_pass',
         message: 'KR sign-up for under-14s currently requires guardian identity verification (PASS), which is being set up.',
+      });
+    }
+
+    if (dto.consentAnalytics || dto.consentMarketing || dto.consentAiTraining) {
+      // Run the deterministic consent guard before creating the user. The
+      // post-create PrivacyService guard remains as defense in depth.
+      this.privacy.assertOptionalConsentProfile({
+        role,
+        birthDate: birthDateForGate,
+        country: resolvedCountry,
+        isGuest: false,
       });
     }
 
@@ -546,6 +578,7 @@ export class AuthService {
    * it is persisted, so a failed send never leaves a usable code in Redis.
    */
   async startPhoneOtp(phone: string, _ctx: { ip?: string; ua?: string } = {}) {
+    this.assertMarketAvailable('IN');
     const normalized = this.normalizePhone(phone);
     if (normalized.replace(/[^0-9]/g, '').length < 8) {
       throw new BadRequestException('invalid phone number');
@@ -571,6 +604,7 @@ export class AuthService {
 
   /** Verify a phone code and find-or-create the user (country IN). */
   async verifyPhoneOtp(phone: string, code: string, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
+    this.assertMarketAvailable('IN');
     const normalized = this.normalizePhone(phone);
     // Single generic error for every failure so /verify can't be used to probe
     // whether a code is currently pending / a number is mid-login.
@@ -598,6 +632,7 @@ export class AuthService {
 
   /** Truecaller one-tap — verify the SDK token, then find-or-create by phone. */
   async signInWithTruecaller(token: string, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
+    this.assertMarketAvailable('IN');
     const identity = await this.otp.verifyTruecaller(token);
     const user = await this.findOrCreatePhoneUser(this.normalizePhone(identity.phone), identity.name);
     await this.bindAndDisplace({ userId: user.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua });
@@ -606,6 +641,7 @@ export class AuthService {
   }
 
   private async findOrCreatePhoneUser(phone: string, name?: string) {
+    this.assertMarketAvailable('IN');
     // No phone column on User. Use a stable, non-reversible synthetic email as
     // the identifier so /users/me and exports do not expose the raw phone.
     const email = `phone_${this.phoneFingerprint(phone)}@users.matheo.local`;
@@ -645,6 +681,8 @@ export class AuthService {
     dto: { country?: string; gradeLevel?: string } = {},
     ctx: { ip?: string; ua?: string; deviceHash?: string } = {},
   ) {
+    this.assertGuestModeEnabled();
+    const guestCountry = this.assertMarketAvailable(dto.country ?? 'KR');
     if (ctx.deviceHash) {
       const bound = await (this.prisma as any).authDevice.findFirst({
         where: { deviceHash: ctx.deviceHash },
@@ -654,9 +692,10 @@ export class AuthService {
       if (bound) {
         const existing = await this.prisma.user.findUnique({
           where: { id: bound.userId },
-          select: { id: true, isGuest: true, deletedAt: true },
+          select: { id: true, isGuest: true, deletedAt: true, country: true },
         });
         if (existing && (existing as any).isGuest && !existing.deletedAt) {
+          this.assertMarketAvailable(existing.country ?? 'KR');
           await this.bindAndDisplace({
             userId: existing.id, deviceHash: ctx.deviceHash, ip: ctx.ip, ua: ctx.ua,
           });
@@ -676,7 +715,7 @@ export class AuthService {
       targetGrade: 3,
       // KR-first: default guests to the only live market when the chip hasn't
       // sent one yet. The onboarding country step overrides this before content.
-      country: (dto.country ?? 'KR') as any,
+      country: guestCountry as any,
       gradeLevel: (dto.gradeLevel ?? null) as any,
       emailVerifiedAt: new Date(),
       isGuest: true,
@@ -733,11 +772,23 @@ export class AuthService {
     // (email-OTP consent runs after upgrade); only fires under the
     // KR_UNDER14_REQUIRE_PASS opt-in. Effective country = new value or guest's.
     const upgradeCountry = (dto.country ?? (me as any).country ?? 'KR') as CountryCode;
+    this.assertMarketAvailable(upgradeCountry);
     const upgradeBirthDate = dto.birthDate ? new Date(dto.birthDate) : null;
     if (isKrUnder14SignupBlocked(upgradeBirthDate, upgradeCountry)) {
       throw new BadRequestException({
         code: 'kr_under14_requires_pass',
         message: 'KR sign-up for under-14s currently requires guardian identity verification (PASS), which is being set up.',
+      });
+    }
+
+
+    if (dto.consentAnalytics || dto.consentMarketing || dto.consentAiTraining) {
+      this.privacy.assertOptionalConsentProfile({
+        role: UserRole.STUDENT,
+        birthDate: upgradeBirthDate,
+        country: upgradeCountry,
+        // Eligibility is evaluated for the post-upgrade real account.
+        isGuest: false,
       });
     }
 

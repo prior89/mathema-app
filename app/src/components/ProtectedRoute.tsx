@@ -67,7 +67,7 @@ export default function ProtectedRoute({ children, roles }: ProtectedRouteProps)
   if (
     userRole === 'STUDENT'
     && !user.gradeLevel
-    && !onboardingCompletedLocally()
+    && !onboardingCompletedLocally(user.id)
   ) {
     return <Navigate to="/onboarding" replace />;
   }

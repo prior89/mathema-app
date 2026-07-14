@@ -41,7 +41,7 @@ export class RegisterDto {
   country?: CountryCode;
 
   // ─── STUDENT 만 의미 — PARENT/TEACHER 일 때는 무시 ─────────────
-  /** Approximate birth date from self-reported age — under-13 guardian email gate. */
+  /** Approximate birth date from self-reported age — country-aware guardian email gate. */
   @IsOptional() @IsDateString() birthDate?: string;
   @IsOptional() @IsDateString() examDate?: string;
   @IsOptional() @IsInt() @Min(1) @Max(9) targetGrade?: number;

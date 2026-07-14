@@ -10,12 +10,12 @@
  * rather than fail flakily.
  */
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin } from './helpers';
+import { API_BASE, loginAsAdmin } from './helpers';
 
 test.describe('study tab', () => {
   test.beforeEach(async ({ page, request }) => {
     try {
-      const r = await request.get('http://localhost:4000/api/v1/health/live');
+      const r = await request.get(`${API_BASE}/health/live`);
       test.skip(!r.ok(), 'Backend not reachable at :4000');
     } catch {
       test.skip(true, 'Backend not reachable at :4000');
@@ -23,9 +23,13 @@ test.describe('study tab', () => {
     // Study practice requires Mastery completion, which a register-only
     // throwaway user can't reach -- only the admin dev-login user (seeded
     // with progress) can. Probe dev-login availability; skip if disabled.
-    const probe = await request.post('http://localhost:4000/api/v1/auth/dev-login', { data: {} });
+    const probe = await request.post(`${API_BASE}/auth/dev-login`, { data: {} });
     test.skip(probe.status() === 401, 'Dev-login disabled -- Study practice spec needs admin seed');
-    await loginAsAdmin(page);
+    const landingPath = await loginAsAdmin(page);
+    test.skip(
+      !landingPath.startsWith('/app'),
+      `Seeded dev user is ${landingPath}-gated; Study specs require a completed /app account`,
+    );
   });
 
   test('study tab renders the chapter picker', async ({ page }) => {

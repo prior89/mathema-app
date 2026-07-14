@@ -38,9 +38,14 @@ export function TabBar() {
   // top-bar HeadAvatar, so no bottom tab highlights there.
   const active: TabId =
     loc.pathname.startsWith('/app/learn') ? 'learn' :
-    loc.pathname.startsWith('/app/study') ? 'study' :
+    loc.pathname.startsWith('/app/study')
+      || loc.pathname.startsWith('/app/practice')
+      || loc.pathname.startsWith('/app/ko-practice-set')
+      || loc.pathname.startsWith('/app/mocks/play') ? 'study' :
     loc.pathname.startsWith('/app/notes') ? 'notes' :
-    loc.pathname.startsWith('/app/test') ? 'test' :
+    loc.pathname.startsWith('/app/test')
+      || loc.pathname.startsWith('/app/review')
+      || loc.pathname.startsWith('/app/mocks') ? 'test' :
     loc.pathname.startsWith('/app/me') ? 'me' : 'home';
   // 2026-05-27 a11y: tab items were plain <div onClick>. That meant no
   // keyboard focus, no Enter/Space activation, no role semantics for screen

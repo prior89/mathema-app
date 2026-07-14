@@ -10,6 +10,7 @@
 import * as bcrypt from 'bcrypt';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { COUNTRY_CONFIG } from '../../common/enums/country.enum';
 
 type AnyMock = { [k: string]: jest.Mock };
 
@@ -36,7 +37,7 @@ function mockPrisma(): any {
   return {
     passwordResetToken: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
     emailVerificationToken: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
-    user: { update: jest.fn() },
+    user: { findUnique: jest.fn(), update: jest.fn() },
     $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
   };
 }
@@ -57,6 +58,7 @@ function mockMail(): AnyMock {
 }
 function mockPrivacy(): AnyMock {
   return {
+    assertOptionalConsentProfile: jest.fn(),
     grantInitial: jest.fn().mockResolvedValue(undefined),
     grant: jest.fn().mockResolvedValue(undefined),
     isActive: jest.fn().mockResolvedValue(false),
@@ -228,6 +230,25 @@ describe('AuthService', () => {
       } as any);
       expect(users.create).toHaveBeenCalledWith(expect.objectContaining({ country: 'KR' }));
     });
+
+    it('rejects an ineligible optional-consent payload before creating the user', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue(null);
+      const privacy = mockPrivacy();
+      privacy.assertOptionalConsentProfile.mockImplementation(() => {
+        throw new BadRequestException({ code: 'minor_optional_consent_requires_guardian' });
+      });
+      const { svc } = build({ users, privacy });
+
+      await expect(svc.register({
+        email: 'minor@b.com', password: 'pw12345678', name: 'Minor', role: 'STUDENT',
+        country: 'KR', birthDate: '2014-01-01', consentAnalytics: true,
+      } as any)).rejects.toMatchObject({
+        response: { code: 'minor_optional_consent_requires_guardian' },
+      });
+      expect(users.create).not.toHaveBeenCalled();
+      expect(privacy.grantInitial).not.toHaveBeenCalled();
+    });
   });
 
   // ─────── login ───────
@@ -382,6 +403,9 @@ describe('AuthService', () => {
 
   describe('phone OTP', () => {
     it('stores phone OTP state and synthetic email without exposing the raw phone', async () => {
+      const previousStatus = COUNTRY_CONFIG.IN.status;
+      COUNTRY_CONFIG.IN.status = 'live';
+      try {
       const rawPhone = '+91 98123 45678';
       const rawDigits = '919812345678';
       const users = mockUsers();
@@ -427,6 +451,75 @@ describe('AuthService', () => {
       expect(created.email).toMatch(/^phone_[0-9a-f]{32}@users\.matheo\.local$/);
       expect(created.email).not.toContain(rawDigits);
       expect(created.passwordHash).not.toContain(rawDigits);
+      } finally {
+        COUNTRY_CONFIG.IN.status = previousStatus;
+      }
+    });
+
+    it('does not send an OTP while the India market is planned', async () => {
+      const otp = {
+        isMock: jest.fn().mockReturnValue(true),
+        send: jest.fn(),
+        verifyTruecaller: jest.fn(),
+      };
+      const { svc } = build({ otp });
+
+      await expect(svc.startPhoneOtp('+91 98123 45678')).rejects.toMatchObject({
+        response: { code: 'country_unavailable' },
+      });
+      expect(otp.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('guest account gates', () => {
+    it('enforces the server-side guest-mode kill switch before creating a user', async () => {
+      const users = mockUsers();
+      const { svc } = build({ users });
+
+      await expect(svc.guestStart({ country: 'KR' })).rejects.toMatchObject({
+        response: { code: 'guest_mode_disabled' },
+      });
+      expect(users.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects a planned guest market before creating a user', async () => {
+      const users = mockUsers();
+      const config = mockConfig({
+        'jwt.accessSecret': 'a'.repeat(48),
+        'jwt.refreshSecret': 'b'.repeat(48),
+        'jwt.accessTtl': '15m',
+        'jwt.refreshTtl': '30d',
+        FEATURE_GUEST_MODE_PCT: '100',
+      });
+      const { svc } = build({ users, config });
+
+      await expect(svc.guestStart({ country: 'IN' })).rejects.toMatchObject({
+        response: { code: 'country_unavailable' },
+      });
+      expect(users.create).not.toHaveBeenCalled();
+    });
+
+    it('checks optional-consent eligibility before mutating a guest account', async () => {
+      const prisma = mockPrisma();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'guest-1', isGuest: true, deletedAt: null, country: 'KR',
+      });
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue(null);
+      const privacy = mockPrivacy();
+      privacy.assertOptionalConsentProfile.mockImplementation(() => {
+        throw new BadRequestException({ code: 'minor_optional_consent_requires_guardian' });
+      });
+      const { svc } = build({ prisma, users, privacy });
+
+      await expect(svc.guestUpgrade('guest-1', {
+        email: 'upgrade@b.com', password: 'pw12345678', name: 'Student',
+        country: 'KR', birthDate: '2014-01-01', consentMarketing: true,
+      })).rejects.toMatchObject({
+        response: { code: 'minor_optional_consent_requires_guardian' },
+      });
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(privacy.grant).not.toHaveBeenCalled();
     });
   });
 

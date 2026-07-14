@@ -1,57 +1,49 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 /**
- * CI-safe public smoke — Vite dev server only (no NestJS/Postgres sidecar).
- *
- *   1. Unauthenticated / → /login with email/password form
- *   2. /privacy renders (static fallback when API proxy is down)
- *
- * Full-stack health + login flows live in other specs and scripts/smoke-prod.sh.
- * Set E2E_API_BASE when a backend is running to also hit /health/ready.
+ * Backend-independent public-route smoke. Auth wiring and routing contracts
+ * live in 01-auth.spec.ts; these checks stay intentionally small and prove
+ * that the redesigned public shell can be entered on both viewports.
  */
+test.describe('Matheo public smoke', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('mathema.lang', 'ko'));
+  });
 
-test.describe('matheo — public smoke', () => {
-  test('lands on login with sign-in form', async ({ page }) => {
+  test('root lands on the redesigned login form', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveURL(/\/login/);
 
-    // Keep the public entry points and primary action visible.
-    await expect(page.getByPlaceholder('you@example.com')).toBeVisible();
-    await expect(page.locator('input[type="password"]')).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /sign in|로그인|साइन इन/i }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /Google로 계속하기|Continue with Google/i }),
-    ).toBeVisible();
-    // BrandLockup exposes one stable accessible name while its cropped image is decorative.
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /다시 반가워요|Welcome back/i })).toBeVisible();
+    await expect(page.getByLabel(/이메일|Email/i)).toBeVisible();
+    await expect(page.getByLabel(/비밀번호|Password/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /로그인|Sign in/i })).toBeEnabled();
     await expect(page.getByLabel('Matheo', { exact: true })).toBeVisible();
   });
 
-  test('onboarding keeps Google sign-up visible', async ({ page }) => {
+  test('onboarding enters through the KR curriculum gate', async ({ page }) => {
     await page.goto('/onboarding');
     await page.getByRole('button', { name: /내 수학 코스 만들기|Build my math path/i }).click();
-    await page.getByRole('button', { name: /계속하기|Continue/i }).click();
-    await expect(
-      page.getByRole('button', { name: /Google로 가입하기|Sign up with Google/i }),
-    ).toBeVisible();
+
+    await expect(page.getByRole('heading', { name: '어느 나라에서 공부하나요?' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /대한민국/ })).toBeEnabled();
+    await expect(page.getByRole('button', { name: '계속하기', exact: true })).toBeEnabled();
+    await expect(page.getByText(/NCERT|JEE|CBSE/)).toHaveCount(0);
   });
 
-  test('privacy page renders without login', async ({ page }) => {
+  test('privacy policy is readable without login', async ({ page }) => {
     await page.goto('/privacy');
-    await expect(page).toHaveURL(/\/privacy/);
-    await expect(
-      page.getByRole('heading', { name: /privacy policy|개인정보/i }),
-    ).toBeVisible();
+
+    await expect(page).toHaveURL(/\/privacy$/);
+    await expect(page.getByRole('heading', { name: /개인정보 처리방침|Privacy Policy/i })).toBeVisible();
   });
 
-  test('backend health is reachable when E2E_API_BASE is set', async ({ request }) => {
-    const apiBase = process.env.E2E_API_BASE;
-    test.skip(!apiBase, 'E2E_API_BASE not set — skip backend probe in CI');
+  test('real backend readiness is checked only when E2E_API_BASE is supplied', async ({ request }) => {
+    const apiBase = process.env.E2E_API_BASE?.replace(/\/$/, '');
+    test.skip(!apiBase, 'Backend prerequisite not requested: set E2E_API_BASE to run readiness');
 
-    const res = await request.get(`${apiBase}/health/ready`);
-    expect(res.status()).toBe(200);
-    const body = await res.json();
-    expect(body).toHaveProperty('status');
+    const response = await request.get(`${apiBase}/health/ready`);
+    expect(response.status(), await response.text()).toBe(200);
+    await expect(response.json()).resolves.toHaveProperty('status');
   });
 });

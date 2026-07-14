@@ -23,6 +23,7 @@ import { BrandLogo } from '../components/Brand';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
+import { googleSignInErrorKey } from '../lib/google-sign-in-error';
 import { LAUNCH_STUDENT_ONLY } from '../lib/launch-config';
 import { detectOnboardingLang, langForCountry } from '../lib/onboarding-locale';
 import '../styles/onboarding.css';
@@ -67,7 +68,9 @@ export default function RegisterPage() {
 
   const [parentEmail, setParentEmail] = useState('');
 
-  const [consentAnalytics, setConsentAnalytics] = useState(true);
+  // Optional processing is opt-in for every age group. Under-threshold
+  // students are additionally forced false in the registration payload.
+  const [consentAnalytics, setConsentAnalytics] = useState(false);
   const [consentAiTraining, setConsentAiTraining] = useState(false);
   const [consentMarketing, setConsentMarketing] = useState(false);
 
@@ -99,7 +102,7 @@ export default function RegisterPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (step !== 2) return;
+    if (step !== 2 || busy || googleBusy) return;
     setErr(null);
     setBusy(true);
     try {
@@ -159,6 +162,7 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignIn = async (idToken: string) => {
+    if (busy || googleBusy) return;
     setErr(null);
     setGoogleBusy(true);
     try {
@@ -206,7 +210,10 @@ export default function RegisterPage() {
                     setLang={setLang}
                     googleBusy={googleBusy}
                     onGoogleSignIn={handleGoogleSignIn}
-                    onGoogleError={() => setErr(t('login.google.failed'))}
+                    onGoogleError={(error: unknown) => {
+                      const key = googleSignInErrorKey(error, 'login.google.failed');
+                      if (key) setErr(t(key));
+                    }}
                     formBusy={busy}
                     hideGoogle={upgradeMode}
                     t={t}
@@ -262,7 +269,7 @@ export default function RegisterPage() {
                   <button
                     type="submit"
                     className="btn"
-                    disabled={busy || (isMinorStudent && !canFinishMinor)}
+                    disabled={busy || googleBusy || (isMinorStudent && !canFinishMinor)}
                     style={{ marginTop: 4 }}
                   >
                     {busy ? t('auth.login.busy') : (isMinorStudent ? t('reg.finish.minor') : t('reg.finish'))}

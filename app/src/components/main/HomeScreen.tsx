@@ -105,6 +105,16 @@ export function HomeScreen() {
             </div>
           )}
 
+          {(me.isError || summary.isError) && (
+            <QueryError
+              lang={lang}
+              onRetry={() => {
+                if (me.isError) void me.refetch();
+                if (summary.isError) void summary.refetch();
+              }}
+            />
+          )}
+
           {/* Cold-start hero — only when the user has zero study activity yet.
               The !today.isLoading guard prevents a flicker: when `summary`
               resolves before `today`, today.data is still undefined and the
@@ -132,8 +142,9 @@ export function HomeScreen() {
             <span className="more">{t('home.today.itemsCount', { n: today.data?.length ?? 0 })}</span>
           </div>
           <div className="mission-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {today.isError && <QueryError lang={lang} onRetry={() => void today.refetch()} />}
             {today.isLoading && <Empty msg={t('home.today.loading')} />}
-            {today.data && today.data.length === 0 && (
+            {!today.isError && today.data && today.data.length === 0 && (
               <EmptyCta
                 msg={t('home.today.emptyMsg')}
                 cta={t('home.today.emptyCta')}
@@ -238,6 +249,14 @@ export function HomeScreen() {
               </div>
             </>
           )}
+          {errorDna.isError && (
+            <>
+              <div className="section-h">
+                <span className="label">{t('home.errorDna.section')}</span>
+              </div>
+              <QueryError lang={lang} onRetry={() => void errorDna.refetch()} />
+            </>
+          )}
 
           {/* Chapter progress — same card for both NCERT and KR (backend
               I4a packs Korean shapes into the same ChapterProgressRow).
@@ -276,7 +295,11 @@ export function HomeScreen() {
                     </span>
                   )}
                 </div>
-                {active.length === 0 ? (
+                {chapterProgress.isLoading ? (
+                  <Empty msg={loadMessage(lang)} />
+                ) : chapterProgress.isError ? (
+                  <QueryError lang={lang} onRetry={() => void chapterProgress.refetch()} />
+                ) : active.length === 0 ? (
                   <EmptyCta
                     msg={t('home.chapterProgress.empty.msg')}
                     cta={t('home.chapterProgress.empty.cta')}
@@ -318,15 +341,16 @@ export function HomeScreen() {
               {t('home.mastery.viewAll')} →
             </button>
           </div>
-          <div
+          <button
+            type="button"
             className="card"
-            style={{ padding: 14, cursor: 'pointer' }}
+            style={{ padding: 14, cursor: 'pointer', width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit' }}
             onClick={() => nav('/app/mastery')}
           >
             <div style={{ fontSize: 13, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
               {t('home.mastery.desc')}
             </div>
-          </div>
+          </button>
 
           <div style={{ height: 16 }} />
         </div>
@@ -342,6 +366,33 @@ function Empty({ msg }: { msg: string }) {
   return (
     <div className="card" style={{ padding: 14, textAlign: 'center', color: 'var(--p-muted)', fontSize: 12.5 }}>
       {msg}
+    </div>
+  );
+}
+
+function loadMessage(lang: string) {
+  if (lang === 'ko') return '학습 정보를 불러오는 중이에요.';
+  if (lang === 'hi') return 'सीखने की जानकारी लोड हो रही है।';
+  return 'Loading your learning data…';
+}
+
+function QueryError({ lang, onRetry }: { lang: string; onRetry: () => unknown }) {
+  const copy = lang === 'ko'
+    ? { message: '정보를 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.', retry: '다시 시도' }
+    : lang === 'hi'
+      ? { message: 'जानकारी लोड नहीं हो सकी। कनेक्शन जाँचें और फिर कोशिश करें।', retry: 'फिर कोशिश करें' }
+      : { message: 'We could not load this information. Check your connection and try again.', retry: 'Try again' };
+  return (
+    <div className="card" role="alert" style={{ padding: 14, textAlign: 'center', color: 'var(--p-ink-2)', fontSize: 12.5 }}>
+      <div>{copy.message}</div>
+      <button
+        type="button"
+        className="btn ghost"
+        onClick={() => { void onRetry(); }}
+        style={{ marginTop: 10, minHeight: 38, fontSize: 12.5 }}
+      >
+        {copy.retry}
+      </button>
     </div>
   );
 }
@@ -399,7 +450,12 @@ function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClic
     'var(--p-danger-tint)';
 
   return (
-    <div className="card" style={{ padding: 12, cursor: 'pointer' }} onClick={onClick}>
+    <button
+      type="button"
+      className="card"
+      style={{ padding: 12, cursor: 'pointer', width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit' }}
+      onClick={onClick}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
@@ -431,7 +487,7 @@ function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClic
         <span>{t('home.chapter.progress', { done: row.problemsAttempted, total: row.problemsTotal })}</span>
         <span>{progressPct}%</span>
       </div>
-    </div>
+    </button>
   );
 }
 

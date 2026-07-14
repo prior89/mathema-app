@@ -59,7 +59,14 @@ export async function initCapacitorBridge() {
   if (appPlugin?.App) {
     try {
       appPlugin.App.addListener('backButton', async () => {
-        if (window.history.length > 1 && window.location.pathname !== '/') {
+        // Give active sessions/modals the first chance to block native Back.
+        const nativeBack = new CustomEvent('matheo:native-back', { cancelable: true });
+        window.dispatchEvent(nativeBack);
+        if (nativeBack.defaultPrevented) return;
+
+        const path = window.location.pathname.replace(/\/$/, '') || '/';
+        const isAppRoot = path === '/app' || path === '/parent' || path === '/teacher';
+        if (!isAppRoot && window.history.length > 1 && path !== '/') {
           window.history.back();
           return;
         }
@@ -68,8 +75,13 @@ export async function initCapacitorBridge() {
           return;
         }
         (window as any).__matheoLastBack = Date.now();
+        let ko = false;
+        try { ko = localStorage.getItem('mathema.lang') === 'ko'; } catch { /* ignore */ }
         window.dispatchEvent(new CustomEvent('mathema-toast', {
-          detail: { id: Date.now(), kind: 'info', text: 'Press back again to exit' },
+          detail: {
+            id: Date.now(), kind: 'info',
+            text: ko ? '뒤로 버튼을 한 번 더 누르면 종료돼요' : 'Press back again to exit',
+          },
         }));
       });
     } catch { /* plugin not installed */ }

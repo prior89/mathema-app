@@ -32,6 +32,9 @@ export function NotesListScreen() {
   const patterns = useQuery({ queryKey: ['patterns'], queryFn: fetchPatterns });
   const activePatterns = useQuery({ queryKey: ['error-patterns', 'active'], queryFn: fetchActivePatterns });
   const uiLang = (lang === 'ko' || lang === 'hi' ? lang : 'en') as 'ko' | 'en' | 'hi';
+  const patternQueriesFailed = (activePatterns.isError || patterns.isError)
+    && !(activePatterns.data?.length)
+    && !(patterns.data?.length);
 
   const visibleNotes = (notes.data ?? []).filter((n) => {
     const s = (n.status ?? '').toLowerCase();
@@ -63,12 +66,16 @@ export function NotesListScreen() {
           <div><span><Sparkles size={13} />{t('notes.hero.kicker')}</span><b>{t('notes.hero.title')}</b><small>{t('notes.hero.desc')}</small></div>
         </div>
         {/* 4 stats compact — stays pinned alongside the header. */}
-        <div className="stat-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-          <StatMini k={t('notes.stat.total')} v={stats.data?.total ?? 0} />
-          <StatMini k={t('notes.stat.analyzed')} v={stats.data?.analyzed ?? 0} />
-          <StatMini k={t('notes.stat.mastered')} v={stats.data?.mastered ?? 0} />
-          <StatMini k={t('notes.stat.retry')} v={Math.round(stats.data?.retryAccuracy ?? 0)} />
-        </div>
+        {stats.isError ? (
+          <QueryError lang={lang} onRetry={() => void stats.refetch()} compact />
+        ) : (
+          <div className="stat-grid" aria-busy={stats.isLoading} style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+            <StatMini k={t('notes.stat.total')} v={stats.data?.total ?? 0} />
+            <StatMini k={t('notes.stat.analyzed')} v={stats.data?.analyzed ?? 0} />
+            <StatMini k={t('notes.stat.mastered')} v={stats.data?.mastered ?? 0} />
+            <StatMini k={t('notes.stat.retry')} v={Math.round(stats.data?.retryAccuracy ?? 0)} />
+          </div>
+        )}
       </div>
 
       {/* Scroll surface — banner + chips + grid all ride here together. */}
@@ -82,7 +89,12 @@ export function NotesListScreen() {
             onClick={() => nav('/app/mastery')}
           />
         ) : patterns.data && patterns.data.length > 0 ? (
-          <div className="card" style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent', padding: 12, display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, marginTop: 8 }}>
+          <button
+            type="button"
+            className="card"
+            onClick={() => nav('/app/mastery')}
+            style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent', padding: 12, display: 'flex', gap: 10, alignItems: 'center', marginBottom: 12, marginTop: 8, width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit', cursor: 'pointer' }}
+          >
             <div style={{ width: 30, height: 30, borderRadius: 9, background: 'var(--p-primary)', color: 'var(--p-primary-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Glyph.Sparkle accent="var(--p-primary-fg)" size={14} />
             </div>
@@ -91,7 +103,16 @@ export function NotesListScreen() {
               <div style={{ fontSize: 11.5, color: 'var(--p-ink-2)' }}>{patterns.data[0].desc}</div>
             </div>
             <Glyph.ChevronR accent="var(--p-primary)" size={16} />
-          </div>
+          </button>
+        ) : patternQueriesFailed ? (
+          <QueryError
+            lang={lang}
+            onRetry={() => {
+              if (activePatterns.isError) void activePatterns.refetch();
+              if (patterns.isError) void patterns.refetch();
+            }}
+            compact
+          />
         ) : null}
 
         {/* Status filter — defaults to "In progress" so the user reaches
@@ -114,9 +135,10 @@ export function NotesListScreen() {
 
       {/* Cards grid — rides inside the same scroll surface as the top strip. */}
       <div className="content-rail" style={{ padding: '8px 22px' }}>
+        {notes.isError && <QueryError lang={lang} onRetry={() => void notes.refetch()} />}
         {notes.isLoading && <Empty msg={t('notes.loading')} />}
-        {notes.data && notes.data.length === 0 && <Empty msg={t('notes.empty.none')} />}
-        {notes.data && notes.data.length > 0 && visibleNotes.length === 0 && (
+        {!notes.isError && notes.data && notes.data.length === 0 && <Empty msg={t('notes.empty.none')} />}
+        {!notes.isError && notes.data && notes.data.length > 0 && visibleNotes.length === 0 && (
           <Empty msg={
             filter === 'mastered'
               ? t('notes.empty.mastered')
@@ -199,6 +221,39 @@ function Empty({ msg }: { msg: string }) {
   return (
     <div className="card" style={{ padding: 14, textAlign: 'center', color: 'var(--p-muted)', fontSize: 12.5, margin: '12px 0' }}>
       {msg}
+    </div>
+  );
+}
+
+function QueryError({
+  lang,
+  onRetry,
+  compact = false,
+}: {
+  lang: string;
+  onRetry: () => unknown;
+  compact?: boolean;
+}) {
+  const copy = lang === 'ko'
+    ? { message: '오답 정보를 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.', retry: '다시 시도' }
+    : lang === 'hi'
+      ? { message: 'गलत उत्तरों की जानकारी लोड नहीं हो सकी। फिर कोशिश करें।', retry: 'फिर कोशिश करें' }
+      : { message: 'We could not load your review data. Check your connection and try again.', retry: 'Try again' };
+  return (
+    <div
+      className="card"
+      role="alert"
+      style={{ padding: compact ? 10 : 14, textAlign: 'center', color: 'var(--p-ink-2)', fontSize: compact ? 11.5 : 12.5, margin: compact ? '8px 0' : '12px 0' }}
+    >
+      <div>{copy.message}</div>
+      <button
+        type="button"
+        className="btn ghost"
+        onClick={() => { void onRetry(); }}
+        style={{ marginTop: 8, minHeight: 36, fontSize: 12 }}
+      >
+        {copy.retry}
+      </button>
     </div>
   );
 }

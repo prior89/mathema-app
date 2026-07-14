@@ -240,6 +240,21 @@ export class MockExamsService {
   }
 
   async startTyped(userId: string, kind: 'mini' | 'wrong-redo' | 'real', lang: Lang = 'en') {
+    if (kind === 'real') {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { country: true },
+      });
+      // REAL is currently an India-only JEE-style +4/-1 paper. Allow-listing
+      // IN prevents Korean, unset, or future-country profiles (including
+      // stale clients and direct API calls) from receiving the wrong model.
+      if (user?.country !== CountryCode.IN) {
+        throw new ForbiddenException({
+          code: 'real_exam_country_unavailable',
+          message: 'This full mock exam is available only for the Indian curriculum.',
+        });
+      }
+    }
     const result = await this.aiRec.composeTyped(userId, kind);
     const fb = (result as { fallbackReason?: string }).fallbackReason;
     const meta: Record<string, { name: string; type: any; totalMinutes: number }> = {

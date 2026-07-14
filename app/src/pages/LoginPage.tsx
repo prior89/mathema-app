@@ -3,23 +3,25 @@
  * Also re-exports AuthShell + Field for legacy ForgotPassword/ResetPassword/VerifyEmail pages.
  */
 import { type FormEvent, type ReactNode, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, Camera, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { post, tokens, get } from '../lib/api';
 import type { Me } from '../lib/queries';
-import { homePathForRole } from '../lib/role-routes';
+import { resolvePostAuthPath } from '../lib/post-auth-path';
 import { useT } from '../lib/i18n';
 import { BrandLockup } from '../components/Brand';
 import { LearningOrbit } from '../components/design/LearningOrbit';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
+import { googleSignInErrorKey } from '../lib/google-sign-in-error';
 import '../styles/onboarding.css';
 
 export default function LoginPage() {
   const { login, loginWithGoogle, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useT();
   // PoC dev-login은 DEV 빌드에서만 prefill — production은 빈 폼 (admin/admin 누른 사용자가
   // /auth/dev-login → "dev-login disabled in production" 에러를 받지 않도록).
@@ -45,9 +47,14 @@ export default function LoginPage() {
   });
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const from = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from;
+  const requestedPath = from?.pathname
+    ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`
+    : null;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (busy || googleBusy) return;
     setErr(null);
     setBusy(true);
     try {
@@ -61,10 +68,10 @@ export default function LoginPage() {
         // Hydrate the context properly so the navigation actually sticks.
         const me = await get<Me>('/users/me');
         await refreshUser();
-        navigate(homePathForRole(me.role));
+        navigate(resolvePostAuthPath(me, requestedPath), { replace: true });
         return;
       }
-      await login(email, password);
+      await login(email, password, { redirectTo: requestedPath });
     } catch (e: unknown) {
       setErr(formatAuthError(e, { context: 'login' }));
     } finally {
@@ -73,10 +80,11 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignIn = async (idToken: string) => {
+    if (busy || googleBusy) return;
     setErr(null);
     setGoogleBusy(true);
     try {
-      await loginWithGoogle(idToken);
+      await loginWithGoogle(idToken, { redirectTo: requestedPath });
     } catch (e: unknown) {
       setErr(formatAuthError(e, { context: 'login' }));
     } finally {
@@ -161,7 +169,7 @@ export default function LoginPage() {
                 {err && (
                   <div className="auth-error" role="alert">{err}</div>
                 )}
-                <button className="btn login-submit" type="submit" disabled={busy}>
+                <button className="btn login-submit" type="submit" disabled={busy || googleBusy}>
                   {busy ? t('login.busy') : t('login.submit')}
                   <ArrowRight size={18} />
                 </button>
@@ -171,7 +179,10 @@ export default function LoginPage() {
               <GoogleSignInButton
                 mode="continue"
                 onCredential={handleGoogleSignIn}
-                onError={() => setErr(t('login.google.failed'))}
+                onError={(error) => {
+                  const key = googleSignInErrorKey(error, 'login.google.failed');
+                  if (key) setErr(t(key));
+                }}
                 busy={googleBusy}
                 disabled={busy}
               />

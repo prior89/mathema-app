@@ -18,17 +18,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as M from '../../lib/mutations';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
-import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
-
-const SESSION_PREFIX = 'mathema.realexam.';
-const PROGRESS_PREFIX = 'mathema.realexam.progress.';
+import { REAL_EXAM_PROGRESS_PREFIX, REAL_EXAM_SESSION_PREFIX } from '../../lib/pending-real-exam';
+import { useAuth } from '../../context/AuthContext';
 
 type Choice = { id: string; choiceIndex: number; text: string };
 type Step = { id: string; stepIndex: number; stepType: 'CONCEPT' | 'PROCESS' | 'ANSWER'; prompt: string; choices: Choice[] };
 type ExamProblem = { id: string; source: string; body: string; difficulty: string; steps: Step[] };
-type LocState = { resultId: string; name: string; totalMinutes: number; problems: ExamProblem[]; origin?: string } | null;
+type LocState = { resultId: string; userId: string; name: string; totalMinutes: number; problems: ExamProblem[]; origin?: string } | null;
 
 type Progress = {
   answers: Record<string, string>;
@@ -47,24 +45,31 @@ export function RealExamScreen() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const { t } = useT();
+  const { user } = useAuth();
 
-  const sessionKey = SESSION_PREFIX + (resultId ?? '');
-  const progressKey = PROGRESS_PREFIX + (resultId ?? '');
+  const sessionKey = REAL_EXAM_SESSION_PREFIX + (resultId ?? '');
+  const progressKey = REAL_EXAM_PROGRESS_PREFIX + (resultId ?? '');
 
   const state = useMemo<LocState>(() => {
-    if (loc.state) return loc.state as LocState;
+    if (loc.state) {
+      const candidate = loc.state as LocState;
+      return candidate?.userId === user?.id ? candidate : null;
+    }
     try {
       const raw = localStorage.getItem(sessionKey);
-      if (raw) return JSON.parse(raw) as LocState;
+      if (raw) {
+        const candidate = JSON.parse(raw) as LocState;
+        return candidate?.userId === user?.id ? candidate : null;
+      }
     } catch { /* ignore */ }
     return null;
-  }, [loc.state, sessionKey]);
+  }, [loc.state, sessionKey, user?.id]);
 
   useEffect(() => {
-    if (loc.state && resultId) {
-      try { localStorage.setItem(sessionKey, JSON.stringify(loc.state)); } catch { /* ignore */ }
+    if (state && loc.state && resultId) {
+      try { localStorage.setItem(sessionKey, JSON.stringify(state)); } catch { /* ignore */ }
     }
-  }, [loc.state, resultId, sessionKey]);
+  }, [loc.state, resultId, sessionKey, state]);
 
   const [progress, setProgress] = useState<Progress>(() => {
     try {
@@ -91,6 +96,19 @@ export function RealExamScreen() {
   const timeSpentMs = useRef<Record<string, number>>({});
   const questionSince = useRef<number>(Date.now());
   const submittedRef = useRef(false);
+
+  // Capacitor's physical Back must follow the same guarded exit path as the
+  // visible back button. Preventing the cancelable event tells the native
+  // bridge not to pop browser history underneath an active timed paper.
+  useEffect(() => {
+    const onNativeBack = (event: Event) => {
+      event.preventDefault();
+      if (progress.startedAt != null && !submittedRef.current) setConfirmExit(true);
+      else nav('/app/test', { replace: true });
+    };
+    window.addEventListener('matheo:native-back', onNativeBack);
+    return () => window.removeEventListener('matheo:native-back', onNativeBack);
+  }, [nav, progress.startedAt]);
 
   const problems = state?.problems ?? [];
   const total = problems.length;
@@ -179,7 +197,6 @@ export function RealExamScreen() {
             {t('realExam.back')}
           </button>
         </div>
-        <TabBar />
       </div>
     );
   }
@@ -222,7 +239,6 @@ export function RealExamScreen() {
             <Glyph.ChevronR />
           </button>
         </div>
-        <TabBar />
       </div>
     );
   }
@@ -318,14 +334,23 @@ export function RealExamScreen() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+            <div role="radiogroup" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
               {step.choices.map((c, i) => {
                 const sel = pickedId === c.id;
                 return (
                   <div
                     key={c.id}
                     className={sel ? 'choice selected' : 'choice'}
+                    role="radio"
+                    aria-checked={sel}
+                    tabIndex={0}
                     onClick={() => setAnswer(cur.id, sel ? null : c.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setAnswer(cur.id, sel ? null : c.id);
+                      }
+                    }}
                   >
                     <div className="letter">{letters[i] ?? c.choiceIndex}</div>
                     <span className="text"><MathText text={c.text} /></span>
@@ -444,8 +469,9 @@ export function RealExamScreen() {
           confirmLabel={busy ? t('realExam.submit.busy') : t('realExam.submit.confirm')}
           cancelLabel={t('common.cancel')}
           disabled={busy}
+          error={err}
           onConfirm={() => submitPaper(false)}
-          onCancel={() => setConfirmSubmit(false)}
+          onCancel={() => { setConfirmSubmit(false); setErr(null); }}
         />
       )}
 
@@ -470,22 +496,40 @@ export function RealExamScreen() {
       )}
 
       {timedOut && (
-        <div style={{ position: 'absolute', inset: 0, zIndex: 40, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
+        <div role="dialog" aria-modal="true" aria-labelledby="real-exam-time-up" style={{ position: 'absolute', inset: 0, zIndex: 40, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
           <div className="card" style={{ padding: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>{t('realExam.timeUp')}</div>
-            <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-muted)' }}>{t('realExam.submit.busy')}</div>
+            <div id="real-exam-time-up" style={{ fontSize: 14, fontWeight: 700 }}>{t('realExam.timeUp')}</div>
+            {busy ? (
+              <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-muted)' }}>{t('realExam.submit.busy')}</div>
+            ) : (
+              <>
+                <div role="alert" style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-danger)' }}>
+                  {err ?? t('realExam.submit.failed')}
+                </div>
+                <div style={{ marginTop: 6, fontSize: 12, lineHeight: 1.5, color: 'var(--p-muted)' }}>
+                  {t('realExam.submit.saved')}
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                  <button className="btn outline" onClick={() => nav('/app/test')} style={{ flex: 1 }}>
+                    {t('realExam.back')}
+                  </button>
+                  <button className="btn" onClick={() => submitPaper(true)} style={{ flex: 1 }}>
+                    {t('realExam.submit.retry')}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
 
-      <TabBar />
     </div>
   );
 }
 
-function Confirm({ title, desc, confirmLabel, cancelLabel, disabled, danger, onConfirm, onCancel }: {
+function Confirm({ title, desc, confirmLabel, cancelLabel, disabled, danger, error, onConfirm, onCancel }: {
   title: string; desc: string; confirmLabel: string; cancelLabel: string;
-  disabled: boolean; danger?: boolean;
+  disabled: boolean; danger?: boolean; error?: string | null;
   onConfirm: () => void; onCancel: () => void;
 }) {
   return (
@@ -493,6 +537,7 @@ function Confirm({ title, desc, confirmLabel, cancelLabel, disabled, danger, onC
       <div className="card" style={{ padding: 20, width: '100%' }}>
         <div style={{ fontSize: 15, fontWeight: 700 }}>{title}</div>
         <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.55, color: 'var(--p-ink-2)' }}>{desc}</div>
+        {error && <div role="alert" style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-danger)' }}>{error}</div>}
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
           <button className="btn outline" onClick={onCancel} disabled={disabled} style={{ flex: 1 }}>
             {cancelLabel}

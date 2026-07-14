@@ -29,7 +29,7 @@ const CLASS_SHORT: Record<string, string> = {
 
 export function StudyScreen() {
   const nav = useNavigate();
-  const { t } = useT();
+  const { t, lang } = useT();
   const [chapter, setChapter] = useState('');
 
   // Country-aware chapter fetch (2026-05-24 user spec: KR mastered chapters
@@ -83,7 +83,8 @@ export function StudyScreen() {
         sortKey: `${c.ncertClass}-${c.chapterNumber}`,
       }));
   })();
-  const chaptersLoading = isKR ? krChapters.isLoading : ncertChapters.isLoading;
+  const chaptersLoading = me.isLoading || (isKR ? krChapters.isLoading : ncertChapters.isLoading);
+  const chaptersError = me.isError || (isKR ? krChapters.isError : ncertChapters.isError);
   const chaptersHasAny = isKR
     ? (krChapters.data ?? []).length > 0
     : (ncertChapters.data ?? []).length > 0;
@@ -93,6 +94,15 @@ export function StudyScreen() {
   function startPractice() {
     if (!chapter) return;
     nav(`/app/practice-set/${chapter}`);
+  }
+
+  function retryChapters() {
+    if (me.isError || !me.data) {
+      void me.refetch();
+      return;
+    }
+    if (isKR) void krChapters.refetch();
+    else void ncertChapters.refetch();
   }
 
   return (
@@ -131,62 +141,70 @@ export function StudyScreen() {
               {t('study.pick.sub')}
             </div>
 
-            <select
-              value={chapter}
-              onChange={(e) => setChapter(e.target.value)}
-              disabled={chaptersLoading}
-              aria-label={t('study.pick.chapterAria')}
-              style={{
-                width: '100%', boxSizing: 'border-box', marginTop: 10,
-                padding: '10px 12px', borderRadius: 10,
-                border: '1px solid var(--p-border-strong)',
-                background: 'var(--p-surface)', color: 'var(--p-ink)',
-                font: 'inherit', fontSize: 14,
-              }}
-            >
-              <option value="">
-                {chaptersLoading
-                  ? t('study.pick.loadingChapters')
-                  : (eligibleChapters.length > 0
-                      ? t('study.pick.placeholder')
-                      : t('study.pick.lockedHint'))}
-              </option>
-              {eligibleChapters.map((c) => (
-                <option key={c.chapterCode} value={c.chapterCode}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Empty-state nudge — when the user has no mastered chapters in
-                ANY class, point at the Mastery tab so they know where to
-                unlock practice. */}
-            {!chaptersLoading && eligibleChapters.length === 0 && chaptersHasAny && (
-              <div style={{ marginTop: 10, fontSize: 12, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
-                {t('study.pick.emptyMastered.pre')}
-                <strong style={{ color: 'var(--p-ink)' }}>{t('study.pick.emptyMastered.tab')}</strong>
-                {t('study.pick.emptyMastered.post')}
-                {/* Make the nudge actionable instead of a read-only dead-end. */}
-                <button
-                  className="btn ghost"
-                  onClick={() => nav('/app/learn')}
-                  style={{ marginTop: 10, width: '100%', height: 40, fontSize: 13 }}
+            {chaptersError ? (
+              <QueryError lang={lang} onRetry={retryChapters} />
+            ) : (
+              <>
+                <select
+                  value={chapter}
+                  onChange={(e) => setChapter(e.target.value)}
+                  disabled={chaptersLoading}
+                  aria-label={t('study.pick.chapterAria')}
+                  style={{
+                    width: '100%', boxSizing: 'border-box', marginTop: 10,
+                    padding: '10px 12px', borderRadius: 10,
+                    border: '1px solid var(--p-border-strong)',
+                    background: 'var(--p-surface)', color: 'var(--p-ink)',
+                    font: 'inherit', fontSize: 14,
+                  }}
                 >
-                  {t('study.pick.emptyMastered.cta')}
-                  <Glyph.ChevronR />
-                </button>
-              </div>
-            )}
+                  <option value="">
+                    {chaptersLoading
+                      ? t('study.pick.loadingChapters')
+                      : (eligibleChapters.length > 0
+                          ? t('study.pick.placeholder')
+                          : t('study.pick.lockedHint'))}
+                  </option>
+                  {eligibleChapters.map((c) => (
+                    <option key={c.chapterCode} value={c.chapterCode}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
 
-            <button
-              className="btn"
-              disabled={!chapter}
-              onClick={startPractice}
-              style={{ marginTop: 12, height: 46, fontSize: 14 }}
-            >
-              {t('study.pick.startBtn')}
-              <ArrowRight size={17} />
-            </button>
+                {/* Empty-state nudge — when the user has no mastered chapters in
+                    ANY class, point at the Mastery tab so they know where to
+                    unlock practice. */}
+                {!chaptersLoading && eligibleChapters.length === 0 && chaptersHasAny && (
+                  <div style={{ marginTop: 10, fontSize: 12, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
+                    {t('study.pick.emptyMastered.pre')}
+                    <strong style={{ color: 'var(--p-ink)' }}>{t('study.pick.emptyMastered.tab')}</strong>
+                    {t('study.pick.emptyMastered.post')}
+                    {/* Make the nudge actionable instead of a read-only dead-end. */}
+                    <button
+                      type="button"
+                      className="btn ghost"
+                      onClick={() => nav('/app/learn')}
+                      style={{ marginTop: 10, width: '100%', height: 40, fontSize: 13 }}
+                    >
+                      {t('study.pick.emptyMastered.cta')}
+                      <Glyph.ChevronR />
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={!chapter || chaptersLoading}
+                  onClick={startPractice}
+                  style={{ marginTop: 12, height: 46, fontSize: 14 }}
+                >
+                  {t('study.pick.startBtn')}
+                  <ArrowRight size={17} />
+                </button>
+              </>
+            )}
           </div>
 
           {/* AI Solver lives on the Home hero only — Study stays a pure
@@ -204,6 +222,27 @@ export function StudyScreen() {
         </div>
       </div>
       <TabBar />
+    </div>
+  );
+}
+
+function QueryError({ lang, onRetry }: { lang: string; onRetry: () => unknown }) {
+  const copy = lang === 'ko'
+    ? { message: '연습할 단원을 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.', retry: '다시 시도' }
+    : lang === 'hi'
+      ? { message: 'अभ्यास के अध्याय लोड नहीं हो सके। कनेक्शन जाँचें और फिर कोशिश करें।', retry: 'फिर कोशिश करें' }
+      : { message: 'We could not load the practice chapters. Check your connection and try again.', retry: 'Try again' };
+  return (
+    <div role="alert" style={{ marginTop: 12, textAlign: 'center', color: 'var(--p-ink-2)', fontSize: 12.5 }}>
+      <div>{copy.message}</div>
+      <button
+        type="button"
+        className="btn ghost"
+        onClick={() => { void onRetry(); }}
+        style={{ marginTop: 10, minHeight: 38, fontSize: 12.5 }}
+      >
+        {copy.retry}
+      </button>
     </div>
   );
 }

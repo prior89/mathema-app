@@ -84,6 +84,8 @@ const ko = {
   'auth.google.busy': 'Google 연결 중…',
   'auth.google.unavailable': '현재 Google 로그인을 사용할 수 없어요. 이메일로 계속해 주세요.',
   'auth.google.loadFailed': 'Google 연결을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
+  'auth.google.noCredential': '기기에 연결된 Google 계정이 없어요. 설정에서 Google 계정을 추가한 뒤 다시 시도해 주세요.',
+  'auth.google.tryAgain': 'Google 로그인을 시작하지 못했어요. Google Play 서비스를 확인한 뒤 다시 시도해 주세요.',
   'auth.seedHint': '',
   'auth.gradeLevel': '학년',
   'auth.gradeLevel.placeholder': '학년 선택',
@@ -820,6 +822,9 @@ const ko = {
   'test.mock.start': '모의고사 시작',
   'test.mock.starting': '시험지 준비 중…',
   'test.mock.empty': '아직 출제할 문제가 부족해요. 나중에 다시 시도해 주세요.',
+  'test.mock.resume.title': '제출 대기 중인 시험이 있어요',
+  'test.mock.resume.desc': '저장된 답안을 먼저 제출한 뒤 새 시험을 시작할 수 있어요.',
+  'test.mock.resume.cta': '시험으로 돌아가기',
 
   // ===== Real exam (full-paper) screen =====
   'realExam.rules.title': '시험 안내',
@@ -846,8 +851,10 @@ const ko = {
   'realExam.exit.title': '시험을 그만둘까요?',
   'realExam.exit.desc': '지금 나가면 이 시험은 폐기되고 점수가 기록되지 않아요.',
   'realExam.exit.confirm': '그만두기',
-  'realExam.timeUp': '시간이 종료되어 답안이 자동 제출됐어요.',
+  'realExam.timeUp': '시간이 종료됐어요. 답안을 자동 제출하고 있어요.',
   'realExam.submit.failed': '제출에 실패했어요. 다시 시도해 주세요.',
+  'realExam.submit.saved': '답안은 이 기기에 보관돼요. 연결을 확인한 뒤 다시 제출할 수 있어요.',
+  'realExam.submit.retry': '다시 제출',
   'realExam.back': '시험 탭으로',
 
   // ===== Concept Lesson Screen =====
@@ -1097,6 +1104,8 @@ const ko = {
   'settingsScreen.privacy.marketing.name': '소식과 혜택 안내',
   'settingsScreen.privacy.marketing.desc': '새 단원·모의고사 소식을 가끔 보내드려요.',
   'settingsScreen.privacy.required': '필수',
+  'settingsScreen.privacy.restricted': '이 계정에서는 선택 동의를 직접 켤 수 없어요. 이미 켜진 항목은 언제든 끌 수 있어요.',
+  'settingsScreen.privacy.updateFailed': '동의 설정을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.',
   'settingsScreen.data.section': '내 데이터',
   'settingsScreen.logout': '로그아웃',
   'settingsScreen.download': '데이터 내려받기 (JSON)',
@@ -1555,6 +1564,8 @@ const en: typeof ko = {
   'auth.google.busy': 'Connecting to Google…',
   'auth.google.unavailable': 'Google sign-in is unavailable right now. Please continue with email.',
   'auth.google.loadFailed': 'Google could not be loaded. Please try again in a moment.',
+  'auth.google.noCredential': 'No Google account is connected to this device. Add one in Settings, then try again.',
+  'auth.google.tryAgain': 'Google sign-in could not start. Check Google Play services, then try again.',
   'auth.seedHint': '',
   'auth.gradeLevel': 'Grade',
   'auth.gradeLevel.placeholder': 'Select grade',
@@ -2290,6 +2301,9 @@ const en: typeof ko = {
   'test.mock.start': 'Start mock exam',
   'test.mock.starting': 'Preparing your paper…',
   'test.mock.empty': 'Not enough problems for a paper yet. Please try again later.',
+  'test.mock.resume.title': 'A paper is waiting to be submitted',
+  'test.mock.resume.desc': 'Submit the saved answers before starting a new paper.',
+  'test.mock.resume.cta': 'Return to paper',
 
   // Real exam (full-paper) screen
   'realExam.rules.title': 'Exam rules',
@@ -2316,8 +2330,10 @@ const en: typeof ko = {
   'realExam.exit.title': 'Quit this exam?',
   'realExam.exit.desc': 'Leaving now discards this paper — no score will be recorded.',
   'realExam.exit.confirm': 'Quit exam',
-  'realExam.timeUp': 'Time is up — your paper was submitted automatically.',
+  'realExam.timeUp': 'Time is up. We are submitting your paper automatically.',
   'realExam.submit.failed': 'Submission failed. Please try again.',
+  'realExam.submit.saved': 'Your answers remain on this device. Check your connection and submit again.',
+  'realExam.submit.retry': 'Submit again',
   'realExam.back': 'Back to Test',
 
   // Concept Lesson Screen
@@ -2567,6 +2583,8 @@ const en: typeof ko = {
   'settingsScreen.privacy.marketing.name': 'Updates and offers',
   'settingsScreen.privacy.marketing.desc': 'Occasional emails on new chapters / mocks.',
   'settingsScreen.privacy.required': 'Required',
+  'settingsScreen.privacy.restricted': 'This account cannot enable optional consent directly. Any option already enabled can still be turned off.',
+  'settingsScreen.privacy.updateFailed': 'Could not update this consent. Please try again.',
   'settingsScreen.data.section': 'Your data',
   'settingsScreen.logout': 'Log out',
   'settingsScreen.download': 'Download my data (JSON)',

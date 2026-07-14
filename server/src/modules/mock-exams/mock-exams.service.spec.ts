@@ -96,6 +96,24 @@ describe('MockExamsService.nextChapterProblem', () => {
   });
 });
 
+describe('MockExamsService.startTyped country guard', () => {
+  it.each([
+    ['Korean', 'KR'],
+    ['country-unset', null],
+  ])('blocks the JEE-scored REAL paper for %s users before composing it', async (_label, country) => {
+    const aiRec = { composeTyped: jest.fn() };
+    const prisma = mockPrisma({
+      user: { findUnique: jest.fn().mockResolvedValue({ country }) },
+    });
+    const { svc } = build({ prisma, aiRec });
+
+    await expect(svc.startTyped('u1', 'real', 'ko')).rejects.toMatchObject({
+      response: { code: 'real_exam_country_unavailable' },
+    });
+    expect(aiRec.composeTyped).not.toHaveBeenCalled();
+  });
+});
+
 // ── pickStudyProblemId scoring (weakness match + concept-mastery boost) ──
 
 /** 5-choice single-step candidate. wrongMeta lands on the first wrong choice. */

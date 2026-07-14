@@ -235,15 +235,18 @@
 }
 .mathema-app .auth-divider-label { font-size: 11px; }
 
-/* Off-screen host for Google Identity Services popup trigger */
-.gsi-hidden-host {
-  position: fixed;
-  left: -9999px;
-  top: 0;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  opacity: 0;
+/* The official GIS iframe must remain visible and receive the user's actual
+   click; Google does not support proxying the flow through a custom button. */
+.google-gsi-button-host {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .15s ease;
+}
+.google-gsi-button-host.is-disabled {
+  opacity: .55;
   pointer-events: none;
 }
 

@@ -9,7 +9,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { BookOpenCheck, Sparkles } from 'lucide-react';
 import {
   fetchConceptLessons, fetchMe,
@@ -59,12 +59,46 @@ const NCERT_TO_KR_GRADE: Record<string, KoreanGrade> = {
 
 export function LearnScreen() {
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
+  const { t, lang } = useT();
   // Country-aware: KR users see the Korean 2022 curriculum hub; every other
   // country falls through to the NCERT hub (India default + the rest until
   // their own curriculum lands). Both components stay compiled so the
   // switch is data-driven (User.country flip) — no code change needed.
-  if (me.data?.country === 'KR') return <KoreanLearnHub me={me.data ?? null} />;
+  if (me.isError) {
+    return (
+      <LearnStateShell>
+        <QueryError lang={lang} onRetry={() => void me.refetch()} />
+      </LearnStateShell>
+    );
+  }
+  if (!me.data) {
+    return (
+      <LearnStateShell>
+        <Empty msg={t('learn.loading')} />
+      </LearnStateShell>
+    );
+  }
+  if (me.data.country === 'KR') return <KoreanLearnHub me={me.data} />;
   return <NcertLearnHub me={me.data ?? null} />;
+}
+
+function LearnStateShell({ children }: { children: ReactNode }) {
+  const { t } = useT();
+  return (
+    <div className="screen tabbed-screen learn-screen">
+      <div className="app-head" style={{ paddingBottom: 0, flexShrink: 0 }}>
+        <div>
+          <div className="hello" style={{ fontSize: 12, color: 'var(--p-muted)' }}>{t('learn.tab.label')}</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, letterSpacing: '-0.01em' }}>{t('learn.tab.title')}</div>
+        </div>
+        <HeadAvatar />
+      </div>
+      <div className="app-scroll content-rail" style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '12px 22px' }}>
+        {children}
+      </div>
+      <TabBar />
+    </div>
+  );
 }
 
 // ────────────────────────────────────────────────────────────────────────
@@ -72,7 +106,7 @@ export function LearnScreen() {
 // ────────────────────────────────────────────────────────────────────────
 function KoreanLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
   const nav = useNavigate();
-  const { t } = useT();
+  const { t, lang } = useT();
   const defaultGrade: KoreanGrade =
     NCERT_TO_KR_GRADE[me?.gradeLevel ?? 'CLASS_11'] ?? 'HIGH_2';
   const [grade, setGrade] = useState<KoreanGrade>(defaultGrade);
@@ -124,8 +158,9 @@ function KoreanLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
       </div>
 
       <div className="app-scroll content-rail" style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '0 22px' }}>
+        {lessons.isError && <QueryError lang={lang} onRetry={() => void lessons.refetch()} />}
         {lessons.isLoading && <Empty msg={t('learn.loading')} />}
-        {lessons.data && lessons.data.length === 0 && <Empty msg={t('learn.empty')} />}
+        {!lessons.isError && lessons.data && lessons.data.length === 0 && <Empty msg={t('learn.empty')} />}
 
         {grouped.map(([subject, items]) => (
           <div key={subject} style={{ marginTop: 16 }}>
@@ -196,10 +231,15 @@ function groupBySubject(
 // ────────────────────────────────────────────────────────────────────────
 function NcertLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
   const nav = useNavigate();
-  const { t } = useT();
+  const { t, lang } = useT();
   const defaultClass: NcertClass = GRADE_TO_CLASS[me?.gradeLevel ?? 'CLASS_11'] ?? 'CLASS_11';
   const [ncertClass, setNcertClass] = useState<NcertClass>(defaultClass);
   const lessons = useQuery({ queryKey: ['lessons', ncertClass], queryFn: () => fetchConceptLessons(ncertClass) });
+
+  useEffect(() => {
+    const classFromProfile = GRADE_TO_CLASS[me?.gradeLevel ?? ''];
+    if (classFromProfile) setNcertClass(classFromProfile);
+  }, [me?.gradeLevel]);
 
   const classes: NcertClass[] = ['CLASS_7', 'CLASS_8', 'CLASS_9', 'CLASS_10', 'CLASS_11', 'CLASS_12'];
 
@@ -239,8 +279,9 @@ function NcertLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
       </div>
 
       <div className="app-scroll content-rail" style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '0 22px' }}>
+        {lessons.isError && <QueryError lang={lang} onRetry={() => void lessons.refetch()} />}
         {lessons.isLoading && <Empty msg={t('learn.loading')} />}
-        {lessons.data && lessons.data.length === 0 && <Empty msg={t('learn.empty')} />}
+        {!lessons.isError && lessons.data && lessons.data.length === 0 && <Empty msg={t('learn.empty')} />}
 
         <div className="chapter-path" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
           {(lessons.data ?? []).map((l) => (
@@ -275,6 +316,27 @@ function Empty({ msg }: { msg: string }) {
   return (
     <div className="card" style={{ padding: 14, textAlign: 'center', color: 'var(--p-muted)', fontSize: 12.5, margin: '12px 0' }}>
       {msg}
+    </div>
+  );
+}
+
+function QueryError({ lang, onRetry }: { lang: string; onRetry: () => unknown }) {
+  const copy = lang === 'ko'
+    ? { message: '단원 정보를 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.', retry: '다시 시도' }
+    : lang === 'hi'
+      ? { message: 'अध्याय लोड नहीं हो सके। कनेक्शन जाँचें और फिर कोशिश करें।', retry: 'फिर कोशिश करें' }
+      : { message: 'We could not load the chapters. Check your connection and try again.', retry: 'Try again' };
+  return (
+    <div className="card" role="alert" style={{ padding: 14, textAlign: 'center', color: 'var(--p-ink-2)', fontSize: 12.5, margin: '12px 0' }}>
+      <div>{copy.message}</div>
+      <button
+        type="button"
+        className="btn ghost"
+        onClick={() => { void onRetry(); }}
+        style={{ marginTop: 10, minHeight: 38, fontSize: 12.5 }}
+      >
+        {copy.retry}
+      </button>
     </div>
   );
 }
