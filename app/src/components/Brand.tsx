@@ -22,6 +22,44 @@ const HEIGHTS = {
 
 type Size = keyof typeof HEIGHTS;
 
+/**
+ * Compact brand mark cropped from the official artwork. The source PNG has a
+ * large presentation canvas around the symbol, which made the old 32 px logo
+ * look like a tiny speck in app bars. Keeping the crop in CSS lets us reuse the
+ * approved asset without shipping a second, divergent logo file.
+ */
+export function BrandMark({ size = 42, className = '' }: { size?: number; className?: string }) {
+  const scale = size / 50;
+  return (
+    <span
+      className={`brand-mark ${className}`.trim()}
+      aria-hidden="true"
+      style={{ width: size, height: size }}
+    >
+      <img
+        src="/matheo-logo.png"
+        alt=""
+        style={{
+          width: 150 * scale,
+          height: 'auto',
+          left: -52 * scale,
+          top: -8 * scale,
+        }}
+      />
+    </span>
+  );
+}
+
+/** Crisp horizontal lock-up for navigation and auth surfaces. */
+export function BrandLockup({ compact = false }: { compact?: boolean }) {
+  return (
+    <span className="brand-lockup" aria-label="Matheo">
+      <BrandMark size={compact ? 34 : 42} />
+      <span className="brand-lockup-name">matheo</span>
+    </span>
+  );
+}
+
 export function BrandLogo({ size = 'sm', style }: { size?: Size; style?: CSSProperties }) {
   return (
     <img

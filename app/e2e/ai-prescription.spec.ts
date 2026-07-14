@@ -44,6 +44,21 @@ test.describe('AI 처방 시스템 — 명세서 §11 검수', () => {
     test.setTimeout(90_000);
     const headers = await authHeader(request);
 
+    // This scenario exercises protected learning APIs, not the auth gates.
+    // Inspect the live seed first so a missing age/email prerequisite is
+    // reported as such instead of surfacing later as an opaque /mastery 403.
+    const meResponse = await request.get(`${API}/users/me`, { headers });
+    expect(meResponse.status(), `seed /users/me failed: ${await meResponse.text()}`).toBe(200);
+    const me = (await meResponse.json()).data;
+    test.skip(
+      me?.role === 'STUDENT' && !me?.birthDate,
+      `Seed prerequisite incomplete: ${SEED_EMAIL} must finish the age-profile onboarding gate`,
+    );
+    test.skip(
+      !me?.emailVerifiedAt,
+      `Seed prerequisite incomplete: ${SEED_EMAIL} email must be verified before learning APIs unlock`,
+    );
+
     // 2) 첫 문제 — /mastery 에 매핑된 Unit 의 /problems/recommended 사용
     // (limit 미지원 → unitId 로 추천 1개 가져옴)
     const mastery0 = await request.get(`${API}/mastery`, { headers });

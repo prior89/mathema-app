@@ -57,7 +57,14 @@ export function MeScreen() {
           <div className="section-h">
             <span className="label">{t('me.reports.section')}</span>
           </div>
-          <div onClick={() => nav('/app/report')} className="plan-card" style={{ cursor: 'pointer' }}>
+          <div
+            onClick={() => nav('/app/report')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nav('/app/report'); } }}
+            role="button"
+            tabIndex={0}
+            className="plan-card"
+            style={{ cursor: 'pointer' }}
+          >
             <div className="badge" style={{ background: 'var(--p-accent-tint)', color: 'var(--p-ink)' }}>📊</div>
             <div className="info">
               <div className="ttl">{t('me.reports.weekly.title')}</div>
@@ -72,7 +79,7 @@ export function MeScreen() {
               <div className="section-h">
                 <span className="label">{t('me.admin.section')}</span>
               </div>
-              <div onClick={() => nav('/app/admin/ingest')} className="plan-card" style={{ cursor: 'pointer' }}>
+              <div onClick={() => nav('/app/admin/ingest')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nav('/app/admin/ingest'); } }} role="button" tabIndex={0} className="plan-card" style={{ cursor: 'pointer' }}>
                 <div className="badge" style={{ background: 'var(--p-primary-tint)', color: 'var(--p-primary)', fontStyle: 'normal', fontSize: 16 }}>↑</div>
                 <div className="info">
                   <div className="ttl">{t('me.admin.ingest.title')}</div>
@@ -80,7 +87,7 @@ export function MeScreen() {
                 </div>
                 <Glyph.ChevronR accent="var(--p-muted)" size={16} />
               </div>
-              <div onClick={() => nav('/app/admin/ko-study-problems/new')} className="plan-card" style={{ cursor: 'pointer' }}>
+              <div onClick={() => nav('/app/admin/ko-study-problems/new')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nav('/app/admin/ko-study-problems/new'); } }} role="button" tabIndex={0} className="plan-card" style={{ cursor: 'pointer' }}>
                 <div className="badge" style={{ background: 'var(--p-primary-tint)', color: 'var(--p-primary)', fontStyle: 'normal', fontSize: 16 }}>＋</div>
                 <div className="info">
                   <div className="ttl">한국 연습 문제 추가</div>
@@ -105,7 +112,7 @@ export function MeScreen() {
                 <Glyph.ChevronR accent="var(--p-muted)" size={16} />
               </div>
             </Link>
-            <div className="plan-card" onClick={logout} style={{ cursor: 'pointer' }}>
+            <div className="plan-card" onClick={logout} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); void logout(); } }} role="button" tabIndex={0} style={{ cursor: 'pointer' }}>
               <div className="badge" style={{ background: 'var(--p-danger-tint)', color: 'var(--p-danger)', fontStyle: 'normal', fontSize: 18 }}>↩</div>
               <div className="info">
                 <div className="ttl">{t('me.account.logout.title')}</div>

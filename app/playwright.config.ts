@@ -16,10 +16,12 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
-  expect: { timeout: 5_000 },
+  expect: { timeout: 10_000 },
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  // Vite's first lazy-route compilation can otherwise be starved by one
+  // worker per CPU on high-core developer machines.
+  workers: process.env.CI ? 2 : 4,
   reporter: [['list'], ['html', { open: 'never' }]],
 
   use: {
@@ -44,6 +46,12 @@ export default defineConfig({
     // the sessionStorage cache to '0' even when the server kill-switch is true.
     env: {
       VITE_BILLING_ENABLED: 'true',
+      // The suite supplies an in-page GIS double. This non-secret id keeps the
+      // real product "configured" gate active so the tests can prove that all
+      // three Google entry points become actionable. External Google OAuth is
+      // still a separate release-console prerequisite.
+      VITE_GOOGLE_CLIENT_ID:
+        process.env.VITE_GOOGLE_CLIENT_ID ?? 'matheo-e2e.apps.googleusercontent.com',
     },
   },
 });

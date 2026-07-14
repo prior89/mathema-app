@@ -3,30 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Matheo · NCERT Math</title>
+    <title>Matheo · 수학이 내 것이 되는 순간</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Typography rationale: psycho-cognitive load on screen-based learning.
-         - Inter (UI body): screen-readability benchmarks #1 (Khan Academy / Brilliant / Linear).
-           Tabular figures align math stats; no character ambiguity (1/l/I distinct).
-         - Lora (display, italic supports the Mathēma wordmark): humanist serif tuned for
-           extended on-screen reading — textbook authority + warmth without ornament.
-         - JetBrains Mono (data tags, formulas): unchanged, optimal for technical labels. -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Manrope keeps the product energetic and contemporary; Noto Sans KR
+         preserves Korean legibility. Mono is reserved for actual math/data. -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       /* Pre-React paint only. The literal sage tint below intentionally
          duplicates --p-primary-tint (src/styles/onboarding.css): bundle CSS
          has not loaded yet at first paint, so a token reference would be
          unresolved. Keep the two values in sync. All other design tokens
          live in onboarding.css (--p-*) — do not add a parallel set here. */
-      html, body { margin: 0; padding: 0; background: oklch(0.95 0.022 175); }
+      html, body { margin: 0; padding: 0; background: #eef2ff; }
       /* 100vh on mobile browsers is fixed to the largest viewport (URL bar
          hidden); when the URL bar is visible the rendered viewport is
          shorter and our sticky TabBar leaves the body sage tint exposed on
          overscroll. 100dvh tracks the dynamic viewport so the app shell
          always fills the actual visible area. 100vh stays as a fallback
          for browsers that don't support dvh (iOS < 15.4, Chrome < 108). */
-      #root { min-height: 100vh; min-height: 100dvh; background: oklch(0.95 0.022 175); }
+      #root { min-height: 100vh; min-height: 100dvh; background: #eef2ff; }
     </style>
   </head>
   <body>

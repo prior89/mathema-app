@@ -2,12 +2,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Camera, ImagePlus, Sparkles } from 'lucide-react';
 import {
   fetchDashboardSummary, fetchMe, fetchToday,
   fetchConceptLessonsForUnit, fetchErrorDna, fetchChapterProgress,
-  fetchKoreanConceptLessons,
   type RecommendCard, type ChapterProgressRow,
-  type KoreanGrade, type KoreanConceptLessonSummary, type KoreanSubject,
 } from '../../lib/queries';
 import { track } from '../../lib/analytics';
 import { resolveBarColor } from '../../lib/palette';
@@ -31,29 +30,6 @@ function planBadge(type: string) {
   return PLAN_BADGE[type] ?? PLAN_BADGE.concept;
 }
 
-// User's NCERT-style gradeLevel → closest Korean grade. Matches the same
-// mapping LearnScreen uses so chip defaults stay aligned across surfaces.
-const NCERT_TO_KR_GRADE: Record<string, KoreanGrade> = {
-  CLASS_7: 'MIDDLE_1', CLASS_8: 'MIDDLE_2', CLASS_9: 'MIDDLE_3',
-  CLASS_10: 'HIGH_1', CLASS_11: 'HIGH_2', CLASS_12: 'HIGH_3',
-};
-const KOREAN_GRADE_LABEL: Record<KoreanGrade, string> = {
-  MIDDLE_1: '중1', MIDDLE_2: '중2', MIDDLE_3: '중3',
-  HIGH_1: '고1', HIGH_2: '고2', HIGH_3: '고3',
-};
-const KOREAN_SUBJECT_LABEL: Record<KoreanSubject, string> = {
-  MIDDLE_MATH_1: '수학 1',
-  MIDDLE_MATH_2: '수학 2',
-  MIDDLE_MATH_3: '수학 3',
-  HIGH_COMMON_1: '공통수학1',
-  HIGH_COMMON_2: '공통수학2',
-  HIGH_ALGEBRA: '대수',
-  HIGH_CALCULUS_1: '미적분Ⅰ',
-  HIGH_CALCULUS_2: '미적분Ⅱ',
-  HIGH_STATISTICS: '확률과 통계',
-  HIGH_GEOMETRY: '기하',
-};
-
 export function HomeScreen() {
   const nav = useNavigate();
   const { t, lang } = useT();
@@ -61,7 +37,6 @@ export function HomeScreen() {
   const summary = useQuery({ queryKey: ['dashboard'], queryFn: fetchDashboardSummary });
   const today = useQuery({ queryKey: ['today'], queryFn: fetchToday });
   const errorDna = useQuery({ queryKey: ['error-dna'], queryFn: fetchErrorDna });
-  const isKR = me.data?.country === 'KR';
   // chapter-progress endpoint is country-aware on the backend (I4a 2026-05-24):
   // NCERT users get ConceptLesson aggregation, KR users get KoreanConceptLesson
   // aggregation, both packed into the same ChapterProgressRow shape. Frontend
@@ -71,15 +46,6 @@ export function HomeScreen() {
     queryFn: fetchChapterProgress,
     enabled: !!me.data,
   });
-  // Korean chapters for KR users: pick grade from NCERT mapping (Korean users
-  // currently still go through India onboarding so gradeLevel is a CLASS_N).
-  const krGrade = NCERT_TO_KR_GRADE[me.data?.gradeLevel ?? 'CLASS_11'] ?? 'HIGH_2';
-  const koLessons = useQuery({
-    queryKey: ['home-ko-lessons', krGrade],
-    queryFn: () => fetchKoreanConceptLessons({ koreanGrade: krGrade }),
-    enabled: !!me.data && isKR,
-  });
-
   // KPI: today.card.shown 로그 (impression — acceptRate 분모).
   useEffect(() => {
     const cards = today.data;
@@ -100,25 +66,19 @@ export function HomeScreen() {
   const dateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'short' });
 
   return (
-    <div className="screen">
+    <div className="screen tabbed-screen home-screen">
       {/* Sticky greeting — frozen so "Hello, Arjun" stays visible while the
           user scrolls through Today's plan / heatmap below. */}
       <div className="app-head" style={{ flexShrink: 0 }}>
         <div className="greet">
           <div className="hello">{dateStr}</div>
           <div className="name">{t('home.greet', { name: userName.split(' ')[0] })}</div>
+          <div className="home-ready"><Sparkles size={13} />{t('home.readyBadge')}</div>
         </div>
         <HeadAvatar />
       </div>
-      <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-        <div style={{ padding: '0 22px' }}>
-
-          {/* Photo-solve hero — Doubtnut/PW norm puts the camera front and
-              center on Home; ours was buried in the Study tab (2026-06-11
-              UI/UX audit issue 4). Same hidden-input pattern as StudyScreen:
-              taps go straight to the camera / gallery, the modal opens only
-              after a file is chosen. */}
-          <PhotoSolveHero />
+      <div className="app-scroll" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div className="content-rail" style={{ padding: '0 22px' }}>
 
           {/* Guest upsell — progress lives on a device-bound throwaway
               account; converting keeps the same userId so nothing is lost. */}
@@ -143,6 +103,16 @@ export function HomeScreen() {
                 {t('guest.banner.cta')}
               </span>
             </div>
+          )}
+
+          {(me.isError || summary.isError) && (
+            <QueryError
+              lang={lang}
+              onRetry={() => {
+                if (me.isError) void me.refetch();
+                if (summary.isError) void summary.refetch();
+              }}
+            />
           )}
 
           {/* Cold-start hero — only when the user has zero study activity yet.
@@ -171,9 +141,10 @@ export function HomeScreen() {
             <span className="label">{t('home.today.section')}</span>
             <span className="more">{t('home.today.itemsCount', { n: today.data?.length ?? 0 })}</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="mission-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {today.isError && <QueryError lang={lang} onRetry={() => void today.refetch()} />}
             {today.isLoading && <Empty msg={t('home.today.loading')} />}
-            {today.data && today.data.length === 0 && (
+            {!today.isError && today.data && today.data.length === 0 && (
               <EmptyCta
                 msg={t('home.today.emptyMsg')}
                 cta={t('home.today.emptyCta')}
@@ -205,7 +176,14 @@ export function HomeScreen() {
                 }
               };
               return (
-                <div key={i} className="plan-card" onClick={goLesson} style={{ alignItems: 'flex-start' }}>
+                <button
+                  key={i}
+                  type="button"
+                  className="plan-card mission-card"
+                  onClick={goLesson}
+                  style={{ alignItems: 'flex-start', width: '100%', textAlign: 'left', font: 'inherit' }}
+                >
+                  <span className="mission-glyph" style={{ background: b.bg, color: b.fg }}>{b.glyph}</span>
                   <div className="info">
                     <div className="ttl">{c.title}</div>
                     <div className="sub">{c.unit} · {c.time}</div>
@@ -237,10 +215,15 @@ export function HomeScreen() {
                   >
                     {c.tag}
                   </span>
-                </div>
+                </button>
               );
             })}
           </div>
+
+          {/* Keep photo solving one tap away, but let the personalized mission
+              own the first visual position so Home answers “what next?” before
+              presenting a utility. */}
+          <PhotoSolveHero />
 
           {/* Where you slip — top error patterns.
               Requires ≥2 categories (2026-06-12 audit): a single category
@@ -264,6 +247,14 @@ export function HomeScreen() {
                   </div>
                 )}
               </div>
+            </>
+          )}
+          {errorDna.isError && (
+            <>
+              <div className="section-h">
+                <span className="label">{t('home.errorDna.section')}</span>
+              </div>
+              <QueryError lang={lang} onRetry={() => void errorDna.refetch()} />
             </>
           )}
 
@@ -304,7 +295,11 @@ export function HomeScreen() {
                     </span>
                   )}
                 </div>
-                {active.length === 0 ? (
+                {chapterProgress.isLoading ? (
+                  <Empty msg={loadMessage(lang)} />
+                ) : chapterProgress.isError ? (
+                  <QueryError lang={lang} onRetry={() => void chapterProgress.refetch()} />
+                ) : active.length === 0 ? (
                   <EmptyCta
                     msg={t('home.chapterProgress.empty.msg')}
                     cta={t('home.chapterProgress.empty.cta')}
@@ -346,15 +341,16 @@ export function HomeScreen() {
               {t('home.mastery.viewAll')} →
             </button>
           </div>
-          <div
+          <button
+            type="button"
             className="card"
-            style={{ padding: 14, cursor: 'pointer' }}
+            style={{ padding: 14, cursor: 'pointer', width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit' }}
             onClick={() => nav('/app/mastery')}
           >
             <div style={{ fontSize: 13, color: 'var(--p-ink-2)', lineHeight: 1.5 }}>
               {t('home.mastery.desc')}
             </div>
-          </div>
+          </button>
 
           <div style={{ height: 16 }} />
         </div>
@@ -366,23 +362,37 @@ export function HomeScreen() {
   );
 }
 
-function Stat({ k, v, u, delta, deltaDown }: { k: string; v: string; u: string; delta?: string; deltaDown?: boolean }) {
-  return (
-    <div className="stat">
-      <div className="k">{k}</div>
-      <div className="v italic">
-        {v}
-        {u && <span style={{ fontSize: 14, color: 'var(--p-muted)' }}>{u}</span>}
-      </div>
-      {delta && <div className={`delta ${deltaDown ? 'down' : ''}`}>{delta}</div>}
-    </div>
-  );
-}
-
 function Empty({ msg }: { msg: string }) {
   return (
     <div className="card" style={{ padding: 14, textAlign: 'center', color: 'var(--p-muted)', fontSize: 12.5 }}>
       {msg}
+    </div>
+  );
+}
+
+function loadMessage(lang: string) {
+  if (lang === 'ko') return '학습 정보를 불러오는 중이에요.';
+  if (lang === 'hi') return 'सीखने की जानकारी लोड हो रही है।';
+  return 'Loading your learning data…';
+}
+
+function QueryError({ lang, onRetry }: { lang: string; onRetry: () => unknown }) {
+  const copy = lang === 'ko'
+    ? { message: '정보를 불러오지 못했어요. 연결을 확인하고 다시 시도해 주세요.', retry: '다시 시도' }
+    : lang === 'hi'
+      ? { message: 'जानकारी लोड नहीं हो सकी। कनेक्शन जाँचें और फिर कोशिश करें।', retry: 'फिर कोशिश करें' }
+      : { message: 'We could not load this information. Check your connection and try again.', retry: 'Try again' };
+  return (
+    <div className="card" role="alert" style={{ padding: 14, textAlign: 'center', color: 'var(--p-ink-2)', fontSize: 12.5 }}>
+      <div>{copy.message}</div>
+      <button
+        type="button"
+        className="btn ghost"
+        onClick={() => { void onRetry(); }}
+        style={{ marginTop: 10, minHeight: 38, fontSize: 12.5 }}
+      >
+        {copy.retry}
+      </button>
     </div>
   );
 }
@@ -440,7 +450,12 @@ function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClic
     'var(--p-danger-tint)';
 
   return (
-    <div className="card" style={{ padding: 12, cursor: 'pointer' }} onClick={onClick}>
+    <button
+      type="button"
+      className="card"
+      style={{ padding: 12, cursor: 'pointer', width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit' }}
+      onClick={onClick}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
@@ -472,51 +487,20 @@ function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClic
         <span>{t('home.chapter.progress', { done: row.problemsAttempted, total: row.problemsTotal })}</span>
         <span>{progressPct}%</span>
       </div>
-    </div>
-  );
-}
-
-/** Korean chapter card — lightweight Home variant of the Mastery / Learn
- *  chapter card. No progress bar (KR side has no per-chapter attempt
- *  aggregation yet — wire up when the Korean mastery rollup lands).
- *  Click → KoreanConceptLessonScreen via ConceptLessonScreen K- routing. */
-function KoreanChapterCard({ lesson, onClick }: { lesson: KoreanConceptLessonSummary; onClick: () => void }) {
-  return (
-    <div className="card" style={{ padding: 12, cursor: 'pointer' }} onClick={onClick}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div
-          className="badge"
-          style={{
-            background: 'var(--p-primary-tint)', color: 'var(--p-primary)',
-            width: 32, height: 32, borderRadius: 8,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 700, flexShrink: 0,
-          }}
-        >
-          {lesson.chapterNumber}
-        </div>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
-            {KOREAN_SUBJECT_LABEL[lesson.koreanSubject]}
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--p-ink)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {lesson.titleKo}
-          </div>
-        </div>
-        <Glyph.ChevronR accent="var(--p-muted)" size={16} />
-      </div>
-    </div>
+    </button>
   );
 }
 
 function EmptyCta({ msg, cta, onClick }: { msg: string; cta: string; onClick: () => void }) {
   return (
-    <div
+    <button
+      type="button"
       className="card"
       onClick={onClick}
       style={{
         padding: 16, textAlign: 'center', cursor: 'pointer',
         display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center',
+        width: '100%', color: 'inherit', font: 'inherit',
       }}
     >
       <div style={{ color: 'var(--p-muted)', fontSize: 13 }}>{msg}</div>
@@ -526,7 +510,7 @@ function EmptyCta({ msg, cta, onClick }: { msg: string; cta: string; onClick: ()
       >
         {cta} →
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -543,6 +527,7 @@ function ColdStartHero({
   const { t } = useT();
   return (
     <div
+      className="cold-start-hero"
       style={{
         marginTop: 14,
         borderRadius: 'var(--radius-lg)',
@@ -596,49 +581,41 @@ function PhotoSolveHero() {
   };
 
   return (
-    <div
-      style={{
-        marginTop: 14,
-        borderRadius: 'var(--radius-lg)',
-        padding: '16px 16px 14px',
-        background: 'var(--p-primary-tint)',
-        border: '1px solid var(--p-border)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <div style={{ fontSize: 15.5, fontWeight: 700 }}>{t('home.solver.title')}</div>
-        <QuotaMeter style={{ marginLeft: 'auto' }} />
-      </div>
-      <div style={{ fontSize: 12.5, color: 'var(--p-ink-2)', marginTop: 4, lineHeight: 1.5 }}>
-        {t('home.solver.desc')}
-      </div>
-      <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+    <div className="solver-hero">
+      <div className="solver-copy">
+        <div className="solver-kicker"><Sparkles size={14} />{t('home.solver.kicker')}<QuotaMeter /></div>
+        <h2>{t('home.solver.title')}</h2>
+        <p>{t('home.solver.desc')}</p>
+      <div className="solver-actions">
         <button
           className="btn"
           type="button"
-          style={{ flex: 1.4 }}
           onClick={() => {
             track('home.solver.open', { source: 'camera' });
             cameraRef.current?.click();
           }}
         >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M3 7h3l2-3h8l2 3h3v12H3z" />
-            <circle cx="12" cy="13" r="4" />
-          </svg>
+          <Camera size={18} />
           {t('home.solver.scan')}
+          <ArrowRight size={17} />
         </button>
         <button
           className="btn outline"
           type="button"
-          style={{ flex: 1 }}
           onClick={() => {
             track('home.solver.open', { source: 'gallery' });
             galleryRef.current?.click();
           }}
         >
-          {t('home.solver.upload')}
+          <ImagePlus size={17} />{t('home.solver.upload')}
         </button>
+      </div>
+      </div>
+      <div className="solver-visual" aria-hidden="true">
+        <span className="formula-chip formula-a">x² + 3x</span>
+        <span className="formula-chip formula-b">√25 = 5</span>
+        <span className="camera-orb"><Camera size={35} /></span>
+        <span className="scan-line" />
       </div>
       <input
         ref={cameraRef}

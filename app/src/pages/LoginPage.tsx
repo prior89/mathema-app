@@ -2,25 +2,26 @@
  * PoC: admin/admin → dev-login. Regular email/password also supported.
  * Also re-exports AuthShell + Field for legacy ForgotPassword/ResetPassword/VerifyEmail pages.
  */
-import { ReactNode } from 'react';
-import { FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { type FormEvent, type ReactNode, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowRight, Camera, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { post, tokens, get } from '../lib/api';
 import type { Me } from '../lib/queries';
-import { homePathForRole } from '../lib/role-routes';
+import { resolvePostAuthPath } from '../lib/post-auth-path';
 import { useT } from '../lib/i18n';
-import { Glyph } from '../components/onboarding/Glyph';
-import { BrandLogo } from '../components/Brand';
+import { BrandLockup } from '../components/Brand';
+import { LearningOrbit } from '../components/design/LearningOrbit';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
-import { isGoogleSignInConfigured } from '../lib/google-client-id';
+import { googleSignInErrorKey } from '../lib/google-sign-in-error';
 import '../styles/onboarding.css';
 
 export default function LoginPage() {
   const { login, loginWithGoogle, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useT();
   // PoC dev-login은 DEV 빌드에서만 prefill — production은 빈 폼 (admin/admin 누른 사용자가
   // /auth/dev-login → "dev-login disabled in production" 에러를 받지 않도록).
@@ -46,9 +47,14 @@ export default function LoginPage() {
   });
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const from = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from;
+  const requestedPath = from?.pathname
+    ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`
+    : null;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (busy || googleBusy) return;
     setErr(null);
     setBusy(true);
     try {
@@ -62,10 +68,10 @@ export default function LoginPage() {
         // Hydrate the context properly so the navigation actually sticks.
         const me = await get<Me>('/users/me');
         await refreshUser();
-        navigate(homePathForRole(me.role));
+        navigate(resolvePostAuthPath(me, requestedPath), { replace: true });
         return;
       }
-      await login(email, password);
+      await login(email, password, { redirectTo: requestedPath });
     } catch (e: unknown) {
       setErr(formatAuthError(e, { context: 'login' }));
     } finally {
@@ -74,10 +80,11 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignIn = async (idToken: string) => {
+    if (busy || googleBusy) return;
     setErr(null);
     setGoogleBusy(true);
     try {
-      await loginWithGoogle(idToken);
+      await loginWithGoogle(idToken, { redirectTo: requestedPath });
     } catch (e: unknown) {
       setErr(formatAuthError(e, { context: 'login' }));
     } finally {
@@ -86,46 +93,57 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mathema-app">
+    <div className="mathema-app auth-shell">
       <div className="mathema-viewport">
         <div className="mathema-phone">
-          <div className="screen">
-            <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <BrandLogo size="sm" />
-              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>{t('login.subtitleClass')}</span>
-            </div>
+          <main className="screen login-screen">
+            <header className="login-brand-row">
+              <BrandLockup />
+              <span className="age-pill">{t('login.subtitleClass')}</span>
+            </header>
 
-            <div className="screen-body" style={{ gap: 24, paddingTop: 32 }}>
-              <div>
-                <span className="eyebrow">{t('login.eyebrow')}</span>
-                <h1 className="display" style={{ marginTop: 10, fontSize: 36, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
-                  <span>{t('login.title.short')}</span>
-                  <BrandLogo size="md" />
-                </h1>
-                <p className="subtitle">{t('login.tagline')}</p>
-              </div>
+            <div className="login-layout">
+              <section className="login-story" aria-labelledby="login-story-title">
+                <div className="login-story-copy">
+                  <span className="story-kicker"><Sparkles size={15} />{t('login.hero.kicker')}</span>
+                  <h1 id="login-story-title">
+                    {t('login.hero.title.pre')}<br />
+                    <em>{t('login.hero.title.em')}</em>{t('login.hero.title.post')}
+                  </h1>
+                  <p>{t('login.tagline')}</p>
+                </div>
+                <LearningOrbit />
+                <div className="login-benefits" aria-label={t('login.hero.benefitsAria')}>
+                  <span><Camera size={17} />{t('login.hero.point.one')}</span>
+                  <span><TrendingUp size={17} />{t('login.hero.point.two')}</span>
+                  <span><Sparkles size={17} />{t('login.hero.point.three')}</span>
+                </div>
+              </section>
+
+              <section className="login-form-panel" aria-labelledby="login-form-title">
+                <div className="login-form-heading">
+                  <span className="eyebrow">{t('login.eyebrow')}</span>
+                  <h2 id="login-form-title">{t('login.form.title')}</h2>
+                  <p>{t('login.form.sub')}</p>
+                </div>
 
               {notice && (
                 <div
                   role="status"
-                  style={{
-                    padding: '10px 12px', borderRadius: 8, fontSize: 13,
-                    background: 'var(--p-surface-2)', border: '1px solid var(--p-border)',
-                    color: 'var(--p-ink)',
-                  }}
+                  className="auth-notice"
                   onClick={() => setNotice(null)}
                 >
                   {notice}
                 </div>
               )}
 
-              <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <form onSubmit={onSubmit} className="login-form">
                 <div className="field">
-                  <label>{t('login.field.email')}</label>
+                  <label htmlFor="login-email">{t('login.field.email')}</label>
                   <input
+                    id="login-email"
                     type={emailInputType}
                     inputMode="email"
-                    autoFocus
                     autoCapitalize="none"
                     spellCheck={false}
                     value={email}
@@ -135,8 +153,12 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="field">
-                  <label>{t('login.field.password')}</label>
+                  <div className="field-label-row">
+                    <label htmlFor="login-password">{t('login.field.password')}</label>
+                    <Link to="/forgot-password">{t('login.forgotPw')}</Link>
+                  </div>
                   <input
+                    id="login-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -145,49 +167,34 @@ export default function LoginPage() {
                   />
                 </div>
                 {err && (
-                  <div style={{ color: 'var(--p-danger)', fontSize: 13 }}>{err}</div>
+                  <div className="auth-error" role="alert">{err}</div>
                 )}
-                <button className="btn" type="submit" disabled={busy} style={{ marginTop: 4 }}>
+                <button className="btn login-submit" type="submit" disabled={busy || googleBusy}>
                   {busy ? t('login.busy') : t('login.submit')}
-                  <Glyph.ChevronR />
+                  <ArrowRight size={18} />
                 </button>
               </form>
 
-              {isGoogleSignInConfigured() && (
-                <>
-                  <AuthDivider labelKey="login.or" />
-                  <GoogleSignInButton
-                    mode="continue"
-                    onCredential={handleGoogleSignIn}
-                    onError={() => setErr(t('login.google.failed'))}
-                    busy={googleBusy}
-                    disabled={busy}
-                  />
-                </>
-              )}
+              <AuthDivider labelKey="login.or" />
+              <GoogleSignInButton
+                mode="continue"
+                onCredential={handleGoogleSignIn}
+                onError={(error) => {
+                  const key = googleSignInErrorKey(error, 'login.google.failed');
+                  if (key) setErr(t(key));
+                }}
+                busy={googleBusy}
+                disabled={busy}
+              />
 
-              {/* PoC dev-login hint card removed per user request 2026-05-27 —
-                  surfaced even in dogfood builds via import.meta.env.DEV and
-                  felt like a leaked internal note. The admin/admin shortcut
-                  still works for development; the on-screen reminder just
-                  isn't shown anymore. */}
-
-              <div style={{ flex: 1 }} />
-
-              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Link
-                  to="/onboarding"
-                  className="btn outline"
-                  style={{ height: 44, maxWidth: 240, alignSelf: 'center', textDecoration: 'none' }}
-                >
-                  {t('login.goOnboarding')}
-                </Link>
-                <Link to="/forgot-password" style={{ color: 'var(--p-muted)', fontSize: 12, textDecoration: 'none' }}>
-                  {t('login.forgotPw')}
-                </Link>
-              </div>
+                <div className="signup-prompt">
+                  <span>{t('login.signupPrompt')}</span>
+                  <Link to="/onboarding">{t('login.goOnboarding')} <ArrowRight size={15} /></Link>
+                </div>
+                <div className="login-trust"><ShieldCheck size={15} />{t('login.trust')}</div>
+              </section>
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </div>
@@ -198,18 +205,18 @@ export default function LoginPage() {
 // Minimal sage-styled shell + field. New pages should use Glyph + .mathema-app classes directly.
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
-    <div className="mathema-app">
+    <div className="mathema-app auth-shell">
       <div className="mathema-viewport">
         <div className="mathema-phone">
-          <div className="screen">
-            <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <BrandLogo size="sm" />
-              <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>{subtitle}</span>
+          <div className="screen auth-utility-screen">
+            <div className="login-brand-row">
+              <BrandLockup />
+              <span className="age-pill">{subtitle}</span>
             </div>
-            <div className="screen-body" style={{ gap: 24, paddingTop: 32 }}>
+            <div className="screen-body auth-utility-body">
               <div>
                 <span className="eyebrow">{subtitle}</span>
-                <h1 className="title" style={{ marginTop: 10, fontSize: 28 }}>{title}</h1>
+                <h1 className="title">{title}</h1>
               </div>
               {children}
             </div>

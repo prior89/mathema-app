@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ensureGoogleIdentity, triggerGoogleSignIn } from '../lib/google-identity';
+import { renderGoogleIdentityButton } from '../lib/google-identity';
 import { isGoogleSignInConfigured } from '../lib/google-client-id';
 import { GoogleAuth, isNativeGoogleAuthPlatform } from '../native/google-auth-bridge';
 
@@ -8,9 +8,19 @@ type UseGoogleSignInOpts = {
   onError?: (error: unknown) => void;
   /** When false, skip GIS init (e.g. onboarding step not visible). Default true. */
   enabled?: boolean;
+  webContainer?: HTMLElement | null;
+  mode?: 'continue' | 'signup';
+  locale?: string;
 };
 
-export function useGoogleSignIn({ onCredential, onError, enabled = true }: UseGoogleSignInOpts) {
+export function useGoogleSignIn({
+  onCredential,
+  onError,
+  enabled = true,
+  webContainer = null,
+  mode = 'continue',
+  locale,
+}: UseGoogleSignInOpts) {
   const callbackRef = useRef(onCredential);
   callbackRef.current = onCredential;
   const errorRef = useRef(onError);
@@ -44,7 +54,11 @@ export function useGoogleSignIn({ onCredential, onError, enabled = true }: UseGo
         });
       return () => { cancelled = true; };
     }
-    ensureGoogleIdentity((token) => callbackRef.current(token))
+    if (!webContainer) {
+      setReady(false);
+      return;
+    }
+    renderGoogleIdentityButton(webContainer, (token) => callbackRef.current(token), { mode, locale })
       .then((ok) => {
         if (!cancelled) {
           setReady(ok);
@@ -57,8 +71,11 @@ export function useGoogleSignIn({ onCredential, onError, enabled = true }: UseGo
           setLoadError(true);
         }
       });
-    return () => { cancelled = true; };
-  }, [enabled, configured, nativePlatform]);
+    return () => {
+      cancelled = true;
+      webContainer.innerHTML = '';
+    };
+  }, [enabled, configured, nativePlatform, webContainer, mode, locale]);
 
   const signIn = useCallback(async () => {
     if (!ready) return;
@@ -72,11 +89,13 @@ export function useGoogleSignIn({ onCredential, onError, enabled = true }: UseGo
       }
       return;
     }
-    triggerGoogleSignIn();
+    // Web users click the visible official GIS button directly. Google does
+    // not support initiating that flow from a custom/programmatic button.
   }, [nativePlatform, ready]);
 
   return {
     configured,
+    nativePlatform,
     ready,
     loadError,
     signIn,

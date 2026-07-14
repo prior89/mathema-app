@@ -12,12 +12,12 @@ import {
   getLangPreference,
   setLangPreference,
   resolveAppLang,
-  type LangPreference,
 } from '../../lib/lang-preference';
 import { useTheme, type ThemeMode } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
+import { requiresGuardianConsent } from '../../lib/guardian-consent';
 
 // Backend /privacy/consents 응답 shape — 'active' (boolean) 사용. 이전엔 'granted' 라 매번 undefined 였음.
 type Consent = {
@@ -50,6 +50,7 @@ export function SettingsScreen() {
       else await post(`/privacy/consents/${c.kind.toLowerCase()}`, {});
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['consents'] }),
+    onError: () => toast(t('settingsScreen.privacy.updateFailed'), 'error'),
   });
 
   // Parent-invite (student referral loop) — see the section markup below.
@@ -111,6 +112,10 @@ export function SettingsScreen() {
     { kind: 'AI_TRAINING', name: t('settingsScreen.privacy.aiTraining.name'), desc: t('settingsScreen.privacy.aiTraining.desc') },
     { kind: 'MARKETING', name: t('settingsScreen.privacy.marketing.name'), desc: t('settingsScreen.privacy.marketing.desc') },
   ];
+  const optionalConsentActivationBlocked = me.data?.isGuest === true || (
+    me.data?.role === 'STUDENT'
+    && (!me.data.birthDate || requiresGuardianConsent(me.data.birthDate, me.data.country))
+  );
 
   return (
     <div className="screen">
@@ -193,9 +198,9 @@ export function SettingsScreen() {
           <div style={{ fontSize: 12, color: 'var(--p-muted)', marginBottom: 10, lineHeight: 1.45 }}>
             {t('settingsScreen.region.hint')}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {(['IN', 'KR'] as const).map((c) => {
-              const selected = (me.data?.country ?? 'IN') === c;
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+            {(['KR'] as const).map((c) => {
+              const selected = me.data?.country === c;
               const busy = changeCountry.isPending;
               return (
                 <button
@@ -215,7 +220,7 @@ export function SettingsScreen() {
                     opacity: busy && !selected ? 0.6 : 1,
                   }}
                 >
-                  {c === 'KR' ? '🇰🇷 ' : '🇮🇳 '}{t(`settingsScreen.country.${c}`)}
+                  🇰🇷 {t(`settingsScreen.country.${c}`)}
                 </button>
               );
             })}
@@ -262,10 +267,13 @@ export function SettingsScreen() {
             opacity: togglePush.isPending ? 0.7 : 1,
           }}
           onClick={() => !togglePush.isPending && togglePush.mutate(!pushReminders)}
-          role="button"
+          role="switch"
+          aria-checked={pushReminders}
+          aria-disabled={togglePush.isPending || undefined}
           tabIndex={0}
           onKeyDown={(e) => {
             if (!togglePush.isPending && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
               togglePush.mutate(!pushReminders);
             }
           }}
@@ -276,13 +284,18 @@ export function SettingsScreen() {
               {t('settingsScreen.notifications.push.desc')}
             </div>
           </div>
-          <div className={`toggle ${pushReminders ? 'on' : ''}`} aria-pressed={pushReminders} />
+          <div className={`toggle ${pushReminders ? 'on' : ''}`} aria-hidden="true" />
         </div>
 
         {/* Privacy */}
         <div className="section-h">
           <span className="label">{t('settingsScreen.privacy.section')}</span>
         </div>
+        {optionalConsentActivationBlocked && (
+          <div className="alert" style={{ marginBottom: 8, fontSize: 12.5, lineHeight: 1.5 }}>
+            {t('settingsScreen.privacy.restricted')}
+          </div>
+        )}
         <div className="card" style={{ padding: '4px 16px' }}>
           {items.map((it) => {
             // Required consents (DATA_PROCESSING) are non-revocable — backend rejects
@@ -292,12 +305,25 @@ export function SettingsScreen() {
             const active = it.req
               ? true
               : (consents.data?.find((c) => c.kind === it.kind)?.active ?? false);
+            // Restricted accounts may always turn an existing optional grant
+            // off, but cannot self-enable a new one.
+            const disabled = !!it.req || toggle.isPending || (!active && optionalConsentActivationBlocked);
             return (
               <div key={it.kind} className="consent-row">
                 <div
                   className={`ck ${active ? 'checked' : ''}`}
-                  onClick={() => !it.req && !toggle.isPending && toggle.mutate({ kind: it.kind, active })}
-                  style={{ opacity: it.req ? 0.85 : 1, cursor: it.req ? 'default' : 'pointer' }}
+                  onClick={() => !disabled && toggle.mutate({ kind: it.kind, active })}
+                  style={{ opacity: disabled ? 0.65 : 1, cursor: disabled ? 'default' : 'pointer' }}
+                  role="checkbox"
+                  aria-checked={active}
+                  aria-disabled={disabled || undefined}
+                  tabIndex={disabled ? -1 : 0}
+                  onKeyDown={(e) => {
+                    if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      toggle.mutate({ kind: it.kind, active });
+                    }
+                  }}
                 >
                   {active && <Glyph.Check accent="var(--p-primary-fg)" size={12} />}
                 </div>

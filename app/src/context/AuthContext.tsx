@@ -9,18 +9,19 @@ import {
   revokeRefreshToken,
 } from '../lib/api';
 import type { Me, GradeLevel, CountryCode } from '../lib/queries';
-import { postAuthPath } from '../lib/post-auth-path';
+import { postAuthPath, resolvePostAuthPath } from '../lib/post-auth-path';
 import { unregisterPushToken } from '../native/push-bridge';
 import { track } from '../lib/analytics';
 import { clearSentryUser, tagSentryUser } from '../lib/sentry';
+import { clearPendingRealExams } from '../lib/pending-real-exam';
 
 export type { GradeLevel };
 
 type AuthState = {
   user: Me | null;
   ready: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (idToken: string, opts?: { skipNavigate?: boolean }) => Promise<Me>;
+  login: (email: string, password: string, opts?: { redirectTo?: string | null }) => Promise<void>;
+  loginWithGoogle: (idToken: string, opts?: { skipNavigate?: boolean; redirectTo?: string | null }) => Promise<Me>;
   register: (input: RegisterInput) => Promise<void>;
   /** Try-first guest session — zero-PII account, no navigation (caller decides). */
   startGuest: (input?: GuestStartInput) => Promise<Me>;
@@ -188,24 +189,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     init();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, opts?: { redirectTo?: string | null }) => {
     const t = await post<{ accessToken: string; refreshToken: string }>('/auth/login', { email, password });
     tokens.set(t.accessToken, t.refreshToken);
     const me = await get<Me>('/users/me');
     setUser(me);
     track('auth.login', { method: 'password' });
-    navigate(postAuthPath(me));
+    navigate(resolvePostAuthPath(me, opts?.redirectTo), { replace: true });
   };
 
   /** Google Sign-In — Web GIS or Capacitor plugin 이 발급한 idToken 으로 백엔드 인증. */
-  const loginWithGoogle = async (idToken: string, opts?: { skipNavigate?: boolean }) => {
+  const loginWithGoogle = async (idToken: string, opts?: { skipNavigate?: boolean; redirectTo?: string | null }) => {
     const t = await post<{ accessToken: string; refreshToken: string }>('/auth/google/id-token', { idToken });
     tokens.set(t.accessToken, t.refreshToken);
     const me = await get<Me>('/users/me');
     setUser(me);
     track('auth.login', { method: 'google' });
     if (!opts?.skipNavigate) {
-      navigate(postAuthPath(me));
+      navigate(resolvePostAuthPath(me, opts?.redirectTo), { replace: true });
     }
     return me;
   };
@@ -216,7 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const me = await get<Me>('/users/me');
     setUser(me);
     track('auth.register', { role: input.role, targetGrade: input.targetGrade });
-    navigate(postAuthPath(me));
+    navigate(postAuthPath(me), { replace: true });
   };
 
   const startGuest = async (input: GuestStartInput = {}) => {
@@ -234,6 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await unregisterPushToken().catch(() => {});
     tokens.clear();
     sessionStorage.clear();
+    try { clearPendingRealExams(localStorage); } catch { /* ignore */ }
     queryClient.clear();
     setUser(null);
     await revokeRefreshToken(refreshToken).catch(() => {});
@@ -244,6 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshToken = tokens.getRefresh();
     tokens.clear();
     sessionStorage.clear();
+    try { clearPendingRealExams(localStorage); } catch { /* ignore */ }
     queryClient.clear();
     setUser(null);
     // The account deletion transaction already removes the server push token.

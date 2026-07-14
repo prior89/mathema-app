@@ -2,18 +2,22 @@
  * Ported from `App onboarding/screens-a.jsx` + `screens-b.jsx`.
  * Phone Auth option hidden (no backend); Goal stored in localStorage; Diagnostic state in-memory.
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { post, patch, tokens, get } from '../lib/api';
+import { ArrowRight, Camera, Lightbulb, Route, Sparkles } from 'lucide-react';
+import { post, patch, tokens } from '../lib/api';
 import { Glyph } from '../components/onboarding/Glyph';
 import MathText from '../components/MathText';
-import { BrandLogo } from '../components/Brand';
-import type {
-  AdaptiveDiagnosticAnswer,
-  AdaptiveDiagnosticStart,
-  DiagnosticProblem,
-  DiagnosticResult,
-  Me,
+import { BrandLockup } from '../components/Brand';
+import { LearningOrbit } from '../components/design/LearningOrbit';
+import {
+  type AdaptiveDiagnosticAnswer,
+  type AdaptiveDiagnosticStart,
+  type DiagnosticProblem,
+  type DiagnosticResult,
+  type Me,
+  fetchGuardianConsentStatus,
+  requestGuardianConsent,
 } from '../lib/queries';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag, useFeatureFlags } from '../hooks/useFeatureFlags';
@@ -23,15 +27,16 @@ import { isLikelyEmail } from '../lib/email';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
-import { isGoogleSignInConfigured } from '../lib/google-client-id';
+import { googleSignInErrorKey } from '../lib/google-sign-in-error';
 import {
+  ageFromBirthDate,
   birthDateFromAge,
   requiresGuardianConsentFromAge,
 } from '../lib/guardian-consent';
+import { postAuthPath } from '../lib/post-auth-path';
 import { LAUNCH_STUDENT_ONLY } from '../lib/launch-config';
 import { detectOnboardingLang, langForCountry } from '../lib/onboarding-locale';
 import { AgeGate } from '../components/onboarding/AgeGate';
-import { fetchGuardianConsentStatus, requestGuardianConsent } from '../lib/queries';
 import '../styles/onboarding.css';
 
 type StepKey = 'welcome' | 'country' | 'auth' | 'role' | 'profile' | 'guardian' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
@@ -55,14 +60,25 @@ const GRADE_MAP: Record<GradeId, string> = {
   CLASS_10: 'CLASS_10', CLASS_11: 'CLASS_11', CLASS_12: 'CLASS_12',
 };
 
-/** Actual NCERT chapter counts per class — used in the Ready screen's stat
- *  trio so the headline numbers are facts the user can verify in the app. */
-const CHAPTERS_PER_CLASS: Record<GradeId, number> = {
+/** Curriculum facts used by the Ready screen. Keep these counts aligned with
+ *  seed-korean-curriculum.ts and seed-concepts.ts. */
+const NCERT_CHAPTERS_PER_CLASS: Record<GradeId, number> = {
   CLASS_7: 13, CLASS_8: 13, CLASS_9: 12,
   CLASS_10: 14, CLASS_11: 14, CLASS_12: 13,
 };
-function chapterCountByClass(grade: GradeId): number {
-  return CHAPTERS_PER_CLASS[grade] ?? 0;
+const KR_CHAPTERS_PER_CLASS: Record<GradeId, number> = {
+  CLASS_7: 8, CLASS_8: 7, CLASS_9: 6,
+  CLASS_10: 7, CLASS_11: 9, CLASS_12: 6,
+};
+const KR_GRADE_LABEL: Record<GradeId, string> = {
+  CLASS_7: '중1', CLASS_8: '중2', CLASS_9: '중3',
+  CLASS_10: '고1', CLASS_11: '고2', CLASS_12: '고3',
+};
+function chapterCountByClass(grade: GradeId, country: CountryId): number {
+  return (country === 'KR' ? KR_CHAPTERS_PER_CLASS : NCERT_CHAPTERS_PER_CLASS)[grade] ?? 0;
+}
+function gradeLabel(grade: GradeId, country: CountryId): string {
+  return country === 'KR' ? KR_GRADE_LABEL[grade] : grade.replace('CLASS_', '');
 }
 
 export default function OnboardingPage() {
@@ -74,18 +90,18 @@ export default function OnboardingPage() {
   // via <I18nCountrySync /> in App.tsx — when a KR account is detected and
   // no explicit lang preference is set, lang switches to 'ko' there.
   return (
-    <div className="mathema-app">
+    <div className="mathema-app onboarding-shell">
       <div className="mathema-viewport">
         <div className="mathema-phone">
-          <Flow onFinish={(r) => navigate(homePathForRole(r ?? user?.role))} />
+          <Flow onFinish={(r, target) => navigate(target ?? homePathForRole(r ?? user?.role), { replace: true })} />
         </div>
       </div>
     </div>
   );
 }
 
-function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
-  const { refreshUser, startGuest } = useAuth();
+function Flow({ onFinish }: { onFinish: (role?: Role, target?: string) => void }) {
+  const { user, refreshUser, startGuest } = useAuth();
   const { setLang } = useT();
   const [step, setStep] = useState<StepKey>('welcome');
   // Try-first guest session (feature-flagged). Guests skip every PII screen:
@@ -112,8 +128,10 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
   // 'goal'/'diagnostic' work even if the user skips the country step. Picking a
   // country also calls i18n setLang immediately (KR → 'ko').
   const [country, setCountry] = useState<CountryId>('KR');
-  const [consents, setConsents] = useState<ConsentMap>({ ANALYTICS: true, AI_TRAINING: false, MARKETING: false });
-  const [notif, setNotif] = useState(true);
+  // Optional processing and reminders are opt-in. This also matches the
+  // published policy that teen analytics/marketing start OFF.
+  const [consents, setConsents] = useState<ConsentMap>({ ANALYTICS: false, AI_TRAINING: false, MARKETING: false });
+  const [notif, setNotif] = useState(false);
   const [diagnosticResult, setDiagnosticResult] = useState<DiagnosticResult | null>(null);
 
   const needsGuardian = useCallback(
@@ -123,7 +141,8 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
 
   useEffect(() => {
     if (needsGuardian(age)) {
-      setConsents((c) => ({ ...c, ANALYTICS: false, MARKETING: false }));
+      setConsents({ ANALYTICS: false, AI_TRAINING: false, MARKETING: false });
+      setNotif(false);
     }
   }, [age, country, needsGuardian]);
 
@@ -159,7 +178,9 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
     await patch<Me>('/users/me', {
       name,
       gradeLevel: GRADE_MAP[grade],
-      birthDate: birthDateFromAge(age),
+      // Existing Google users may already have a verified guardian flow. Do
+      // not re-submit an immutable birth date when resuming onboarding.
+      ...(!user?.birthDate ? { birthDate: birthDateFromAge(age) } : {}),
     });
     await refreshUser().catch(() => {});
     if (needsGuardian(age)) go('guardian');
@@ -179,6 +200,17 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
           email={email} setEmail={setEmail}
           password={password} setPassword={setPassword}
           country={country}
+          onAuthenticated={(me) => {
+            const target = postAuthPath(me);
+            if (target !== '/onboarding') {
+              onFinish((me.role ?? 'STUDENT') as Role, target);
+              return;
+            }
+            if (me.name) setName(me.name);
+            if (me.gradeLevel && me.gradeLevel in GRADE_MAP) setGrade(me.gradeLevel as GradeId);
+            if (me.birthDate) setAge(ageFromBirthDate(me.birthDate));
+            next();
+          }}
           onGuest={async () => {
             await startGuest({ country });
             setGuest(true);
@@ -244,7 +276,7 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
       return (
         <ScreenResults
           step={stepIndex} onBack={back}
-          onNext={() => (guest ? go('ready') : next())}
+          onNext={() => (guest || needsGuardian(age) ? go('ready') : next())}
           name={name} result={diagnosticResult}
         />
       );
@@ -268,9 +300,11 @@ function Flow({ onFinish }: { onFinish: (role?: Role) => void }) {
           role={role || 'STUDENT'}
           grade={grade || 'CLASS_11'}
           goal={goal || 'BOARD'}
+          country={country}
           consents={consents}
           notif={notif}
           guest={guest}
+          minor={needsGuardian(age)}
           onFinish={onFinish}
         />
       );
@@ -307,42 +341,39 @@ function TopScaffold({
 function ScreenWelcome({ onNext, onSignIn }: { onNext: () => void; onSignIn: () => void }) {
   const { t } = useT();
   return (
-    <div className="screen">
-      <div style={{ padding: '20px 24px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <BrandLogo size="sm" />
-        <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em' }}>{t('onboarding.classLabel')}</span>
-      </div>
-      <div className="screen-body" style={{ paddingTop: 28, gap: 24 }}>
-        <div className="hero-glyph">
-          <div className="grid-bg" />
-          <div style={{ position: 'absolute', inset: 0, padding: '20px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.12em', opacity: 0.8 }}>{t('onboarding.welcome.figureLabel')}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, opacity: 0.6 }}>{t('onboarding.welcome.figureSub')}</span>
-            </div>
-            <div style={{ flex: 1, marginTop: -8 }}>
-              <Glyph.WelcomeHero accent="var(--p-primary-fg)" />
-            </div>
-          </div>
-        </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-          <span className="eyebrow">{t('onboarding.welcome.eyebrow')}</span>
-          <h1 className="display" style={{ marginTop: 10 }}>
+    <div className="screen welcome-screen">
+      <header className="welcome-brand-row">
+        <BrandLockup />
+        <span className="age-pill">{t('onboarding.classLabel')}</span>
+      </header>
+      <div className="welcome-layout">
+        <section className="welcome-copy">
+          <span className="story-kicker"><Sparkles size={15} />{t('onboarding.welcome.eyebrow')}</span>
+          <h1 className="display">
             {t('onboarding.welcome.title.line1')}<br />{t('onboarding.welcome.title.line2')} <em>{t('onboarding.welcome.title.em')}</em>{t('onboarding.welcome.title.line3')}<br />{t('onboarding.welcome.title.line4')}
           </h1>
-          <p className="subtitle" style={{ maxWidth: 320 }}>
-            {t('onboarding.welcome.tagline')}
-          </p>
-        </div>
-      </div>
-      <div className="screen-foot">
-        <button className="btn" onClick={onNext}>
-          {t('onboarding.welcome.cta.start')}
-          <Glyph.ChevronR />
-        </button>
-        <button className="btn text" onClick={onSignIn}>
-          {t('onboarding.welcome.cta.signin')}
-        </button>
+          <p className="subtitle">{t('onboarding.welcome.tagline')}</p>
+          <div className="welcome-benefits">
+            <span><Camera size={18} /><b>{t('onboarding.welcome.benefit.photo.title')}</b><small>{t('onboarding.welcome.benefit.photo.sub')}</small></span>
+            <span><Route size={18} /><b>{t('onboarding.welcome.benefit.path.title')}</b><small>{t('onboarding.welcome.benefit.path.sub')}</small></span>
+            <span><Lightbulb size={18} /><b>{t('onboarding.welcome.benefit.coach.title')}</b><small>{t('onboarding.welcome.benefit.coach.sub')}</small></span>
+          </div>
+          <div className="welcome-actions">
+            <button className="btn" onClick={onNext}>
+              {t('onboarding.welcome.cta.start')}<ArrowRight size={18} />
+            </button>
+            <button className="btn text" onClick={onSignIn}>{t('onboarding.welcome.cta.signin')}</button>
+          </div>
+        </section>
+        <section className="welcome-visual" aria-hidden="true">
+          <div className="welcome-visual-label">{t('onboarding.welcome.visual.label')}</div>
+          <LearningOrbit variant="teal" />
+          <div className="welcome-loop">
+            <span>{t('onboarding.welcome.loop.one')}</span><i />
+            <span>{t('onboarding.welcome.loop.two')}</span><i />
+            <span>{t('onboarding.welcome.loop.three')}</span>
+          </div>
+        </section>
       </div>
     </div>
   );
@@ -447,13 +478,14 @@ function ScreenCountry({
 
 // ─────────── 02 Auth — real email/password (+ optional Google) signup ───────────
 function ScreenAuth({
-  step, onBack, onNext, name, email, setEmail, password, setPassword, country, onGuest,
+  step, onBack, onNext, name, email, setEmail, password, setPassword, country, onAuthenticated, onGuest,
 }: {
   step: number; onBack: () => void; onNext: () => void;
   name: string;
   email: string; setEmail: (v: string) => void;
   password: string; setPassword: (v: string) => void;
   country: CountryId;
+  onAuthenticated: (me: Me) => void;
   onGuest?: () => Promise<void>;
 }) {
   const { t } = useT();
@@ -465,7 +497,7 @@ function ScreenAuth({
   const [err, setErr] = useState<string | null>(null);
 
   async function continueAsGuest() {
-    if (busy || guestBusy || !onGuest) return;
+    if (busy || googleBusy || guestBusy || !onGuest) return;
     setErr(null);
     setGuestBusy(true);
     try {
@@ -487,7 +519,7 @@ function ScreenAuth({
   }
 
   async function continueWithEmail() {
-    if (busy) return;
+    if (busy || googleBusy || guestBusy) return;
     setErr(null);
 
     // 이미 토큰 있으면(뒤로갔다 다시 온 경우, /login 거쳐서 온 경우) 그대로 진행.
@@ -602,8 +634,8 @@ function ScreenAuth({
     setErr(null);
     setGoogleBusy(true);
     try {
-      await loginWithGoogle(idToken, { skipNavigate: true });
-      onNext();
+      const me = await loginWithGoogle(idToken, { skipNavigate: true });
+      onAuthenticated(me);
     } catch (e: unknown) {
       setErr(formatAuthError(e, {
         context: 'onboarding',
@@ -661,24 +693,23 @@ function ScreenAuth({
           </div>
         )}
 
-        <button className="btn" onClick={continueWithEmail} disabled={busy}>
+        <button className="btn" onClick={continueWithEmail} disabled={busy || googleBusy || guestBusy}>
           <Glyph.Mail />
           <span>{busy ? t('onboarding.auth.busy') : t('onboarding.auth.emailCta')}</span>
           <Glyph.ChevronR />
         </button>
 
-        {isGoogleSignInConfigured() && (
-          <>
-            <AuthDivider labelKey="onboarding.auth.or" />
-            <GoogleSignInButton
-              mode="signup"
-              onCredential={handleGoogleSignIn}
-              onError={() => setErr(t('onboarding.auth.google.failed'))}
-              busy={googleBusy}
-              disabled={busy}
-            />
-          </>
-        )}
+        <AuthDivider labelKey="onboarding.auth.or" />
+        <GoogleSignInButton
+          mode="signup"
+          onCredential={handleGoogleSignIn}
+          onError={(error) => {
+            const key = googleSignInErrorKey(error, 'onboarding.auth.google.failed');
+            if (key) setErr(t(key));
+          }}
+          busy={googleBusy}
+          disabled={busy || guestBusy}
+        />
 
         {guestModeEnabled && onGuest && (
           <button
@@ -747,7 +778,16 @@ function ScreenRole({
               <div
                 key={r.id}
                 className={`option-card ${selected ? 'selected' : ''}`}
+                role="radio"
+                aria-checked={selected}
+                tabIndex={0}
                 onClick={() => setRole(r.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setRole(r.id);
+                  }
+                }}
               >
                 <div style={{
                   width: 44, height: 44, borderRadius: 12,
@@ -851,7 +891,15 @@ function ScreenProfile({
           <label>{t('onboarding.profile.classQ')}</label>
           <div className="grade-grid">
             {grades.map((g) => (
-              <div key={g.id} className={`grade-pill ${grade === g.id ? 'selected' : ''}`} onClick={() => setGrade(g.id)}>
+              <div
+                key={g.id}
+                className={`grade-pill ${grade === g.id ? 'selected' : ''}`}
+                role="radio"
+                aria-checked={grade === g.id}
+                tabIndex={0}
+                onClick={() => setGrade(g.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setGrade(g.id); } }}
+              >
                 <span className="num">{g.num}</span>
                 <span className="lbl">{g.lbl}</span>
               </div>
@@ -1088,7 +1136,15 @@ function ScreenGoal({
           {goals.map((g) => {
             const selected = goal === g.id;
             return (
-              <div key={g.id} className={`option-card ${selected ? 'selected' : ''}`} onClick={() => setGoal(g.id)}>
+              <div
+                key={g.id}
+                className={`option-card ${selected ? 'selected' : ''}`}
+                role="radio"
+                aria-checked={selected}
+                tabIndex={0}
+                onClick={() => setGoal(g.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setGoal(g.id); } }}
+              >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--p-ink)' }}>{g.title}</div>
                   <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{g.sub}</div>
@@ -1130,6 +1186,26 @@ function ScreenGoal({
 
 // ─────────── 06 Diagnostic — fixed 4문항 or adaptive CAT-lite (PR-06) ───────────
 type DiagnosticMode = 'fixed' | 'adaptive';
+
+function moveDiagnosticRadio(
+  event: KeyboardEvent<HTMLButtonElement>,
+  count: number,
+  currentIndex: number,
+  selectIndex: (index: number) => void,
+) {
+  if (count === 0) return;
+  let nextIndex: number | null = null;
+  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % count;
+  if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + count) % count;
+  if (event.key === 'Home') nextIndex = 0;
+  if (event.key === 'End') nextIndex = count - 1;
+  if (nextIndex === null) return;
+
+  event.preventDefault();
+  selectIndex(nextIndex);
+  const radios = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]');
+  radios?.[nextIndex]?.focus();
+}
 
 function ScreenDiagnostic({
   step, onBack, onNext, onComplete,
@@ -1203,6 +1279,7 @@ function ScreenDiagnostic({
   }, [flagsQuery.isLoading, adaptiveFlag, t]);
 
   const activeProblem = mode === 'fixed' ? (problems[qIdx] ?? cur) : cur;
+  const answerChoices = activeProblem?.step?.choices ?? [];
   const progressN = mode === 'adaptive' ? itemsAnswered + 1 : qIdx + 1;
   const progressTotal = mode === 'adaptive' ? maxItems : (problems.length || 4);
   const isLastFixedQuestion = mode === 'fixed' && qIdx + 1 >= problems.length;
@@ -1295,15 +1372,24 @@ function ScreenDiagnostic({
                 </div>
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {(activeProblem.step?.choices ?? []).map((c, i) => {
+            <div role="radiogroup" aria-label={t('onboarding.diag.title')} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {answerChoices.map((c, i) => {
                 const sel = choice === c.id;
                 const cls = sel ? 'choice selected' : 'choice';
                 return (
-                  <div key={c.id} className={cls} onClick={() => setChoice(c.id)}>
+                  <button
+                    type="button"
+                    key={c.id}
+                    className={cls}
+                    role="radio"
+                    aria-checked={sel}
+                    tabIndex={sel || (choice === null && i === 0) ? 0 : -1}
+                    onClick={() => setChoice(c.id)}
+                    onKeyDown={(event) => moveDiagnosticRadio(event, answerChoices.length, i, (next) => setChoice(answerChoices[next].id))}
+                  >
                     <div className="letter">{['A', 'B', 'C', 'D', 'E'][i] ?? c.choiceIndex}</div>
                     <span className="text"><MathText text={c.text} /></span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -1312,13 +1398,29 @@ function ScreenDiagnostic({
                 <span className="caption" style={{ fontSize: 12 }}>{t('onboarding.diag.confidence.q')}</span>
                 <span className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{t('onboarding.diag.confidence.fmt', { n: confidence })}</span>
               </div>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div role="radiogroup" aria-label={t('onboarding.diag.confidence.q')} style={{ display: 'flex', gap: 6 }}>
                 {[1, 2, 3, 4].map((n) => (
-                  <div key={n} onClick={() => setConfidence(n)} style={{
-                    flex: 1, height: 8, borderRadius: 4,
-                    background: n <= confidence ? 'var(--p-primary)' : 'var(--p-border)',
-                    cursor: 'pointer', transition: 'background .12s',
-                  }} />
+                  <button
+                    type="button"
+                    key={n}
+                    role="radio"
+                    aria-checked={n === confidence}
+                    aria-label={t('onboarding.diag.confidence.fmt', { n })}
+                    tabIndex={n === confidence ? 0 : -1}
+                    onClick={() => setConfidence(n)}
+                    onKeyDown={(event) => moveDiagnosticRadio(event, 4, n - 1, (next) => setConfidence(next + 1))}
+                    style={{
+                      flex: 1, height: 36, padding: 0, border: 0,
+                      background: 'transparent', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center',
+                    }}
+                  >
+                    <span aria-hidden="true" style={{
+                      width: '100%', height: 8, borderRadius: 4,
+                      background: n <= confidence ? 'var(--p-primary)' : 'var(--p-border)',
+                      transition: 'background .12s',
+                    }} />
+                  </button>
                 ))}
               </div>
             </div>
@@ -1450,9 +1552,15 @@ function ScreenConsents({
           className="card"
           style={{ padding: 16, display: 'flex', gap: 14, alignItems: 'center', cursor: 'pointer' }}
           onClick={() => setNotif(!notif)}
-          role="button"
+          role="switch"
+          aria-checked={notif}
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setNotif(!notif); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setNotif(!notif);
+            }
+          }}
         >
           <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--p-accent-tint)', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <div style={{ width: 22, height: 22 }}><Glyph.Bell accent="currentColor" /></div>
@@ -1461,7 +1569,7 @@ function ScreenConsents({
             <div style={{ fontSize: 14.5, fontWeight: 600 }}>{t('onboarding.consents.notif.title')}</div>
             <div style={{ fontSize: 12.5, color: 'var(--p-muted)', marginTop: 2 }}>{t('onboarding.consents.notif.sub')}</div>
           </div>
-          <div className={`toggle ${notif ? 'on' : ''}`} aria-pressed={notif} />
+          <div className={`toggle ${notif ? 'on' : ''}`} aria-hidden="true" />
         </div>
         <div className="card" style={{ padding: '4px 16px' }}>
           {items.map((it) => (
@@ -1470,6 +1578,16 @@ function ScreenConsents({
                 className={`ck ${isChecked(it.id) ? 'checked' : ''}`}
                 onClick={() => !it.req && toggle(it.id as ConsentKey)}
                 style={{ opacity: it.req ? 0.85 : 1, cursor: it.req ? 'default' : 'pointer' }}
+                role="checkbox"
+                aria-checked={isChecked(it.id)}
+                aria-disabled={it.req || undefined}
+                tabIndex={it.req ? -1 : 0}
+                onKeyDown={(e) => {
+                  if (!it.req && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    toggle(it.id as ConsentKey);
+                  }
+                }}
               >
                 {isChecked(it.id) && <Glyph.Check accent="var(--p-primary-fg)" size={12} />}
               </div>
@@ -1500,21 +1618,22 @@ function ScreenConsents({
 
 // ─────────── 09 Ready / First lesson ───────────
 function ScreenReady({
-  step, name, role, grade, goal, consents, notif, guest = false, onFinish,
+  step, name, role, grade, goal, country, consents, notif, guest = false, minor = false, onFinish,
 }: {
   step: number; name: string; role: Role; grade: GradeId; goal: GoalId;
-  consents: ConsentMap; notif: boolean; guest?: boolean; onFinish: (role?: Role) => void;
+  country: CountryId; consents: ConsentMap; notif: boolean; guest?: boolean; minor?: boolean;
+  onFinish: (role?: Role, target?: string) => void;
 }) {
   const { t } = useT();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const { refreshUser } = useAuth();
+  const { refreshUser, user } = useAuth();
 
-  // Detect KR language client-side so the alert/error copy localizes even if
-  // the country prop isn't threaded into this screen.
-  const isKR = (typeof window !== 'undefined' && localStorage.getItem('mathema.lang') === 'ko');
+  // Use the selected market directly; localStorage language can be missing or
+  // intentionally overridden and must not choose the wrong recovery copy.
+  const isKR = country === 'KR';
 
-  async function finalize() {
+  async function finalize(destination: 'learn' | 'home' = 'home') {
     if (busy) return;
     setErr(null);
     setBusy(true);
@@ -1556,7 +1675,7 @@ function ScreenReady({
       // best-effort — consent 저장 실패는 사용자가 onboarding 진입을 막을 만큼
       // 치명적 X (재시도는 설정 페이지에서도 가능). Guests skip the consents
       // screen entirely and must not self-grant optional consents.
-      if (!guest) {
+      if (!guest && !minor) {
         const consentKinds: ConsentKey[] = ['ANALYTICS', 'AI_TRAINING', 'MARKETING'];
         for (const k of consentKinds) {
           try {
@@ -1566,11 +1685,12 @@ function ScreenReady({
       }
       // localStorage 에 onboarding 결과 저장 (백엔드 미저장 항목: goal, notif 토글).
       localStorage.setItem('mathema.onboarding', JSON.stringify({
+        userId: user?.id,
         role, grade, goal, notif, completedAt: new Date().toISOString(),
       }));
       // Refresh AuthContext.user so ProtectedRoute sees gradeLevel filled.
       await refreshUser();
-      onFinish(resolvedRole);
+      onFinish(resolvedRole, destination === 'learn' && resolvedRole === 'STUDENT' ? '/app/learn' : undefined);
     } catch (e: any) {
       const status = e?.response?.status;
       const rawMsg = e?.response?.data?.error?.message;
@@ -1625,8 +1745,8 @@ function ScreenReady({
               promise of pace — earlier copy said "5 lessons/week" and "25m
               daily target" which were placeholders the app never enforced. */}
           {[
-            { k: grade ? grade.replace('CLASS_', '') : '—', v: t('onboarding.ready.stats.grade') },
-            { k: grade ? String(chapterCountByClass(grade)) : '—', v: t('onboarding.ready.stats.chapters') },
+            { k: grade ? gradeLabel(grade, country) : '—', v: t('onboarding.ready.stats.grade') },
+            { k: grade ? String(chapterCountByClass(grade, country)) : '—', v: t('onboarding.ready.stats.chapters') },
             { k: '∞', v: t('onboarding.ready.stats.problems') },
           ].map((s) => (
             <div key={s.v} className="card" style={{ padding: 12, textAlign: 'center' }}>
@@ -1658,11 +1778,11 @@ function ScreenReady({
             {err}
           </div>
         )}
-        <button className="btn" onClick={finalize} disabled={busy}>
+        <button className="btn" onClick={() => finalize('learn')} disabled={busy}>
           {busy ? t('onboarding.ready.cta.busy') : (err ? (isKR ? '다시 시도' : 'Retry') : t('onboarding.ready.cta.start'))}
           <Glyph.ChevronR />
         </button>
-        <button className="btn text" onClick={finalize} disabled={busy}>
+        <button className="btn text" onClick={() => finalize('home')} disabled={busy}>
           {t('onboarding.ready.cta.dashboard')}
         </button>
       </div>

@@ -124,8 +124,16 @@ export function MasteryScreen() {
         {!balance.isLoading && !hasHeatmap && (
           <div
             className="card"
+            role="button"
+            tabIndex={0}
             style={{ padding: 16, textAlign: 'center', cursor: 'pointer' }}
             onClick={() => nav('/app/learn')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                nav('/app/learn');
+              }
+            }}
           >
             <div style={{ color: 'var(--p-muted)', fontSize: 13, marginBottom: 10 }}>{L('noData', uiLang)}</div>
             <span className="chip primary" style={{ fontSize: 12 }}>{L('startLearn', uiLang)} →</span>
@@ -196,7 +204,14 @@ function ReviewConceptCard({ row, lang, onClick }: { row: ReviewScheduleRow; lan
     <div
       className="card"
       role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       style={{ padding: 12, cursor: onClick ? 'pointer' : 'default' }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
@@ -232,7 +247,14 @@ function ConceptStatusCard({ row, lang, onClick }: { row: ConceptMastery; lang: 
     <div
       className="card"
       role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       style={{ padding: 12, cursor: onClick ? 'pointer' : 'default' }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>

@@ -10,7 +10,9 @@ import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.GetCredentialCancellationException;
 import androidx.credentials.exceptions.GetCredentialException;
+import androidx.credentials.exceptions.NoCredentialException;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -73,7 +75,24 @@ public class GoogleAuthPlugin extends Plugin {
                     @Override
                     public void onError(@NonNull GetCredentialException e) {
                         Log.i(TAG, "Google sign-in was not completed", e);
-                        call.reject(e.getMessage() != null ? e.getMessage() : "Google sign-in failed");
+                        if (e instanceof GetCredentialCancellationException) {
+                            call.reject(
+                                "Google sign-in was cancelled.",
+                                "GOOGLE_SIGN_IN_CANCELLED"
+                            );
+                            return;
+                        }
+                        if (e instanceof NoCredentialException) {
+                            call.reject(
+                                "No Google account is available. Add a Google account to this device, then try again.",
+                                "GOOGLE_NO_CREDENTIAL"
+                            );
+                            return;
+                        }
+                        call.reject(
+                            "Google sign-in could not start. Check Google Play services, then try again.",
+                            "GOOGLE_SIGN_IN_FAILED"
+                        );
                     }
                 }
             )

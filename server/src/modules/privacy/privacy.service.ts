@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { ConsentKind, Prisma } from '@prisma/client';
+import { ConsentKind, Prisma, UserRole } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { requiresGuardianConsent } from '../guardian-consent/guardian-consent.util';
 
 /**
  * DPDP (India Digital Personal Data Protection Act 2023) + GDPR 동의 관리.
@@ -32,6 +33,9 @@ export class PrivacyService {
     ipAddress?: string;
     userAgent?: string;
   } = {}) {
+    if (opts.analytics || opts.marketing || opts.aiTraining) {
+      await this.assertOptionalConsentAllowed(userId);
+    }
     const rows: Prisma.ConsentCreateManyInput[] = [
       { userId, kind: ConsentKind.DATA_PROCESSING, policyVersion: CURRENT_POLICY_VERSION, ipAddress: opts.ipAddress, userAgent: opts.userAgent },
     ];
@@ -43,6 +47,9 @@ export class PrivacyService {
 
   /** 동의 부여 (이미 활성이면 idempotent — 새 row 생성 X). */
   async grant(userId: string, kind: ConsentKind, ctx: { ip?: string; ua?: string } = {}) {
+    if (kind !== ConsentKind.DATA_PROCESSING) {
+      await this.assertOptionalConsentAllowed(userId);
+    }
     const current = await this.currentRow(userId, kind);
     if (current && current.revokedAt === null && current.policyVersion === CURRENT_POLICY_VERSION) {
       return current;  // 이미 활성, 같은 정책 — 변경 없음
@@ -115,5 +122,41 @@ export class PrivacyService {
       where: { userId, kind },
       orderBy: { grantedAt: 'desc' },
     });
+  }
+
+  /** Pre-mutation eligibility check used by account creation/upgrade flows so
+   * an invalid optional-consent payload cannot leave a partially-created user. */
+  assertOptionalConsentProfile(user: {
+    role?: UserRole | string | null;
+    birthDate?: Date | null;
+    country?: string | null;
+    isGuest?: boolean;
+  }) {
+    if (
+      user.isGuest
+      || (
+        user.role === UserRole.STUDENT
+        && (!user.birthDate || requiresGuardianConsent(user.birthDate, user.country))
+      )
+    ) {
+      throw new BadRequestException({
+        code: 'minor_optional_consent_requires_guardian',
+        message: 'Optional analytics, AI training, and marketing consent cannot be self-granted by this account.',
+      });
+    }
+  }
+
+  private async assertOptionalConsentAllowed(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, birthDate: true, country: true, isGuest: true },
+    });
+    if (!user) {
+      throw new BadRequestException({
+        code: 'minor_optional_consent_requires_guardian',
+        message: 'Optional analytics, AI training, and marketing consent cannot be self-granted by this account.',
+      });
+    }
+    this.assertOptionalConsentProfile(user);
   }
 }

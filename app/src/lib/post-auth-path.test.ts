@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Me } from './queries';
-import { postAuthPath } from './post-auth-path';
+import { postAuthPath, resolvePostAuthPath } from './post-auth-path';
 
 function student(overrides: Partial<Me> = {}): Me {
   return {
@@ -17,6 +17,8 @@ function student(overrides: Partial<Me> = {}): Me {
     ...overrides,
   };
 }
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe('postAuthPath guardian consent contract', () => {
   it('keeps a minor student on the guardian waiting page before approval', () => {
@@ -35,5 +37,42 @@ describe('postAuthPath guardian consent contract', () => {
       guardianConsentVerifiedAt: null,
     })))
       .toBe('/parent');
+  });
+});
+
+describe('resolvePostAuthPath deep-link contract', () => {
+  it('returns a protected student deep link after all profile gates pass', () => {
+    expect(resolvePostAuthPath(
+      student({ guardianConsentVerifiedAt: new Date().toISOString() }),
+      '/app/notes/note-1?from=push',
+    )).toBe('/app/notes/note-1?from=push');
+  });
+
+  it('keeps onboarding/guardian gates ahead of a requested deep link', () => {
+    expect(resolvePostAuthPath(student({ guardianConsentVerifiedAt: null }), '/app/review'))
+      .toBe('/guardian-consent');
+  });
+
+  it('rejects protocol-relative and cross-role destinations', () => {
+    const me = student({ guardianConsentVerifiedAt: new Date().toISOString() });
+    expect(resolvePostAuthPath(me, '//evil.example/path')).toBe('/app');
+    expect(resolvePostAuthPath(me, '/admin')).toBe('/app');
+  });
+
+  it('does not reuse another account\'s local onboarding completion', () => {
+    const values = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    });
+    localStorage.setItem('mathema.onboarding', JSON.stringify({
+      userId: 'student-1',
+      completedAt: new Date().toISOString(),
+    }));
+    expect(postAuthPath(student({
+      id: 'student-2',
+      gradeLevel: null,
+      birthDate: `${new Date().getUTCFullYear() - 20}-01-01`,
+    }))).toBe('/onboarding');
   });
 });

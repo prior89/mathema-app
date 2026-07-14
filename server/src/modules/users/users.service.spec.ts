@@ -1,8 +1,8 @@
 /**
  * UsersService — updateProfile role guard + pushReminders persistence (PR-04).
  */
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { CountryCode, UserRole } from '@prisma/client';
 import { UsersService } from './users.service';
 
 type RepoMock = {
@@ -17,6 +17,7 @@ function mockUser(over: Partial<{
   examDate: Date;
   birthDate: Date | null;
   guardianConsentVerifiedAt: Date | null;
+  country: CountryCode;
 }> = {}) {
   return {
     id: 'user-1',
@@ -25,6 +26,7 @@ function mockUser(over: Partial<{
     passwordHash: 'hash',
     birthDate: null as Date | null,
     guardianConsentVerifiedAt: null as Date | null,
+    country: CountryCode.KR,
     ...over,
   };
 }
@@ -52,6 +54,16 @@ describe('UsersService.updateProfile', () => {
     const { svc, repo } = build();
     await svc.updateProfile('user-1', { pushRemindersEnabled: true });
     expect(repo.update).toHaveBeenCalledWith('user-1', { pushRemindersEnabled: true });
+  });
+
+  it('blocks switching into a planned curriculum market', async () => {
+    const { svc, repo } = build();
+
+    await expect(svc.updateProfile('user-1', { country: 'IN' })).rejects.toMatchObject({
+      response: { code: 'country_unavailable' },
+    });
+    await expect(svc.updateProfile('user-1', { country: 'IN' })).rejects.toBeInstanceOf(BadRequestException);
+    expect(repo.update).not.toHaveBeenCalled();
   });
 
   it('allows STUDENT self-assignment', async () => {

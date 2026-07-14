@@ -21,12 +21,9 @@ declare global {
               size?: string;
               text?: string;
               width?: number;
+              locale?: string;
             },
           ) => void;
-          prompt: (momentListener?: (n: {
-            isNotDisplayed: () => boolean;
-            isSkippedMoment: () => boolean;
-          }) => void) => void;
         };
       };
     };
@@ -35,7 +32,6 @@ declare global {
 
 let scriptPromise: Promise<void> | null = null;
 let initialized = false;
-let hiddenHost: HTMLDivElement | null = null;
 let callbackRef: CredentialCallback = () => {};
 
 function loadGoogleScript(): Promise<void> {
@@ -57,24 +53,23 @@ function loadGoogleScript(): Promise<void> {
     s.async = true;
     s.defer = true;
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error('Google Identity Services script failed to load'));
+    s.onerror = () => {
+      scriptPromise = null;
+      reject(new Error('Google Identity Services script failed to load'));
+    };
     document.head.appendChild(s);
   });
   return scriptPromise;
 }
 
-function ensureHiddenHost(): HTMLDivElement {
-  if (!hiddenHost) {
-    hiddenHost = document.createElement('div');
-    hiddenHost.setAttribute('aria-hidden', 'true');
-    hiddenHost.className = 'gsi-hidden-host';
-    document.body.appendChild(hiddenHost);
-  }
-  return hiddenHost;
-}
-
-/** Load GIS once and keep a hidden official button for account-picker popups. */
-export async function ensureGoogleIdentity(onCredential: CredentialCallback): Promise<boolean> {
+/** Render the official GIS control into a visible host. Google does not expose
+ * an API for programmatically starting its button flow; the user must click
+ * the button produced by renderButton(). */
+export async function renderGoogleIdentityButton(
+  parent: HTMLElement,
+  onCredential: CredentialCallback,
+  options: { mode?: 'continue' | 'signup'; locale?: string } = {},
+): Promise<boolean> {
   if (!isGoogleSignInConfigured()) return false;
   callbackRef = onCredential;
 
@@ -92,27 +87,16 @@ export async function ensureGoogleIdentity(onCredential: CredentialCallback): Pr
       auto_select: false,
       cancel_on_tap_outside: true,
     });
-    const host = ensureHiddenHost();
-    host.innerHTML = '';
-    g.renderButton(host, {
-      type: 'standard',
-      theme: 'outline',
-      size: 'large',
-      text: 'continue_with',
-      width: 280,
-    });
     initialized = true;
   }
-  return true;
-}
-
-/** Programmatically open the Google account picker via the hidden GIS button. */
-export function triggerGoogleSignIn(): boolean {
-  const btn = hiddenHost?.querySelector<HTMLElement>('[role="button"]');
-  if (!btn) {
-    window.google?.accounts?.id?.prompt();
-    return false;
-  }
-  btn.click();
+  parent.innerHTML = '';
+  g.renderButton(parent, {
+    type: 'standard',
+    theme: 'outline',
+    size: 'large',
+    text: options.mode === 'signup' ? 'signup_with' : 'continue_with',
+    width: Math.max(220, Math.min(400, Math.floor(parent.clientWidth || 320))),
+    locale: options.locale,
+  });
   return true;
 }

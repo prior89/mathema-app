@@ -340,7 +340,7 @@ export function SoloProblemScreen() {
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+          <div role="radiogroup" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
             {shuffledChoices.map((c, i) => {
               const isPicked = pickedId === c.id;
               const isRevealedCorrect = result?.isCorrect && isPicked;
@@ -350,10 +350,21 @@ export function SoloProblemScreen() {
                 <div
                   key={c.id}
                   className={cls}
+                  role="radio"
+                  aria-checked={isPicked}
+                  aria-disabled={locked || undefined}
+                  tabIndex={locked ? -1 : 0}
                   onClick={() => {
                     if (locked) return;
                     if (result && !result.isCorrect) setResult(null);
                     setPickedId(c.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (!locked && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      if (result && !result.isCorrect) setResult(null);
+                      setPickedId(c.id);
+                    }
                   }}
                 >
                   <div className="letter">{letters[i] ?? c.choiceIndex}</div>

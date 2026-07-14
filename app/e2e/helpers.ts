@@ -8,17 +8,22 @@
  */
 import { Page, expect } from '@playwright/test';
 
+export const API_BASE = process.env.E2E_API_BASE ?? 'http://127.0.0.1:4000/api/v1';
+
 export async function loginAsAdmin(page: Page) {
   await page.goto('/login');
-  await page.getByPlaceholder('you@example.com').fill('admin');
-  await page.locator('input[type="password"]').first().fill('admin');
-  await page.getByRole('button', { name: /Sign in/i }).click();
-  await expect(page).toHaveURL(/\/app(\/|$)/, { timeout: 10_000 });
+  await page.getByLabel(/이메일|Email/i).fill('admin');
+  await page.getByLabel(/비밀번호|Password/i).fill('admin');
+  await page.getByRole('button', { name: /로그인|Sign in/i }).click();
+  // The seeded account may intentionally be onboarding/guardian gated. Let
+  // each caller assert (or declare) the prerequisite it actually needs.
+  await expect(page).not.toHaveURL(/\/login$/, { timeout: 10_000 });
+  return new URL(page.url()).pathname;
 }
 
 export async function backendReachable(page: Page): Promise<boolean> {
   try {
-    const res = await page.request.get('http://localhost:4000/api/v1/health/live');
+    const res = await page.request.get(`${API_BASE}/health/live`);
     return res.ok();
   } catch {
     return false;
@@ -39,9 +44,11 @@ export async function registerThrowawayUser(page: Page) {
   const password = 'Test1234!Throwaway' + stamp;
   const name = 'E2E User';
 
-  const res = await page.request.post('http://localhost:4000/api/v1/auth/register', {
+  const res = await page.request.post(`${API_BASE}/auth/register`, {
     data: {
       email, password, name, role: 'STUDENT',
+      country: 'KR',
+      birthDate: '2000-01-01',
       gradeLevel: 'CLASS_11',
       examDate: '2027-02-14',
       targetGrade: 3,
@@ -68,7 +75,10 @@ export async function registerThrowawayUser(page: Page) {
 
   const teardown = async () => {
     try {
-      await page.request.delete('http://localhost:4000/api/v1/users/me', {
+      // Use fetch rather than page.request: serial suites commonly close the
+      // setup page/context before afterAll invokes this cleanup callback.
+      await fetch(`${API_BASE}/users/me`, {
+        method: 'DELETE',
         headers: { Authorization: `Bearer ${accessToken}` },
       });
     } catch { /* best-effort cleanup */ }

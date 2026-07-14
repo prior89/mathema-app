@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CountryCode, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from './users.repository';
@@ -7,6 +7,7 @@ import { isKrUnder14SignupBlocked } from '../guardian-consent/guardian-consent.u
 import { daysUntil } from '../../common/utils/date.util';
 import { BCRYPT_COST } from '../../common/utils/auth-constants';
 import { assertPasswordNotBreached } from '../../common/utils/password-breach';
+import { COUNTRY_CONFIG, type CountryCode as ConfigCountryCode } from '../../common/enums/country.enum';
 
 @Injectable()
 export class UsersService {
@@ -60,6 +61,13 @@ export class UsersService {
 
     const countryChanging = dto.country !== undefined && dto.country !== user.country;
     if (countryChanging) {
+      const countryConfig = COUNTRY_CONFIG[dto.country as ConfigCountryCode];
+      if (!countryConfig || countryConfig.status === 'planned') {
+        throw new BadRequestException({
+          code: 'country_unavailable',
+          message: 'This country curriculum is not available yet.',
+        });
+      }
       data.country = dto.country;
     }
 
