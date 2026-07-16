@@ -63,16 +63,13 @@ export function BrandLockup({ compact = false }: { compact?: boolean }) {
 export function BrandLogo({ size = 'sm', style }: { size?: Size; style?: CSSProperties }) {
   return (
     <img
+      className="brand-logo"
       src="/matheo-logo.png"
       alt="Matheo"
       style={{
         height: HEIGHTS[size],
         width: 'auto',
         objectFit: 'contain',
-        // mixBlendMode multiplies the logo against the page bg, so the white
-        // halo in the PNG disappears against the sage palette without needing
-        // a separately exported transparent-bg asset.
-        mixBlendMode: 'multiply',
         ...style,
       }}
     />
@@ -98,9 +95,7 @@ export function LoadingSplash() {
         background: 'var(--p-primary-tint, oklch(0.95 0.022 175))',
       }}
     >
-      {/* Animation must live on the <img> itself: animated opacity on a
-          wrapper creates an isolated stacking context, which voids the
-          child's mix-blend-mode and exposes the PNG's white box. */}
+      {/* Animation stays on the image so the light-theme blend remains stable. */}
       <BrandLogo size="splash" style={{ animation: 'mathema-fade 1.4s ease-in-out infinite' }} />
       <style>{`
         @keyframes mathema-fade {

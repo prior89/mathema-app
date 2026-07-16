@@ -70,7 +70,7 @@ export class ErrorBoundary extends Component<Props, State> {
               borderRadius: 8,
               border: 'none',
               background: 'var(--p-primary, #2d6a5a)',
-              color: '#fff',
+              color: 'var(--p-primary-fg, #fff)',
               cursor: 'pointer',
               fontWeight: 500,
             }}

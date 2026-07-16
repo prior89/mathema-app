@@ -287,13 +287,19 @@ export function UploadProblemModal({ open, onClose, initialFile }: Props) {
         position: 'fixed', inset: 0, zIndex: 200,
         backgroundColor: 'var(--p-overlay)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 16,
+        paddingTop: 'calc(16px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))',
+        paddingRight: 'calc(16px + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))',
+        paddingBottom: 'calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+        paddingLeft: 'calc(16px + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))',
+        boxSizing: 'border-box',
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: 540, maxWidth: '100%', maxHeight: '90vh', overflow: 'auto',
+          width: 540, maxWidth: '100%',
+          maxHeight: 'calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+          overflow: 'auto',
           background: 'var(--p-surface)', border: '1px solid var(--p-border)',
           borderRadius: 16, padding: 22, color: 'var(--p-ink)',
           boxShadow: 'var(--p-shadow-lg)',

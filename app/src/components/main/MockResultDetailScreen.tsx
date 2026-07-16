@@ -96,7 +96,7 @@ export function MockResultDetailScreen() {
           <div style={{ padding: 22, textAlign: 'center', color: 'var(--p-muted)' }}>{t('mockResult.loading')}</div>
         )}
         {detail.isError && (
-          <div className="card" style={{ padding: 14, color: 'var(--p-danger)' }}>
+          <div className="card" style={{ padding: 14, color: 'var(--p-danger-ink)' }}>
             {t('mockResult.errorLoad')}
           </div>
         )}
@@ -124,7 +124,7 @@ export function MockResultDetailScreen() {
                 <div className="card" style={{ marginTop: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--p-success-tint)', borderColor: 'var(--p-success)' }}>
                   <span style={{ fontSize: 22 }} aria-hidden>{isBest ? '🏆' : '📈'}</span>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, color: 'var(--p-success)' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--p-success-ink)' }}>
                       {isBest
                         ? (ko ? '최고 점수 경신!' : 'New personal best!')
                         : (ko ? `지난 시험보다 +${delta}점 올랐어요` : `+${delta} pts since your last exam`)}
@@ -165,7 +165,7 @@ export function MockResultDetailScreen() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <span style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18 }}>{i + 1}.</span>
                     {/* Attribution (p.source) intentionally not rendered. */}
-                    <span className="chip" style={{ marginLeft: 'auto', fontSize: 10.5, background: p.allCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)', color: p.allCorrect ? 'var(--p-success)' : 'var(--p-danger)' }}>
+                    <span className="chip" style={{ marginLeft: 'auto', fontSize: 10.5, background: p.allCorrect ? 'var(--p-success-tint)' : 'var(--p-danger-tint)', color: p.allCorrect ? 'var(--p-success-ink)' : 'var(--p-danger-ink)' }}>
                       {p.allCorrect ? t('mockResult.problem.allCorrect') : t('mockResult.problem.missed')}
                     </span>
                   </div>
@@ -179,7 +179,7 @@ export function MockResultDetailScreen() {
                             ? t('mockResult.step.pill', { n: s.stepIndex, label: t(STEP_LABEL_KEY[s.stepIndex]) })
                             : t('mockResult.step.pillNoLabel', { n: s.stepIndex })}
                         </span>
-                        <span style={{ color: s.isCorrect ? 'var(--p-success)' : 'var(--p-danger)', fontWeight: 600 }}>
+                        <span style={{ color: s.isCorrect ? 'var(--p-success-ink)' : 'var(--p-danger-ink)', fontWeight: 600 }}>
                           {s.isCorrect ? '✓' : '✗'}
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>

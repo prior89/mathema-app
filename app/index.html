@@ -10,6 +10,19 @@
     <!-- Manrope keeps the product energetic and contemporary; Noto Sans KR
          preserves Korean legibility. Mono is reserved for actual math/data. -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Match ThemeContext before React/CSS loads to prevent a light flash in
+      // dark-mode browsers and Android WebViews.
+      (() => {
+        try {
+          const saved = localStorage.getItem('mathema.theme');
+          const dark = saved === 'dark'
+            || (saved !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        } catch { /* storage can be unavailable in private contexts */ }
+      })();
+    </script>
     <style>
       /* Pre-React paint only. The literal sage tint below intentionally
          duplicates --p-primary-tint (src/styles/onboarding.css): bundle CSS
@@ -17,6 +30,7 @@
          unresolved. Keep the two values in sync. All other design tokens
          live in onboarding.css (--p-*) — do not add a parallel set here. */
       html, body { margin: 0; padding: 0; background: #eef2ff; }
+      html.dark, html.dark body { background: #0c1020; }
       /* 100vh on mobile browsers is fixed to the largest viewport (URL bar
          hidden); when the URL bar is visible the rendered viewport is
          shorter and our sticky TabBar leaves the body sage tint exposed on
@@ -24,6 +38,7 @@
          always fills the actual visible area. 100vh stays as a fallback
          for browsers that don't support dvh (iOS < 15.4, Chrome < 108). */
       #root { min-height: 100vh; min-height: 100dvh; background: #eef2ff; }
+      html.dark #root { background: #0c1020; }
     </style>
   </head>
   <body>

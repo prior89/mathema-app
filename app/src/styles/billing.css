@@ -4,7 +4,7 @@
 
 .mathema-app .paywall-topbar {
   min-height: 54px;
-  padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+  padding: 8px 16px;
   display: grid;
   grid-template-columns: 44px 1fr 44px;
   align-items: center;
@@ -398,7 +398,7 @@
 
 .mathema-app .paywall-load-error {
   flex-wrap: wrap;
-  color: var(--p-danger);
+  color: var(--p-danger-ink);
 }
 
 .mathema-app .paywall-load-error button {
@@ -418,16 +418,17 @@
 .mathema-app .paywall-action-notice.success {
   border-color: var(--p-success);
   background: var(--p-success-tint);
+  color: var(--p-success-ink);
 }
 
 .mathema-app .paywall-action-notice.success svg {
-  color: var(--p-success);
+  color: var(--p-success-ink);
 }
 
 .mathema-app .paywall-action-notice.error {
   border-color: var(--p-danger);
   background: var(--p-danger-tint);
-  color: var(--p-danger);
+  color: var(--p-danger-ink);
 }
 
 .mathema-app .paywall-trust {
@@ -508,7 +509,7 @@
 }
 
 .mathema-app .paywall-purchase-dock {
-  padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+  padding: 12px 20px;
   display: grid;
   grid-template-columns: minmax(0, 520px);
   justify-content: center;
@@ -597,7 +598,7 @@
   justify-content: center;
   border-radius: 50%;
   background: var(--p-success-tint);
-  color: var(--p-success);
+  color: var(--p-success-ink);
 }
 
 .mathema-app .paywall-status-chip {
@@ -714,7 +715,7 @@
 .mathema-app .billing-payment-issue svg {
   flex: 0 0 auto;
   margin-top: 1px;
-  color: var(--p-warning);
+  color: var(--p-warning-ink);
 }
 
 .mathema-app .billing-plan-progress {

@@ -3,14 +3,10 @@
  * Native-only — web builds no-op. Token → POST /devices/register.
  * Deep links: wrongnote.due → /app/review, streak.reminder → /app.
  */
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { del, post, patch, tokens } from '../lib/api';
-
-const PKG_CORE = '@capacitor/core';
-const PKG_PUSH = '@capacitor/push-notifications';
 const TOKEN_KEY = 'mathema.push.token';
-
-const dynImport = (name: string): Promise<any> =>
-  import(/* @vite-ignore */ name).catch(() => null);
 
 export type PushSyncOptions = {
   enabled: boolean;
@@ -44,10 +40,8 @@ function clearStoredToken() {
 }
 
 async function nativePlatform(): Promise<'android' | 'ios' | null> {
-  const core: any = await dynImport(PKG_CORE);
-  const Capacitor = core?.Capacitor;
-  if (!Capacitor?.isNativePlatform?.()) return null;
-  const p = Capacitor.getPlatform?.();
+  if (!Capacitor.isNativePlatform()) return null;
+  const p = Capacitor.getPlatform();
   if (p === 'android' || p === 'ios') return p;
   return null;
 }
@@ -73,10 +67,6 @@ export async function initPushListeners() {
   const platform = await nativePlatform();
   if (!platform) return;
 
-  const pushMod: any = await dynImport(PKG_PUSH);
-  const PushNotifications = pushMod?.PushNotifications;
-  if (!PushNotifications) return;
-
   await PushNotifications.addListener('registration', async (ev: { value: string }) => {
     if (!ev?.value || !tokens.get()) return;
     await registerTokenOnServer(ev.value, platform).catch(() => {});
@@ -100,10 +90,6 @@ export async function initPushListeners() {
 export async function syncPushRegistration(opts: PushSyncOptions) {
   const platform = await nativePlatform();
   if (!platform || !tokens.get()) return;
-
-  const pushMod: any = await dynImport(PKG_PUSH);
-  const PushNotifications = pushMod?.PushNotifications;
-  if (!PushNotifications) return;
 
   await initPushListeners();
 
@@ -139,9 +125,6 @@ export async function unregisterPushToken() {
 
   const platform = await nativePlatform();
   if (!platform) return;
-  const pushMod: any = await dynImport(PKG_PUSH);
-  const PushNotifications = pushMod?.PushNotifications;
-  if (!PushNotifications) return;
   try { await PushNotifications.removeAllListeners(); } catch { /* ignore */ }
   listenersReady = false;
 }

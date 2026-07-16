@@ -6,7 +6,7 @@ import { useT } from '../../lib/i18n';
 
 const QUALITY_COLORS: Record<ReviewQuality, string> = {
   AGAIN: 'var(--p-danger)',
-  HARD: 'var(--p-accent)',
+  HARD: 'var(--p-accent-ink)',
   GOOD: 'var(--p-primary)',
   EASY: 'var(--p-success)',
 };
@@ -44,7 +44,7 @@ export function Sm2ReviewButtons({
             style={{
               padding: compact ? '7px 4px' : '8px 6px',
               cursor: disabled ? 'not-allowed' : 'pointer',
-              borderColor: `${QUALITY_COLORS[b.key]}40`,
+              borderColor: QUALITY_COLORS[b.key],
               opacity: disabled ? 0.5 : 1,
             }}
           >

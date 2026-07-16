@@ -34,6 +34,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(BillingPlugin.class);
         registerPlugin(GoogleAuthPlugin.class);
+        registerPlugin(MatheoThemePlugin.class);
         super.onCreate(savedInstanceState);
         appUpdateManager = AppUpdateManagerFactory.create(this);
         checkForImmediateUpdate();
