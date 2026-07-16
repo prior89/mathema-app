@@ -148,8 +148,11 @@ export function ReportScreen() {
                   deltaDown={(cur.data?.accuracyDelta ?? 0) < 0} />
             <Stat
               k={t('reportScreen.stat.aiScore')}
-              v={cur.data && cur.data.aiScore > 0 ? `${cur.data.aiScore.toFixed(1)}` : '—'}
-              u={cur.data && cur.data.aiScore > 0 ? '/10' : ''}
+              v={cur.data && cur.data.aiScore > 0 ? `${Math.min(100, cur.data.aiScore).toFixed(0)}` : '—'}
+              // weekly/current returns avgMasteryScore on a 0-100 scale (unlike
+              // the stored WeeklyReport aiScore, which is /10) — live QA caught
+              // this rendering as an impossible "100.0/10".
+              u={cur.data && cur.data.aiScore > 0 ? '/100' : ''}
               delta={!cur.data || cur.data.aiScore === 0 ? t('reportScreen.stat.noData') : ''}
             />
           </div>

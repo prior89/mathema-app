@@ -2,7 +2,7 @@
  * Ported from `App onboarding/screens-a.jsx` + `screens-b.jsx`.
  * Phone Auth option hidden (no backend); Goal stored in localStorage; Diagnostic state in-memory.
  */
-import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, type KeyboardEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Camera, Lightbulb, Route, Sparkles } from 'lucide-react';
 import { post, patch, tokens } from '../lib/api';
@@ -1296,7 +1296,19 @@ function ScreenDiagnostic({
   }, [flagsQuery.isLoading, adaptiveFlag, t]);
 
   const activeProblem = mode === 'fixed' ? (problems[qIdx] ?? cur) : cur;
-  const answerChoices = activeProblem?.step?.choices ?? [];
+  // Seed data tends to park the correct option at key A; without a shuffle a
+  // student can pass the diagnostic by pattern alone. Grading submits the
+  // choice id, so display order is free — shuffle deterministically per
+  // problem so re-renders (and back/forward) keep a stable order.
+  const answerChoices = useMemo(() => {
+    const raw = activeProblem?.step?.choices ?? [];
+    const hash = (s: string) => {
+      let h = 5381;
+      for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+      return h;
+    };
+    return [...raw].sort((a, b) => hash(`${activeProblem?.id}:${a.id}`) - hash(`${activeProblem?.id}:${b.id}`));
+  }, [activeProblem?.id, activeProblem?.step?.choices]);
   const progressN = mode === 'adaptive' ? itemsAnswered + 1 : qIdx + 1;
   const progressTotal = mode === 'adaptive' ? maxItems : (problems.length || 4);
   const isLastFixedQuestion = mode === 'fixed' && qIdx + 1 >= problems.length;
@@ -1383,9 +1395,18 @@ function ScreenDiagnostic({
               <div className="math-big" style={{ fontSize: 16, lineHeight: 1.5, whiteSpace: 'pre-wrap', color: 'var(--p-ink)' }}>
                 <MathText text={activeProblem.body} />
               </div>
+              {/* The diagnostic grades the CONCEPT step, not the problem's
+                  final answer. Without this framing the choices look wrong
+                  ("180°를 라디안으로?" over degree options) — label the step
+                  prompt as the question the student actually answers. */}
               {activeProblem.step?.prompt && (
-                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--p-ink-2)' }}>
-                  <MathText text={activeProblem.step.prompt} />
+                <div style={{ marginTop: 10, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                  <span className="chip" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', flexShrink: 0 }}>
+                    {t('onboarding.diag.stepAsk')}
+                  </span>
+                  <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--p-ink)' }}>
+                    <MathText text={activeProblem.step.prompt} />
+                  </div>
                 </div>
               )}
             </div>

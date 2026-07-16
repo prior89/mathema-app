@@ -37,7 +37,7 @@ export class WeeklyReportService {
     const { weekStart, weekEnd, isoWeek } = this.weekRange(opts.weekStart);
 
     const [user, attempts, sessions, mastery, errorPatterns, recommendations] = await Promise.all([
-      this.prisma.user.findUnique({ where: { id: userId }, select: { tenantId: true } }),
+      this.prisma.user.findUnique({ where: { id: userId }, select: { tenantId: true, country: true } }),
       this.prisma.attempt.findMany({
         where: { userId, createdAt: { gte: weekStart, lt: weekEnd } },
         include: { problem: { select: { difficultyLevel: true, source: true } } },
@@ -91,8 +91,13 @@ export class WeeklyReportService {
     const solved = recommendations.filter((r) => r.solved).length;
     const recommendationAcceptRate = recommendations.length === 0 ? 0 : Math.round((accepted / recommendations.length) * 100);
 
+    // Summaries are stored strings shown verbatim to families — generate them
+    // in the reader's language. KR is the launch market; everything else keeps
+    // the English rule text.
+    const ko = user.country === 'KR';
+
     // 다음 주 목표 — 가장 약한 1~3 concept + ACTIVE error pattern 1개.
-    const recommendedNextGoals = this.buildNextGoals(mastery, errorPatterns);
+    const recommendedNextGoals = this.buildNextGoals(mastery, errorPatterns, ko);
 
     // 3종 summary (룰 기반)
     const conceptNameMap = new Map(mastery.map((m) => [m.conceptId, m.concept.name]));
@@ -101,13 +106,13 @@ export class WeeklyReportService {
       improvedNames: topImprovedConcepts.map((id) => conceptNameMap.get(id) ?? ''),
       weakNames: weakConcepts.map((id) => conceptNameMap.get(id) ?? ''),
       nextGoal: recommendedNextGoals[0] ?? null,
-    });
+    }, ko);
     const parentSummary = this.buildParentSummary({
       totalSessions: sessions.length, averageStudyDurationSec,
       totalAttempts, averageAccuracyPct,
       weakNames: weakConcepts.map((id) => conceptNameMap.get(id) ?? ''),
       repeatedPatternCount: repeatedErrorPatterns.length,
-    });
+    }, ko);
     const teacherSummary = this.buildTeacherSummary({
       totalAttempts, averageAccuracyPct,
       weakConcepts: weakConcepts.map((id) => ({ id, name: conceptNameMap.get(id) ?? '' })),
@@ -115,7 +120,7 @@ export class WeeklyReportService {
         .filter((e) => e.status === ErrorPatternStatus.ACTIVE)
         .map((e) => ({ errorCode: e.errorCode, conceptName: e.concept.name, severity: e.severity })),
       recommendations: { total: recommendations.length, accepted, solved, acceptRate: recommendationAcceptRate },
-    });
+    }, ko);
 
     return this.prisma.weeklyReport.upsert({
       where: { userId_isoWeek: { userId, isoWeek } },
@@ -179,15 +184,20 @@ export class WeeklyReportService {
   private buildNextGoals(
     mastery: Array<{ conceptId: string; masteryScore: number; concept: { name: string }; evidenceCount: number }>,
     patterns: Array<{ status: ErrorPatternStatus; concept: { name: string }; errorCode: string }>,
+    ko: boolean,
   ): string[] {
     const goals: string[] = [];
     const weakest = mastery.filter((m) => m.evidenceCount >= 3).sort((a, b) => a.masteryScore - b.masteryScore)[0];
     if (weakest) {
-      goals.push(`Raise ${weakest.concept.name} mastery from ${Math.round(weakest.masteryScore)}% → +10% target next week`);
+      goals.push(ko
+        ? `${weakest.concept.name} 이해도 ${Math.round(weakest.masteryScore)}% → 다음 주 +10% 올리기`
+        : `Raise ${weakest.concept.name} mastery from ${Math.round(weakest.masteryScore)}% → +10% target next week`);
     }
     const activePattern = patterns.find((p) => p.status === ErrorPatternStatus.ACTIVE);
     if (activePattern) {
-      goals.push(`Reduce ${activePattern.errorCode} errors in ${activePattern.concept.name} (write out each solution step)`);
+      goals.push(ko
+        ? `${activePattern.concept.name}에서 반복되는 실수 줄이기 (풀이 단계를 손으로 적어 보기)`
+        : `Reduce ${activePattern.errorCode} errors in ${activePattern.concept.name} (write out each solution step)`);
     }
     return goals.slice(0, 3);
   }
@@ -195,19 +205,27 @@ export class WeeklyReportService {
   private buildStudentSummary(s: {
     totalAttempts: number; averageAccuracyPct: number;
     improvedNames: string[]; weakNames: string[]; nextGoal: string | null;
-  }): string {
+  }, ko: boolean): string {
     if (s.totalAttempts === 0) {
-      return "No study data for this week yet. Let's start with one problem.";
+      return ko
+        ? '이번 주 학습 기록이 아직 없어요. 문제 한 개부터 시작해 볼까요?'
+        : "No study data for this week yet. Let's start with one problem.";
     }
     const parts: string[] = [];
-    parts.push(`This week: ${s.totalAttempts} problems solved, ${s.averageAccuracyPct}% accuracy.`);
+    parts.push(ko
+      ? `이번 주: ${s.totalAttempts}문제 풀이, 정답률 ${s.averageAccuracyPct}%.`
+      : `This week: ${s.totalAttempts} problems solved, ${s.averageAccuracyPct}% accuracy.`);
     if (s.improvedNames.length > 0) {
-      parts.push(`${s.improvedNames[0]} has noticeably stabilised.`);
+      parts.push(ko
+        ? `${s.improvedNames[0]} 개념이 눈에 띄게 안정됐어요.`
+        : `${s.improvedNames[0]} has noticeably stabilised.`);
     }
     if (s.nextGoal) {
-      parts.push(`Next goal: ${s.nextGoal}`);
+      parts.push(ko ? `다음 목표: ${s.nextGoal}` : `Next goal: ${s.nextGoal}`);
     } else if (s.weakNames.length > 0) {
-      parts.push(`Next week: spend more time on ${s.weakNames[0]}.`);
+      parts.push(ko
+        ? `다음 주에는 ${s.weakNames[0]}에 시간을 더 써 보세요.`
+        : `Next week: spend more time on ${s.weakNames[0]}.`);
     }
     return parts.join(' ');
   }
@@ -216,14 +234,25 @@ export class WeeklyReportService {
     totalSessions: number; averageStudyDurationSec: number;
     totalAttempts: number; averageAccuracyPct: number;
     weakNames: string[]; repeatedPatternCount: number;
-  }): string {
+  }, ko: boolean): string {
     const minPerSession = Math.round(s.averageStudyDurationSec / 60);
-    const parts: string[] = [
-      `Sessions this week: ${s.totalSessions}, average ${minPerSession} min/session.`,
-      `Problems solved: ${s.totalAttempts}, accuracy ${s.averageAccuracyPct}%.`,
-    ];
-    if (s.weakNames.length > 0) parts.push(`Main weak units: ${s.weakNames.join(', ')}.`);
-    if (s.repeatedPatternCount > 0) parts.push(`${s.repeatedPatternCount} repeated mistake pattern(s) currently active.`);
+    const parts: string[] = ko
+      ? [
+          `이번 주 학습 세션 ${s.totalSessions}회, 회당 평균 ${minPerSession}분.`,
+          `푼 문제 ${s.totalAttempts}개, 정답률 ${s.averageAccuracyPct}%.`,
+        ]
+      : [
+          `Sessions this week: ${s.totalSessions}, average ${minPerSession} min/session.`,
+          `Problems solved: ${s.totalAttempts}, accuracy ${s.averageAccuracyPct}%.`,
+        ];
+    if (s.weakNames.length > 0) {
+      parts.push(ko ? `주요 취약 단원: ${s.weakNames.join(', ')}.` : `Main weak units: ${s.weakNames.join(', ')}.`);
+    }
+    if (s.repeatedPatternCount > 0) {
+      parts.push(ko
+        ? `반복되는 실수 패턴 ${s.repeatedPatternCount}개가 진행 중이에요.`
+        : `${s.repeatedPatternCount} repeated mistake pattern(s) currently active.`);
+    }
     return parts.join(' ');
   }
 
@@ -232,19 +261,29 @@ export class WeeklyReportService {
     weakConcepts: Array<{ id: string; name: string }>;
     activeErrorPatterns: Array<{ errorCode: string; conceptName: string; severity: string }>;
     recommendations: { total: number; accepted: number; solved: number; acceptRate: number };
-  }): string {
+  }, ko: boolean): string {
     const parts: string[] = [
-      `Student weekly accuracy: ${s.averageAccuracyPct}% (${s.totalAttempts} problems).`,
+      ko
+        ? `주간 정답률 ${s.averageAccuracyPct}% (${s.totalAttempts}문제).`
+        : `Student weekly accuracy: ${s.averageAccuracyPct}% (${s.totalAttempts} problems).`,
     ];
     if (s.weakConcepts.length > 0) {
-      parts.push(`Weak units: ${s.weakConcepts.map((c) => c.name).join(', ')}.`);
+      parts.push(ko
+        ? `취약 단원: ${s.weakConcepts.map((c) => c.name).join(', ')}.`
+        : `Weak units: ${s.weakConcepts.map((c) => c.name).join(', ')}.`);
     }
     if (s.activeErrorPatterns.length > 0) {
       const top = s.activeErrorPatterns[0];
-      parts.push(`Top error pattern: ${top.errorCode} in ${top.conceptName} (${top.severity}).`);
+      parts.push(ko
+        ? `대표 오류 패턴: ${top.conceptName}의 ${top.errorCode} (${top.severity}).`
+        : `Top error pattern: ${top.errorCode} in ${top.conceptName} (${top.severity}).`);
     }
-    parts.push(`AI recommendations: ${s.recommendations.total} (accept ${s.recommendations.acceptRate}%, resolved ${s.recommendations.solved}).`);
-    parts.push('Consider a Teacher Override only after combining ErrorPattern severity with the recommendation accept rate.');
+    parts.push(ko
+      ? `AI 추천 ${s.recommendations.total}건 (수락 ${s.recommendations.acceptRate}%, 해결 ${s.recommendations.solved}건).`
+      : `AI recommendations: ${s.recommendations.total} (accept ${s.recommendations.acceptRate}%, resolved ${s.recommendations.solved}).`);
+    parts.push(ko
+      ? '오류 패턴 심각도와 추천 수락률을 함께 확인한 뒤에만 Teacher Override를 고려하세요.'
+      : 'Consider a Teacher Override only after combining ErrorPattern severity with the recommendation accept rate.');
     return parts.join(' ');
   }
 }
