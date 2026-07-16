@@ -12,6 +12,8 @@ const LEGAL_PATHS = [
   '/legal/account-deletion.md',
 ];
 
+const GOOGLE_SITE_VERIFICATION = 'Uv7M7AJ3Vp5JnxfuOI92ykyvqjZh1SpX_eacxEFEE8s';
+
 function fail(message) {
   throw new Error(message);
 }
@@ -43,6 +45,16 @@ function assetReferences(html) {
     if (pathname.startsWith('/assets/') && /\.(?:css|js|mjs)$/i.test(pathname)) refs.add(pathname);
   }
   return [...refs].sort();
+}
+
+function verifyGoogleSiteOwnership(html, label) {
+  const tag = html.match(/<meta\b[^>]*\bname=["']google-site-verification["'][^>]*>/i)?.[0];
+  if (!tag || (
+    !tag.includes(`content="${GOOGLE_SITE_VERIFICATION}"`)
+    && !tag.includes(`content='${GOOGLE_SITE_VERIFICATION}'`)
+  )) {
+    fail(`${label} is missing the pinned Google Search Console verification meta tag.`);
+  }
 }
 
 function localPath(artifactRoot, urlPath) {
@@ -79,6 +91,7 @@ async function deployableAssets(artifactRoot, directory = path.join(artifactRoot
 async function verifyArtifact(artifactRoot) {
   const indexBytes = await readRequired(path.join(artifactRoot, 'index.html'), 'Built index');
   const indexHtml = indexBytes.toString('utf8');
+  verifyGoogleSiteOwnership(indexHtml, 'Built index');
   const entryAssets = assetReferences(indexHtml);
   if (!entryAssets.some((asset) => /\.(?:js|mjs)$/i.test(asset))) {
     fail('Built index does not reference a JavaScript asset under /assets/.');
@@ -159,6 +172,8 @@ async function verifyRemote(origin, artifact) {
   if (indexResponse.status !== 200 || isHtml(indexBytes) === false) {
     fail(`Remote index is not an HTML 200 response (HTTP ${indexResponse.status}).`);
   }
+
+  verifyGoogleSiteOwnership(indexBytes.toString('utf8'), 'Remote index');
 
   const remoteAssets = assetReferences(indexBytes.toString('utf8'));
   if (JSON.stringify(remoteAssets) !== JSON.stringify(artifact.entryAssets)) {
