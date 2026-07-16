@@ -293,19 +293,6 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-primary) 12%, transparent);
 }
 
-.mathema-app .paywall-plan-card-badge {
-  position: absolute;
-  top: -9px;
-  left: 10px;
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: var(--p-accent);
-  color: var(--p-on-accent);
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
 .mathema-app .paywall-plan-card-check {
   position: absolute;
   top: 10px;
@@ -348,10 +335,11 @@
   font-size: 10.5px;
 }
 
-.mathema-app .paywall-plan-card-anchor {
-  color: var(--p-primary);
-  font-size: 11px;
-  font-weight: 700;
+.mathema-app .paywall-plan-card-equivalent {
+  color: var(--p-muted);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .mathema-app .paywall-plan-card-detail {

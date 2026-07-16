@@ -1,17 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/staticwebapp.config.json",
-  "routes": [
-    {
-      "route": "/legal/privacy-policy.md",
-      "redirect": "/privacy",
-      "statusCode": 301
-    },
-    {
-      "route": "/legal/terms-of-service.md",
-      "redirect": "/terms",
-      "statusCode": 301
-    }
-  ],
   "navigationFallback": {
     "rewrite": "/index.html",
     "exclude": [
@@ -27,8 +15,5 @@
   },
   "globalHeaders": {
     "Cache-Control": "no-cache, must-revalidate"
-  },
-  "responseOverrides": {
-    "404": { "rewrite": "/index.html", "statusCode": 200 }
   }
 }

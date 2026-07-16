@@ -14,6 +14,8 @@ import { unregisterPushToken } from '../native/push-bridge';
 import { track } from '../lib/analytics';
 import { clearSentryUser, tagSentryUser } from '../lib/sentry';
 import { clearPendingRealExams } from '../lib/pending-real-exam';
+import { consumeGoogleSignInNonce } from '../lib/google-sign-in-nonce';
+import { clearNativeGoogleCredentialState } from '../native/google-auth-bridge';
 
 export type { GradeLevel };
 
@@ -21,7 +23,11 @@ type AuthState = {
   user: Me | null;
   ready: boolean;
   login: (email: string, password: string, opts?: { redirectTo?: string | null }) => Promise<void>;
-  loginWithGoogle: (idToken: string, opts?: { skipNavigate?: boolean; redirectTo?: string | null }) => Promise<Me>;
+  loginWithGoogle: (idToken: string, opts?: {
+    skipNavigate?: boolean;
+    redirectTo?: string | null;
+    linkPassword?: string;
+  }) => Promise<Me>;
   register: (input: RegisterInput) => Promise<void>;
   /** Try-first guest session — zero-PII account, no navigation (caller decides). */
   startGuest: (input?: GuestStartInput) => Promise<Me>;
@@ -199,8 +205,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /** Google Sign-In — Web GIS or Capacitor plugin 이 발급한 idToken 으로 백엔드 인증. */
-  const loginWithGoogle = async (idToken: string, opts?: { skipNavigate?: boolean; redirectTo?: string | null }) => {
-    const t = await post<{ accessToken: string; refreshToken: string }>('/auth/google/id-token', { idToken });
+  const loginWithGoogle = async (idToken: string, opts?: {
+    skipNavigate?: boolean;
+    redirectTo?: string | null;
+    linkPassword?: string;
+  }) => {
+    const nonce = consumeGoogleSignInNonce(idToken);
+    const t = await post<{ accessToken: string; refreshToken: string }>('/auth/google/id-token', {
+      idToken,
+      ...(nonce ? { nonce } : {}),
+      ...(opts?.linkPassword ? { linkPassword: opts.linkPassword } : {}),
+    });
     tokens.set(t.accessToken, t.refreshToken);
     const me = await get<Me>('/users/me');
     setUser(me);
@@ -233,6 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     track('auth.logout');
     const refreshToken = tokens.getRefresh();
     await unregisterPushToken().catch(() => {});
+    await clearNativeGoogleCredentialState().catch(() => {});
     tokens.clear();
     sessionStorage.clear();
     try { clearPendingRealExams(localStorage); } catch { /* ignore */ }
@@ -257,6 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clearing auth first makes unregisterPushToken perform local/native cleanup only.
     await Promise.allSettled([
       unregisterPushToken(),
+      clearNativeGoogleCredentialState(),
       revokeRefreshToken(refreshToken),
     ]);
     navigate('/login', { replace: true });

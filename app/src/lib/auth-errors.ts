@@ -47,6 +47,16 @@ export function formatAuthError(e: unknown, opts: FormatAuthErrorOpts): string {
       ? '이 비밀번호는 보안 사고로 노출된 적이 있어요. 다른 비밀번호를 골라주세요.'
       : 'This password has been seen in a public data breach. Please pick a different one.';
   }
+  if (code === 'google_account_link_required') {
+    if (opts.context !== 'login') {
+      return kr
+        ? '기존 계정이 있어요. 로그인 화면에서 비밀번호를 확인한 뒤 Google 계정을 연결해 주세요.'
+        : 'An account already exists. Use the sign-in screen to verify its password and link Google.';
+    }
+    return kr
+      ? '기존 계정 비밀번호를 입력한 뒤 Google 버튼을 다시 눌러주세요. 비밀번호를 모르면 재설정할 수 있어요.'
+      : 'Enter the existing account password, then use Google again. You can reset the password if needed.';
+  }
   if (rawMsg === 'email already used') {
     return kr
       ? '이미 가입된 이메일이에요. 로그인 페이지로 이동해주세요.'

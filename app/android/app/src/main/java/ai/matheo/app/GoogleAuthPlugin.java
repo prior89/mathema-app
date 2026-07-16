@@ -5,6 +5,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.credentials.Credential;
+import androidx.credentials.ClearCredentialStateRequest;
 import androidx.credentials.CredentialManager;
 import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.CustomCredential;
@@ -13,6 +14,7 @@ import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialCancellationException;
 import androidx.credentials.exceptions.GetCredentialException;
 import androidx.credentials.exceptions.NoCredentialException;
+import androidx.credentials.exceptions.ClearCredentialException;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -54,8 +56,16 @@ public class GoogleAuthPlugin extends Plugin {
             credentialManager = CredentialManager.create(getContext());
         }
 
+        String nonce = call.getString("nonce");
+        if (nonce == null || nonce.length() < 32 || nonce.length() > 128) {
+            call.reject("A secure Google sign-in nonce is required.", "GOOGLE_NONCE_INVALID");
+            return;
+        }
+
         GetSignInWithGoogleOption googleOption =
-            new GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_WEB_CLIENT_ID).build();
+            new GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                .setNonce(nonce)
+                .build();
         GetCredentialRequest request = new GetCredentialRequest.Builder()
             .addCredentialOption(googleOption)
             .build();
@@ -96,6 +106,37 @@ public class GoogleAuthPlugin extends Plugin {
                     }
                 }
             )
+        );
+    }
+
+    /** Notify every Android credential provider that the app user explicitly
+     * signed out. Without this, Credential Manager can keep prioritizing the
+     * previous account on the next sign-in attempt. */
+    @PluginMethod
+    public void clearCredentialState(PluginCall call) {
+        if (credentialManager == null) {
+            credentialManager = CredentialManager.create(getContext());
+        }
+
+        credentialManager.clearCredentialStateAsync(
+            new ClearCredentialStateRequest(),
+            new CancellationSignal(),
+            executor,
+            new CredentialManagerCallback<Void, ClearCredentialException>() {
+                @Override
+                public void onResult(Void result) {
+                    call.resolve();
+                }
+
+                @Override
+                public void onError(@NonNull ClearCredentialException e) {
+                    Log.w(TAG, "Could not clear Android credential state", e);
+                    call.reject(
+                        "Could not clear Google credential state.",
+                        "GOOGLE_CREDENTIAL_CLEAR_FAILED"
+                    );
+                }
+            }
         );
     }
 

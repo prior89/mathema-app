@@ -11,11 +11,18 @@ name: Backend — build & deploy to Azure Container Apps
 on:
   workflow_dispatch:
 
+concurrency:
+  group: mathema-production-backend
+  cancel-in-progress: false
+
 env:
   ACR_NAME: mathemaacr7ehvzqcd6c436
   RESOURCE_GROUP: mathema-prod-cin
   CONTAINER_APP: mathema-backend
   IMAGE_NAME: mathema-backend
+  # Public OAuth identifier (not a client secret). Frontend, Android Credential
+  # Manager and backend token verification must all use this exact Web client.
+  EXPECTED_GOOGLE_WEB_CLIENT_ID: 780610015758-4sfjjjhtq6p86edr5bsdn5c9b95uav1b.apps.googleusercontent.com
 
 jobs:
   build-and-deploy:
@@ -28,6 +35,11 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - name: Require production Google OAuth client
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: node scripts/require-google-client-id.cjs
 
       - name: Login to Azure (OIDC)
         uses: azure/login@v2
@@ -53,11 +65,51 @@ jobs:
             echo "release_id=${{ github.run_id }}-${GITHUB_SHA::7}"
           } >> "$GITHUB_OUTPUT"
 
+      # Mail is part of account verification, password recovery, guardian
+      # consent, and parent linking. Fail before building or changing Azure if
+      # any required value is absent or malformed. Values are GitHub secrets
+      # and are deliberately never printed.
+      - name: Preflight required SMTP configuration
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for name in SMTP_HOST SMTP_PORT SMTP_SECURE SMTP_USER SMTP_PASS MAIL_FROM; do
+            if [ -z "${!name:-}" ]; then missing+=("$name"); fi
+          done
+          if [ "${#missing[@]}" -ne 0 ]; then
+            echo "::error::Missing required GitHub secret(s): ${missing[*]}"
+            exit 1
+          fi
+          if ! [[ "$SMTP_PORT" =~ ^[0-9]+$ ]] || [ "$SMTP_PORT" -lt 1 ] || [ "$SMTP_PORT" -gt 65535 ]; then
+            echo "::error::SMTP_PORT must be an integer between 1 and 65535"
+            exit 1
+          fi
+          case "${SMTP_SECURE,,}" in
+            true|false) ;;
+            *) echo "::error::SMTP_SECURE must be true or false"; exit 1 ;;
+          esac
+          if [ "$SMTP_PORT" = "465" ] && [ "${SMTP_SECURE,,}" != "true" ]; then
+            echo "::error::SMTP_SECURE must be true when SMTP_PORT is 465"
+            exit 1
+          fi
+          if [[ "$MAIL_FROM" != *"@"* ]]; then
+            echo "::error::MAIL_FROM must contain a sender email address"
+            exit 1
+          fi
+          echo "SMTP secret presence and formats verified (values remain masked)."
+
       # Dockerfile is monorepo-aware — build context is the repo root so it can
       # see the workspace package-lock.json and copy both root + server/package.json.
       # --build-arg trio threads release inventory into the image so the
       # /health/version endpoint can report the live SHA without guesswork.
-      - name: Docker build & push
+      - name: Docker build
         run: |
           docker build \
             -f server/Dockerfile \
@@ -67,6 +119,31 @@ jobs:
             -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
             -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest \
             .
+
+      # nodemailer.verify() performs connection/TLS/authentication without
+      # sending a message. Passing env names (not values) keeps credentials out
+      # of the command line and workflow output.
+      - name: Verify SMTP connection and credentials
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+        run: |
+          docker run --rm \
+            -e SMTP_HOST \
+            -e SMTP_PORT \
+            -e SMTP_SECURE \
+            -e SMTP_USER \
+            -e SMTP_PASS \
+            -e MAIL_FROM \
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
+            node scripts/verify-smtp.cjs
+
+      - name: Docker push
+        run: |
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
           docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
 
@@ -165,12 +242,41 @@ jobs:
             --secrets \
               "play-service-account-json=${PLAY_SERVICE_ACCOUNT_JSON}"
 
+      # Keep SMTP credentials and sender configuration in Container App
+      # secrets. The revision receives secretRef bindings only; no SMTP value
+      # is written into the workflow log or plain-text Container App env.
+      - name: Ensure SMTP secret references
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_SECURE: ${{ secrets.SMTP_SECURE }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+        run: |
+          az containerapp secret set \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --secrets \
+              "smtp-host=${SMTP_HOST}" \
+              "smtp-port=${SMTP_PORT}" \
+              "smtp-secure=${SMTP_SECURE}" \
+              "smtp-user=${SMTP_USER}" \
+              "smtp-pass=${SMTP_PASS}" \
+              "mail-from=${MAIL_FROM}"
+
       - name: Container App revision update
         env:
           MATHPIX_APP_ID: ${{ secrets.MATHPIX_APP_ID }}
           MATHPIX_APP_KEY: ${{ secrets.MATHPIX_APP_KEY }}
         run: |
           ENV_VARS="OPENAI_API_KEY=secretref:openai-api-key"
+          ENV_VARS="$ENV_VARS SMTP_HOST=secretref:smtp-host"
+          ENV_VARS="$ENV_VARS SMTP_PORT=secretref:smtp-port"
+          ENV_VARS="$ENV_VARS SMTP_SECURE=secretref:smtp-secure"
+          ENV_VARS="$ENV_VARS SMTP_USER=secretref:smtp-user"
+          ENV_VARS="$ENV_VARS SMTP_PASS=secretref:smtp-pass"
+          ENV_VARS="$ENV_VARS MAIL_FROM=secretref:mail-from"
           ENV_VARS="$ENV_VARS AI_OCR_MODEL=gpt-4o-mini"
           ENV_VARS="$ENV_VARS AI_OCR_FALLBACK_MODEL=gpt-5.4-mini"
           ENV_VARS="$ENV_VARS AI_OCR_GRAPH_MODEL=gpt-5.4-mini"
@@ -204,9 +310,8 @@ jobs:
             ENV_VARS="$ENV_VARS FIREBASE_CLIENT_EMAIL=secretref:firebase-client-email"
             ENV_VARS="$ENV_VARS FIREBASE_PRIVATE_KEY=secretref:firebase-private-key"
           fi
-          if [ -n "${{ secrets.VITE_GOOGLE_CLIENT_ID }}" ]; then
-            ENV_VARS="$ENV_VARS GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}"
-          fi
+          ENV_VARS="$ENV_VARS GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}"
+          ENV_VARS="$ENV_VARS PLAY_PACKAGE_NAME=ai.matheo.app"
           # Billing UI switch — set GitHub secret BILLING_UI_ENABLED=true to
           # expose paywall / upgrade CTAs without a frontend rebuild.
           if [ -n "${{ secrets.BILLING_UI_ENABLED }}" ]; then
@@ -230,6 +335,45 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }} \
             --set-env-vars $ENV_VARS
+
+      - name: Verify deployed SMTP secret bindings
+        run: |
+          set -euo pipefail
+          assert_secret_ref() {
+            local env_name="$1"
+            local expected_ref="$2"
+            local actual_ref
+            actual_ref=$(az containerapp show \
+              --name ${{ env.CONTAINER_APP }} \
+              --resource-group ${{ env.RESOURCE_GROUP }} \
+              --query "properties.template.containers[0].env[?name=='${env_name}'].secretRef | [0]" \
+              -o tsv)
+            if [ "$actual_ref" != "$expected_ref" ]; then
+              echo "::error::${env_name} is not bound to the expected Container App secret"
+              exit 1
+            fi
+          }
+
+          assert_secret_ref SMTP_HOST smtp-host
+          assert_secret_ref SMTP_PORT smtp-port
+          assert_secret_ref SMTP_SECURE smtp-secure
+          assert_secret_ref SMTP_USER smtp-user
+          assert_secret_ref SMTP_PASS smtp-pass
+          assert_secret_ref MAIL_FROM mail-from
+          echo "SMTP Container App secretRef bindings verified."
+
+      - name: Verify deployed Google OAuth audience
+        run: |
+          actual_client_id=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.template.containers[0].env[?name=='GOOGLE_CLIENT_ID'].value | [0]" \
+            -o tsv)
+          if [ "$actual_client_id" != "$EXPECTED_GOOGLE_WEB_CLIENT_ID" ]; then
+            echo "::error::Container App GOOGLE_CLIENT_ID does not match the production OAuth Web client"
+            exit 1
+          fi
+          echo "Google OAuth audience binding verified."
 
       # Bounded smoke test: poll every 10s, give up after 2min, then dump the
       # last 100 log lines of the new revision so we can see the real cause

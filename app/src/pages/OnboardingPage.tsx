@@ -25,9 +25,11 @@ import { homePathForRole } from '../lib/role-routes';
 import { useT } from '../lib/i18n';
 import { isLikelyEmail } from '../lib/email';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
+import { PreAuthAgeGate, usePreAuthAgeGate } from '../components/auth/PreAuthAgeGate';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
 import { googleSignInErrorKey } from '../lib/google-sign-in-error';
+import { canOfferGoogleSignIn } from '../lib/pre-auth-age-gate';
 import {
   ageFromBirthDate,
   birthDateFromAge,
@@ -495,6 +497,7 @@ function ScreenAuth({
   const { t } = useT();
   const { refreshUser, loginWithGoogle } = useAuth();
   const guestModeEnabled = useFeatureFlag('guest_mode');
+  const { ageBand, selectAgeBand, resetAgeBand } = usePreAuthAgeGate();
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [guestBusy, setGuestBusy] = useState(false);
@@ -660,6 +663,12 @@ function ScreenAuth({
           <p className="subtitle">{t('onboarding.auth.tagline')}</p>
         </div>
 
+        <PreAuthAgeGate
+          ageBand={ageBand}
+          onSelect={selectAgeBand}
+          onReset={resetAgeBand}
+        />
+
         <div className="field">
           <label>{t('onboarding.auth.email')}</label>
           <input
@@ -703,17 +712,21 @@ function ScreenAuth({
           <Glyph.ChevronR />
         </button>
 
-        <AuthDivider labelKey="onboarding.auth.or" />
-        <GoogleSignInButton
-          mode="signup"
-          onCredential={handleGoogleSignIn}
-          onError={(error) => {
-            const key = googleSignInErrorKey(error, 'onboarding.auth.google.failed');
-            if (key) setErr(t(key));
-          }}
-          busy={googleBusy}
-          disabled={busy || guestBusy}
-        />
+        {canOfferGoogleSignIn(ageBand) && (
+          <>
+            <AuthDivider labelKey="onboarding.auth.or" />
+            <GoogleSignInButton
+              mode="signup"
+              onCredential={handleGoogleSignIn}
+              onError={(error) => {
+                const key = googleSignInErrorKey(error, 'onboarding.auth.google.failed');
+                if (key) setErr(t(key));
+              }}
+              busy={googleBusy}
+              disabled={busy || guestBusy}
+            />
+          </>
+        )}
 
         {guestModeEnabled && onGuest && (
           <button

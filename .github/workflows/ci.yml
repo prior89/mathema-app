@@ -152,6 +152,9 @@ jobs:
           VITE_API_BASE_URL: '/api/v1'
         run: npm run build
 
+      - name: Verify Static Web Apps artifact safety
+        run: node scripts/verify-static-site.mjs --artifact app/dist
+
       - name: Capacitor sync (android)
         working-directory: app
         run: npx cap sync android

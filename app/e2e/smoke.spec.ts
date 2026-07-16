@@ -17,7 +17,7 @@ test.describe('Matheo public smoke', () => {
     await expect(page.getByRole('heading', { name: /다시 반가워요|Welcome back/i })).toBeVisible();
     await expect(page.getByLabel(/이메일|Email/i)).toBeVisible();
     await expect(page.getByLabel(/비밀번호|Password/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /로그인|Sign in/i })).toBeEnabled();
+    await expect(page.getByRole('button', { name: /^로그인$|^Sign in$/i })).toBeEnabled();
     await expect(page.getByLabel('Matheo', { exact: true })).toBeVisible();
   });
 

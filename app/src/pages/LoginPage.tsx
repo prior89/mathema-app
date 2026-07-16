@@ -13,9 +13,11 @@ import { useT } from '../lib/i18n';
 import { BrandLockup } from '../components/Brand';
 import { LearningOrbit } from '../components/design/LearningOrbit';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
+import { PreAuthAgeGate, usePreAuthAgeGate } from '../components/auth/PreAuthAgeGate';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
 import { googleSignInErrorKey } from '../lib/google-sign-in-error';
+import { canOfferGoogleSignIn } from '../lib/pre-auth-age-gate';
 import '../styles/onboarding.css';
 
 export default function LoginPage() {
@@ -23,6 +25,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useT();
+  const { ageBand, selectAgeBand, resetAgeBand } = usePreAuthAgeGate();
   // PoC dev-login은 DEV 빌드에서만 prefill — production은 빈 폼 (admin/admin 누른 사용자가
   // /auth/dev-login → "dev-login disabled in production" 에러를 받지 않도록).
   const [email, setEmail] = useState(import.meta.env.DEV ? 'admin' : '');
@@ -47,6 +50,7 @@ export default function LoginPage() {
   });
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleLinkRequired, setGoogleLinkRequired] = useState(false);
   const from = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from;
   const requestedPath = from?.pathname
     ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`
@@ -84,8 +88,17 @@ export default function LoginPage() {
     setErr(null);
     setGoogleBusy(true);
     try {
-      await loginWithGoogle(idToken, { redirectTo: requestedPath });
+      await loginWithGoogle(idToken, {
+        redirectTo: requestedPath,
+        ...(googleLinkRequired && password.length >= 8 ? { linkPassword: password } : {}),
+      });
+      setGoogleLinkRequired(false);
     } catch (e: unknown) {
+      const response = e as {
+        response?: { data?: { error?: { code?: string }; code?: string } };
+      };
+      const code = response.response?.data?.error?.code ?? response.response?.data?.code;
+      if (code === 'google_account_link_required') setGoogleLinkRequired(true);
       setErr(formatAuthError(e, { context: 'login' }));
     } finally {
       setGoogleBusy(false);
@@ -126,6 +139,12 @@ export default function LoginPage() {
                   <h2 id="login-form-title">{t('login.form.title')}</h2>
                   <p>{t('login.form.sub')}</p>
                 </div>
+
+              <PreAuthAgeGate
+                ageBand={ageBand}
+                onSelect={selectAgeBand}
+                onReset={resetAgeBand}
+              />
 
               {notice && (
                 <div
@@ -175,17 +194,28 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <AuthDivider labelKey="login.or" />
-              <GoogleSignInButton
-                mode="continue"
-                onCredential={handleGoogleSignIn}
-                onError={(error) => {
-                  const key = googleSignInErrorKey(error, 'login.google.failed');
-                  if (key) setErr(t(key));
-                }}
-                busy={googleBusy}
-                disabled={busy}
-              />
+              {canOfferGoogleSignIn(ageBand) && (
+                <>
+                  {googleLinkRequired && (
+                    <div className="google-link-confirmation" role="status">
+                      <strong>{t('login.googleLink.title')}</strong>
+                      <span>{t('login.googleLink.help')}</span>
+                      <Link to="/forgot-password">{t('login.googleLink.reset')}</Link>
+                    </div>
+                  )}
+                  <AuthDivider labelKey="login.or" />
+                  <GoogleSignInButton
+                    mode="continue"
+                    onCredential={handleGoogleSignIn}
+                    onError={(error) => {
+                      const key = googleSignInErrorKey(error, 'login.google.failed');
+                      if (key) setErr(t(key));
+                    }}
+                    busy={googleBusy}
+                    disabled={busy}
+                  />
+                </>
+              )}
 
                 <div className="signup-prompt">
                   <span>{t('login.signupPrompt')}</span>

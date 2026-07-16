@@ -123,7 +123,11 @@ export class UsersService {
   async findOne(id: string) {
     const u = await this.repo.findById(id);
     if (!u) return null;
-    const { passwordHash, ...rest } = u;
+    // Authentication-only identifiers stay server-side; the profile API does
+    // not need to expose either credential material or the Google subject.
+    const { passwordHash, googleSubject, ...rest } = u;
+    void passwordHash;
+    void googleSubject;
     return { ...rest, dDay: daysUntil(u.examDate) };
   }
 

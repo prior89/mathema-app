@@ -18,7 +18,6 @@ import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   annualSavingsPercent,
   monthlyEquivalent,
-  perDayPrice,
   phaseDurationLabel,
 } from '../lib/billing-pricing';
 import { useBillingUiEnabled } from '../lib/billing-flags';
@@ -39,6 +38,7 @@ import { useT } from '../lib/i18n';
 import { openPlaySubscriptionManage, playStoreListingUrl } from '../lib/play-subscription';
 import type { BillingProductDetails } from '../native/billing-bridge';
 import type { TranslationKey } from '../lib/translations';
+import { AnnualPlanPrice } from '../components/AnnualPlanPrice';
 import '../styles/billing.css';
 
 const PREMIUM_FEATURE_KEYS: Record<string, TranslationKey> = {
@@ -205,23 +205,14 @@ export default function PaywallPage() {
       )
     : null;
   const yearlySaving =
-    monthlyPlan && yearlyPlan
+    monthlyPlan
+    && yearlyPlan
+    && monthlyPlan.phase.currencyCode === yearlyPlan.phase.currencyCode
       ? annualSavingsPercent(
           monthlyPlan.phase.priceAmountMicros,
           yearlyPlan.phase.priceAmountMicros,
         )
       : null;
-  const yearlyPerDay = yearlyPlan
-    ? perDayPrice(
-        yearlyPlan.phase.priceAmountMicros,
-        yearlyPlan.phase.currencyCode,
-        locale,
-      )
-    : null;
-  // Per-day framing suits India/SEA; KR premium positioning uses monthly-equivalent
-  // + savings% instead (research). Only surface per-day outside KR.
-  const showPerDay = locale !== 'ko-KR';
-
   // Launch/intro promo phase per plan (null when only a base plan is offered).
   const yearlyIntro = yearlyPlan ? introPhase(yearlyPlan.offer) : null;
   const monthlyIntro = monthlyPlan ? introPhase(monthlyPlan.offer) : null;
@@ -605,25 +596,17 @@ export default function PaywallPage() {
                     aria-pressed={selectedProductId === 'premium_yearly'}
                     onClick={() => setSelectedProductId('premium_yearly')}
                   >
-                    <span className="paywall-plan-card-badge">
-                      {t('paywall.plan.bestValue')}
-                    </span>
                     <span className="paywall-plan-card-check" aria-hidden="true">
                       {selectedProductId === 'premium_yearly' && <Check size={12} />}
                     </span>
                     <span className="paywall-plan-card-name">{t('paywall.yearly')}</span>
-                    <span className="paywall-plan-card-price">
-                      <strong>{yearlyEquivalent}</strong>
-                      <span>/ {t('paywall.monthly.per')}</span>
-                    </span>
-                    {yearlyPerDay && showPerDay && (
-                      <span className="paywall-plan-card-anchor">
-                        {t('paywall.plan.perDay', { price: yearlyPerDay })}
-                      </span>
-                    )}
-                    <span className="paywall-plan-card-detail">
-                      {t('paywall.plan.billedYearly', { price: yearlyPlan.phase.priceFormatted })}
-                    </span>
+                    <AnnualPlanPrice
+                      annualTotal={yearlyPlan.phase.priceFormatted}
+                      annualPeriod={t('paywall.yearly.per')}
+                      monthlyEquivalentLabel={yearlyEquivalent
+                        ? t('paywall.plan.monthlyEquivalent', { price: yearlyEquivalent })
+                        : null}
+                    />
                     {yearlySaving !== null && yearlySaving > 0 && (
                       <span className="paywall-plan-card-saving">
                         {t('paywall.plan.save', { percent: yearlySaving })}
