@@ -19,6 +19,7 @@ import {
 } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
 import { Glyph } from '../onboarding/Glyph';
+import MathText from '../MathText';
 import { TabBar } from './TabBar';
 import { HeadAvatar } from './HeadAvatar';
 
@@ -189,7 +190,8 @@ function KoreanLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
                   </div>
                   <div className="info">
                     <div className="ttl">{l.titleKo}</div>
-                    <div className="sub">{l.bigIdeaKo}</div>
+                    {/* bigIdea copy contains inline $TeX$ — render it, don't leak raw markers. */}
+                    <div className="sub"><MathText text={l.bigIdeaKo} /></div>
                   </div>
                   <Glyph.ChevronR accent="var(--p-muted)" size={16} />
                 </button>
@@ -298,7 +300,7 @@ function NcertLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
               </div>
               <div className="info">
                 <div className="ttl">{l.title}</div>
-                <div className="sub">{l.bigIdea}</div>
+                <div className="sub"><MathText text={l.bigIdea} /></div>
               </div>
               <Glyph.ChevronR accent="var(--p-muted)" size={16} />
             </button>
