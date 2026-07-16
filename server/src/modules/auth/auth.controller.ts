@@ -114,6 +114,7 @@ export class AuthController {
       ip: ip ?? undefined, ua: ua ?? undefined,
       deviceHash: deviceHash || undefined,
       nonce: dto.nonce,
+      linkPassword: dto.linkPassword,
     });
   }
 

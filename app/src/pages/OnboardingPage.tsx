@@ -669,8 +669,6 @@ function ScreenAuth({
           onReset={resetAgeBand}
         />
 
-        {ageBand !== null && (
-          <>
         <div className="field">
           <label>{t('onboarding.auth.email')}</label>
           <input
@@ -763,8 +761,6 @@ function ScreenAuth({
           <Link to="/privacy" style={{ color: 'var(--p-primary)', textDecoration: 'underline' }}>{t('onboarding.auth.policyNote.privacy')}</Link>
           {t('onboarding.auth.policyNote.post')}
         </p>
-          </>
-        )}
       </div>
     </div>
   );

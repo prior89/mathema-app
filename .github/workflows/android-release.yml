@@ -26,6 +26,9 @@ jobs:
       contents: read
     env:
       MATHEO_KEY_ALIAS: matheo
+      # Public OAuth identifier (not a client secret). This must be the Web
+      # client used as the Credential Manager server client ID/audience.
+      EXPECTED_GOOGLE_WEB_CLIENT_ID: 780610015758-4sfjjjhtq6p86edr5bsdn5c9b95uav1b.apps.googleusercontent.com
     steps:
       - uses: actions/checkout@v4
 
@@ -98,6 +101,11 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_BILLING_ENABLED: ${{ secrets.BILLING_UI_ENABLED }}
         run: npm -w app run build
+
+      - name: Verify Google login is present in Android web assets
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: node scripts/require-google-client-id.cjs --artifact app/dist
 
       - name: Capacitor sync (android)
         run: npm -w app exec cap sync android

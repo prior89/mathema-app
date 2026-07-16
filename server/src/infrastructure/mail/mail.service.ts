@@ -48,6 +48,8 @@ export class MailService {
       host,
       port,
       secure,
+      requireTLS: !secure,
+      tls: { minVersion: 'TLSv1.2' },
       auth: user && pass ? { user, pass } : undefined,
     });
     return this.transporter;

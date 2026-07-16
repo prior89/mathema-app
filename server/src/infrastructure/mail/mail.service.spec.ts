@@ -34,6 +34,30 @@ describe('MailService', () => {
   }
 
   describe('sendEmailVerification', () => {
+    it('requires STARTTLS with TLS 1.2+ on submission ports', async () => {
+      const svc = build({ SMTP_PORT: '587', SMTP_SECURE: 'false' });
+      await svc.sendEmailVerification('user@gmail.com', 'tok-tls');
+
+      expect(createTransportSpy).toHaveBeenCalledWith(expect.objectContaining({
+        port: 587,
+        secure: false,
+        requireTLS: true,
+        tls: { minVersion: 'TLSv1.2' },
+      }));
+    });
+
+    it('uses direct TLS on port 465', async () => {
+      const svc = build({ SMTP_PORT: '465', SMTP_SECURE: 'true' });
+      await svc.sendEmailVerification('user@gmail.com', 'tok-tls-465');
+
+      expect(createTransportSpy).toHaveBeenCalledWith(expect.objectContaining({
+        port: 465,
+        secure: true,
+        requireTLS: false,
+        tls: { minVersion: 'TLSv1.2' },
+      }));
+    });
+
     it('builds branded HTML, friendly subject, and Matheo display name', async () => {
       const svc = build();
       await svc.sendEmailVerification('user@gmail.com', 'tok-abc');

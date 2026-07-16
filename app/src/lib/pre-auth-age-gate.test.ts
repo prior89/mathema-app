@@ -1,48 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import {
-  canOfferGoogleSignIn,
-  clearPreAuthAgeBand,
-  PRE_AUTH_AGE_BAND_STORAGE_KEY,
-  readPreAuthAgeBand,
-  writePreAuthAgeBand,
-} from './pre-auth-age-gate';
-
-function memoryStorage(initial?: string) {
-  const values = new Map<string, string>();
-  if (initial !== undefined) values.set(PRE_AUTH_AGE_BAND_STORAGE_KEY, initial);
-  return {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => { values.set(key, value); },
-    removeItem: (key: string) => { values.delete(key); },
-  };
-}
+import { canOfferGoogleSignIn, derivePreAuthAgeBand } from './pre-auth-age-gate';
 
 describe('pre-auth age gate', () => {
-  it('persists only the coarse age-band decision', () => {
-    const storage = memoryStorage();
-    writePreAuthAgeBand('under13', storage);
-    expect(readPreAuthAgeBand(storage)).toBe('under13');
-    expect(storage.getItem(PRE_AUTH_AGE_BAND_STORAGE_KEY)).toBe('under13');
+  const today = new Date(2026, 6, 16);
 
-    writePreAuthAgeBand('13plus', storage);
-    expect(readPreAuthAgeBand(storage)).toBe('13plus');
+  it('uses the South Korea Google Account minimum age without storing a date', () => {
+    expect(derivePreAuthAgeBand('2012-07-16', 'KR', today)).toBe('eligible');
+    expect(derivePreAuthAgeBand('2012-07-17', 'KR', today)).toBe('child');
   });
 
-  it('treats missing or unexpected persisted values as undecided', () => {
-    expect(readPreAuthAgeBand(memoryStorage())).toBeNull();
-    expect(readPreAuthAgeBand(memoryStorage('12'))).toBeNull();
-    expect(readPreAuthAgeBand(memoryStorage('adult'))).toBeNull();
+  it('uses the Indian child-protection boundary of 18', () => {
+    expect(derivePreAuthAgeBand('2008-07-16', 'IN', today)).toBe('eligible');
+    expect(derivePreAuthAgeBand('2008-07-17', 'IN', today)).toBe('child');
   });
 
-  it('offers Google only after an explicit 13+ decision', () => {
+  it('fails conservatively for future or unmapped markets', () => {
+    expect(derivePreAuthAgeBand('2008-07-16', 'OTHER', today)).toBe('eligible');
+    expect(derivePreAuthAgeBand('2008-07-17', 'OTHER', today)).toBe('child');
+  });
+
+  it('rejects malformed, impossible, and future dates', () => {
+    expect(derivePreAuthAgeBand('', 'KR', today)).toBeNull();
+    expect(derivePreAuthAgeBand('2010-02-30', 'KR', today)).toBeNull();
+    expect(derivePreAuthAgeBand('2027-01-01', 'KR', today)).toBeNull();
+  });
+
+  it('offers Google only after an eligible decision', () => {
     expect(canOfferGoogleSignIn(null)).toBe(false);
-    expect(canOfferGoogleSignIn('under13')).toBe(false);
-    expect(canOfferGoogleSignIn('13plus')).toBe(true);
-  });
-
-  it('can reset the decision for a shared device or another user', () => {
-    const storage = memoryStorage('13plus');
-    clearPreAuthAgeBand(storage);
-    expect(readPreAuthAgeBand(storage)).toBeNull();
+    expect(canOfferGoogleSignIn('child')).toBe(false);
+    expect(canOfferGoogleSignIn('eligible')).toBe(true);
   });
 });

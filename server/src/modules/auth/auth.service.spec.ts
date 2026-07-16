@@ -8,7 +8,7 @@
  * on the same env flags as the dev server.
  */
 import * as bcrypt from 'bcrypt';
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { COUNTRY_CONFIG } from '../../common/enums/country.enum';
 
@@ -34,12 +34,20 @@ function mockConfig(initial: Record<string, string> = {}): AnyMock {
   };
 }
 function mockPrisma(): any {
-  return {
-    passwordResetToken: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
-    emailVerificationToken: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
-    user: { findUnique: jest.fn(), update: jest.fn() },
-    $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
+  const prisma: any = {
+    passwordResetToken: {
+      create: jest.fn(), findUnique: jest.fn(), update: jest.fn(),
+      updateMany: jest.fn(), deleteMany: jest.fn(),
+    },
+    emailVerificationToken: {
+      create: jest.fn(), findUnique: jest.fn(), update: jest.fn(), deleteMany: jest.fn(),
+    },
+    user: { findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
   };
+  prisma.$transaction = jest.fn(async (
+    operation: Promise<unknown>[] | ((tx: typeof prisma) => Promise<unknown>),
+  ) => (typeof operation === 'function' ? operation(prisma) : Promise.all(operation)));
+  return prisma;
 }
 function mockRedis(): AnyMock {
   return {
@@ -528,24 +536,36 @@ describe('AuthService', () => {
   describe('Google ID-token nonce', () => {
     const nonce = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
-    function googleTicket(tokenNonce?: string) {
+    function googleTicket(
+      tokenNonce?: string,
+      overrides: Record<string, unknown> = {},
+    ) {
       return {
         getPayload: () => ({
           sub: 'google-user-1',
-          email: 'student@example.com',
+          email: 'student@gmail.com',
           email_verified: true,
           name: 'Student',
           exp: Math.floor(Date.now() / 1000) + 3_000,
           ...(tokenNonce ? { nonce: tokenNonce } : {}),
+          ...overrides,
         }),
       };
     }
 
     function googleService(redis = mockRedis()) {
       const users = mockUsers();
-      users.findByEmail.mockResolvedValue({
-        id: 'user-1', email: 'student@example.com', emailVerifiedAt: new Date(),
-      });
+      const existingUser = {
+        id: 'user-1', email: 'student@gmail.com', emailVerifiedAt: new Date(),
+      };
+      users.findByEmail.mockResolvedValue(existingUser);
+      const prisma = mockPrisma();
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.update.mockImplementation(async ({ data }: any) => ({
+        ...existingUser,
+        ...data,
+      }));
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
       const jwt = mockJwt();
       jwt.sign.mockImplementation((_payload, options) =>
         options?.secret === 'access-secret' ? 'access-token' : 'refresh-token');
@@ -556,10 +576,10 @@ describe('AuthService', () => {
         'jwt.accessTtl': '15m',
         'jwt.refreshTtl': '30d',
       });
-      return build({ users, jwt, config, redis });
+      return build({ users, jwt, config, redis, prisma });
     }
 
-    it('accepts a matching signed nonce once without storing the raw value', async () => {
+    it('accepts a matching signed nonce while replay-keying the exact token', async () => {
       const redis = mockRedis();
       const { svc } = googleService(redis);
       (svc as any).googleClient = {
@@ -569,13 +589,13 @@ describe('AuthService', () => {
       await expect(svc.signInWithGoogle('signed-id-token', { nonce }))
         .resolves.toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
       expect(redis.setNx).toHaveBeenCalledWith(
-        expect.stringMatching(/^auth:google:nonce:(?!.*0123456789abcdef)/),
+        expect.stringMatching(/^auth:google:token:(?!.*signed-id-token)/),
         '1',
         expect.any(Number),
       );
     });
 
-    it('rejects a replay of the same signed nonce', async () => {
+    it('rejects replay of the exact nonce-bearing token', async () => {
       const redis = mockRedis();
       redis.setNx.mockResolvedValue(false);
       const { svc } = googleService(redis);
@@ -585,6 +605,22 @@ describe('AuthService', () => {
 
       await expect(svc.signInWithGoogle('replayed-id-token', { nonce }))
         .rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('allows a fresh token to retry with the same mounted GIS nonce', async () => {
+      const redis = mockRedis();
+      const { svc } = googleService(redis);
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(nonce)),
+      };
+
+      await expect(svc.signInWithGoogle('first-id-token', { nonce })).resolves.toBeDefined();
+      await expect(svc.signInWithGoogle('fresh-id-token', { nonce })).resolves.toBeDefined();
+      expect(redis.setNx.mock.calls.map(([key]) => key)).toEqual([
+        expect.stringMatching(/^auth:google:token:/),
+        expect.stringMatching(/^auth:google:token:/),
+      ]);
+      expect(redis.setNx.mock.calls[0][0]).not.toBe(redis.setNx.mock.calls[1][0]);
     });
 
     it('rejects mismatched or stripped request nonces before user lookup', async () => {
@@ -602,7 +638,7 @@ describe('AuthService', () => {
       expect(users.findByEmail).not.toHaveBeenCalled();
     });
 
-    it('keeps nonce-free browser and legacy app tokens compatible', async () => {
+    it('keeps nonce-free legacy tokens compatible but makes each token one-time-use', async () => {
       const redis = mockRedis();
       const { svc } = googleService(redis);
       (svc as any).googleClient = {
@@ -611,7 +647,213 @@ describe('AuthService', () => {
 
       await expect(svc.signInWithGoogle('legacy-id-token'))
         .resolves.toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
-      expect(redis.setNx).not.toHaveBeenCalled();
+      expect(redis.setNx).toHaveBeenCalledWith(
+        expect.stringMatching(/^auth:google:token:/),
+        '1',
+        expect.any(Number),
+      );
+    });
+
+    it('rejects replay of a nonce-free legacy token', async () => {
+      const redis = mockRedis();
+      redis.setNx.mockResolvedValue(false);
+      const { svc } = googleService(redis);
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket()),
+      };
+
+      await expect(svc.signInWithGoogle('replayed-legacy-id-token'))
+        .rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('resolves returning Google users by immutable subject, not email', async () => {
+      const { svc, prisma, users } = googleService();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'linked-user',
+        email: 'old-address@example.com',
+        googleSubject: 'google-user-1',
+        emailVerifiedAt: new Date(),
+      });
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(undefined, {
+          email: 'new-address@example.com',
+        })),
+      };
+
+      await expect(svc.signInWithGoogle('linked-id-token')).resolves.toBeDefined();
+      expect(users.findByEmail).not.toHaveBeenCalled();
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.user.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('refuses to auto-link an existing account by non-authoritative email', async () => {
+      const { svc, prisma, users } = googleService();
+      users.findByEmail.mockResolvedValue({
+        id: 'password-user', email: 'student@example.com', emailVerifiedAt: new Date(),
+      });
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(undefined, {
+          email: 'student@example.com',
+        })),
+      };
+
+      await expect(svc.signInWithGoogle('external-email-token'))
+        .rejects.toBeInstanceOf(ConflictException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.user.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('links an existing external-email account after current-password proof', async () => {
+      const { svc, prisma, users } = googleService();
+      users.findByEmail.mockResolvedValue({
+        id: 'password-user',
+        email: 'student@example.com',
+        emailVerifiedAt: new Date(),
+        passwordHash: await bcrypt.hash('current-password', 4),
+      });
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(undefined, {
+          email: 'student@example.com',
+        })),
+      };
+
+      await expect(svc.signInWithGoogle('external-link-token', {
+        linkPassword: 'current-password',
+      })).resolves.toBeDefined();
+      expect(prisma.user.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: 'password-user', googleSubject: null },
+        data: expect.objectContaining({ googleSubject: 'google-user-1' }),
+      }));
+      const linkedPasswordHash = prisma.user.updateMany.mock.calls[0][0].data.passwordHash;
+      await expect(bcrypt.compare('current-password', linkedPasswordHash)).resolves.toBe(true);
+      expect(prisma.passwordResetToken.deleteMany)
+        .toHaveBeenCalledWith({ where: { userId: 'password-user' } });
+      expect(prisma.emailVerificationToken.deleteMany)
+        .toHaveBeenCalledWith({ where: { userId: 'password-user' } });
+    });
+
+    it('allows an authoritative Workspace email to link once', async () => {
+      const { svc, prisma, users } = googleService();
+      users.findByEmail.mockResolvedValue({
+        id: 'workspace-user',
+        email: 'student@school.edu',
+        emailVerifiedAt: null,
+        passwordHash: await bcrypt.hash('old-workspace-password', 4),
+      });
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(undefined, {
+          email: 'student@school.edu',
+          hd: 'school.edu',
+        })),
+      };
+
+      await expect(svc.signInWithGoogle('workspace-token')).resolves.toBeDefined();
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'workspace-user', googleSubject: null },
+        data: {
+          googleSubject: 'google-user-1',
+          emailVerifiedAt: expect.any(Date),
+          passwordHash: expect.any(String),
+        },
+      });
+      const securedPasswordHash = prisma.user.updateMany.mock.calls[0][0].data.passwordHash;
+      await expect(bcrypt.compare('old-workspace-password', securedPasswordHash))
+        .resolves.toBe(false);
+      expect(prisma.passwordResetToken.deleteMany)
+        .toHaveBeenCalledWith({ where: { userId: 'workspace-user' } });
+      expect(prisma.emailVerificationToken.deleteMany)
+        .toHaveBeenCalledWith({ where: { userId: 'workspace-user' } });
+    });
+
+    it('does not revoke recovery tokens when another first-link wins the race', async () => {
+      const { svc, prisma, users } = googleService();
+      users.findByEmail.mockResolvedValue({
+        id: 'workspace-user', email: 'student@school.edu', emailVerifiedAt: new Date(),
+      });
+      prisma.user.updateMany.mockResolvedValue({ count: 0 });
+      prisma.user.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(undefined, {
+          email: 'student@school.edu',
+          hd: 'school.edu',
+        })),
+      };
+
+      await expect(svc.signInWithGoogle('workspace-race-token'))
+        .rejects.toBeInstanceOf(ConflictException);
+      expect(prisma.passwordResetToken.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.emailVerificationToken.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('never replaces a different Google subject already linked to the email', async () => {
+      const { svc, prisma, users } = googleService();
+      users.findByEmail.mockResolvedValue({
+        id: 'existing-user',
+        email: 'student@gmail.com',
+        emailVerifiedAt: new Date(),
+        googleSubject: 'original-google-subject',
+      });
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket()),
+      };
+
+      await expect(svc.signInWithGoogle('replacement-attempt-token'))
+        .rejects.toBeInstanceOf(ConflictException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(prisma.user.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('creates a new external-email Google identity without mailbox verification', async () => {
+      const { svc, users } = googleService();
+      users.findByEmail.mockResolvedValue(null);
+      users.create.mockImplementation(async (data: any) => ({ id: 'new-google-user', ...data }));
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(undefined, {
+          email: 'new-user@example.com',
+        })),
+      };
+
+      await expect(svc.signInWithGoogle('new-external-token')).resolves.toBeDefined();
+      expect(users.create).toHaveBeenCalledWith(expect.objectContaining({
+        email: 'new-user@example.com',
+        googleSubject: 'google-user-1',
+        emailVerifiedAt: null,
+      }));
+    });
+
+    it('updates an authoritative changed Workspace email and revokes old mailbox tokens', async () => {
+      const { svc, prisma, users } = googleService();
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'workspace-linked',
+        email: 'old@school.edu',
+        googleSubject: 'google-user-1',
+        emailVerifiedAt: new Date(),
+      });
+      prisma.user.update.mockResolvedValue({
+        id: 'workspace-linked',
+        email: 'new@school.edu',
+        googleSubject: 'google-user-1',
+        emailVerifiedAt: new Date(),
+      });
+      users.findByEmail.mockResolvedValue(null);
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(undefined, {
+          email: 'new@school.edu',
+          hd: 'school.edu',
+        })),
+      };
+
+      await expect(svc.signInWithGoogle('workspace-email-change-token')).resolves.toBeDefined();
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'workspace-linked', googleSubject: 'google-user-1' },
+        data: { email: 'new@school.edu', emailVerifiedAt: expect.any(Date) },
+      });
+      expect(prisma.passwordResetToken.deleteMany)
+        .toHaveBeenCalledWith({ where: { userId: 'workspace-linked' } });
+      expect(prisma.emailVerificationToken.deleteMany)
+        .toHaveBeenCalledWith({ where: { userId: 'workspace-linked' } });
     });
   });
 
@@ -697,6 +939,84 @@ describe('AuthService', () => {
       const r = await svc.forgotPassword('a@b.com');
       expect(r).toEqual({ ok: true });
       expect(mail.sendPasswordResetEmail).toHaveBeenCalledWith('a@b.com', expect.any(String));
+    });
+
+    it('does not send recovery mail to a reassignable Google-linked address', async () => {
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue({
+        id: 'u-workspace',
+        email: 'student@school.edu',
+        googleSubject: 'google-subject',
+        deletedAt: null,
+      });
+      const mail = mockMail();
+      const prisma = mockPrisma();
+      const { svc } = build({ users, mail, prisma });
+
+      await expect(svc.forgotPassword('student@school.edu')).resolves.toEqual({ ok: true });
+      expect(prisma.passwordResetToken.create).not.toHaveBeenCalled();
+      expect(mail.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('rejects and consumes a late token after a reassignable Google account is linked', async () => {
+      const prisma = mockPrisma();
+      prisma.passwordResetToken.findUnique.mockResolvedValue({
+        id: 'late-token',
+        userId: 'u-workspace',
+        usedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      // The guarded user update sees googleSubject != null and a non-Gmail
+      // address, so it affects zero rows.
+      prisma.user.updateMany.mockResolvedValue({ count: 0 });
+      const events = mockSecurityEvents();
+      const { svc } = build({ prisma, events });
+
+      await expect(svc.resetPassword('late-raw-token', 'new-password-123'))
+        .rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'u-workspace',
+          deletedAt: null,
+          OR: [
+            { googleSubject: null },
+            { email: { endsWith: '@gmail.com' } },
+          ],
+        },
+        data: { passwordHash: expect.any(String) },
+      });
+      expect(prisma.passwordResetToken.deleteMany)
+        .toHaveBeenCalledWith({ where: { id: 'late-token' } });
+      expect(events.record).not.toHaveBeenCalledWith(
+        'PASSWORD_RESET_SUCCESS',
+        expect.anything(),
+      );
+    });
+
+    it('atomically changes the password and claims an eligible token once', async () => {
+      const prisma = mockPrisma();
+      prisma.passwordResetToken.findUnique.mockResolvedValue({
+        id: 'valid-token',
+        userId: 'u-local',
+        usedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      prisma.user.updateMany.mockResolvedValue({ count: 1 });
+      prisma.passwordResetToken.updateMany.mockResolvedValue({ count: 1 });
+      const { svc } = build({ prisma });
+
+      await expect(svc.resetPassword('valid-raw-token', 'new-password-123'))
+        .resolves.toEqual({ ok: true });
+      expect(prisma.passwordResetToken.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'valid-token',
+          usedAt: null,
+          expiresAt: { gt: expect.any(Date) },
+        },
+        data: { usedAt: expect.any(Date) },
+      });
     });
   });
 

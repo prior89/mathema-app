@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, ServiceUnavailableException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ConflictException, ServiceUnavailableException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes, createHash, createHmac, randomUUID, randomInt, timingSafeEqual } from 'crypto';
@@ -31,7 +31,7 @@ import { OtpProviderService } from './otp-provider.service';
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
 const REFRESH_REVOKE_NAMESPACE = 'jwt:refresh:revoked:';
-const GOOGLE_NONCE_NAMESPACE = 'auth:google:nonce:';
+const GOOGLE_TOKEN_NAMESPACE = 'auth:google:token:';
 
 // Phone-OTP hardening.
 const OTP_CODE_TTL_SEC = 300;
@@ -41,6 +41,16 @@ const OTP_PHONE_LOCK_FAILS = 10;     // persistent per-phone fail lock (survives
 // Synthetic identifier namespaces — never accepted as a real signup email so a
 // user can't squat a phone/social/guest identity address.
 const RESERVED_EMAIL_DOMAINS = ['users.matheo.local', 'mock.local', 'guest.matheo.invalid'];
+
+function isGoogleAuthoritativeForEmail(payload: { hd?: unknown }, email: string): boolean {
+  const domain = email.split('@')[1]?.toLowerCase();
+  const hostedDomain = typeof payload.hd === 'string' ? payload.hd.trim().toLowerCase() : '';
+  return domain === 'gmail.com' || (!!hostedDomain && hostedDomain === domain);
+}
+
+function isStableGmailAddress(email: string): boolean {
+  return email.trim().toLowerCase().endsWith('@gmail.com');
+}
 
 @Injectable()
 export class AuthService {
@@ -417,7 +427,13 @@ export class AuthService {
    */
   async signInWithGoogle(
     idToken: string,
-    ctx: { ip?: string; ua?: string; deviceHash?: string; nonce?: string } = {},
+    ctx: {
+      ip?: string;
+      ua?: string;
+      deviceHash?: string;
+      nonce?: string;
+      linkPassword?: string;
+    } = {},
   ) {
     if (!this.googleClient) {
       throw new UnauthorizedException('Google sign-in not configured (GOOGLE_CLIENT_ID missing)');
@@ -433,11 +449,11 @@ export class AuthService {
       throw new UnauthorizedException('invalid Google ID token');
     }
 
-    // Native Credential Manager signs the request nonce into the Google ID
-    // token. If either side supplies one, require both sides to match; this
-    // means an attacker cannot bypass the check by stripping nonce from the
-    // API request. Browser GIS and older app builds remain compatible because
-    // their signed tokens have no nonce claim.
+    // Current GIS and native Credential Manager clients sign the request nonce
+    // into the Google ID token. If either side supplies one, require both sides
+    // to match so an attacker cannot bypass the check by stripping the API
+    // field. Older app builds remain compatible through token-hash replay
+    // protection below.
     if (ctx.nonce || payload?.nonce) {
       if (!ctx.nonce || typeof payload?.nonce !== 'string') {
         throw new UnauthorizedException('invalid Google sign-in nonce');
@@ -447,52 +463,206 @@ export class AuthService {
       if (requestNonce.length !== tokenNonce.length || !timingSafeEqual(requestNonce, tokenNonce)) {
         throw new UnauthorizedException('invalid Google sign-in nonce');
       }
-
-      const nowSec = Math.floor(Date.now() / 1000);
-      const nonceTtlSec = Math.max(60, Math.min(3_600, (payload.exp ?? nowSec + 600) - nowSec));
-      const nonceKey = GOOGLE_NONCE_NAMESPACE
-        + createHash('sha256').update(ctx.nonce).digest('base64url');
-      let firstUse: boolean;
-      try {
-        firstUse = await this.redis.setNx(nonceKey, '1', nonceTtlSec);
-      } catch {
-        throw new ServiceUnavailableException('Google sign-in is temporarily unavailable');
-      }
-      if (!firstUse) {
-        throw new UnauthorizedException('Google ID token was already used');
-      }
     }
-    if (!payload?.email || !payload.email_verified) {
+
+    // The token, rather than the nonce, is the replay unit. GIS can issue more
+    // than one token from a mounted button using the same nonce after a
+    // recoverable backend failure; consuming the nonce would make a valid
+    // retry fail. A token hash still makes every signed response one-time-use.
+    const replayKey = GOOGLE_TOKEN_NAMESPACE
+      + createHash('sha256').update(idToken).digest('base64url');
+    const nowSec = Math.floor(Date.now() / 1000);
+    const replayTtlSec = Math.max(60, Math.min(3_600, (payload.exp ?? nowSec + 600) - nowSec));
+    let firstUse: boolean;
+    try {
+      firstUse = await this.redis.setNx(replayKey, '1', replayTtlSec);
+    } catch {
+      throw new ServiceUnavailableException('Google sign-in is temporarily unavailable');
+    }
+    if (!firstUse) {
+      throw new UnauthorizedException('Google ID token was already used');
+    }
+    if (!payload?.sub || !payload?.email || !payload.email_verified) {
       throw new UnauthorizedException('email not verified by Google');
     }
 
     const email = payload.email.toLowerCase();
     const name = payload.name ?? payload.given_name ?? email.split('@')[0];
-    let user = await this.users.findByEmail(email);
+    const authoritativeEmail = isGoogleAuthoritativeForEmail(payload, email);
+
+    // Google's immutable `sub` is the account key. Email is consulted only
+    // for the initial link, and only Gmail / hosted-domain email is considered
+    // authoritative enough to merge into an existing password account.
+    let user = await this.prisma.user.findUnique({
+      where: { googleSubject: payload.sub },
+    });
+    if ((user as any)?.deletedAt) {
+      throw new UnauthorizedException('Account deactivated');
+    }
+
+    if (user && user.email !== email && authoritativeEmail) {
+      const emailOwner = await this.users.findByEmail(email);
+      if (emailOwner && emailOwner.id !== user.id) {
+        throw new ConflictException('The current Google email is already used by another account');
+      }
+      try {
+        const [updatedUser] = await this.prisma.$transaction([
+          this.prisma.user.update({
+            where: { id: user.id, googleSubject: payload.sub },
+            data: { email, emailVerifiedAt: new Date() },
+          }),
+          // Any link issued to the old mailbox must become unusable in the
+          // same transaction as the authoritative Workspace/Gmail change.
+          this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
+          this.prisma.emailVerificationToken.deleteMany({ where: { userId: user.id } }),
+        ]);
+        user = updatedUser;
+      } catch (error) {
+        if ((error as { code?: string })?.code !== 'P2002') throw error;
+        throw new ConflictException('The current Google email is already used by another account');
+      }
+    }
+
     if (!user) {
-      const placeholderExam = new Date();
-      placeholderExam.setFullYear(placeholderExam.getFullYear() + 1);
-      // gradeLevel intentionally left null. ProtectedRoute on the frontend
-      // routes any logged-in user with gradeLevel===null to /onboarding, where
-      // the NCERT class picker (Class 7-12) is presented. Hard-coding CLASS_11
-      // here used to give every Google sign-up the wrong-class curriculum.
-      user = await this.users.create({
-        email,
-        passwordHash: await bcrypt.hash(`google:${payload.sub}:${Date.now()}`, BCRYPT_COST),
-        name,
-        examDate: placeholderExam,
-        targetGrade: 1,
-        // KR-first launch: new Google accounts start in the only live market.
-        // gradeLevel stays null so ProtectedRoute still routes them to
-        // onboarding, where the country chip can switch to another live market.
-        country: 'KR' as any,
-        emailVerifiedAt: new Date(),
-      });
-    } else if (!(user as any).emailVerifiedAt) {
-      user = await this.prisma.user.update({
-        where: { id: user.id },
-        data: { emailVerifiedAt: new Date() },
-      }) as any;
+      const emailUser = await this.users.findByEmail(email);
+      if (emailUser) {
+        if ((emailUser as any).deletedAt) {
+          throw new UnauthorizedException('Account deactivated');
+        }
+        const existingSubject = (emailUser as any).googleSubject as string | null | undefined;
+        if (existingSubject) {
+          if (existingSubject !== payload.sub) {
+            throw new ConflictException('Google account link cannot be replaced');
+          }
+          user = emailUser as any;
+        } else {
+          let passwordConfirmed = false;
+          if (!authoritativeEmail && ctx.linkPassword) {
+            await assertNotLocked(this.redis, ctx.ip ?? '', email);
+            passwordConfirmed = await bcrypt.compare(ctx.linkPassword, emailUser.passwordHash);
+            if (!passwordConfirmed) {
+              await recordFailedLogin(this.redis, ctx.ip ?? '', email);
+            } else {
+              await clearLoginFailures(this.redis, ctx.ip ?? '', email);
+            }
+          }
+          if (!authoritativeEmail && !passwordConfirmed) {
+            // The first attempt only discovers that explicit account proof is
+            // required. Let the same short-lived signed token be retried once
+            // with the password; wrong-password attempts remain consumed and
+            // are also covered by the normal Redis login lockout above.
+            if (!ctx.linkPassword) {
+              try {
+                await this.redis.del(replayKey);
+              } catch {
+                throw new ServiceUnavailableException('Google sign-in is temporarily unavailable');
+              }
+            }
+            throw new ConflictException({
+              code: 'google_account_link_required',
+              message: 'Enter the existing account password, then use Google again to link it securely.',
+            });
+          }
+          const verifiedAt = (emailUser as any).emailVerifiedAt ?? new Date();
+          // Re-establish the password credential while taking ownership of a
+          // reassignable address. A password-confirmed external account keeps
+          // that proven password; an authoritative Workspace link gets a new
+          // unguessable value so a concurrent old-mailbox reset cannot remain
+          // a second login path. Gmail addresses are stable and need no reset.
+          const securedPasswordHash = isStableGmailAddress(email)
+            ? undefined
+            : await bcrypt.hash(
+              passwordConfirmed && ctx.linkPassword
+                ? ctx.linkPassword
+                : `google-linked:${randomBytes(32).toString('hex')}`,
+              BCRYPT_COST,
+            );
+          try {
+            const linkedResult = await this.prisma.$transaction(async (tx) => {
+              const result = await tx.user.updateMany({
+                // The null predicate makes first-linking atomic: two different
+                // Google subjects can never race and overwrite one another.
+                where: { id: emailUser.id, googleSubject: null },
+                data: {
+                  googleSubject: payload.sub,
+                  ...(!(emailUser as any).emailVerifiedAt ? { emailVerifiedAt: verifiedAt } : {}),
+                  ...(securedPasswordHash ? { passwordHash: securedPasswordHash } : {}),
+                },
+              });
+
+              if (result.count === 1) {
+                // A reset or verification link issued before the identity was
+                // linked must not remain a recovery path to the old mailbox.
+                // Keep revocation atomic with the winning first-link update.
+                await Promise.all([
+                  tx.passwordResetToken.deleteMany({ where: { userId: emailUser.id } }),
+                  tx.emailVerificationToken.deleteMany({ where: { userId: emailUser.id } }),
+                ]);
+              }
+
+              return result;
+            });
+            if (linkedResult.count === 1) {
+              user = {
+                ...emailUser,
+                googleSubject: payload.sub,
+                emailVerifiedAt: verifiedAt,
+              } as any;
+            } else {
+              const linked = await this.prisma.user.findUnique({
+                where: { googleSubject: payload.sub },
+              });
+              if (!linked || linked.id !== emailUser.id) {
+                throw new ConflictException('Google account is already linked to another user');
+              }
+              user = linked;
+            }
+          } catch (error) {
+            const code = (error as { code?: string })?.code;
+            if (code !== 'P2002') throw error;
+            const linked = await this.prisma.user.findUnique({
+              where: { googleSubject: payload.sub },
+            });
+            if (!linked || linked.id !== emailUser.id) {
+              throw new ConflictException('Google account is already linked to another user');
+            }
+            user = linked;
+          }
+        }
+      } else {
+        const placeholderExam = new Date();
+        placeholderExam.setFullYear(placeholderExam.getFullYear() + 1);
+        // gradeLevel intentionally left null. ProtectedRoute on the frontend
+        // routes any logged-in user with gradeLevel===null to /onboarding, where
+        // the class picker is presented.
+        try {
+          user = await this.users.create({
+            email,
+            passwordHash: await bcrypt.hash(`google:${payload.sub}:${Date.now()}`, BCRYPT_COST),
+            name,
+            examDate: placeholderExam,
+            targetGrade: 1,
+            // KR-first launch: new Google accounts start in the only live market.
+            country: 'KR' as any,
+            googleSubject: payload.sub,
+            // Google is authoritative for Gmail and Workspace email. Other
+            // addresses must still complete Matheo's mailbox verification.
+            emailVerifiedAt: authoritativeEmail ? new Date() : null,
+          });
+        } catch (error) {
+          if ((error as { code?: string })?.code !== 'P2002') throw error;
+          const linked = await this.prisma.user.findUnique({
+            where: { googleSubject: payload.sub },
+          });
+          if (!linked) {
+            throw new ConflictException('An account already uses this email address');
+          }
+          user = linked;
+        }
+      }
+    }
+    if ((user as any).deletedAt) {
+      throw new UnauthorizedException('Account deactivated');
     }
     const verifiedUser = user!;
     await this.bindAndDisplace({
@@ -888,7 +1058,13 @@ export class AuthService {
    */
   async forgotPassword(email: string, requestIp?: string) {
     const user = await this.users.findByEmail(email.trim().toLowerCase());
-    if (user && !(user as any).deletedAt) {
+    // Workspace and external-domain addresses can be reassigned while the
+    // stable Google subject remains with the original person. Never let a new
+    // mailbox owner reset a Google-linked account. Gmail addresses are stable;
+    // unlinked legacy accounts can still reset once and use that password to
+    // complete the explicit Google link flow.
+    const safeGoogleRecovery = !user?.googleSubject || isStableGmailAddress(user.email);
+    if (user && !(user as any).deletedAt && safeGoogleRecovery) {
       const raw = randomBytes(32).toString('hex');
       const tokenHash = createHash('sha256').update(raw).digest('hex');
       const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MIN * 60 * 1000);
@@ -908,13 +1084,44 @@ export class AuthService {
     }
     await assertPasswordNotBreached(newPassword);
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST);
-    await this.prisma.$transaction([
-      this.prisma.user.update({ where: { id: rec.userId }, data: { passwordHash } }),
-      (this.prisma as any).passwordResetToken.update({
-        where: { id: rec.id },
-        data: { usedAt: new Date() },
-      }),
-    ]);
+    const now = new Date();
+    const resetApplied = await this.prisma.$transaction(async (tx) => {
+      // Lock/update the user before consuming the token. The Google first-link
+      // transaction follows the same user-then-token order, avoiding a
+      // deadlock while making the two operations serialize on this row.
+      const updatedUser = await tx.user.updateMany({
+        where: {
+          id: rec.userId,
+          deletedAt: null,
+          OR: [
+            { googleSubject: null },
+            { email: { endsWith: '@gmail.com' } },
+          ],
+        },
+        data: { passwordHash },
+      });
+
+      if (updatedUser.count !== 1) {
+        // A token created by an already-started forgot-password request can
+        // arrive just after Google linking deleted older tokens. Consume that
+        // late token without changing the now Google-owned account.
+        await tx.passwordResetToken.deleteMany({ where: { id: rec.id } });
+        return false;
+      }
+
+      const consumed = await tx.passwordResetToken.updateMany({
+        where: { id: rec.id, usedAt: null, expiresAt: { gt: now } },
+        data: { usedAt: now },
+      });
+      if (consumed.count !== 1) {
+        // Throwing rolls back the user update as well as the failed claim.
+        throw new BadRequestException('invalid or expired token');
+      }
+      return true;
+    });
+    if (!resetApplied) {
+      throw new BadRequestException('invalid or expired token');
+    }
     this.events.record('PASSWORD_RESET_SUCCESS' as any, { userId: rec.userId });
     return { ok: true };
   }

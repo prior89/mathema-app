@@ -62,7 +62,18 @@ export function useGoogleSignIn({
       setReady(false);
       return;
     }
-    renderGoogleIdentityButton(webContainer, (token) => callbackRef.current(token), { mode, locale })
+    let nonce: string;
+    try {
+      nonce = createGoogleSignInNonce();
+    } catch {
+      setReady(false);
+      setLoadError(true);
+      return;
+    }
+    renderGoogleIdentityButton(webContainer, async (token) => {
+      rememberGoogleSignInNonce(token, nonce);
+      await callbackRef.current(token);
+    }, { mode, locale, nonce })
       .then((ok) => {
         if (!cancelled) {
           setReady(ok);

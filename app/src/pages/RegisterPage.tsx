@@ -203,7 +203,6 @@ export default function RegisterPage() {
                   onReset={resetAgeBand}
                 />
               )}
-              {ageBand !== null && (
               <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {step === 0 && upgradeMode && (
                   <div
@@ -310,7 +309,6 @@ export default function RegisterPage() {
                   </p>
                 )}
               </form>
-              )}
             </div>
           </div>
         </div>

@@ -359,6 +359,10 @@ model User {
   /// user has never confirmed they own the email on file. Frontend can show a
   /// "verify your email" banner; future policy may gate certain features.
   emailVerifiedAt DateTime?
+  /// Stable Google OpenID subject. Email is mutable/reassignable for some
+  /// non-Gmail accounts, so Google sign-in resolves by this identifier after
+  /// the first secure link instead of repeatedly joining on email.
+  googleSubject String? @unique
   /// Student birth date — used for KR PIPA / IN DPDP minor & parental consent gates.
   birthDate DateTime?
   /// Set when a verifiable parent/guardian consent flow completes (see GuardianConsentRequest).

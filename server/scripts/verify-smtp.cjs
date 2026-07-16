@@ -30,11 +30,20 @@ function configuration() {
   if (!process.env.MAIL_FROM.includes('@')) {
     configError('MAIL_FROM must contain a sender email address');
   }
+  if (port === 465 && secureRaw !== 'true') {
+    configError('SMTP_SECURE must be true when SMTP_PORT is 465');
+  }
+
+  const secure = secureRaw === 'true' || port === 465;
 
   return {
     host: process.env.SMTP_HOST,
     port,
-    secure: secureRaw === 'true',
+    secure,
+    // Port 587/25 must upgrade with STARTTLS; never allow an opportunistic
+    // plaintext fallback. Port 465 is encrypted from connection start.
+    requireTLS: !secure,
+    tls: { minVersion: 'TLSv1.2' },
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   };
 }

@@ -16,6 +16,9 @@ env:
   RESOURCE_GROUP: mathema-prod-cin
   CONTAINER_APP: mathema-backend
   IMAGE_NAME: mathema-backend
+  # Public OAuth identifier (not a client secret). Frontend, Android Credential
+  # Manager and backend token verification must all use this exact Web client.
+  EXPECTED_GOOGLE_WEB_CLIENT_ID: 780610015758-4sfjjjhtq6p86edr5bsdn5c9b95uav1b.apps.googleusercontent.com
 
 jobs:
   build-and-deploy:
@@ -28,6 +31,11 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - name: Require production Google OAuth client
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: node scripts/require-google-client-id.cjs
 
       - name: Login to Azure (OIDC)
         uses: azure/login@v2
@@ -83,6 +91,10 @@ jobs:
             true|false) ;;
             *) echo "::error::SMTP_SECURE must be true or false"; exit 1 ;;
           esac
+          if [ "$SMTP_PORT" = "465" ] && [ "${SMTP_SECURE,,}" != "true" ]; then
+            echo "::error::SMTP_SECURE must be true when SMTP_PORT is 465"
+            exit 1
+          fi
           if [[ "$MAIL_FROM" != *"@"* ]]; then
             echo "::error::MAIL_FROM must contain a sender email address"
             exit 1
@@ -294,9 +306,7 @@ jobs:
             ENV_VARS="$ENV_VARS FIREBASE_CLIENT_EMAIL=secretref:firebase-client-email"
             ENV_VARS="$ENV_VARS FIREBASE_PRIVATE_KEY=secretref:firebase-private-key"
           fi
-          if [ -n "${{ secrets.VITE_GOOGLE_CLIENT_ID }}" ]; then
-            ENV_VARS="$ENV_VARS GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}"
-          fi
+          ENV_VARS="$ENV_VARS GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}"
           # Billing UI switch — set GitHub secret BILLING_UI_ENABLED=true to
           # expose paywall / upgrade CTAs without a frontend rebuild.
           if [ -n "${{ secrets.BILLING_UI_ENABLED }}" ]; then
@@ -346,6 +356,19 @@ jobs:
           assert_secret_ref SMTP_PASS smtp-pass
           assert_secret_ref MAIL_FROM mail-from
           echo "SMTP Container App secretRef bindings verified."
+
+      - name: Verify deployed Google OAuth audience
+        run: |
+          actual_client_id=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.template.containers[0].env[?name=='GOOGLE_CLIENT_ID'].value | [0]" \
+            -o tsv)
+          if [ "$actual_client_id" != "$EXPECTED_GOOGLE_WEB_CLIENT_ID" ]; then
+            echo "::error::Container App GOOGLE_CLIENT_ID does not match the production OAuth Web client"
+            exit 1
+          fi
+          echo "Google OAuth audience binding verified."
 
       # Bounded smoke test: poll every 10s, give up after 2min, then dump the
       # last 100 log lines of the new revision so we can see the real cause

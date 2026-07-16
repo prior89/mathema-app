@@ -14,6 +14,9 @@ env:
   # the right API host. Adjust if your Container App FQDN changes.
   VITE_API_BASE_URL: https://mathema-backend.redcoast-6e6508a7.centralindia.azurecontainerapps.io/api/v1
   PRODUCTION_ORIGIN: https://app.matheo.verastudy.net
+  # Public OAuth identifier (not a client secret). Pin it so a missing or
+  # accidentally replaced GitHub secret cannot silently remove Google login.
+  EXPECTED_GOOGLE_WEB_CLIENT_ID: 780610015758-4sfjjjhtq6p86edr5bsdn5c9b95uav1b.apps.googleusercontent.com
 
 jobs:
   build-and-deploy:
@@ -38,6 +41,11 @@ jobs:
       - name: Install workspace deps
         run: npm ci
 
+      - name: Require production Google OAuth client
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: node scripts/require-google-client-id.cjs
+
       - name: Build Vite SPA
         env:
           VITE_API_BASE_URL: ${{ env.VITE_API_BASE_URL }}
@@ -47,6 +55,11 @@ jobs:
           # Optional: force billing UI on at build time (server BILLING_UI_ENABLED also works).
           VITE_BILLING_ENABLED: ${{ secrets.BILLING_UI_ENABLED }}
         run: npm -w app run build
+
+      - name: Verify Google login is present in build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: node scripts/require-google-client-id.cjs --artifact app/dist
 
       # Validate exactly what will be uploaded. In particular, every hashed
       # asset referenced by index.html must exist and legal Markdown must stay

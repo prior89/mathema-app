@@ -1,53 +1,64 @@
-export const PRE_AUTH_AGE_BAND_STORAGE_KEY = 'matheo.preAuthAgeBand';
-
 /**
- * Coarse, self-reported band used only to decide whether Google sign-in may
- * be offered. Never store a birth date or exact age at the pre-auth boundary.
+ * Transient, self-reported decision used only to decide whether Google
+ * sign-in may be offered. The birth date itself never leaves the component,
+ * is never persisted, and is cleared as soon as the decision is derived.
  */
-export type PreAuthAgeBand = 'under13' | '13plus';
+export type PreAuthAgeBand = 'child' | 'eligible';
+export type PreAuthRegion = 'KR' | 'IN' | 'OTHER';
 
-type AgeBandStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+const MINIMUM_GOOGLE_AGE: Record<PreAuthRegion, number> = {
+  // Google Accounts can be self-managed from age 14 in South Korea.
+  KR: 14,
+  // India's DPDP child protections apply until age 18.
+  IN: 18,
+  // Unknown/future markets fail conservatively until their policy is mapped.
+  OTHER: 18,
+};
 
-function browserStorage(storage?: AgeBandStorage): AgeBandStorage | null {
-  if (storage) return storage;
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
+function parseDateOnly(value: string): { year: number; month: number; day: number } | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const check = new Date(Date.UTC(year, month - 1, day));
+  if (
+    check.getUTCFullYear() !== year
+    || check.getUTCMonth() !== month - 1
+    || check.getUTCDate() !== day
+  ) return null;
+  return { year, month, day };
 }
 
-export function readPreAuthAgeBand(storage?: AgeBandStorage): PreAuthAgeBand | null {
-  try {
-    const value = browserStorage(storage)?.getItem(PRE_AUTH_AGE_BAND_STORAGE_KEY);
-    return value === 'under13' || value === '13plus' ? value : null;
-  } catch {
-    return null;
-  }
+export function derivePreAuthAgeBand(
+  birthDate: string,
+  region: PreAuthRegion,
+  today: Date = new Date(),
+): PreAuthAgeBand | null {
+  const birth = parseDateOnly(birthDate);
+  if (!birth || Number.isNaN(today.getTime())) return null;
+
+  const current = {
+    year: today.getFullYear(),
+    month: today.getMonth() + 1,
+    day: today.getDate(),
+  };
+  if (
+    birth.year > current.year
+    || (birth.year === current.year && birth.month > current.month)
+    || (birth.year === current.year && birth.month === current.month && birth.day > current.day)
+  ) return null;
+
+  let age = current.year - birth.year;
+  if (
+    current.month < birth.month
+    || (current.month === birth.month && current.day < birth.day)
+  ) age -= 1;
+
+  return age >= MINIMUM_GOOGLE_AGE[region] ? 'eligible' : 'child';
 }
 
-export function writePreAuthAgeBand(
-  ageBand: PreAuthAgeBand,
-  storage?: AgeBandStorage,
-): void {
-  try {
-    browserStorage(storage)?.setItem(PRE_AUTH_AGE_BAND_STORAGE_KEY, ageBand);
-  } catch {
-    // Private/embedded browser storage can be unavailable. The in-memory UI
-    // state still enforces the gate for the current page.
-  }
-}
-
-export function clearPreAuthAgeBand(storage?: AgeBandStorage): void {
-  try {
-    browserStorage(storage)?.removeItem(PRE_AUTH_AGE_BAND_STORAGE_KEY);
-  } catch {
-    // Best-effort cleanup only.
-  }
-}
-
-/** Unknown and under-13 users must never mount/initialise Google Identity. */
+/** Unknown and child users must never mount/initialise Google Identity. */
 export function canOfferGoogleSignIn(ageBand: PreAuthAgeBand | null): boolean {
-  return ageBand === '13plus';
+  return ageBand === 'eligible';
 }

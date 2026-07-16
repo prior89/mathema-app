@@ -50,6 +50,7 @@ export default function LoginPage() {
   });
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleLinkRequired, setGoogleLinkRequired] = useState(false);
   const from = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from;
   const requestedPath = from?.pathname
     ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}`
@@ -87,8 +88,17 @@ export default function LoginPage() {
     setErr(null);
     setGoogleBusy(true);
     try {
-      await loginWithGoogle(idToken, { redirectTo: requestedPath });
+      await loginWithGoogle(idToken, {
+        redirectTo: requestedPath,
+        ...(googleLinkRequired && password.length >= 8 ? { linkPassword: password } : {}),
+      });
+      setGoogleLinkRequired(false);
     } catch (e: unknown) {
+      const response = e as {
+        response?: { data?: { error?: { code?: string }; code?: string } };
+      };
+      const code = response.response?.data?.error?.code ?? response.response?.data?.code;
+      if (code === 'google_account_link_required') setGoogleLinkRequired(true);
       setErr(formatAuthError(e, { context: 'login' }));
     } finally {
       setGoogleBusy(false);
@@ -136,8 +146,6 @@ export default function LoginPage() {
                 onReset={resetAgeBand}
               />
 
-              {ageBand !== null && (
-                <>
               {notice && (
                 <div
                   role="status"
@@ -188,6 +196,13 @@ export default function LoginPage() {
 
               {canOfferGoogleSignIn(ageBand) && (
                 <>
+                  {googleLinkRequired && (
+                    <div className="google-link-confirmation" role="status">
+                      <strong>{t('login.googleLink.title')}</strong>
+                      <span>{t('login.googleLink.help')}</span>
+                      <Link to="/forgot-password">{t('login.googleLink.reset')}</Link>
+                    </div>
+                  )}
                   <AuthDivider labelKey="login.or" />
                   <GoogleSignInButton
                     mode="continue"
@@ -207,8 +222,6 @@ export default function LoginPage() {
                   <Link to="/onboarding">{t('login.goOnboarding')} <ArrowRight size={15} /></Link>
                 </div>
                 <div className="login-trust"><ShieldCheck size={15} />{t('login.trust')}</div>
-                </>
-              )}
               </section>
             </div>
           </main>

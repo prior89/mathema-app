@@ -12,6 +12,7 @@ declare global {
             callback: (resp: { credential?: string }) => void;
             auto_select?: boolean;
             cancel_on_tap_outside?: boolean;
+            nonce?: string;
           }) => void;
           renderButton: (
             parent: HTMLElement,
@@ -31,7 +32,6 @@ declare global {
 }
 
 let scriptPromise: Promise<void> | null = null;
-let initialized = false;
 let callbackRef: CredentialCallback = () => {};
 
 function loadGoogleScript(): Promise<void> {
@@ -68,7 +68,7 @@ function loadGoogleScript(): Promise<void> {
 export async function renderGoogleIdentityButton(
   parent: HTMLElement,
   onCredential: CredentialCallback,
-  options: { mode?: 'continue' | 'signup'; locale?: string } = {},
+  options: { mode?: 'continue' | 'signup'; locale?: string; nonce: string },
 ): Promise<boolean> {
   if (!isGoogleSignInConfigured()) return false;
   callbackRef = onCredential;
@@ -78,17 +78,18 @@ export async function renderGoogleIdentityButton(
   if (!g) return false;
 
   const clientId = getGoogleClientId();
-  if (!initialized) {
-    g.initialize({
-      client_id: clientId,
-      callback: (resp) => {
-        if (resp.credential) void callbackRef(resp.credential);
-      },
-      auto_select: false,
-      cancel_on_tap_outside: true,
-    });
-    initialized = true;
-  }
+  // Re-initialise for each rendered auth surface so every user-initiated GIS
+  // response carries a fresh signed nonce. Auth pages are mutually exclusive,
+  // so only one callback/button configuration is live at a time.
+  g.initialize({
+    client_id: clientId,
+    callback: (resp) => {
+      if (resp.credential) void callbackRef(resp.credential);
+    },
+    auto_select: false,
+    cancel_on_tap_outside: true,
+    nonce: options.nonce,
+  });
   parent.innerHTML = '';
   g.renderButton(parent, {
     type: 'standard',
