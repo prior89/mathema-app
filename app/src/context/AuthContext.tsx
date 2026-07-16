@@ -38,13 +38,13 @@ type AuthState = {
   refreshUser: () => Promise<void>;
 };
 
-export type RegisterRole = 'STUDENT' | 'PARENT' | 'TEACHER';
+export type RegisterRole = 'STUDENT' | 'PARENT';
 
 /**
  * 명세서 §1 — 역할별 가입.
  *   STUDENT: examDate/targetGrade/gradeLevel 입력
  *   PARENT : childEmail (자녀가 미리 가입돼 있어야 함)
- *   TEACHER: tenantCode (선택 — 없으면 solo)
+ *   TEACHER/ADMIN: 검증된 기관 초대 또는 운영자 프로비저닝 전용
  */
 export type RegisterInput = {
   email: string; password: string; name: string;
@@ -54,8 +54,6 @@ export type RegisterInput = {
   examDate?: string; targetGrade?: number; gradeLevel?: GradeLevel;
   // PARENT 전용
   childEmail?: string;
-  // TEACHER 전용 (선택)
-  tenantCode?: string;
   // Country chip (IN | KR | ...). Optional — backend defaults to IN when
   // missing for back-compat with the pre-2026-05-24 onboarding flow.
   country?: CountryCode;

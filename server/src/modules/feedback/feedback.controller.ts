@@ -1,9 +1,10 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { FeedbackRaterType, FeedbackTargetType, TeacherOverrideTargetType } from '@prisma/client';
+import { FeedbackRaterType, FeedbackTargetType } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { TeacherOverrideService } from './teacher-override.service';
+import { ApplyTeacherOverrideDto } from './dto/apply-teacher-override.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller()
@@ -13,18 +14,12 @@ export class FeedbackController {
     private readonly prisma: PrismaService,
   ) {}
 
-  // Spec §5 — POST /teacher-overrides. Teacher-role gating will move to a
-  // dedicated guard when teacher tooling lands.
+  // Spec §5 — POST /teacher-overrides. The service re-checks the actor role,
+  // tenant boundary, target ownership, and field allowlist transactionally.
   @Post('teacher-overrides')
   applyOverride(
     @CurrentUser('id') teacherId: string,
-    @Body() body: {
-      studentUserId: string;
-      targetType: TeacherOverrideTargetType;
-      targetId: string;
-      afterValue: Record<string, unknown>;
-      reason: string;
-    },
+    @Body() body: ApplyTeacherOverrideDto,
   ) {
     return this.override.apply({ ...body, teacherId });
   }

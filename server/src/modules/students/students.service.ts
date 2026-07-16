@@ -4,6 +4,7 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { MasteryTrajectoryService } from '../mastery/mastery-trajectory.service';
 import { ErrorPatternService } from '../mastery/error-pattern.service';
 import { ParentLinksService } from '../parent-links/parent-links.service';
+import { PremiumAccessService } from '../billing/premium-access.service';
 
 /**
  * StudentsService — 명세서 §5 `/students/:studentId/...` 패턴의 권한 분리.
@@ -24,6 +25,7 @@ export class StudentsService {
     private readonly trajectory: MasteryTrajectoryService,
     private readonly errorPattern: ErrorPatternService,
     private readonly parentLinks: ParentLinksService,
+    private readonly premiumAccess: PremiumAccessService,
   ) {}
 
   /** Teacher 가 보는 담당 학생 리스트 (같은 tenantId 의 STUDENT). */
@@ -120,7 +122,15 @@ export class StudentsService {
   }
 
   async getWeeklyReports(requesterId: string, studentId: string) {
+    // Access is deliberately checked before entitlement. Besides preserving
+    // tenant/parent-link isolation, this prevents probing whether an
+    // arbitrary student id has an active subscription.
     await this.assertAccess(requesterId, studentId);
+    // Reports are a benefit of the student's learning account. A parent or
+    // teacher must not need a separate personal subscription to view a
+    // Premium student's report, and their own subscription must not unlock a
+    // free student's data.
+    await this.premiumAccess.requirePremiumAccess(studentId, 'weekly_reports');
     return this.prisma.weeklyReport.findMany({
       where: { userId: studentId },
       orderBy: { weekStart: 'desc' },

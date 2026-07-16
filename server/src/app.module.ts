@@ -5,6 +5,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { UserAwareThrottlerGuard } from './common/guards/user-aware-throttler.guard';
+import { skipUnlessNamedThrottle } from './common/guards/named-throttle';
 
 // config
 import appConfig from './config/configuration';
@@ -79,10 +80,18 @@ import { MetricsModule } from './common/metrics/metrics.module';
     // every student behind a shared NAT, and every dev tab on 127.0.0.1.
     // Auth endpoints still apply their own stricter @Throttle({ auth: ... })
     // limits on top of this.
-    ThrottlerModule.forRoot([{
-      ttl: 60_000,
-      limit: process.env.NODE_ENV === 'production' ? 240 : 10_000,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: process.env.NODE_ENV === 'production' ? 240 : 10_000,
+      },
+      {
+        name: 'auth',
+        ttl: 60_000,
+        limit: 30,
+        skipIf: skipUnlessNamedThrottle('auth'),
+      },
+    ]),
 
     // infra
     MetricsModule,
@@ -135,8 +144,8 @@ import { MetricsModule } from './common/metrics/metrics.module';
     // rather than per-IP. IP-only bucketing collapsed every dogfooder + NAT
     // student onto one counter — a single user finishing a 20-problem
     // mastery run could lock out the whole 127.0.0.1 cluster. The custom
-    // guard reads the Bearer token's `sub`/`id`/`userId` and keys on
-    // `u:<id>`, falling back to `ip:<addr>` for unauthenticated routes
+    // guard verifies the Bearer token and keys its `sub` as `u:<id>`,
+    // falling back to `ip:<addr>` for unauthenticated routes
     // (e.g., /auth/login itself, /health/*). Per-route @Throttle() and
     // @SkipThrottle() decorators still override per-endpoint.
     { provide: APP_GUARD, useClass: UserAwareThrottlerGuard },

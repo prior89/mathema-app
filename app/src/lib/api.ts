@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
-import { readCachedBillingUiEnabled } from './billing-flags';
+import { canRedirectToStudentPaywall, readCachedBillingUiEnabled } from './billing-flags';
 import { getDeviceHash } from './deviceId';
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL ?? '/api/v1';
@@ -139,7 +139,11 @@ api.interceptors.response.use(
             redirectToBillingPaywall('/app/paywall?reason=quota');
             return Promise.reject(err);
           }
-          if (code === 'PremiumRequired' && !window.location.pathname.startsWith('/app/paywall')) {
+          if (
+            code === 'PremiumRequired'
+            && canRedirectToStudentPaywall(window.location.pathname)
+            && !window.location.pathname.startsWith('/app/paywall')
+          ) {
             const feature =
               (typeof errBody === 'object' ? errBody?.feature : undefined)
               ?? data?.feature

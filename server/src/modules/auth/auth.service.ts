@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException, ServiceUnavailableException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ConflictException, ServiceUnavailableException, ForbiddenException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes, createHash, createHmac, randomUUID, randomInt, timingSafeEqual } from 'crypto';
@@ -105,6 +105,26 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
+    // Defense in depth: ValidationPipe rejects these fields at the HTTP edge,
+    // but callers inside the process can invoke AuthService directly. Public
+    // registration may create only STUDENT accounts or PARENT accounts whose
+    // child link still requires approval. Teacher/admin provisioning and
+    // tenant membership require a separate verified-invite workflow.
+    const publicInput = dto as RegisterDto & { role?: string; tenantCode?: unknown };
+    const requestedRole = publicInput.role ?? 'STUDENT';
+    if (requestedRole !== 'STUDENT' && requestedRole !== 'PARENT') {
+      throw new ForbiddenException({
+        code: 'public_role_registration_blocked',
+        message: 'Teacher and administrator accounts require a verified invitation.',
+      });
+    }
+    if (publicInput.tenantCode !== undefined) {
+      throw new ForbiddenException({
+        code: 'tenant_invite_required',
+        message: 'Joining an organization requires a verified invitation.',
+      });
+    }
+
     const email = dto.email.trim().toLowerCase();
     // Structural isolation of the synthetic identity namespaces: reject them at
     // signup regardless of secret strength, so no one can pre-register a
@@ -163,14 +183,6 @@ export class AuthService {
       pendingChildUserId = child.id;
     }
 
-    // ── TEACHER: tenantCode 매칭. 없으면 solo 교사 (tenantId null). ─
-    let tenantId: string | null = null;
-    if (role === 'TEACHER' && dto.tenantCode) {
-      const tenant = await this.prisma.tenant.findUnique({ where: { code: dto.tenantCode } });
-      if (!tenant) throw new BadRequestException('invalid tenant code');
-      tenantId = tenant.id;
-    }
-
     // ── STUDENT 만 examDate/targetGrade/gradeLevel 의미 ──────────
     const isStudent = role === 'STUDENT';
     const examDate = isStudent && dto.examDate ? new Date(dto.examDate) : new Date('2027-02-14'); // 인도 기본 board exam 날짜
@@ -200,7 +212,6 @@ export class AuthService {
       ...(isStudent ? { gradeLevel: gradeLevel ?? null } : {}),
       ...(isStudent && dto.birthDate ? { birthDate: new Date(dto.birthDate) } : {}),
       ...(studyGoal ? { studyGoal } : {}),
-      ...(tenantId ? { tenantId } : {}),
       });
     } catch (e) {
       // A concurrent double-submit can slip past the findByEmail check above and

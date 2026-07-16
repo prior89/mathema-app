@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { FREE_TIER_MASTERY_PROBLEMS } from './billing.constants';
+import { PremiumFeature } from './premium-feature.decorator';
 
 /**
  * Service-level premium checks — used when a guard on the whole controller
@@ -17,6 +18,22 @@ export class PremiumAccessService {
   async hasPremiumAccess(userId: string): Promise<boolean> {
     if (!this.isGatingActive()) return true;
     return this.billing.isPremium(userId);
+  }
+
+  /**
+   * Service-level equivalent of PremiumFeatureGuard. This is used when the
+   * entitled account is not the requester (for example, a parent reading an
+   * approved child's report). Callers must perform resource access checks
+   * before this method so entitlement status cannot become an ID oracle.
+   */
+  async requirePremiumAccess(userId: string, feature: PremiumFeature): Promise<void> {
+    if (await this.hasPremiumAccess(userId)) return;
+    throw new ForbiddenException({
+      error: 'PremiumRequired',
+      message: 'This feature requires Matheo Premium.',
+      feature,
+      productSuggestion: 'premium_monthly',
+    });
   }
 
   /** Free tier sees the first N problems of a frozen 20-problem mastery set. */

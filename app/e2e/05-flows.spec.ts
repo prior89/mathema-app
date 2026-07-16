@@ -28,8 +28,8 @@ test.describe('authenticated flows (shared user)', () => {
     } catch {
       test.skip(true, 'Backend not reachable at :4000');
     }
-    // Use a one-off page for registration so the tokens persist to the
-    // domain's localStorage. Each spec re-uses the same browser context.
+    // Register once and replay the returned tokens into each isolated test
+    // context below. This keeps the real-backend flow below the auth throttle.
     const ctx = await browser.newContext();
     const p = await ctx.newPage();
     const t = await registerThrowawayUser(p);
@@ -62,7 +62,10 @@ test.describe('authenticated flows (shared user)', () => {
   test('fresh password registration is stopped at email verification', async ({ page }) => {
     test.skip(emailVerified, 'Backend auto-verified this fixture; the unverified-email gate is not exercisable');
     await authPage(page);
-    await page.goto('/app/learn');
+    // The auth gate can immediately replace this URL with /verify-required.
+    // Resolve on the initial document commit so that client-side replacement
+    // does not surface as a spurious net::ERR_ABORTED navigation failure.
+    await page.goto('/app/learn', { waitUntil: 'commit' });
 
     await expect(page).toHaveURL(/\/verify-required$/);
     await expect(page.getByRole('heading', { name: /이메일 확인이 필요해요|Verify your email/i })).toBeVisible();

@@ -88,6 +88,52 @@ export type AdaptiveStartResponse = {
 };
 
 export type ExamResult = { id: string; name: string; date: string; score: number; grade: number; percentile: number; time: string };
+export type MockResultStep = {
+  stepIndex: number;
+  isCorrect: boolean;
+  myChoice: string | null;
+  rationale: string | null;
+};
+export type MockResultProblem = {
+  problemId: string;
+  source: string;
+  body: string;
+  steps: MockResultStep[];
+  allCorrect: boolean;
+};
+export type MockWeakArea = {
+  conceptId: string;
+  code: string;
+  name: string;
+  problemCount: number;
+  incorrectProblems: number;
+  accuracyPct: number;
+};
+export type MockResultComparison = {
+  previousResultId: string;
+  previousScore: number;
+  currentScore: number;
+  delta: number;
+  trend: 'improved' | 'declined' | 'same';
+};
+export type MockResultDetail = {
+  id: string;
+  name: string;
+  /** Optional during the rolling backend rollout. */
+  type?: string;
+  takenAt: string;
+  score: number;
+  grade: number;
+  percentile: number;
+  durationMin: number;
+  totalMinutes: number;
+  problems: MockResultProblem[];
+  /** Added by the weak-area report contract. Optional keeps older deployed
+   * servers and already-cached result payloads renderable during rollout. */
+  weakAreas?: MockWeakArea[] | null;
+  scoreDelta?: number | null;
+  comparison?: MockResultComparison | null;
+};
 export type MockSummary = {
   lastScore: number | null; expectedGrade: number | null;
   reliability: number | null; pointsToNextGrade: number | null;
@@ -288,6 +334,8 @@ export const fetchStreak = () => get<{ days: number }>('/activity/streak');
 export const fetchActivityStats = () => get<ActivityStats>('/activity/stats');
 export const fetchTrajectory = () => get<Trajectory>('/mock-exams/trajectory');
 export const fetchExamResults = () => get<ExamResult[]>('/mock-exams/results');
+export const fetchMockResultDetail = (resultId: string) =>
+  get<MockResultDetail>(`/mock-exams/results/${resultId}`);
 export const fetchMockSummary = () => get<MockSummary>('/mock-exams/summary');
 export const fetchReportCurrent = () => get<ReportCurrent>('/reports/weekly/current');
 export const fetchTimeVsAccuracy = () => get<TimeVsAccuracy>('/reports/weekly/time-vs-accuracy');

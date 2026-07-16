@@ -47,7 +47,10 @@ function build() {
   };
   const config = { get: jest.fn().mockReturnValue('100') };
   const flags = new FeatureFlagsService(config as unknown as ConfigService);
-  const firstSessionPlan = { seedFirstSession: jest.fn().mockResolvedValue([]) };
+  const firstSessionPlan = {
+    seedFirstSession: jest.fn().mockResolvedValue([]),
+    getActiveCards: jest.fn().mockResolvedValue([]),
+  };
   const metrics = { observeAdaptiveItems: jest.fn() };
   const svc = new AdaptiveDiagnosticService(
     prisma as never,
@@ -105,5 +108,57 @@ describe('AdaptiveDiagnosticService', () => {
     expect(prisma.userPlacementProfile.upsert).toHaveBeenCalled();
     expect(result.placement.estimatedGradeBand).toBe('CLASS_11');
     expect(result.attempted).toBe(1);
+    expect(result.masteries).toEqual([expect.objectContaining({
+      conceptId: 'c1',
+      conceptName: 'N',
+      conceptCode: 'C1',
+      score: 100,
+    })]);
+  });
+
+  it('uses placement scores even when only some mastery listeners have committed', async () => {
+    const { svc, prisma } = build();
+    prisma.masteryTrajectory.findMany.mockResolvedValue([{
+      conceptId: 'c1',
+      masteryScore: 55,
+      concept: { name: 'N', nameKo: null, code: 'C1' },
+    }]);
+    prisma.studySession.findUnique.mockResolvedValue({
+      id: 'sess-1',
+      userId: 'user-1',
+      endedAt: null,
+      attempts: [{
+        isCorrect: true,
+        confidence: 3,
+        problemId: 'p1',
+        problem: {
+          concepts: [{ conceptId: 'c1', concept: { name: 'N', nameKo: null, code: 'C1' } }],
+          conceptLesson: { chapterCode: 'C11-CH01' },
+          koreanConceptLesson: null,
+        },
+      }],
+    });
+    prisma.user.findUnique.mockResolvedValue({ gradeLevel: 'CLASS_11', country: 'IN' });
+
+    const result = await svc.finish('user-1', 'sess-1');
+
+    expect(result.masteries[0].score).toBe(100);
+    expect(prisma.masteryTrajectory.findMany).not.toHaveBeenCalled();
+  });
+
+  it('does not reset a completed first-session plan when finish is retried', async () => {
+    const { svc, prisma, firstSessionPlan } = build();
+    prisma.studySession.findUnique.mockResolvedValue({
+      id: 'sess-1',
+      userId: 'user-1',
+      endedAt: new Date('2026-07-17T00:00:00Z'),
+      attempts: [],
+    });
+    prisma.user.findUnique.mockResolvedValue({ gradeLevel: 'CLASS_11', country: 'IN' });
+
+    await svc.finish('user-1', 'sess-1');
+
+    expect(firstSessionPlan.getActiveCards).toHaveBeenCalledWith('user-1');
+    expect(firstSessionPlan.seedFirstSession).not.toHaveBeenCalled();
   });
 });

@@ -29,6 +29,16 @@ export interface WeekBoundaries {
   weekStart: Date;
   /** UTC instant of next Monday 00:00 (exclusive upper bound). */
   weekEnd: Date;
+  /**
+   * Local Monday calendar date represented at UTC midnight.
+   *
+   * Use this value for Prisma fields backed by PostgreSQL `date` (`@db.Date`).
+   * It is intentionally different from `weekStart`, which is the real UTC
+   * instant used for timestamp queries.
+   */
+  calendarWeekStart: Date;
+  /** Local next-Monday calendar date for `@db.Date` storage. */
+  calendarWeekEnd: Date;
   /** ISO 8601 label: YYYY-Www (e.g. '2026-W23'). */
   isoWeek: string;
   /** IANA timezone name used to compute the boundaries. */
@@ -64,6 +74,8 @@ function computeIsoWeekLabel(localDate: Date): string {
  *
  * `weekStart` and `weekEnd` are UTC instants suitable for Prisma `gte` / `lt`
  * filters. `weekEnd` is exclusive (next Monday 00:00 local time).
+ * `calendarWeekStart` and `calendarWeekEnd` preserve the corresponding local
+ * calendar dates for PostgreSQL `date` columns.
  */
 export function getCurrentWeek(
   country: string | null | undefined,
@@ -92,6 +104,8 @@ export function getCurrentWeek(
   return {
     weekStart,
     weekEnd,
+    calendarWeekStart: weekStartLocal,
+    calendarWeekEnd: weekEndLocal,
     isoWeek: computeIsoWeekLabel(weekStartLocal),
     timezone: timezoneName(country),
   };

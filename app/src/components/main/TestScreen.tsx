@@ -1,16 +1,16 @@
-/* Test tab — entry point for the wrong-note review queue.
+/* Test tab — personalized weak-area exam + wrong-note review entry point.
  *
- * The actual review (FIFO + 3-day cooldown + sequential gate) lives in
- * ReviewQueueScreen. This tab shows the current queue depth and routes the
- * user there. Auto-scheduled weekly/monthly reviews (cron) are a follow-up;
- * for now reviews are user-triggered.
+ * Recommended exams use the backend's existing learner-history composer;
+ * the actual spaced review (FIFO + 3-day cooldown + sequential gate) lives
+ * in ReviewQueueScreen. Both paths return here as one continuous Test flow.
  */
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Clock3, RotateCcw, Sparkles, Trophy } from 'lucide-react';
+import { ArrowRight, Clock3, RotateCcw, Sparkles, Target, Trophy } from 'lucide-react';
 import { fetchReviewQueueNext } from '../../lib/queries';
 import * as M from '../../lib/mutations';
+import { buildRecommendedExamLaunch } from '../../lib/mock-exam-flow';
 import { useT } from '../../lib/i18n';
 import { TabBar } from './TabBar';
 import { HeadAvatar } from './HeadAvatar';
@@ -27,7 +27,21 @@ export function TestScreen() {
     try { return findPendingRealExam(window.localStorage, user.id); } catch { return null; }
   }, [user?.id]);
   const queue = useQuery({ queryKey: ['queue-next'], queryFn: fetchReviewQueueNext });
+  const [recommendedState, setRecommendedState] = useState<'empty' | 'error' | null>(null);
   const [mockState, setMockState] = useState<'empty' | 'error' | null>(null);
+
+  const startRecommended = useMutation({
+    mutationFn: M.startRecommendedExam,
+    onSuccess: (exam) => {
+      const launch = buildRecommendedExamLaunch(exam);
+      if (!launch) {
+        setRecommendedState('empty');
+        return;
+      }
+      nav(launch.path, { state: launch.state });
+    },
+    onError: () => setRecommendedState('error'),
+  });
 
   const startMock = useMutation({
     mutationFn: () => M.startTypedExam('real'),
@@ -81,6 +95,75 @@ export function TestScreen() {
         </div>
 
         <div className="content-rail" style={{ padding: '12px 22px 0' }}>
+          <div className="section-h" style={{ marginTop: 0 }}>
+            <span className="label">{t('test.recommended.section')}</span>
+          </div>
+          <div
+            className="card mock-challenge-card"
+            style={{
+              background: 'linear-gradient(135deg, var(--p-primary-tint), var(--p-accent-tint))',
+              borderColor: 'var(--p-primary)',
+            }}
+          >
+            <span
+              className="mock-icon"
+              aria-hidden="true"
+              style={{ color: 'var(--p-primary)', background: 'var(--p-surface)' }}
+            >
+              <Target size={21} />
+            </span>
+            <div style={{ fontSize: 10, color: 'var(--p-primary)', fontWeight: 800, letterSpacing: '0.04em' }}>
+              {t('test.recommended.eyebrow')}
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, color: 'var(--p-ink)', marginTop: 3, letterSpacing: '-0.005em' }}>
+              {t('test.recommended.title')}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--p-ink-2)', marginTop: 5, lineHeight: 1.55 }}>
+              {t('test.recommended.desc')}
+            </div>
+            <div
+              style={{
+                marginTop: 10,
+                padding: '8px 10px',
+                borderRadius: 12,
+                background: 'var(--p-surface)',
+                color: 'var(--p-accent-ink)',
+                fontSize: 11,
+                fontWeight: 700,
+                lineHeight: 1.4,
+              }}
+            >
+              {t('test.recommended.loop')}
+            </div>
+            {recommendedState && (
+              <div
+                role="alert"
+                style={{ fontSize: 12, color: 'var(--p-danger-ink)', marginTop: 9, lineHeight: 1.45 }}
+              >
+                {recommendedState === 'empty'
+                  ? t('test.recommended.empty')
+                  : t('test.recommended.error')}
+              </div>
+            )}
+            <button
+              className="btn"
+              disabled={startRecommended.isPending}
+              onClick={() => {
+                setRecommendedState(null);
+                startRecommended.mutate();
+              }}
+              style={{ marginTop: 12, height: 44, fontSize: 13 }}
+            >
+              {startRecommended.isPending
+                ? t('test.recommended.starting')
+                : t('test.recommended.start')}
+              <ArrowRight size={17} />
+            </button>
+          </div>
+
+          <div className="section-h">
+            <span className="label">{t('test.review.section')}</span>
+          </div>
           <div
             className="card review-hero"
             style={{ background: 'var(--p-primary-tint)', borderColor: 'transparent' }}

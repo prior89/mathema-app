@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ErrorCode } from '@prisma/client';
 import { AttemptsRepository } from './attempts.repository';
@@ -17,6 +17,8 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
  */
 @Injectable()
 export class AttemptsService {
+  private readonly logger = new Logger(AttemptsService.name);
+
   constructor(
     private readonly repo: AttemptsRepository,
     private readonly events: EventEmitter2,
@@ -25,7 +27,18 @@ export class AttemptsService {
 
   async create(userId: string, dto: any) {
     const attempt = await this.repo.create(userId, dto);
-    this.events.emit('attempt.completed', attempt);
+    // Wait for the learning-state listeners before returning. Recommended
+    // weakness retests are often started immediately after an answer; the old
+    // fire-and-forget emit let that request read stale mastery and recommend
+    // the same material. Listener failures are logged because the Attempt is
+    // already durably committed and must not be duplicated by a client retry.
+    try {
+      await this.events.emitAsync('attempt.completed', attempt);
+    } catch (error) {
+      this.logger.error(
+        `Post-attempt learning update failed for attempt=${attempt.id}: ${(error as Error).message}`,
+      );
+    }
 
     // Mastery → Study unlock gate (user-spec 2026-05-24 정정): the chapter's
     // ConceptProgress.masteredAt fires when the user has submitted an

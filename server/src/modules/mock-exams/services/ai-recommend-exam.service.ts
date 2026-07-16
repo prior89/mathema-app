@@ -26,6 +26,7 @@ export class AiRecommendExamService {
    */
   async compose(userId: string) {
     const country = await this.userCountry(userId);
+    const recentProblemIds = await this.recentProblemIds(userId);
     const masteries = await this.prisma.masterySnapshot.findMany({
       where: { userId }, include: { unit: true },
     });
@@ -35,7 +36,7 @@ export class AiRecommendExamService {
       // user's first recommended exam actually targets their weak areas instead
       // of a generic recent-problem grab. True generic fallback only if there's
       // no placement either.
-      return this.coldStartExam(userId, country, 20);
+      return this.coldStartExam(userId, country, 20, recentProblemIds);
     }
 
     const target = 20;
@@ -59,15 +60,59 @@ export class AiRecommendExamService {
         const n = Math.round(allocate * ratio);
         if (n <= 0) continue;
         const ps = await this.prisma.problem.findMany({
-          where: { unitId: m.unitId, difficulty: diff as any, ...krOnly },
+          where: {
+            unitId: m.unitId,
+            difficulty: diff as any,
+            ...krOnly,
+            ...this.playableProblemFilter(),
+            ...(recentProblemIds.length > 0 ? { id: { notIn: recentProblemIds } } : {}),
+          },
           take: n,
           orderBy: { createdAt: 'desc' },
         });
         problems.push(...ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })));
       }
     }
-    if (problems.length === 0) return this.fallbackAnyLinked(10, country);
+    if (problems.length === 0) return this.fallbackAnyLinked(10, country, recentProblemIds);
     return { problems: problems.slice(0, target), arm };
+  }
+
+  /** A problem is playable only when it has at least one step with choices.
+   * beginSession performs the stricter final validation (all steps have one
+   * correct choice) before it creates a result row. */
+  private playableProblemFilter() {
+    return { steps: { some: { choices: { some: {} } } } };
+  }
+
+  /**
+   * Recommended weakness retests should not immediately recycle the same
+   * questions. RecommendationLog records every problem offered in a recent
+   * recommended session; Attempt covers older sessions and questions reached
+   * through other study flows. The generic fallback deliberately relaxes this
+   * exclusion only when the unseen playable pool is empty.
+   */
+  private async recentProblemIds(userId: string): Promise<string[]> {
+    const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    const [recommendations, attempts] = await Promise.all([
+      this.prisma.recommendationLog.findMany({
+        where: {
+          userId,
+          recommendationType: 'REVIEW_PROBLEM',
+          sessionId: { not: null },
+          createdAt: { gte: since },
+        },
+        select: { recommendedProblemId: true },
+      }),
+      this.prisma.attempt.findMany({
+        where: { userId, createdAt: { gte: since } },
+        select: { problemId: true },
+        distinct: ['problemId'],
+      }),
+    ]);
+    return [...new Set([
+      ...recommendations.map((r) => r.recommendedProblemId),
+      ...attempts.map((a) => a.problemId),
+    ])];
   }
 
   /** Selection weight function for a cohort arm — kept here so the legacy
@@ -87,13 +132,18 @@ export class AiRecommendExamService {
   /** Cold-start (no unit mastery): target the diagnostic-derived weak concepts
    *  from UserPlacementProfile. Falls back to generic only if there is no
    *  placement profile or its weak concepts have no linked problems. */
-  private async coldStartExam(userId: string, country: 'IN' | 'KR', target: number) {
+  private async coldStartExam(
+    userId: string,
+    country: 'IN' | 'KR',
+    target: number,
+    recentProblemIds: string[],
+  ) {
     const placement = await this.prisma.userPlacementProfile.findUnique({
       where: { userId },
       select: { weakConceptIds: true },
     });
     const weakIds = placement?.weakConceptIds ?? [];
-    if (weakIds.length === 0) return this.fallbackAnyLinked(10, country);
+    if (weakIds.length === 0) return this.fallbackAnyLinked(10, country, recentProblemIds);
     const treeFilter = country === 'KR'
       ? { koreanConceptLessonId: { not: null } }
       : { conceptLessonId: { not: null } };
@@ -101,27 +151,49 @@ export class AiRecommendExamService {
       where: {
         ...treeFilter,
         concepts: { some: { conceptId: { in: weakIds } } },
-        steps: { some: { stepIndex: 1 } },
+        ...this.playableProblemFilter(),
+        ...(recentProblemIds.length > 0 ? { id: { notIn: recentProblemIds } } : {}),
       },
       take: target,
       orderBy: { createdAt: 'desc' },
     });
-    if (ps.length === 0) return this.fallbackAnyLinked(10, country);
+    if (ps.length === 0) return this.fallbackAnyLinked(10, country, recentProblemIds);
     return { problems: ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })) };
   }
 
   /** Cold-start fallback: any curriculum-linked problem from the user's
    *  country tree — KR users must never receive the English NCERT seed. */
-  private async fallbackAnyLinked(limit: number, country: 'IN' | 'KR' = 'IN') {
+  private async fallbackAnyLinked(
+    limit: number,
+    country: 'IN' | 'KR' = 'IN',
+    recentProblemIds: string[] = [],
+  ) {
     const lessonFilter = country === 'KR'
       ? { koreanConceptLessonId: { not: null } }
       : { conceptLessonId: { not: null } };
-    const ps = await this.prisma.problem.findMany({
-      where: { ...lessonFilter, steps: { some: { stepIndex: 1 } } },
+    const query = (excludeRecent: boolean) => this.prisma.problem.findMany({
+      where: {
+        ...lessonFilter,
+        ...this.playableProblemFilter(),
+        ...(excludeRecent && recentProblemIds.length > 0
+          ? { id: { notIn: recentProblemIds } }
+          : {}),
+      },
       take: limit,
       orderBy: { createdAt: 'desc' },
     });
-    return { problems: ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })) };
+    const unseen = await query(true);
+    if (unseen.length > 0 || recentProblemIds.length === 0) {
+      return { problems: unseen.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })) };
+    }
+
+    // Explicit, observable fallback: repeats are allowed only after the
+    // country-linked playable pool has no unseen problem left.
+    const repeated = await query(false);
+    return {
+      problems: repeated.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })),
+      fallbackReason: 'recent-playable-pool-exhausted' as const,
+    };
   }
 
   /**
@@ -144,7 +216,9 @@ export class AiRecommendExamService {
         const fb = await this.fallbackAnyLinked(5, country);
         return { kind, fallbackReason: 'no-wrong-notes' as const, ...fb };
       }
-      const ps = await this.prisma.problem.findMany({ where: { id: { in: problemIds } } });
+      const ps = await this.prisma.problem.findMany({
+        where: { id: { in: problemIds }, ...this.playableProblemFilter() },
+      });
       return {
         kind,
         problems: ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })),
@@ -170,12 +244,21 @@ export class AiRecommendExamService {
         const n = Math.round(10 * ratio);
         if (n <= 0) continue;
         const ps = await this.prisma.problem.findMany({
-          where: { unitId: target.unitId, difficulty: diff as any, ...krOnly }, take: n,
+          where: {
+            unitId: target.unitId,
+            difficulty: diff as any,
+            ...krOnly,
+            ...this.playableProblemFilter(),
+          },
+          take: n,
         });
         problems.push(...ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })));
       }
       if (problems.length === 0) {
-        const ps = await this.prisma.problem.findMany({ where: { unitId: target.unitId, ...krOnly }, take: 10 });
+        const ps = await this.prisma.problem.findMany({
+          where: { unitId: target.unitId, ...krOnly, ...this.playableProblemFilter() },
+          take: 10,
+        });
         if (ps.length > 0) {
           return { kind, problems: ps.map((p) => ({ id: p.id, source: p.source, difficulty: p.difficulty })) };
         }
@@ -198,7 +281,7 @@ export class AiRecommendExamService {
       pool = await this.prisma.problem.findMany({
         where: {
           koreanConceptLesson: { koreanGrade },
-          steps: { some: { stepIndex: 1 } },
+          ...this.playableProblemFilter(),
         },
         orderBy: { source: 'asc' },
       });
@@ -206,7 +289,7 @@ export class AiRecommendExamService {
       pool = await this.prisma.problem.findMany({
         where: {
           conceptLesson: { ncertClass: user.gradeLevel },
-          steps: { some: { stepIndex: 1 } },
+          ...this.playableProblemFilter(),
         },
         orderBy: { source: 'asc' },
       });

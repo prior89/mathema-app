@@ -207,7 +207,8 @@ export class AdaptiveDiagnosticService {
     });
     if (!session || session.userId !== userId) throw new NotFoundException('Session not found');
 
-    if (!session.endedAt) {
+    const wasAlreadyFinished = !!session.endedAt;
+    if (!wasAlreadyFinished) {
       await this.prisma.studySession.update({
         where: { id: sessionId },
         data: {
@@ -259,36 +260,48 @@ export class AdaptiveDiagnosticService {
       },
     });
 
-    const firstSessionPlan = await this.firstSessionPlan.seedFirstSession(userId, {
-      recommendedChapterCodes,
-      weakConceptIds,
-      estimatedGradeBand,
-    });
+    const firstSessionPlan = wasAlreadyFinished
+      ? await this.firstSessionPlan.getActiveCards(userId)
+      : await this.firstSessionPlan.seedFirstSession(userId, {
+          recommendedChapterCodes,
+          weakConceptIds,
+          estimatedGradeBand,
+        });
 
     if (this.flags.isEnabled('adaptive_diagnostic', userId)) {
       const country = user?.country === 'KR' ? 'KR' : 'IN';
       this.metrics.observeAdaptiveItems(session.attempts.length, country);
     }
 
-    const conceptIds = [...new Set(snapshots.flatMap((s) => s.conceptIds))];
-    const trajectories = conceptIds.length
-      ? await this.prisma.masteryTrajectory.findMany({
-          where: { userId, conceptId: { in: conceptIds } },
-          include: { concept: { select: { name: true, nameKo: true, code: true } } },
-        })
-      : [];
+    const conceptMetadata = new Map(
+      session.attempts.flatMap((attempt) => attempt.problem.concepts.map((pc) => [
+        pc.conceptId,
+        {
+          conceptName: pc.concept.name,
+          conceptNameKo: pc.concept.nameKo,
+          conceptCode: pc.concept.code,
+        },
+      ] as const)),
+    );
+    // Placement scores are computed from the committed attempts in this
+    // diagnostic session. Do not mix them with asynchronously updated
+    // trajectories or identical answers can render different results.
+    const masteries = conceptScores.map((placement) => {
+      const metadata = conceptMetadata.get(placement.conceptId);
+      return {
+        conceptId: placement.conceptId,
+        conceptName: metadata?.conceptName ?? placement.conceptId,
+        conceptNameKo: metadata?.conceptNameKo ?? null,
+        conceptCode: metadata?.conceptCode ?? placement.conceptId,
+        score: placement.placementScore,
+      };
+    });
 
     return {
       sessionId,
       attempted: session.attempts.length,
       correct: session.attempts.filter((a) => a.isCorrect).length,
-      masteries: trajectories.map((t) => ({
-        conceptId: t.conceptId,
-        conceptName: t.concept.name,
-        conceptNameKo: t.concept.nameKo,
-        conceptCode: t.concept.code,
-        score: t.masteryScore,
-      })),
+      masteries,
       placement: {
         estimatedGradeBand,
         conceptScores: placementPayload,

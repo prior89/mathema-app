@@ -30,13 +30,13 @@ const TABS: Array<{ id: TabId; labelKey: TranslationKey; path: string; icon: typ
     icon: RefreshCw },
 ];
 
-export function TabBar() {
+export function TabBar({ activeOverride }: { activeOverride?: TabId } = {}) {
   const nav = useNavigate();
   const loc = useLocation();
   const { t } = useT();
   // '/app/me' yields active='me' which matches no tab — Me lives in the
   // top-bar HeadAvatar, so no bottom tab highlights there.
-  const active: TabId =
+  const routeActive: TabId =
     loc.pathname.startsWith('/app/learn') ? 'learn' :
     loc.pathname.startsWith('/app/study')
       || loc.pathname.startsWith('/app/practice')
@@ -47,6 +47,7 @@ export function TabBar() {
       || loc.pathname.startsWith('/app/review')
       || loc.pathname.startsWith('/app/mocks') ? 'test' :
     loc.pathname.startsWith('/app/me') ? 'me' : 'home';
+  const active = activeOverride ?? routeActive;
   // 2026-05-27 a11y: tab items were plain <div onClick>. That meant no
   // keyboard focus, no Enter/Space activation, no role semantics for screen
   // readers, and Playwright locators by role had to fall back to text-only

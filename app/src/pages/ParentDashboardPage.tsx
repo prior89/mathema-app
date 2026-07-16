@@ -23,6 +23,7 @@ import {
   type ConceptMastery, type ErrorPatternRow, type WeeklyReportListItem,
 } from '../lib/queries';
 import { useT } from '../lib/i18n';
+import { isPremiumRequiredError } from '../lib/billing-flags';
 
 const COLORS = {
   bg: 'var(--p-bg)', ink: 'var(--p-ink)', sub: 'var(--p-muted)', line: 'var(--p-border)', card: 'var(--p-surface)',
@@ -54,6 +55,7 @@ export function ParentDashboardPage({ embedded = false }: { embedded?: boolean }
   });
 
   const latest = weekly.data?.[0];
+  const weeklyPremiumRequired = isPremiumRequiredError(weekly.error);
   // 학부모 대시보드(/parent) 에서 TopNav 클릭 시:
   //   '대시보드' 는 본 화면이므로 stay. 그 외는 /app#/<hash> 로 보내 MathLearningApp 의 hash 라우팅 사용.
   //   (이전 버그: navigate('/#/X') → RoleRedirect 가 다시 /parent 로 되돌려 모든 클릭이 무력화)
@@ -95,7 +97,17 @@ export function ParentDashboardPage({ embedded = false }: { embedded?: boolean }
           </Card>
         )}
 
-        {linkStatus.data?.status === 'APPROVED' && !latest && (
+        {linkStatus.data?.status === 'APPROVED' && weeklyPremiumRequired && (
+          <Card>
+            <Sub>
+              {lang === 'ko'
+                ? '주간 리포트는 학생 계정의 Premium 혜택입니다. 학생이 본인 앱에서 Premium을 시작하면 이 화면에서 바로 확인할 수 있어요.'
+                : 'Weekly reports follow the student account. Once the student starts Premium in their app, the report will appear here automatically.'}
+            </Sub>
+          </Card>
+        )}
+
+        {linkStatus.data?.status === 'APPROVED' && !latest && !weeklyPremiumRequired && (
           <Card>
             <Sub>{lang === 'ko' ? '이번 주 데이터가 없습니다. 학생이 한 문제 풀면 자동으로 분석됩니다.' : 'No data yet — analysis activates after first attempt.'}</Sub>
           </Card>

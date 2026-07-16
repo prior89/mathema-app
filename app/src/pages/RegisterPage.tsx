@@ -6,7 +6,7 @@
  */
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, RegisterRole } from '../context/AuthContext';
 import { post, get } from '../lib/api';
 import { postAuthPath } from '../lib/post-auth-path';
@@ -19,7 +19,7 @@ import {
 } from '../lib/guardian-consent';
 import { AgeGate } from '../components/onboarding/AgeGate';
 import { Glyph } from '../components/onboarding/Glyph';
-import { BrandLogo } from '../components/Brand';
+import { BrandLogo, LoadingSplash } from '../components/Brand';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { PreAuthAgeGate, usePreAuthAgeGate } from '../components/auth/PreAuthAgeGate';
 import { AuthDivider } from '../components/auth/AuthDivider';
@@ -28,6 +28,7 @@ import { googleSignInErrorKey } from '../lib/google-sign-in-error';
 import { LAUNCH_STUDENT_ONLY } from '../lib/launch-config';
 import { detectOnboardingLang, langForCountry } from '../lib/onboarding-locale';
 import { canOfferGoogleSignIn } from '../lib/pre-auth-age-gate';
+import { shouldUseStandaloneRegister } from '../lib/register-entry';
 import '../styles/onboarding.css';
 
 const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
@@ -40,10 +41,12 @@ const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
 };
 
 export default function RegisterPage() {
-  const { register, loginWithGoogle, user, refreshUser } = useAuth();
+  const { register, loginWithGoogle, user, ready, refreshUser } = useAuth();
   const { t, lang, setLang } = useT();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const upgradeRequested = searchParams.get('upgrade') === '1';
+  const standaloneEntry = shouldUseStandaloneRegister(searchParams, user?.isGuest === true);
   const { ageBand, selectAgeBand, resetAgeBand } = usePreAuthAgeGate();
   // Guest → real account upgrade (?upgrade=1). Same form, but submits to
   // /auth/guest/upgrade so the existing userId (and all progress) is kept.
@@ -66,7 +69,6 @@ export default function RegisterPage() {
   const [targetGrade, setTargetGrade] = useState('3');
 
   const [childEmail, setChildEmail] = useState(invitedAsParent ? (searchParams.get('childEmail') ?? '') : '');
-  const [tenantCode, setTenantCode] = useState('');
   const [country, setCountry] = useState<'IN' | 'KR'>('KR');
 
   const [parentEmail, setParentEmail] = useState('');
@@ -146,7 +148,6 @@ export default function RegisterPage() {
           } : {}),
         } : {}),
         ...(role === 'PARENT' ? { childEmail } : {}),
-        ...(role === 'TEACHER' ? (tenantCode ? { tenantCode } : {}) : {}),
         ...(isMinorStudent ? {
           parentEmail: parentEmail.trim(),
           consentAnalytics: false,
@@ -178,6 +179,16 @@ export default function RegisterPage() {
       setGoogleBusy(false);
     }
   };
+
+  // Ordinary student registration must include goals + placement diagnostic,
+  // so it enters through onboarding. Keep this page for guest upgrades and
+  // the parent invite rail, both of which intentionally have different data.
+  if (upgradeRequested && !ready) {
+    return <LoadingSplash />;
+  }
+  if (!standaloneEntry) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   return (
     <div className="mathema-app">
@@ -227,7 +238,7 @@ export default function RegisterPage() {
                       if (key) setErr(t(key));
                     }}
                     formBusy={busy}
-                    hideGoogle={upgradeMode || !canOfferGoogleSignIn(ageBand)}
+                    hideGoogle={upgradeMode || role !== 'STUDENT' || !canOfferGoogleSignIn(ageBand)}
                     t={t}
                   />
                 )}
@@ -243,9 +254,6 @@ export default function RegisterPage() {
                 )}
                 {step === 1 && role === 'PARENT' && (
                   <StepParent childEmail={childEmail} setChildEmail={setChildEmail} t={t} />
-                )}
-                {step === 1 && role === 'TEACHER' && (
-                  <StepTeacher tenantCode={tenantCode} setTenantCode={setTenantCode} t={t} />
                 )}
                 {step === 2 && isMinorStudent && (
                   <StepGuardianMinor
@@ -341,7 +349,6 @@ function StepRoleAndCredentials({
     { id: 'STUDENT', Icon: Glyph.Person, label: t('reg.role.student'), sub: t('reg.role.student.sub'), popular: true },
     ...(LAUNCH_STUDENT_ONLY ? [] : [
       { id: 'PARENT' as RegisterRole, Icon: Glyph.Parent, label: t('reg.role.parent'), sub: t('reg.role.parent.sub') },
-      { id: 'TEACHER' as RegisterRole, Icon: Glyph.Teacher, label: t('reg.role.teacher'), sub: t('reg.role.teacher.sub') },
     ]),
   ];
   return (
@@ -517,22 +524,6 @@ function StepParent({ childEmail, setChildEmail, t }: any) {
         <label>{t('reg.parent.childEmail')}</label>
         <input type="email" value={childEmail} onChange={(e) => setChildEmail(e.target.value)} placeholder="child@example.com" />
         <span className="caption" style={{ marginTop: 6 }}>{t('reg.parent.childEmail.hint')}</span>
-      </div>
-    </>
-  );
-}
-
-function StepTeacher({ tenantCode, setTenantCode, t }: any) {
-  return (
-    <>
-      <div>
-        <span className="eyebrow">{t('reg.step2.eyebrow')}</span>
-        <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step2.title')}</h2>
-      </div>
-      <div className="field">
-        <label>{t('reg.teacher.tenantCode')}</label>
-        <input value={tenantCode} onChange={(e) => setTenantCode(e.target.value)} placeholder="MATHEMA-A1B2" />
-        <span className="caption" style={{ marginTop: 6 }}>{t('reg.teacher.tenantCode.hint')}</span>
       </div>
     </>
   );

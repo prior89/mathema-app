@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { resolveBillingUiEnabled } from './billing-flags';
+import {
+  canRedirectToStudentPaywall,
+  isPremiumRequiredError,
+  resolveBillingUiEnabled,
+} from './billing-flags';
 
 describe('resolveBillingUiEnabled', () => {
   it('returns false when build flag is off', () => {
@@ -17,5 +21,34 @@ describe('resolveBillingUiEnabled', () => {
     expect(resolveBillingUiEnabled(true, true, true)).toBe(true);
     expect(resolveBillingUiEnabled(false, true, true)).toBe(false);
     expect(resolveBillingUiEnabled(undefined, true, true)).toBe(false);
+  });
+});
+
+describe('canRedirectToStudentPaywall', () => {
+  it('allows student app routes', () => {
+    expect(canRedirectToStudentPaywall('/app')).toBe(true);
+    expect(canRedirectToStudentPaywall('/app/report')).toBe(true);
+  });
+
+  it('keeps parent and teacher dashboards out of the student-only paywall', () => {
+    expect(canRedirectToStudentPaywall('/parent')).toBe(false);
+    expect(canRedirectToStudentPaywall('/teacher')).toBe(false);
+  });
+
+  it('does not mistake similarly prefixed public paths for the app shell', () => {
+    expect(canRedirectToStudentPaywall('/application')).toBe(false);
+  });
+});
+
+describe('isPremiumRequiredError', () => {
+  it('recognises the wrapped backend PremiumRequired payload', () => {
+    expect(isPremiumRequiredError({
+      response: { data: { error: { error: 'PremiumRequired', feature: 'weekly_reports' } } },
+    })).toBe(true);
+  });
+
+  it('does not classify unrelated authorization or network errors as billing', () => {
+    expect(isPremiumRequiredError({ response: { data: { error: 'Forbidden' } } })).toBe(false);
+    expect(isPremiumRequiredError(new Error('offline'))).toBe(false);
   });
 });

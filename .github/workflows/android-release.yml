@@ -62,6 +62,15 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
         run: npm run android:require-google-client-id
 
+      - name: Require billing UI in release bundle
+        env:
+          BILLING_UI_ENABLED: ${{ secrets.BILLING_UI_ENABLED }}
+        run: |
+          if [[ "$BILLING_UI_ENABLED" != "true" ]]; then
+            echo "BILLING_UI_ENABLED must be exactly 'true' for a Play release bundle." >&2
+            exit 1
+          fi
+
       - name: Resolve and validate Play versionCode
         shell: bash
         env:

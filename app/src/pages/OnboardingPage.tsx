@@ -16,6 +16,7 @@ import {
   type DiagnosticProblem,
   type DiagnosticResult,
   type Me,
+  type UserRole,
   fetchGuardianConsentStatus,
   requestGuardianConsent,
 } from '../lib/queries';
@@ -41,8 +42,7 @@ import { detectOnboardingLang, langForCountry } from '../lib/onboarding-locale';
 import { AgeGate } from '../components/onboarding/AgeGate';
 import '../styles/onboarding.css';
 
-type StepKey = 'welcome' | 'country' | 'auth' | 'role' | 'profile' | 'guardian' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
-type Role = 'STUDENT' | 'PARENT' | 'TEACHER';
+type StepKey = 'welcome' | 'country' | 'auth' | 'profile' | 'guardian' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
 type GradeId = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12';
 type GoalId = 'BOARD' | 'JEE' | 'SCHOOL' | 'CATCHUP';
 type ConsentKey = 'ANALYTICS' | 'AI_TRAINING' | 'MARKETING';
@@ -56,7 +56,7 @@ const STEP_FLOW: StepKey[] = LAUNCH_STUDENT_ONLY
   // KR is the only live launch market. A one-option country screen added a
   // decision-shaped tap without giving the student a real decision.
   ? ['welcome', 'auth', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready']
-  : ['welcome', 'country', 'auth', 'role', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready'];
+  : ['welcome', 'country', 'auth', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready'];
 
 // CLASS_X (UI) → GradeLevel (backend enum)
 const GRADE_MAP: Record<GradeId, string> = {
@@ -104,7 +104,7 @@ export default function OnboardingPage() {
   );
 }
 
-function Flow({ onFinish }: { onFinish: (role?: Role, target?: string) => void }) {
+function Flow({ onFinish }: { onFinish: (role?: UserRole, target?: string) => void }) {
   const { user, refreshUser, startGuest } = useAuth();
   const { setLang } = useT();
   const [step, setStep] = useState<StepKey>('welcome');
@@ -119,7 +119,6 @@ function Flow({ onFinish }: { onFinish: (role?: Role, target?: string) => void }
   useEffect(() => {
     setLang(LAUNCH_STUDENT_ONLY ? 'ko' : detectOnboardingLang(), { reload: false });
   }, [setLang]);
-  const [role, setRole] = useState<Role | ''>('STUDENT');
   // Empty initial — placeholder/label comes from the input's placeholder
   // attribute. Pre-filling a fake Indian name leaked into KR signups and
   // confused users who didn't immediately overwrite it.
@@ -209,7 +208,7 @@ function Flow({ onFinish }: { onFinish: (role?: Role, target?: string) => void }
           onAuthenticated={(me) => {
             const target = postAuthPath(me);
             if (target !== '/onboarding') {
-              onFinish((me.role ?? 'STUDENT') as Role, target);
+              onFinish(me.role ?? 'STUDENT', target);
               return;
             }
             if (me.name) setName(me.name);
@@ -222,19 +221,6 @@ function Flow({ onFinish }: { onFinish: (role?: Role, target?: string) => void }
             setGuest(true);
             next();
           }}
-        />
-      );
-    case 'role':
-      return (
-        <ScreenRole
-          step={stepIndex}
-          onBack={back}
-          onNext={() => {
-            if (role === 'PARENT' || role === 'TEACHER') go('consents');
-            else next();
-          }}
-          role={role}
-          setRole={setRole}
         />
       );
     case 'profile':
@@ -303,7 +289,6 @@ function Flow({ onFinish }: { onFinish: (role?: Role, target?: string) => void }
         <ScreenReady
           step={stepIndex}
           name={name}
-          role={role || 'STUDENT'}
           grade={grade || 'CLASS_11'}
           goal={goal || 'BOARD'}
           country={country}
@@ -766,83 +751,7 @@ function ScreenAuth({
   );
 }
 
-// ─────────── 03 Role select ───────────
-function ScreenRole({
-  step, onBack, onNext, role, setRole,
-}: { step: number; onBack: () => void; onNext: () => void; role: Role | ''; setRole: (r: Role) => void }) {
-  const { t } = useT();
-  const roles: Array<{ id: Role; icon: typeof Glyph.Person; label: string; sub: string }> = [
-    { id: 'STUDENT', icon: Glyph.Person, label: t('onboarding.role.student.label'), sub: t('onboarding.role.student.sub') },
-    ...(LAUNCH_STUDENT_ONLY ? [] : [
-      { id: 'PARENT' as Role, icon: Glyph.Parent, label: t('onboarding.role.parent.label'), sub: t('onboarding.role.parent.sub') },
-      { id: 'TEACHER' as Role, icon: Glyph.Teacher, label: t('onboarding.role.teacher.label'), sub: t('onboarding.role.teacher.sub') },
-    ]),
-  ];
-  return (
-    <div className="screen">
-      <TopScaffold step={step} onBack={onBack} />
-      <div className="screen-body" style={{ gap: 24 }}>
-        <div>
-          <span className="eyebrow">{t('onboarding.role.eyebrow')}</span>
-          <h2 className="title" style={{ marginTop: 10 }}>{t('onboarding.role.title')}</h2>
-          <p className="subtitle">{t('onboarding.role.tagline')}</p>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {roles.map((r) => {
-            const Icon = r.icon;
-            const selected = role === r.id;
-            return (
-              <div
-                key={r.id}
-                className={`option-card ${selected ? 'selected' : ''}`}
-                role="radio"
-                aria-checked={selected}
-                tabIndex={0}
-                onClick={() => setRole(r.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setRole(r.id);
-                  }
-                }}
-              >
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12,
-                  background: selected ? 'var(--p-surface)' : 'var(--p-surface-2)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: selected ? 'var(--p-primary)' : 'var(--p-ink-2)',
-                  flexShrink: 0,
-                  border: selected ? '1.5px solid var(--p-primary)' : '1px solid var(--p-border)',
-                }}>
-                  <div style={{ width: 24, height: 24 }}><Icon accent="currentColor" /></div>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 16, fontWeight: 600 }}>{r.label}</span>
-                    {r.id === 'STUDENT' && <span className="chip primary" style={{ padding: '2px 8px', fontSize: 10.5 }}>{t('onboarding.role.popular')}</span>}
-                  </div>
-                  <div style={{ fontSize: 13, color: 'var(--p-muted)', marginTop: 2 }}>{r.sub}</div>
-                </div>
-                <div className="check" style={{ width: 22, height: 22 }}>
-                  {selected && <Glyph.Check accent="var(--p-primary-fg)" size={14} />}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ flex: 1 }} />
-      </div>
-      <div className="screen-foot">
-        <button className="btn" onClick={onNext} disabled={!role} style={{ opacity: role ? 1 : 0.45 }}>
-          {t('onboarding.role.continue')}
-          <Glyph.ChevronR />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─────────── 04 Profile (name + class) ───────────
+// ─────────── 03 Profile (name + class) ───────────
 function ScreenProfile({
   step, onBack, onNext, name, setName, grade, setGrade, age, setAge, country, guest = false,
 }: {
@@ -1635,11 +1544,11 @@ function ScreenConsents({
 
 // ─────────── 09 Ready / First lesson ───────────
 function ScreenReady({
-  step, name, role, grade, goal, country, consents, notif, guest = false, minor = false, onFinish,
+  step, name, grade, goal, country, consents, notif, guest = false, minor = false, onFinish,
 }: {
-  step: number; name: string; role: Role; grade: GradeId; goal: GoalId;
+  step: number; name: string; grade: GradeId; goal: GoalId;
   country: CountryId; consents: ConsentMap; notif: boolean; guest?: boolean; minor?: boolean;
-  onFinish: (role?: Role, target?: string) => void;
+  onFinish: (role?: UserRole, target?: string) => void;
 }) {
   const { t } = useT();
   const [busy, setBusy] = useState(false);
@@ -1677,11 +1586,10 @@ function ScreenReady({
       // onboardingCompleted localStorage flag (set further down) is the
       // safety net that lets ProtectedRoute let them through if they later
       // hit the bouncing case anyway.
-      const resolvedRole = role || 'STUDENT';
+      const resolvedRole = user?.role ?? 'STUDENT';
       await patch<Me>('/users/me', {
         // Guests keep the server-side 'Guest' placeholder name (zero-PII).
         ...(guest ? {} : { name }),
-        role: resolvedRole,
         pushRemindersEnabled: notif,
         ...(resolvedRole === 'STUDENT'
           ? { gradeLevel: GRADE_MAP[grade], studyGoal: goal }
@@ -1703,7 +1611,7 @@ function ScreenReady({
       // localStorage 에 onboarding 결과 저장 (백엔드 미저장 항목: goal, notif 토글).
       localStorage.setItem('mathema.onboarding', JSON.stringify({
         userId: user?.id,
-        role, grade, goal, notif, completedAt: new Date().toISOString(),
+        role: resolvedRole, grade, goal, notif, completedAt: new Date().toISOString(),
       }));
       // Refresh AuthContext.user so ProtectedRoute sees gradeLevel filled.
       await refreshUser();

@@ -14,6 +14,7 @@ import { PROBLEM_EN, STEP_PROMPT_EN, CHOICE_EN, SOURCE_EN, HINT_EN, CONCEPT_EN, 
 import { LlmDraftService, DraftPayload } from '../content-ingest/llm-draft.service';
 import { DeterministicCheckService } from '../../infrastructure/math/deterministic-check.service';
 import { choiceErrorCode } from '../../common/learning/distractor-error-codes';
+import { WeeklyReportService } from '../reports/weekly-report.service';
 
 /**
  * MockExam name → English short label.
@@ -27,7 +28,8 @@ function translateExamName(name: string): string {
     '7월': 'Jul', '8월': 'Aug', '9월': 'Sep', '10월': 'Oct', '11월': 'Nov', '12월': 'Dec',
   };
   for (const [k, v] of Object.entries(monthMap)) s = s.replace(k, v);
-  s = s.replace('모의평가', 'Mock').replace('학력평가', 'Practice')
+  s = s.replace('AI 맞춤형 약점 시험', 'AI-tailored Weakness Test')
+       .replace('모의평가', 'Mock').replace('학력평가', 'Practice')
        .replace('수능', 'SAT').replace('교육청', 'Edu')
        .replace(/\s+/g, ' ').trim();
   return s;
@@ -91,6 +93,7 @@ export class MockExamsService {
     private readonly prisma: PrismaService,
     private readonly llmDraft: LlmDraftService,
     private readonly deterministicCheck: DeterministicCheckService,
+    private readonly weeklyReports: WeeklyReportService,
   ) {}
 
   async trajectory(userId: string, count: number, lang: Lang = 'en') {
@@ -137,7 +140,21 @@ export class MockExamsService {
         mockExam: true,
         attempts: {
           include: {
-            problem: { select: { id: true, source: true, body: true, difficulty: true } },
+            problem: {
+              select: {
+                id: true,
+                source: true,
+                body: true,
+                difficulty: true,
+                concepts: {
+                  include: {
+                    concept: {
+                      select: { id: true, code: true, name: true, nameKo: true },
+                    },
+                  },
+                },
+              },
+            },
             choice: { select: { choiceIndex: true, text: true, isCorrect: true, rationale: true } },
           },
           orderBy: [{ problemId: 'asc' }, { stepIndex: 'asc' }],
@@ -148,8 +165,10 @@ export class MockExamsService {
 
     // 문제별로 묶기: { problemId → { source, steps:[{stepIndex, isCorrect, choiceText}] } }
     const byProblem = new Map<string, any>();
+    const conceptLinksByProblem = new Map<string, typeof r.attempts[number]['problem']['concepts']>();
     for (const a of r.attempts) {
       const key = a.problemId;
+      conceptLinksByProblem.set(key, a.problem.concepts);
       const cur = byProblem.get(key) ?? {
         problemId: a.problemId,
         source: lang !== 'ko' && SOURCE_EN[a.problem.source]
@@ -169,9 +188,66 @@ export class MockExamsService {
       if (!isCorrect) cur.allCorrect = false;
       byProblem.set(key, cur);
     }
+
+    const weakAreaStats = new Map<string, {
+      conceptId: string;
+      code: string;
+      name: string;
+      problemCount: number;
+      incorrectProblems: number;
+    }>();
+    for (const problem of byProblem.values()) {
+      for (const link of conceptLinksByProblem.get(problem.problemId) ?? []) {
+        const concept = link.concept;
+        const current = weakAreaStats.get(concept.id) ?? {
+          conceptId: concept.id,
+          code: concept.code,
+          name: lang === 'ko' ? (concept.nameKo ?? concept.name) : concept.name,
+          problemCount: 0,
+          incorrectProblems: 0,
+        };
+        current.problemCount += 1;
+        if (!problem.allCorrect) current.incorrectProblems += 1;
+        weakAreaStats.set(concept.id, current);
+      }
+    }
+    const weakAreas = Array.from(weakAreaStats.values())
+      .filter((area) => area.incorrectProblems > 0)
+      .map((area) => ({
+        ...area,
+        accuracyPct: Math.round(
+          ((area.problemCount - area.incorrectProblems) / area.problemCount) * 100,
+        ),
+      }))
+      .sort((a, b) => a.accuracyPct - b.accuracyPct || b.problemCount - a.problemCount);
+
+    const previous = r.mockExam.type === MockExamType.RECOMMENDED
+      ? await this.prisma.mockExamResult.findFirst({
+          where: {
+            id: { not: r.id },
+            userId,
+            takenAt: { lt: r.takenAt },
+            mockExam: { type: MockExamType.RECOMMENDED },
+            attempts: { some: {} },
+          },
+          select: { id: true, score: true, takenAt: true },
+          orderBy: { takenAt: 'desc' },
+        })
+      : null;
+    const scoreDelta = previous ? r.score - previous.score : null;
+    const comparison = previous && scoreDelta !== null
+      ? {
+          previousResultId: previous.id,
+          previousScore: previous.score,
+          currentScore: r.score,
+          delta: scoreDelta,
+          trend: scoreDelta > 0 ? 'improved' as const : scoreDelta < 0 ? 'declined' as const : 'same' as const,
+        }
+      : null;
     return {
       id: r.id,
       name: lang !== 'ko' ? translateExamName(r.mockExam.name) : r.mockExam.name,
+      type: r.mockExam.type,
       takenAt: r.takenAt.toISOString(),
       score: r.score,
       grade: r.grade,
@@ -179,6 +255,9 @@ export class MockExamsService {
       durationMin: r.durationMin,
       totalMinutes: r.mockExam.totalMinutes,
       problems: Array.from(byProblem.values()),
+      weakAreas,
+      scoreDelta,
+      comparison,
     };
   }
 
@@ -231,20 +310,55 @@ export class MockExamsService {
   }
 
   async startRecommended(userId: string, lang: Lang = 'en') {
-    const { problems } = await this.aiRec.compose(userId);
-    return this.beginSession(
+    const recommendation = await this.aiRec.compose(userId);
+    const profile = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { country: true, tenantId: true },
+    });
+    const isKorean = profile?.country === CountryCode.KR;
+    const session = await this.beginSession(
       userId,
-      { name: 'AI-tailored Mock', type: MockExamType.RECOMMENDED, totalMinutes: 50, problems },
+      {
+        name: isKorean ? 'AI 맞춤형 약점 시험' : 'AI-tailored Weakness Test',
+        type: MockExamType.RECOMMENDED,
+        totalMinutes: 50,
+        problems: recommendation.problems,
+      },
       lang,
     );
+    if (session.resultId && session.problems.length > 0) {
+      try {
+        await this.prisma.recommendationLog.createMany({
+          data: session.problems.map((problem: { id: string }) => ({
+            userId,
+            sessionId: session.resultId,
+            tenantId: profile?.tenantId ?? null,
+            recommendedProblemId: problem.id,
+            recommendationType: 'REVIEW_PROBLEM' as const,
+            reason: isKorean
+              ? '최근 약점을 보완하기 위한 맞춤형 재시험 문제'
+              : 'Personalized retest problem for a recent weak area',
+          })),
+        });
+      } catch (error) {
+        // Recommendation telemetry must never strand an otherwise valid exam.
+        this.logger.warn(`Failed to record recommended exam selection: ${(error as Error).message}`);
+      }
+    }
+    return {
+      ...session,
+      ...('fallbackReason' in recommendation
+        ? { fallbackReason: recommendation.fallbackReason }
+        : {}),
+    };
   }
 
   async startTyped(userId: string, kind: 'mini' | 'wrong-redo' | 'real', lang: Lang = 'en') {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { country: true },
+    });
     if (kind === 'real') {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { country: true },
-      });
       // REAL is currently an India-only JEE-style +4/-1 paper. Allow-listing
       // IN prevents Korean, unset, or future-country profiles (including
       // stale clients and direct API calls) from receiving the wrong model.
@@ -257,15 +371,16 @@ export class MockExamsService {
     }
     const result = await this.aiRec.composeTyped(userId, kind);
     const fb = (result as { fallbackReason?: string }).fallbackReason;
+    const isKorean = user?.country === CountryCode.KR;
     const meta: Record<string, { name: string; type: any; totalMinutes: number }> = {
-      mini:        { name: 'Unit Mini Test',                  type: 'MINI',       totalMinutes: 15 },
-      'wrong-redo':{ name: 'Wrong-Redo Exam',                 type: 'WRONG_REDO', totalMinutes: 30 },
+      mini:        { name: isKorean ? '단원 미니 테스트' : 'Unit Mini Test', type: 'MINI', totalMinutes: 15 },
+      'wrong-redo':{ name: isKorean ? '오답 다시 풀기 시험' : 'Wrong-Redo Exam', type: 'WRONG_REDO', totalMinutes: 30 },
       real:        { name: 'Full Mock Exam (Grade-wide)',     type: 'REAL',       totalMinutes: 60 },
     };
     const m = { ...meta[kind] };
     // Override name if a fallback kicked in — keep user informed.
     if (fb === 'no-wrong-notes' && kind === 'wrong-redo') {
-      m.name = 'Practice (no wrong notes yet)';
+      m.name = isKorean ? '연습 (아직 오답 없음)' : 'Practice (no wrong notes yet)';
     } else if (fb === 'no-grade-problems' && kind === 'real') {
       m.name = 'Practice (grade pool empty)';
     }
@@ -798,10 +913,14 @@ export class MockExamsService {
     if (!p.problems || p.problems.length === 0) {
       return { resultId: null, name: p.name, type: p.type, totalMinutes: p.totalMinutes, problems: [] };
     }
+    const uniqueProblemIds = [...new Set(p.problems.map((x) => x.id))];
+    const fullProblems = await this.fetchFullProblems(uniqueProblemIds, lang);
+    if (fullProblems.length === 0) {
+      return { resultId: null, name: p.name, type: p.type, totalMinutes: p.totalMinutes, problems: [] };
+    }
     const { result } = await this.repo.createSession(userId, {
-      name: p.name, type: p.type, totalProblems: p.problems.length, totalMinutes: p.totalMinutes,
+      name: p.name, type: p.type, totalProblems: fullProblems.length, totalMinutes: p.totalMinutes,
     });
-    const fullProblems = await this.fetchFullProblems(p.problems.map((x) => x.id), lang);
     return {
       resultId: result.id,
       name: p.name,
@@ -825,7 +944,10 @@ export class MockExamsService {
     const byId = new Map(ps.map((p) => [p.id, p]));
     return ids
       .map((id) => byId.get(id))
-      .filter(Boolean)
+      .filter((p): p is NonNullable<typeof p> => Boolean(p))
+      .filter((p) => p.steps.length > 0 && p.steps.every((step) =>
+        step.choices.length > 0 && step.choices.filter((choice) => choice.isCorrect).length === 1,
+      ))
       .map((p: any) => sanitizeForExam(p, lang));
   }
 
@@ -891,6 +1013,44 @@ export class MockExamsService {
       percentile: graded.percentile,
       durationMin: graded.durationMin,
     });
+    try {
+      const attempts = await this.prisma.attempt.findMany({
+        where: { userId, mockExamResultId: resultId },
+        select: { problemId: true, isCorrect: true },
+      });
+      const outcomeByProblem = new Map<string, boolean>();
+      for (const attempt of attempts) {
+        outcomeByProblem.set(
+          attempt.problemId,
+          (outcomeByProblem.get(attempt.problemId) ?? true) && attempt.isCorrect,
+        );
+      }
+      await Promise.all(Array.from(outcomeByProblem, ([problemId, isCorrect]) =>
+        this.prisma.recommendationLog.updateMany({
+          where: {
+            userId,
+            sessionId: resultId,
+            recommendedProblemId: problemId,
+            recommendationType: 'REVIEW_PROBLEM',
+          },
+          data: {
+            accepted: true,
+            solved: true,
+            result: isCorrect ? 'CORRECT' : 'INCORRECT',
+          },
+        }),
+      ));
+    } catch (error) {
+      this.logger.warn(`Failed to record recommendation outcomes for exam ${resultId}: ${(error as Error).message}`);
+    }
+    try {
+      // Await materialisation so a parent opening the dashboard immediately
+      // after the exam sees the latest score/weakness data. Reporting failure
+      // is non-fatal because the graded exam result is already durable.
+      await this.weeklyReports.generate(userId);
+    } catch (error) {
+      this.logger.warn(`Weekly report refresh failed after exam ${resultId}: ${(error as Error).message}`);
+    }
     return {
       ...saved,
       correctCount: graded.correctCount,

@@ -136,7 +136,8 @@ export class DiagnosticService {
     // summary from the same attempts and return it. The mastery-trajectory
     // listener already ran once per Attempt at submit-time, so concept
     // scores are stable too.
-    if (!session.endedAt) {
+    const wasAlreadyFinished = !!session.endedAt;
+    if (!wasAlreadyFinished) {
       await this.prisma.studySession.update({
         where: { id: sessionId },
         data: {
@@ -153,19 +154,45 @@ export class DiagnosticService {
     // weighted-average upsert here, which double-counted evidence (listener
     // already incremented it) and clobbered the listener's gradient updates
     // with a flat session score.
-    const conceptIds = Array.from(new Set(
-      session.attempts.flatMap((a) => a.problem.concepts.map((pc) => pc.conceptId)),
-    ));
-    const trajectories = conceptIds.length > 0
-      ? await this.prisma.masteryTrajectory.findMany({
-          where: { userId, conceptId: { in: conceptIds } },
-          include: { concept: { select: { name: true, nameKo: true, code: true } } },
-        })
-      : [];
+    const diagnosticScores = new Map<string, {
+      correct: number;
+      total: number;
+      conceptName: string;
+      conceptNameKo: string | null;
+      conceptCode: string;
+    }>();
+    for (const attempt of session.attempts) {
+      for (const pc of attempt.problem.concepts) {
+        const current = diagnosticScores.get(pc.conceptId) ?? {
+          correct: 0,
+          total: 0,
+          conceptName: pc.concept.name,
+          conceptNameKo: pc.concept.nameKo,
+          conceptCode: pc.concept.code,
+        };
+        current.total += 1;
+        if (attempt.isCorrect) current.correct += 1;
+        diagnosticScores.set(pc.conceptId, current);
+      }
+    }
+    // attempt.completed listeners are intentionally asynchronous. Diagnostic
+    // results must therefore be derived exclusively from the committed
+    // attempts in this session. Mixing an already-updated trajectory for one
+    // concept with a still-pending trajectory for another made the same
+    // answers produce different first-render scores depending on timing.
+    const masteries = [...diagnosticScores.entries()].map(([conceptId, score]) => {
+      return {
+        conceptId,
+        conceptName: score.conceptName,
+        conceptNameKo: score.conceptNameKo,
+        conceptCode: score.conceptCode,
+        score: Math.round((score.correct / Math.max(1, score.total)) * 100),
+      };
+    });
 
-    const weakConceptIds = trajectories
-      .filter((t) => t.masteryScore < 50)
-      .map((t) => t.conceptId);
+    const weakConceptIds = masteries
+      .filter((m) => m.score < 50)
+      .map((m) => m.conceptId);
     const recommendedChapterCodes = [
       ...new Set(
         session.attempts
@@ -175,22 +202,18 @@ export class DiagnosticService {
       ),
     ].slice(0, 5);
 
-    const firstSessionPlan = await this.firstSessionPlan.seedFirstSession(userId, {
-      recommendedChapterCodes,
-      weakConceptIds,
-    });
+    const firstSessionPlan = wasAlreadyFinished
+      ? await this.firstSessionPlan.getActiveCards(userId)
+      : await this.firstSessionPlan.seedFirstSession(userId, {
+          recommendedChapterCodes,
+          weakConceptIds,
+        });
 
     return {
       sessionId,
       attempted: session.attempts.length,
       correct: session.attempts.filter((a) => a.isCorrect).length,
-      masteries: trajectories.map((t) => ({
-        conceptId: t.conceptId,
-        conceptName: t.concept.name,
-        conceptNameKo: t.concept.nameKo,
-        conceptCode: t.concept.code,
-        score: t.masteryScore,
-      })),
+      masteries,
       firstSessionPlan,
     };
   }

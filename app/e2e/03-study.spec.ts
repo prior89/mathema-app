@@ -10,7 +10,7 @@
  * rather than fail flakily.
  */
 import { test, expect } from '@playwright/test';
-import { API_BASE, loginAsAdmin } from './helpers';
+import { API_BASE } from './helpers';
 
 test.describe('study tab', () => {
   test.beforeEach(async ({ page, request }) => {
@@ -24,29 +24,55 @@ test.describe('study tab', () => {
     // throwaway user can't reach -- only the admin dev-login user (seeded
     // with progress) can. Probe dev-login availability; skip if disabled.
     const probe = await request.post(`${API_BASE}/auth/dev-login`, { data: {} });
-    test.skip(probe.status() === 401, 'Dev-login disabled -- Study practice spec needs admin seed');
-    const landingPath = await loginAsAdmin(page);
-    test.skip(
-      !landingPath.startsWith('/app'),
-      `Seeded dev user is ${landingPath}-gated; Study specs require a completed /app account`,
-    );
+    test.skip(!probe.ok(), 'Dev-login disabled -- Study practice spec needs admin seed');
+    const body = await probe.json();
+    const accessToken = body?.data?.accessToken;
+    const refreshToken = body?.data?.refreshToken;
+    if (!accessToken || !refreshToken) {
+      throw new Error('Dev-login response missing access or refresh token');
+    }
+
+    // Inject the API-issued seed session directly. Going through the login UI
+    // makes this suite vulnerable to rate limits and unrelated auth-form state.
+    await page.goto('/login');
+    await page.evaluate(([access, refresh]) => {
+      localStorage.setItem('mathema.access', access);
+      localStorage.setItem('mathema.refresh', refresh);
+      localStorage.setItem('mathema.lang', 'ko');
+    }, [accessToken, refreshToken]);
+    await page.goto('/app/study');
+    await expect(page).toHaveURL(/\/app\/study$/, { timeout: 10_000 });
   });
 
   test('study tab renders the chapter picker', async ({ page }) => {
     await page.goto('/app/study');
-    // The chapter picker shows class/chapter labels.
-    await expect(page.getByText(/Class \d+|Pick a chapter|Start practice/i).first())
+    // Country-aware copy: the seeded dev user is Korean, while English is
+    // retained for other local fixtures.
+    await expect(page.getByText(/집중 연습|Focused practice|Pick a chapter/i).first())
       .toBeVisible({ timeout: 10_000 });
   });
 
   test('study practice screen surfaces a problem + handwriting canvas when accessible', async ({ page }) => {
-    // Use a well-known seeded chapter code. C11-CH01 is the first chapter in
-    // Class 11 (Sets) which is always present in the dev seed.
-    await page.goto('/app/practice-set/C11-CH01');
+    await page.goto('/app/study');
+    const picker = page.getByRole('combobox').first();
+    await expect(picker).toBeVisible({ timeout: 10_000 });
+    const eligible = await picker.locator('option').evaluateAll((options) =>
+      options
+        .map((option) => (option as HTMLOptionElement).value)
+        .filter((value) => value.length > 0),
+    );
+    if (eligible.length === 0) {
+      await expect(picker).toHaveValue('');
+      await expect(picker.locator('option').first())
+        .toHaveText(/단원학습|complete.*(concept|mastery)/i);
+      test.skip(true, 'Seeded KR student has no mastered chapter; practice is correctly gated.');
+    }
+    await picker.selectOption(eligible[0]);
+    await page.getByRole('button', { name: /연습 시작|Start practice/i }).click();
 
     // If Mastery isn't done for this chapter, the route shows a "complete mastery first"
     // message. Skip the body assertion in that case.
-    const blocked = page.getByText(/complete (the )?(concept|mastery) lesson/i);
+    const blocked = page.getByText(/단원학습.*먼저|complete (the )?(concept|mastery) lesson/i);
     if (await blocked.isVisible().catch(() => false)) {
       test.skip(true, 'Mastery not complete for C11-CH01 in this dev DB — skipping body check.');
     }
@@ -55,7 +81,7 @@ test.describe('study tab', () => {
     // "no problems available" state.
     await expect(
       page.locator('canvas, [data-testid="problem-body"]').first()
-        .or(page.getByText(/No problems available|Could not start/i)),
+        .or(page.getByText(/다음 문제를 불러올 수 없었어요|No problems available|Could not start/i)),
     ).toBeVisible({ timeout: 15_000 });
   });
 });

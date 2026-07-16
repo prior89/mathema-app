@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { MasteryTrend, MasteryUpdateSource, Prisma } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { MasteryTrend, MasteryUpdateSource } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { applyMasteryDecay } from './mastery-decay.util';
 
@@ -47,12 +47,19 @@ export interface MasteryUpdateInput {
 
 @Injectable()
 export class MasteryTrajectoryService {
-  private readonly logger = new Logger(MasteryTrajectoryService.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   async updateAfterAttempt(input: MasteryUpdateInput): Promise<{ score: number; delta: number }> {
-    const existing = await this.prisma.masteryTrajectory.findUnique({
+    return this.prisma.$transaction(async (tx) => {
+      // Serialize all writers for one student/concept. The previous
+      // read-compute-upsert sequence could lose an update when two attempts
+      // read the same evidenceCount concurrently. Teacher overrides acquire
+      // the same transaction-scoped advisory lock.
+      await tx.$queryRaw`
+        SELECT pg_advisory_xact_lock(hashtext(${input.userId}), hashtext(${input.conceptId}))
+      `;
+
+    const existing = await tx.masteryTrajectory.findUnique({
       where: { userId_conceptId: { userId: input.userId, conceptId: input.conceptId } },
     });
 
@@ -93,7 +100,7 @@ export class MasteryTrajectoryService {
     }
 
     // trend — 직전 5 MasteryEvent 의 delta 합산 부호.
-    const recentEvents = await this.prisma.masteryEvent.findMany({
+    const recentEvents = await tx.masteryEvent.findMany({
       where: { userId: input.userId, conceptId: input.conceptId },
       orderBy: { createdAt: 'desc' },
       take: 5,
@@ -106,9 +113,9 @@ export class MasteryTrajectoryService {
 
     const evidenceCount = (existing?.evidenceCount ?? 0) + 1;
 
-    await this.prisma.$transaction([
+    await Promise.all([
       // 1) MasteryTrajectory upsert.
-      this.prisma.masteryTrajectory.upsert({
+      tx.masteryTrajectory.upsert({
         where: { userId_conceptId: { userId: input.userId, conceptId: input.conceptId } },
         update: {
           masteryScore: nextScore,
@@ -137,7 +144,7 @@ export class MasteryTrajectoryService {
         },
       }),
       // 2) MasteryEvent 시계열 1 row.
-      this.prisma.masteryEvent.create({
+      tx.masteryEvent.create({
         data: {
           userId: input.userId,
           conceptId: input.conceptId,
@@ -151,6 +158,7 @@ export class MasteryTrajectoryService {
     ]);
 
     return { score: nextScore, delta };
+    });
   }
 
   /** 학생의 모든 MasteryTrajectory 조회 (UI heatmap 용). Scores are served

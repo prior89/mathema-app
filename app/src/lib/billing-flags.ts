@@ -47,6 +47,28 @@ export function readCachedBillingUiEnabled(): boolean {
   return false;
 }
 
+/**
+ * The purchase screen belongs to the student app shell. Parent and teacher
+ * dashboards can receive PremiumRequired for a linked student's account, but
+ * sending those roles to /app/paywall is both misleading and blocked by route
+ * role guards. Keep them on their dashboard so it can render its query error.
+ */
+export function canRedirectToStudentPaywall(pathname: string): boolean {
+  return pathname === '/app' || pathname.startsWith('/app/');
+}
+
+/** Handles both Nest's direct payload and the app's wrapped error envelope. */
+export function isPremiumRequiredError(error: unknown): boolean {
+  const data = (error as any)?.response?.data;
+  const body = data?.error;
+  const code =
+    (typeof body === 'string' ? body : undefined)
+    ?? body?.code
+    ?? body?.error
+    ?? data?.code;
+  return code === 'PremiumRequired';
+}
+
 export function useBillingUiEnabled(): boolean {
   const { data, isFetched } = useBillingStatus();
   return resolveBillingUiEnabled(

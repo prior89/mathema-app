@@ -41,19 +41,27 @@ export class ReportsController {
 
   // 헤더 4 stat: 주간 학습시간 / 푼 문제 / 정답률 / AI 종합 점수
   @Get('weekly/current')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('weekly_reports')
   current(@CurrentUser('id') userId: string) { return this.service.current(userId); }
 
   @Get('weekly/time-vs-accuracy')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('weekly_reports')
   timeVsAccuracy(@CurrentUser('id') userId: string, @Query('weeks') weeks = 8) {
     return this.service.timeVsAccuracy(userId, +weeks);
   }
 
   @Get('weekly/next-focus')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('weekly_reports')
   nextFocus(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang) {
     return this.service.nextFocus(userId, lang);
   }
 
   @Get('weekly/achievements')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('weekly_reports')
   achievements(@CurrentUser('id') userId: string, @CurrentLang() lang: Lang) {
     return this.service.achievements(userId, lang);
   }
@@ -65,6 +73,8 @@ export class ReportsController {
   }
 
   @Get('weekly/:isoWeek')
+  @UseGuards(PremiumFeatureGuard)
+  @RequirePremium('weekly_reports')
   byWeek(@CurrentUser('id') userId: string, @Param('isoWeek') week: string) {
     return this.service.byWeek(userId, week);
   }

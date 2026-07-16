@@ -41,4 +41,28 @@ describe('PremiumAccessService', () => {
     const note = { id: 'n1', insightJson: { summary: 'x' } };
     await expect(svc.redactInsightJson('u1', note)).resolves.toEqual(note);
   });
+
+  it('requirePremiumAccess allows access when gating is off', async () => {
+    const billing = mockBilling(false, false);
+    const svc = new PremiumAccessService(billing as any);
+
+    await expect(svc.requirePremiumAccess('student-1', 'weekly_reports')).resolves.toBeUndefined();
+    expect(billing.isPremium).not.toHaveBeenCalled();
+  });
+
+  it('requirePremiumAccess returns the standard PremiumRequired contract', async () => {
+    const billing = mockBilling(true, false);
+    const svc = new PremiumAccessService(billing as any);
+
+    await expect(
+      svc.requirePremiumAccess('student-1', 'weekly_reports'),
+    ).rejects.toMatchObject({
+      response: {
+        error: 'PremiumRequired',
+        feature: 'weekly_reports',
+        productSuggestion: 'premium_monthly',
+      },
+    });
+    expect(billing.isPremium).toHaveBeenCalledWith('student-1');
+  });
 });

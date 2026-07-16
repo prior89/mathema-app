@@ -14,6 +14,7 @@ type MockMe = {
   examDate: string;
   targetGrade: number;
   dDay: number;
+  isGuest?: boolean;
 };
 
 const COMPLETE_KR_STUDENT: MockMe = {
@@ -244,15 +245,48 @@ test.describe('redesigned auth entry points', () => {
     });
   });
 
-  test('register exposes an actionable Google sign-up', async ({ page }) => {
+  test('ordinary register entry uses the complete onboarding funnel', async ({ page }) => {
     await page.goto('/register');
 
-    await expect(page.getByRole('heading', { name: /matheo를 어떻게 쓰시나요|Who's using Matheo/i })).toBeVisible();
-    await expect(page.locator('input[type="email"]').first()).toBeVisible();
+    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page.getByRole('button', { name: /내 수학 코스 만들기|Build my math path/i })).toBeVisible();
+  });
+
+  test('parent invite keeps the standalone form and prefilled child link', async ({ page }) => {
+    await page.goto('/register?role=PARENT&childEmail=child%40example.com');
+
+    await expect(page).toHaveURL(/\/register\?role=PARENT/);
     await passPreAuthAgeGate(page);
-    const google = page.getByRole('button', { name: /Google로 가입하기|Sign up with Google/i });
-    await expect(google).toBeVisible();
-    await expect(google).toBeEnabled();
+    await page.locator('input[type="email"]').first().fill('parent@example.com');
+    await page.locator('input[type="password"]').fill('SafePassword!123');
+    await page.locator('.field input').nth(2).fill('Parent');
+    await page.getByRole('button', { name: /계속|Continue/i }).click();
+    await expect(page.locator('input[type="email"]')).toHaveValue('child@example.com');
+    await expect(page.getByRole('button', { name: /Google로 가입하기|Sign up with Google/i })).toHaveCount(0);
+  });
+
+  test('authenticated guest upgrade remains on the standalone route', async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('mathema.access', 'e2e-access');
+      localStorage.setItem('mathema.refresh', 'e2e-refresh');
+    });
+    await mockAuthApi(page, {
+      ...INCOMPLETE_KR_STUDENT,
+      id: 'e2e-guest',
+      name: 'Guest',
+      email: 'guest.e2e@guest.matheo.invalid',
+      isGuest: true,
+    });
+    await page.goto('/register?upgrade=1');
+
+    await expect(page).toHaveURL(/\/register\?upgrade=1$/);
+    await expect(page.getByRole('heading', { name: /matheo를 어떻게 쓰시나요|Who's using Matheo/i })).toBeVisible();
+  });
+
+  test('upgrade query alone cannot bypass student onboarding', async ({ page }) => {
+    await page.goto('/register?upgrade=1');
+
+    await expect(page).toHaveURL(/\/onboarding$/);
   });
 
   test('child age result never mounts Google Identity on a shared entry page', async ({ page }) => {
@@ -285,7 +319,9 @@ test.describe('redesigned auth entry points', () => {
     await submitPasswordLogin(page, COMPLETE_KR_STUDENT.email);
 
     await expect(page).toHaveURL(/\/app\/test$/);
-    await expect(page.getByText(/복습 라운드|Review round/i, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(/맞춤형 약점 시험|Personalized weak-area test/i, { exact: true }),
+    ).toBeVisible();
     expect(submitted).toMatchObject({
       email: COMPLETE_KR_STUDENT.email,
       password: 'SafePassword!123',
@@ -339,7 +375,9 @@ test.describe('redesigned auth entry points', () => {
     await page.goto('/app/test');
 
     await expect(page).toHaveURL(/\/app\/test$/);
-    await expect(page.getByText(/복습 라운드|Review round/i, { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(/맞춤형 약점 시험|Personalized weak-area test/i, { exact: true }),
+    ).toBeVisible();
     await expect(page.getByText(/JEE식 감점|JEE marking/i)).toHaveCount(0);
     await expect(page.getByText(/실전 모의고사|Full Mock Exam/i)).toHaveCount(0);
     await expect(page.getByRole('button', { name: /모의고사 시작|Start mock exam/i })).toHaveCount(0);
@@ -350,7 +388,7 @@ test.describe('redesigned auth entry points', () => {
     await expect(page.locator('input[type="email"]').first()).toBeVisible();
   });
 
-  test('real backend dev-login enforces the seeded student onboarding gate', async ({ page, request }) => {
+  test('real backend dev-login lands the completed seeded student in the app', async ({ page, request }) => {
     test.skip(!(await backendReachable(page)), `Backend prerequisite unavailable: ${API_BASE}/health/live`);
 
     const probe = await request.post(`${API_BASE}/auth/dev-login`, { data: {} });
@@ -367,10 +405,15 @@ test.describe('redesigned auth entry points', () => {
     });
     expect(meResponse.ok(), `seed /users/me failed (${meResponse.status()})`).toBeTruthy();
     const liveMe = (await meResponse.json())?.data;
-    expect(liveMe).toMatchObject({ role: 'STUDENT', country: 'KR', birthDate: null });
+    expect(liveMe).toMatchObject({
+      role: 'STUDENT',
+      country: 'KR',
+      birthDate: '2000-01-01T00:00:00.000Z',
+      gradeLevel: 'CLASS_8',
+    });
 
     const landingPath = await loginAsAdmin(page);
-    expect(landingPath).toBe('/onboarding');
-    await expect(page.getByRole('button', { name: /내 수학 코스 만들기|Build my math path/i })).toBeVisible();
+    expect(landingPath).toBe('/app');
+    await expect(page.getByText(/안녕하세요|Good/i).first()).toBeVisible();
   });
 });

@@ -22,7 +22,14 @@ type ExamProblem = {
   id: string; source: string; body: string; difficulty: string;
   steps: Step[];
 };
-type LocState = { resultId: string; name: string; totalMinutes: number; problems: ExamProblem[] } | null;
+type LocState = {
+  resultId: string;
+  name: string;
+  totalMinutes: number;
+  problems: ExamProblem[];
+  origin?: 'study' | 'test';
+  examKind?: 'recommended';
+} | null;
 
 type FinalizeResult = {
   score: number; grade: number; percentile: number; durationMin: number;
@@ -132,7 +139,7 @@ export function MockExamPlayScreen() {
   // 잘못된 진입 (state 없음)
   // location.state.origin tells us where the user came from so the back
   // button returns there instead of the deprecated /app/mocks route.
-  const backTarget = ((state as any)?.origin === 'test') ? '/app/test' : '/app/study';
+  const backTarget = state?.origin === 'test' ? '/app/test' : '/app/study';
 
   if (!state || !resultId) {
     return (
@@ -210,7 +217,12 @@ export function MockExamPlayScreen() {
       // Preserve origin so the result detail screen's Back also routes home.
       nav(`/app/mocks/result/${resultId}`, {
         replace: true,
-        state: { fromFinalize: true, origin: (state as any)?.origin ?? 'study', ...r },
+        state: {
+          fromFinalize: true,
+          origin: state?.origin ?? 'study',
+          examKind: state?.examKind,
+          ...r,
+        },
       });
     } catch (e: any) {
       setErr(e?.response?.data?.error?.message ?? t('mockPlay.finalize.failed'));
@@ -354,7 +366,7 @@ export function MockExamPlayScreen() {
           </button>
         )}
       </div>
-      <TabBar />
+      <TabBar activeOverride={(state as any)?.origin === 'test' ? 'test' : 'study'} />
     </div>
   );
 }

@@ -51,7 +51,7 @@ public class BillingPlugin extends Plugin {
             JSObject evt = new JSObject();
             evt.put("purchases", arr);
             notifyListeners("purchaseUpdate", evt);
-        } else if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.USER_CANCELED) {
+        } else {
             JSObject evt = new JSObject();
             evt.put("responseCode", billingResult.getResponseCode());
             evt.put("message", billingResult.getDebugMessage());

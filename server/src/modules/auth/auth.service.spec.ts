@@ -8,7 +8,7 @@
  * on the same env flags as the dev server.
  */
 import * as bcrypt from 'bcrypt';
-import { BadRequestException, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { COUNTRY_CONFIG } from '../../common/enums/country.enum';
 
@@ -153,6 +153,45 @@ describe('AuthService', () => {
 
   // ─────── register ───────
   describe('register', () => {
+    it.each(['TEACHER', 'ADMIN'])('rejects public %s self-registration in the service layer', async (role) => {
+      const users = mockUsers();
+      const { svc } = build({ users });
+
+      await expect(svc.register({
+        email: `${role.toLowerCase()}@b.com`,
+        password: 'pw12345678',
+        name: role,
+        role,
+      } as any)).rejects.toMatchObject({
+        response: { code: 'public_role_registration_blocked' },
+      });
+      await expect(svc.register({
+        email: `${role.toLowerCase()}-second@b.com`,
+        password: 'pw12345678',
+        name: role,
+        role,
+      } as any)).rejects.toBeInstanceOf(ForbiddenException);
+      expect(users.findByEmail).not.toHaveBeenCalled();
+      expect(users.create).not.toHaveBeenCalled();
+    });
+
+    it('rejects tenantCode on public registration even when the requested role is STUDENT', async () => {
+      const users = mockUsers();
+      const { svc } = build({ users });
+
+      await expect(svc.register({
+        email: 'student@b.com',
+        password: 'pw12345678',
+        name: 'Student',
+        role: 'STUDENT',
+        tenantCode: 'MATHEMA-A1B2',
+      } as any)).rejects.toMatchObject({
+        response: { code: 'tenant_invite_required' },
+      });
+      expect(users.findByEmail).not.toHaveBeenCalled();
+      expect(users.create).not.toHaveBeenCalled();
+    });
+
     it('rejects duplicate email', async () => {
       const users = mockUsers();
       users.findByEmail.mockResolvedValue({ id: 'u1' });
@@ -193,7 +232,7 @@ describe('AuthService', () => {
       expect(result).toEqual(expect.objectContaining({ parentLinkPending: true }));
     });
 
-    it('creates STUDENT + issues tokens', async () => {
+    it('allows public STUDENT registration + issues tokens', async () => {
       const users = mockUsers();
       users.findByEmail.mockResolvedValue(null);
       users.create.mockResolvedValue({ id: 'u-new', email: 'a@b.com' });

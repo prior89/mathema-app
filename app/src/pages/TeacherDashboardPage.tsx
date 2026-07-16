@@ -28,6 +28,7 @@ import {
   type ConceptMastery, type ErrorPatternRow, type MasteryEventRow, type StudentRow,
 } from '../lib/queries';
 import { useT } from '../lib/i18n';
+import { isPremiumRequiredError } from '../lib/billing-flags';
 
 const COLORS = {
   bg: 'var(--p-bg)', ink: 'var(--p-ink)', sub: 'var(--p-muted)', line: 'var(--p-border)', card: 'var(--p-surface)',
@@ -61,6 +62,7 @@ export function TeacherDashboardPage({ embedded = false }: { embedded?: boolean 
     queryKey: ['teacher','weekly', selectedStudent ?? 'self'],
     queryFn: () => selectedStudent ? fetchStudentWeekly(selectedStudent) : fetchWeeklyList(),
   });
+  const weeklyPremiumRequired = isPremiumRequiredError(weekly.error);
 
   const [selectedConcept, setSelectedConcept] = useState<string | null>(null);
   const [overrideTarget, setOverrideTarget] = useState<{ type: 'MASTERY'|'ERROR_PATTERN'|'RECOMMENDATION'; id: string; current: any } | null>(null);
@@ -139,7 +141,21 @@ export function TeacherDashboardPage({ embedded = false }: { embedded?: boolean 
 
         {/* (8) WeeklyReport 목록 — 진단 추적 */}
         <SectionTitle no="06" title={lang === 'ko' ? '주간 리포트' : 'Weekly reports'} />
-        <WeeklyTable rows={weekly.data ?? []} />
+        {weeklyPremiumRequired ? (
+          <Card>
+            <Sub>
+              {selectedStudent
+                ? (lang === 'ko'
+                  ? '주간 리포트는 선택한 학생 계정의 Premium 혜택입니다. 학생이 Premium을 시작하면 교사 화면에서도 자동으로 열립니다.'
+                  : "Weekly reports follow the selected student's Premium account. They will become available here when the student starts Premium.")
+                : (lang === 'ko'
+                  ? '학생을 선택하면 해당 학생 계정의 주간 리포트 이용 가능 여부를 확인할 수 있습니다.'
+                  : 'Select a student to check weekly-report availability for that student account.')}
+            </Sub>
+          </Card>
+        ) : (
+          <WeeklyTable rows={weekly.data ?? []} />
+        )}
 
         {/* (7) Teacher Override 모달 */}
         {overrideTarget && (
