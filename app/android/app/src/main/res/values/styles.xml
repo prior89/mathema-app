@@ -1,22 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+    <!-- Native chrome mirrors the WebView palette. SystemBars updates the
+         icon foreground at runtime when the user changes the in-app theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/matheo_window_background</item>
+        <item name="android:statusBarColor">@color/matheo_window_background</item>
+        <item name="android:navigationBarColor">@color/matheo_navigation_bar_background</item>
+        <item name="android:windowLightStatusBar">@bool/matheo_light_system_bars</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">@bool/matheo_light_system_bars</item>
     </style>
 
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:background">@null</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/matheo_window_background</item>
+        <item name="android:statusBarColor">@color/matheo_window_background</item>
+        <item name="android:navigationBarColor">@color/matheo_navigation_bar_background</item>
+        <item name="android:windowLightStatusBar">@bool/matheo_light_system_bars</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">@bool/matheo_light_system_bars</item>
     </style>
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="android:background">@drawable/matheo_splash</item>
+        <item name="android:windowBackground">@drawable/matheo_splash</item>
+        <item name="windowSplashScreenBackground">@color/matheo_window_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

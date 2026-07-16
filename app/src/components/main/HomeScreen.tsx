@@ -452,7 +452,7 @@ function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClic
   // the list isn't dominated by red badges.
   const accColor =
     accuracyPct >= 80 ? 'var(--p-success)' :
-    accuracyPct >= 50 ? 'var(--p-accent)' :
+    accuracyPct >= 50 ? 'var(--p-accent-ink)' :
     'var(--p-danger)';
   const accBg =
     accuracyPct >= 80 ? 'var(--p-success-tint)' :

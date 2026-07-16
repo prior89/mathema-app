@@ -40,6 +40,7 @@ export function resolveIsDark(mode: ThemeMode): boolean {
 export function applyThemeMode(mode: ThemeMode): boolean {
   const isDark = resolveIsDark(mode);
   document.documentElement.classList.toggle('dark', isDark);
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
   void syncStatusBarTheme(isDark);
   return isDark;
 }

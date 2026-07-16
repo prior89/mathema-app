@@ -7,47 +7,43 @@
  * Push: initPushListeners() wires FCM registration + deep-link taps (PR-28).
  * Actual token sync runs after auth via usePushSync (respects pushRemindersEnabled).
  *
- * 플러그인은 동적 import — Capacitor.isNativePlatform() 일 때만 로드.
- * `@vite-ignore` + 변수 우회 — 패키지가 설치되어 있지 않은 web-only dev 환경에서도
- * Vite 가 모듈을 정적 분석하지 않도록 한다 (실제로 native 빌드에서만 로드됨).
+ * Capacitor의 web 구현은 안전한 no-op이다. 네이티브 모듈을 정적으로 번들해
+ * Android WebView에 해석 불가능한 bare import가 남지 않도록 한다.
  */
 
+import { App } from '@capacitor/app';
+import { Capacitor, SystemBars, SystemBarsStyle, registerPlugin } from '@capacitor/core';
 import { initPushListeners } from './push-bridge';
 
-// Vite 가 string literal 이 아니라 변수만 보고 resolve 를 건너뛰게 한다.
-const PKG_CORE = '@capacitor/core';
-const PKG_STATUS = '@capacitor/status-bar';
-const PKG_APP = '@capacitor/app';
+type NativeThemePlugin = {
+  setSystemBarBackground(options: { color: string }): Promise<void>;
+};
 
-const dynImport = (name: string): Promise<any> =>
-  import(/* @vite-ignore */ name).catch(() => null);
+const NativeTheme = registerPlugin<NativeThemePlugin>('MatheoTheme');
 
-/** Match sage light/dark shells — web no-op. */
+/** Match the web light/dark shell across both native system bars; web no-op. */
 export async function syncStatusBarTheme(isDark: boolean) {
-  const core: any = await dynImport(PKG_CORE);
-  const Capacitor = core?.Capacitor;
-  if (!Capacitor?.isNativePlatform?.()) return;
-
-  const status: any = await dynImport(PKG_STATUS);
-  if (!status?.StatusBar || !status?.Style) return;
+  if (!Capacitor.isNativePlatform()) return;
   try {
-    if (isDark) {
-      await status.StatusBar.setStyle({ style: status.Style.Dark });
-      await status.StatusBar.setBackgroundColor({ color: '#1e2624' });
-    } else {
-      await status.StatusBar.setStyle({ style: status.Style.Light });
-      await status.StatusBar.setBackgroundColor({ color: '#EFEBDF' });
-    }
-    await status.StatusBar.setOverlaysWebView({ overlay: false });
-  } catch { /* plugin not installed in this build */ }
+    // Capacitor 8 SystemBars updates both the top status bar and the bottom
+    // navigation/gesture bar. Android 16 ignores the legacy background-color
+    // and overlay APIs, so the DayNight window theme owns the backdrop.
+    await SystemBars.setStyle({
+      style: isDark ? SystemBarsStyle.Dark : SystemBarsStyle.Light,
+    });
+    // On pre-edge-to-edge Android versions the bars still own an opaque
+    // native backdrop. Match the independently stored app theme rather than
+    // the device uiMode; Android 15+ simply uses this as the decor fallback.
+    await NativeTheme.setSystemBarBackground({
+      color: isDark ? '#11162A' : '#F6F7FC',
+    });
+  } catch { /* native theme bridge is unavailable in this shell */ }
 }
 
 export async function initCapacitorBridge() {
-  const core: any = await dynImport(PKG_CORE);
-  const Capacitor = core?.Capacitor;
-  if (!Capacitor?.isNativePlatform?.()) return;
+  if (!Capacitor.isNativePlatform()) return;
 
-  // ----- StatusBar (respect bootstrapTheme / ThemeContext) -----
+  // ----- System bars (respect bootstrapTheme / ThemeContext) -----
   const isDark = document.documentElement.classList.contains('dark');
   await syncStatusBarTheme(isDark);
 
@@ -55,10 +51,8 @@ export async function initCapacitorBridge() {
   await initPushListeners();
 
   // ----- 뒤로가기 버튼 -----
-  const appPlugin: any = await dynImport(PKG_APP);
-  if (appPlugin?.App) {
-    try {
-      appPlugin.App.addListener('backButton', async () => {
+  try {
+    await App.addListener('backButton', async () => {
         // Give active sessions/modals the first chance to block native Back.
         const nativeBack = new CustomEvent('matheo:native-back', { cancelable: true });
         window.dispatchEvent(nativeBack);
@@ -71,7 +65,7 @@ export async function initCapacitorBridge() {
           return;
         }
         if ((window as any).__matheoLastBack && Date.now() - (window as any).__matheoLastBack < 2000) {
-          appPlugin.App.exitApp();
+          App.exitApp();
           return;
         }
         (window as any).__matheoLastBack = Date.now();
@@ -83,8 +77,7 @@ export async function initCapacitorBridge() {
             text: ko ? '뒤로 버튼을 한 번 더 누르면 종료돼요' : 'Press back again to exit',
           },
         }));
-      });
-    } catch { /* plugin not installed */ }
-  }
+    });
+  } catch { /* plugin not installed */ }
 
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Keep these values aligned with the light tokens in onboarding.css. -->
+    <color name="colorPrimary">#5B4DF7</color>
+    <color name="colorPrimaryDark">#5B4DF7</color>
+    <color name="colorAccent">#5B4DF7</color>
+    <color name="matheo_window_background">#F6F7FC</color>
+    <!-- API 24-25 cannot draw dark navigation glyphs. Keep their fallback dark. -->
+    <color name="matheo_navigation_bar_background">#11162A</color>
+</resources>

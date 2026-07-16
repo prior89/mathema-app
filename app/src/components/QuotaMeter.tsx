@@ -39,7 +39,7 @@ export function QuotaMeter({ className, style }: Props) {
       className={className}
       style={{
         fontSize: 11.5,
-        color: exhausted ? 'var(--p-danger)' : 'var(--p-muted)',
+        color: exhausted ? 'var(--p-danger-ink)' : 'var(--p-muted)',
         fontFamily: 'var(--font-mono)',
         display: 'flex',
         alignItems: 'center',
@@ -56,7 +56,7 @@ export function QuotaMeter({ className, style }: Props) {
             background: 'transparent',
             border: 'none',
             padding: 0,
-            color: 'var(--p-danger)',
+            color: 'var(--p-danger-ink)',
             fontWeight: 600,
             fontSize: 11.5,
             cursor: 'pointer',
@@ -90,7 +90,7 @@ export function QuotaMeter({ className, style }: Props) {
         </span>
       )}
       {inGrace && !exhausted && graceDaysLeft > 0 && (
-        <span style={{ color: 'var(--p-accent)', fontSize: 10.5 }}>
+        <span style={{ color: 'var(--p-accent-ink)', fontSize: 10.5 }}>
           {t('quota.solver.grace', { limit, daysLeft: graceDaysLeft })}
         </span>
       )}

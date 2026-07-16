@@ -37,6 +37,15 @@ const config: CapacitorConfig = {
     // Android Studio 가 자동 처리하지만 여기 명시해서 의도 분명히.
     allowMixedContent: false,
   },
+  plugins: {
+    // Capacitor 8's edge-to-edge API controls both status/navigation icon
+    // styles and supplies --safe-area-inset-* fallbacks to the WebView.
+    SystemBars: {
+      insetsHandling: 'css',
+      style: 'DEFAULT',
+      hidden: false,
+    },
+  },
 };
 
 export default config;

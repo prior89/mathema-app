@@ -419,7 +419,7 @@ export function RealExamScreen() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ width: '100%', background: 'var(--p-surface)', borderRadius: '20px 20px 0 0', padding: '14px 18px calc(16px + env(safe-area-inset-bottom, 0px))', maxHeight: '70%', overflow: 'auto' }}
+            style={{ width: '100%', background: 'var(--p-surface)', borderRadius: '20px 20px 0 0', padding: '14px 18px 16px', maxHeight: '70%', overflow: 'auto' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <span style={{ fontSize: 14, fontWeight: 700 }}>{t('realExam.palette')}</span>

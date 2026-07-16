@@ -15,9 +15,27 @@ type Props = {
 export default function ConfidenceSlider({ value, onChange, label }: Props) {
   const { t } = useT();
   const levels = [
-    { v: 30, text: t('study.confidence.low'), color: '#C25E2E' },
-    { v: 60, text: t('study.confidence.medium'), color: '#C7791F' },
-    { v: 90, text: t('study.confidence.high'), color: '#5A8A45' },
+    {
+      v: 30,
+      text: t('study.confidence.low'),
+      accent: 'var(--p-danger)',
+      ink: 'var(--p-danger-ink)',
+      tint: 'var(--p-danger-tint)',
+    },
+    {
+      v: 60,
+      text: t('study.confidence.medium'),
+      accent: 'var(--p-warning)',
+      ink: 'var(--p-warning-ink)',
+      tint: 'var(--p-warning-tint)',
+    },
+    {
+      v: 90,
+      text: t('study.confidence.high'),
+      accent: 'var(--p-success)',
+      ink: 'var(--p-success-ink)',
+      tint: 'var(--p-success-tint)',
+    },
   ];
   const displayLabel = label ?? t('study.confidence.label');
 
@@ -25,11 +43,11 @@ export default function ConfidenceSlider({ value, onChange, label }: Props) {
     <div style={{ marginTop: 12, marginBottom: 12 }}>
       <div style={{
         display: 'flex', alignItems: 'baseline', gap: 6,
-        fontSize: 11, color: '#5C6B85', marginBottom: 6,
+        fontSize: 11, color: 'var(--p-muted)', marginBottom: 6,
         letterSpacing: '0.1em', textTransform: 'uppercase',
       }}>
         <span>{displayLabel}</span>
-        <span style={{ fontSize: 10, opacity: 0.7, textTransform: 'none', letterSpacing: 0 }}>
+        <span style={{ fontSize: 10, color: 'var(--p-ink-2)', textTransform: 'none', letterSpacing: 0 }}>
           · {t('study.confidence.optional')}
         </span>
       </div>
@@ -45,9 +63,9 @@ export default function ConfidenceSlider({ value, onChange, label }: Props) {
               style={{
                 flex: 1, padding: '9px 0', borderRadius: 10, cursor: 'pointer',
                 fontSize: 12.5, fontWeight: 600, fontFamily: 'inherit',
-                border: `1.5px solid ${active ? lv.color : 'var(--p-border, #D7DCE5)'}`,
-                background: active ? `${lv.color}1A` : 'transparent',
-                color: active ? lv.color : 'var(--p-ink-2, #5C6B85)',
+                border: `1.5px solid ${active ? lv.accent : 'var(--p-border)'}`,
+                background: active ? lv.tint : 'transparent',
+                color: active ? lv.ink : 'var(--p-ink-2)',
                 transition: 'border-color 0.12s, background 0.12s, color 0.12s',
               }}
             >

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../lib/i18n';
 import { trackUi } from '../lib/analytics';
+import { BrandLockup } from './Brand';
 
 /**
  * 상단 네비게이션 — 6 탭 + 언어 토글 + D-day + 프로필 + 로그아웃.
@@ -52,8 +53,9 @@ export function TopNav({
 
   return (
     <nav style={{
-      borderBottom: '1px solid #14285020', backgroundColor: '#EFEBDF',
-      position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(8px)',
+      borderBottom: '1px solid var(--p-border)', backgroundColor: 'var(--p-surface)',
+      color: 'var(--p-ink)',
+      position: 'sticky', top: 'var(--safe-area-inset-top, env(safe-area-inset-top, 0px))', zIndex: 50, backdropFilter: 'blur(8px)',
     }}>
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '48px' }}>
@@ -67,22 +69,15 @@ export function TopNav({
               color: 'inherit', fontFamily: 'inherit',
             }}
           >
-            <img
-              src="/matheo-logo.png"
-              alt={t('app.brand')}
-              style={{
-                height: 56, width: 'auto', objectFit: 'contain',
-                mixBlendMode: 'multiply',
-              }}
-            />
+            <BrandLockup />
           </button>
           <div style={{ display: 'flex', gap: '4px' }}>
             {items.map(item => (
               <button key={item} onClick={() => { trackUi('nav.change', { to: item }); setActiveNav(item); }} style={{
                 padding: '8px 16px', fontSize: '14px',
                 fontWeight: activeNav === item ? 600 : 400,
-                color: activeNav === item ? '#142850' : '#5C6B85',
-                backgroundColor: activeNav === item ? '#14285010' : 'transparent',
+                color: activeNav === item ? 'var(--p-primary)' : 'var(--p-ink-2)',
+                backgroundColor: activeNav === item ? 'var(--p-primary-tint)' : 'transparent',
                 border: 'none', borderRadius: '4px', cursor: 'pointer',
                 transition: 'all 0.2s', fontFamily: 'inherit',
               }}>{navLabel(item)}</button>
@@ -92,7 +87,7 @@ export function TopNav({
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{
             display: 'flex', gap: 0, padding: 2,
-            backgroundColor: '#14285008', borderRadius: 4, border: '1px solid #14285018',
+            backgroundColor: 'var(--p-surface-2)', borderRadius: 4, border: '1px solid var(--p-border)',
           }}>
             {(['hi', 'en', 'ko'] as const).map((l) => (
               <button
@@ -102,8 +97,8 @@ export function TopNav({
                 style={{
                   padding: '4px 10px', fontSize: 11, fontWeight: 600,
                   letterSpacing: '0.1em', textTransform: 'uppercase',
-                  backgroundColor: lang === l ? '#142850' : 'transparent',
-                  color: lang === l ? '#EFEBDF' : '#5C6B85',
+                  backgroundColor: lang === l ? 'var(--p-primary)' : 'transparent',
+                  color: lang === l ? 'var(--p-primary-fg)' : 'var(--p-ink-2)',
                   border: 'none', borderRadius: 3, cursor: 'pointer',
                   fontFamily: 'JetBrains Mono, monospace',
                   transition: 'all 0.15s',
@@ -114,16 +109,16 @@ export function TopNav({
             ))}
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '10px', letterSpacing: '0.2em', color: '#8B95AB', textTransform: 'uppercase', marginBottom: '2px' }}>{t('nav.dDayPrefix')}</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.2em', color: 'var(--p-muted)', textTransform: 'uppercase', marginBottom: '2px' }}>{t('nav.dDayPrefix')}</div>
             <div className="serif mono" style={{ fontSize: '20px', fontWeight: 600, letterSpacing: '-0.02em' }}>{t('nav.dDay', { days: user?.dDay ?? '–' })}</div>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#142850', color: '#EFEBDF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 600 }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--p-primary)', color: 'var(--p-primary-fg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 600 }}>
             {user?.name?.[0] ?? '?'}
           </div>
-          <button onClick={goSettings} title={t('settings.title')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5C6B85' }}>
+          <button onClick={goSettings} title={t('settings.title')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--p-ink-2)' }}>
             <SettingsIcon size={16} />
           </button>
-          <button onClick={logout} title={t('nav.logout')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5C6B85' }}>
+          <button onClick={logout} title={t('nav.logout')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--p-ink-2)' }}>
             <LogOut size={16} />
           </button>
         </div>
