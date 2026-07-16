@@ -11,6 +11,10 @@ name: Backend — build & deploy to Azure Container Apps
 on:
   workflow_dispatch:
 
+concurrency:
+  group: mathema-production-backend
+  cancel-in-progress: false
+
 env:
   ACR_NAME: mathemaacr7ehvzqcd6c436
   RESOURCE_GROUP: mathema-prod-cin
@@ -307,6 +311,7 @@ jobs:
             ENV_VARS="$ENV_VARS FIREBASE_PRIVATE_KEY=secretref:firebase-private-key"
           fi
           ENV_VARS="$ENV_VARS GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}"
+          ENV_VARS="$ENV_VARS PLAY_PACKAGE_NAME=ai.matheo.app"
           # Billing UI switch — set GitHub secret BILLING_UI_ENABLED=true to
           # expose paywall / upgrade CTAs without a frontend rebuild.
           if [ -n "${{ secrets.BILLING_UI_ENABLED }}" ]; then

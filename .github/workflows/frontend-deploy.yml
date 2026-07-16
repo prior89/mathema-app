@@ -9,6 +9,10 @@ name: Frontend — build & deploy to Azure Static Web Apps
 on:
   workflow_dispatch:
 
+concurrency:
+  group: mathema-production-frontend
+  cancel-in-progress: false
+
 env:
   # Backend URL injected as VITE_API_BASE_URL at build time so the SPA calls
   # the right API host. Adjust if your Container App FQDN changes.

@@ -19,6 +19,10 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: mathema-android-release
+  cancel-in-progress: false
+
 jobs:
   build-aab:
     runs-on: ubuntu-latest
@@ -70,8 +74,11 @@ jobs:
             echo "Invalid/missing versionCode. Dispatch with version_code or tag as v<semver>+<versionCode>." >&2
             exit 1
           fi
-          if (( version_code <= 2026062102 || version_code > 2100000000 )); then
-            echo "versionCode must be > 2026062102 and <= 2100000000; got $version_code." >&2
+          # Play already contains 2026071501. Keeping the repository floor in
+          # sync prevents a valid-looking workflow input from producing an AAB
+          # that Play will reject as a reused/lower versionCode.
+          if (( version_code <= 2026071501 || version_code > 2100000000 )); then
+            echo "versionCode must be > 2026071501 and <= 2100000000; got $version_code." >&2
             exit 1
           fi
           echo "ANDROID_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
@@ -133,6 +140,17 @@ jobs:
           # gradlew loses its +x bit when committed from Windows; restore it.
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon
+
+      - name: Verify release bundle signature
+        working-directory: app/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB="app/build/outputs/bundle/release/app-release.aab"
+          test -s "$AAB"
+          jarsigner -verify -verbose -certs "$AAB" | tee /tmp/matheo-jarsigner.txt
+          grep -q "jar verified" /tmp/matheo-jarsigner.txt
+          keytool -printcert -jarfile "$AAB"
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
