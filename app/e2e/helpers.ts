@@ -14,7 +14,7 @@ export async function loginAsAdmin(page: Page) {
   await page.goto('/login');
   await page.getByLabel(/이메일|Email/i).fill('admin');
   await page.getByLabel(/비밀번호|Password/i).fill('admin');
-  await page.getByRole('button', { name: /로그인|Sign in/i }).click();
+  await page.getByRole('button', { name: /^로그인$|^Sign in$/i }).click();
   // The seeded account may intentionally be onboarding/guardian gated. Let
   // each caller assert (or declare) the prerequisite it actually needs.
   await expect(page).not.toHaveURL(/\/login$/, { timeout: 10_000 });
