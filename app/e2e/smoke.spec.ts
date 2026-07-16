@@ -21,13 +21,14 @@ test.describe('Matheo public smoke', () => {
     await expect(page.getByLabel('Matheo', { exact: true })).toBeVisible();
   });
 
-  test('onboarding enters through the KR curriculum gate', async ({ page }) => {
+  test('onboarding skips the one-option country gate straight to auth', async ({ page }) => {
     await page.goto('/onboarding');
     await page.getByRole('button', { name: /내 수학 코스 만들기|Build my math path/i }).click();
 
-    await expect(page.getByRole('heading', { name: '어느 나라에서 공부하나요?' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /대한민국/ })).toBeEnabled();
-    await expect(page.getByRole('button', { name: '계속하기', exact: true })).toBeEnabled();
+    // KR-only launch: the country step is gone, so the welcome CTA lands on
+    // account creation directly — still with zero India-curriculum leakage.
+    await expect(page.getByRole('heading', { name: 'Matheo 계정 만들기' })).toBeVisible();
+    await expect(page.getByText('어느 나라에서 공부하나요?')).toHaveCount(0);
     await expect(page.getByText(/NCERT|JEE|CBSE/)).toHaveCount(0);
   });
 

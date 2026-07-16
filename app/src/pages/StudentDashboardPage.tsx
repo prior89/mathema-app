@@ -323,7 +323,7 @@ function WeeklyCard({ row }: { row: WeeklyReportListItem }) {
         <Stat label="문제" value={String(row.problemsSolved)} />
         <Stat label="정답률" value={`${Math.round(row.accuracyPct)}%`} />
         <Stat label="세션" value={String(row.totalSessions)} />
-        <Stat label="AI 점수" value={`${row.aiScore}/10`} />
+        <Stat label="AI 점수" value={`${Math.min(10, row.aiScore).toFixed(1)}/10`} />
       </div>
     </Card>
   );

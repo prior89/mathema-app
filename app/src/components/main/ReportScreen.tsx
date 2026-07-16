@@ -20,7 +20,7 @@ export function ReportScreen() {
   const ach = useQuery({ queryKey: ['achievements'], queryFn: fetchAchievements });
   const mentor = useQuery({ queryKey: ['mentor'], queryFn: fetchMentorMessage });
 
-  const userName = (me.data?.name ?? '').split(' ')[0];
+  const userName = (me.data?.name ?? '').split(' ')[0] || t('onboarding.ready.title.fallback');
   // Week boundaries come from the backend — KR Asia/Seoul vs IN Asia/Kolkata
   // can land on different Mondays around midnight, and the API's isoWeek is
   // the single source of truth that the mentor card also keys off.
@@ -73,6 +73,23 @@ export function ReportScreen() {
           </div>
 
           <EfficacyCard compact />
+
+          {!cur.isLoading && !hasData && (
+            <div className="card" style={{ padding: 16, marginBottom: 12, textAlign: 'center' }}>
+              <div style={{ color: 'var(--p-muted)', fontSize: 13, lineHeight: 1.5 }}>
+                {t('reportScreen.empty')}
+              </div>
+              <button
+                type="button"
+                className="btn outline"
+                style={{ marginTop: 12, height: 44 }}
+                onClick={() => nav('/app/learn')}
+              >
+                {t('onboarding.ready.cta.start')}
+                <Glyph.ChevronR />
+              </button>
+            </div>
+          )}
 
           {/* Outcome headline — the report's actual sales pitch. The accuracy
               delta was buried as a tiny chip in the stat grid; a parent or

@@ -79,7 +79,9 @@ export default function RegisterPage() {
   const [googleBusy, setGoogleBusy] = useState(false);
 
   useEffect(() => {
-    setLang(detectOnboardingLang(), { reload: false });
+    // KR-only launch: don't let a non-ko device locale render an EN signup
+    // for what is currently a Korea-only funnel.
+    setLang(LAUNCH_STUDENT_ONLY ? 'ko' : detectOnboardingLang(), { reload: false });
   }, [setLang]);
 
   const isMinorStudent = useMemo(
@@ -389,6 +391,9 @@ function StepRoleAndCredentials({
         <label>{t('auth.name')}</label>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('reg.name.placeholder')} />
       </div>
+      {/* KR-only launch: a country grid whose only enabled option is Korea is
+          a fake decision — hide it until a second market goes live. */}
+      {!LAUNCH_STUDENT_ONLY && (
       <div className="field">
         <label>{country === 'KR' ? '국가' : 'Country'}</label>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
@@ -416,6 +421,7 @@ function StepRoleAndCredentials({
           })}
         </div>
       </div>
+      )}
       {!hideGoogle && (
         <>
           <AuthDivider labelKey="reg.or" />

@@ -7,6 +7,7 @@
  * Notes is always immediate. */
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   extractProblemText,
   solveExtractedText,
@@ -465,8 +466,11 @@ function SolutionStepsList({
 function isQuotaExceededError(e: unknown): boolean {
   const data = (e as { response?: { data?: any } })?.response?.data;
   // HttpExceptionFilter wraps the guard payload as { error: { error: 'QuotaExceeded', … } };
-  // the bare shape is kept for safety with unwrapped responses.
-  return data?.error === 'QuotaExceeded' || data?.error?.error === 'QuotaExceeded';
+  // the bare shape is kept for safety with unwrapped responses. OcrQuotaExceeded
+  // (the 40/day OCR ceiling) gets the same quota UX — without it the user saw a
+  // raw "upload failed" and kept retrying a hard daily limit.
+  const code = data?.error?.error ?? data?.error;
+  return code === 'QuotaExceeded' || code === 'OcrQuotaExceeded';
 }
 
 function extractErrorMessage(e: unknown, t: Translate): string | null {
@@ -1124,6 +1128,7 @@ function ResultPhase({
   // invalidates it) so the next solve re-solves — a direct answer to the #1
   // trust complaint about solver apps ("the AI won't admit it's wrong").
   const problemId = solve.problemId;
+  const qc = useQueryClient();
   const [reporting, setReporting] = useState(false);
   const onReport = async () => {
     if (!problemId || reporting) return;
@@ -1131,6 +1136,14 @@ function ResultPhase({
     setReporting(true);
     try {
       await reportProblem(problemId);
+      // The server just EXCLUDEd the problem — drop every cache that could
+      // still serve it (or its retired solution) so the "won't be recommended
+      // again" promise holds without an app reload.
+      qc.invalidateQueries({ queryKey: ['problem', problemId] });
+      qc.invalidateQueries({ queryKey: ['practice-problems'] });
+      qc.invalidateQueries({ queryKey: ['ko-practice'] });
+      qc.invalidateQueries({ queryKey: ['queue-next'] });
+      qc.invalidateQueries({ queryKey: ['wn-list'] });
       toast(t('upload.result.report.done'), 'success');
     } catch {
       toast(t('upload.result.report.failed'), 'error');

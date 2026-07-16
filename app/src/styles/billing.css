@@ -6,7 +6,7 @@
   min-height: 54px;
   padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
   display: grid;
-  grid-template-columns: 40px 1fr 40px;
+  grid-template-columns: 44px 1fr 44px;
   align-items: center;
   border-bottom: 1px solid var(--p-border);
   background: var(--p-surface);
@@ -19,8 +19,8 @@
 }
 
 .mathema-app .paywall-icon-button {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -36,8 +36,8 @@
 }
 
 .mathema-app .paywall-topbar-spacer {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
 }
 
 .mathema-app .paywall-scroll {
@@ -217,7 +217,7 @@
 }
 
 .mathema-app .paywall-preview-button {
-  min-height: 40px;
+  min-height: 44px;
   margin-top: 12px;
   padding: 0 14px;
   display: inline-flex;
@@ -486,7 +486,7 @@
 }
 
 .mathema-app .paywall-text-button {
-  min-height: 36px;
+  min-height: 44px;
   padding: 0;
   display: inline-flex;
   align-items: center;

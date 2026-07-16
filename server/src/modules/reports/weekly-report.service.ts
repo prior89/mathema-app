@@ -171,7 +171,9 @@ export class WeeklyReportService {
     const baseAccuracy = s.averageAccuracyPct / 10;          // 0~10
     const volumeBonus = Math.min(2, s.totalAttempts / 30);    // 30+ 문제 = +2
     const consistencyBonus = Math.min(1, s.sessions / 5);     // 5+ 세션 = +1
-    return Math.round((baseAccuracy + volumeBonus + consistencyBonus) * 10) / 10;
+    // The public contract is /10. Bonuses may improve a low-volume score but
+    // must never produce impossible values such as 11.7/10.
+    return Math.min(10, Math.round((baseAccuracy + volumeBonus + consistencyBonus) * 10) / 10);
   }
 
   private buildNextGoals(

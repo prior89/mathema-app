@@ -73,7 +73,7 @@ export function NotesListScreen() {
             <StatMini k={t('notes.stat.total')} v={stats.data?.total ?? 0} />
             <StatMini k={t('notes.stat.analyzed')} v={stats.data?.analyzed ?? 0} />
             <StatMini k={t('notes.stat.mastered')} v={stats.data?.mastered ?? 0} />
-            <StatMini k={t('notes.stat.retry')} v={Math.round(stats.data?.retryAccuracy ?? 0)} />
+            <StatMini k={t('notes.stat.retry')} v={Math.round(stats.data?.retryAccuracy ?? 0)} suffix="%" />
           </div>
         )}
       </div>
@@ -208,11 +208,11 @@ function stripTrailingDot(s: string | undefined | null): string {
   return (s ?? '').replace(/[\s.]+$/u, '');
 }
 
-function StatMini({ k, v }: { k: string; v: number }) {
+function StatMini({ k, v, suffix = '' }: { k: string; v: number; suffix?: string }) {
   return (
     <div className="stat" style={{ padding: '8px 10px' }}>
       <div className="k" style={{ fontSize: 9.5 }}>{k}</div>
-      <div className="v italic" style={{ fontSize: 18 }}>{v}</div>
+      <div className="v italic" style={{ fontSize: 18 }}>{v}{suffix}</div>
     </div>
   );
 }

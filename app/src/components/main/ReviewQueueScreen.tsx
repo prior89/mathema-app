@@ -166,6 +166,7 @@ function ActiveProblem({
   onMastered: () => Promise<void> | void;
 }) {
   const { t } = useT();
+  const qc = useQueryClient();
   const canvasRef = useRef<HandwritingCanvasHandle>(null);
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ kind: 'correct' | 'wrong'; msg: string } | null>(null);
@@ -205,6 +206,13 @@ function ActiveProblem({
       durationSec: Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000)),
     }),
     onSuccess: async (r) => {
+      // Every check records an Attempt (dashboard minutes, occurrences) even
+      // when the SM-2 rating step is skipped afterwards — refresh the surfaces
+      // that read it so backing out doesn't leave pre-answer state everywhere.
+      qc.invalidateQueries({ queryKey: ['wn-list'] });
+      qc.invalidateQueries({ queryKey: ['wn-stats'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+      qc.invalidateQueries({ queryKey: ['heatmap'] });
       if (r.isCorrect) {
         setFeedback({ kind: 'correct', msg: t('review.correct') });
         setShowSm2(true);

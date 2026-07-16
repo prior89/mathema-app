@@ -119,7 +119,7 @@ export function ParentDashboardPage({ embedded = false }: { embedded?: boolean }
               <StatCard icon={Target} label={lang === 'ko' ? '푼 문제' : 'Problems solved'}
                 value={`${latest.totalAttempts}`} sub={`${lang === 'ko' ? '정답률' : 'Accuracy'} ${Math.round(latest.accuracyPct)}%`} accent={COLORS.good} />
               <StatCard icon={TrendingUp} label={lang === 'ko' ? 'AI 종합 점수' : 'AI score'}
-                value={`${latest.aiScore}/10`} sub={lang === 'ko' ? '학습 패턴 종합' : 'pattern-weighted'} accent={'#C7791F'} />
+                value={`${Math.min(10, latest.aiScore).toFixed(1)}/10`} sub={lang === 'ko' ? '학습 패턴 종합' : 'pattern-weighted'} accent={'#C7791F'} />
               <StatCard icon={AlertTriangle} label={lang === 'ko' ? '주의 신호' : 'Attention'}
                 value={`${patterns.data?.length ?? 0}`} sub={lang === 'ko' ? '반복 실수 패턴' : 'repeated patterns'} accent={COLORS.warn} />
             </div>

@@ -64,6 +64,12 @@ export function HomeScreen() {
   // the India PoC default "Sunday, 24 May".
   const dateLocale = lang === 'ko' ? 'ko-KR' : 'en-IN';
   const dateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'short' });
+  const isColdStart = !!(
+    summary.data
+    && !today.isLoading
+    && summary.data.todayMinutes === 0
+    && summary.data.streakDays === 0
+  );
 
   return (
     <div className="screen tabbed-screen home-screen">
@@ -120,10 +126,7 @@ export function HomeScreen() {
               resolves before `today`, today.data is still undefined and the
               `?? 0 === 0` check passed, briefly showing the hero before the
               recommend cards arrived and hid it again. */}
-          {summary.data
-            && !today.isLoading
-            && summary.data.todayMinutes === 0
-            && summary.data.streakDays === 0 && (
+          {isColdStart && (
             <ColdStartHero
               name={userName.split(' ')[0]}
               placementChapter={today.data?.[0]?.chapterCode ?? null}
@@ -136,6 +139,11 @@ export function HomeScreen() {
               starts. Streak still surfaces in the 12-week heatmap header
               below, so the signal isn't lost. */}
 
+          {/* On a true cold start the placement hero is the single learning
+              CTA. Hiding the duplicate empty-plan card avoids competing first
+              actions that all led to the same lesson library. */}
+          {!isColdStart && (
+          <>
           {/* Today's plan */}
           <div className="section-h">
             <span className="label">{t('home.today.section')}</span>
@@ -219,6 +227,8 @@ export function HomeScreen() {
               );
             })}
           </div>
+          </>
+          )}
 
           {/* Keep photo solving one tap away, but let the personalized mission
               own the first visual position so Home answers “what next?” before

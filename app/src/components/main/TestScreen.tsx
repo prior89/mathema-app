@@ -130,8 +130,6 @@ export function TestScreen() {
             {t('test.how.body.mid')}
             <strong style={{ color: 'var(--p-ink)' }}>{t('test.how.body.oneAtTime')}</strong>
             {t('test.how.body.order')}
-            <span className="chip" style={{ padding: '1px 6px', fontSize: 10.5 }}>{t('test.how.body.comingSoon')}</span>
-            {t('test.how.body.tail')}
           </div>
 
           {/* REAL currently uses JEE +4/-1 scoring. Do not expose it to the
