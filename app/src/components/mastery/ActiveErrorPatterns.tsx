@@ -68,7 +68,14 @@ export function ActiveErrorPatternBanner({
     <div
       className="card"
       role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={onClick ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      } : undefined}
       style={{
         background: 'var(--p-primary-tint)',
         borderColor: 'transparent',
@@ -144,7 +151,14 @@ export function ActiveErrorPatternList({
             key={p.id}
             className="card"
             role={actionable ? 'button' : undefined}
+            tabIndex={actionable ? 0 : undefined}
             onClick={actionable ? () => onPractice!(p) : undefined}
+            onKeyDown={actionable ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onPractice!(p);
+              }
+            } : undefined}
             style={{ padding: 12, cursor: actionable ? 'pointer' : 'default' }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>

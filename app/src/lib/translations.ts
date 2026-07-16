@@ -549,7 +549,7 @@ const ko = {
   'study.concept.banner.label': 'New · 개념 학습',
   'study.concept.banner.title': '문제 풀기 전, 단원의 빅 아이디어부터 →',
   'study.concept.banner.desc':
-    '7~12학년 수학 단원 79개 · 단원당 10~25분 · 예시, 그림, 풀이, 복습 문제로 차근차근 배워요.',
+    '중1~고3 수학 단원 · 단원당 10~25분 · 예시, 그림, 풀이, 복습 문제로 차근차근 배워요.',
   'study.gate.toConcept': '먼저 개념 학습: {title}',
 
   // ===== Quota / Paywall (Phase 5 — AI Solver daily limit) =====
@@ -665,7 +665,7 @@ const ko = {
   'study.howThis.bMastery': '단원학습',
   'study.howThis.body.post': '에서 개념 학습을 끝낸 단원만 위 드롭다운에 띄워줘요. 틀린 문제는 ',
   'study.howThis.bNotes': '오답노트',
-  'study.howThis.body.tail': '에 자동으로 쌓여 주간 복습 대상이 돼요. 풀에 없는 문제는 위 AI 풀이 도우미로 찍어 올리면 라이브러리에 추가됩니다.',
+  'study.howThis.body.tail': '에 자동으로 저장되고, 3일 뒤 복습 대기열에서 다시 풀 수 있어요.',
 
   // ===== Study Practice Screen =====
   'practice.back': '뒤로',
@@ -811,7 +811,7 @@ const ko = {
   'test.how.body.threeDays': '3일',
   'test.how.body.mid': ' 뒤 다시 열려요. 바로 외운 답보다 오래 남는 이해를 확인하기 좋은 간격이에요. ',
   'test.how.body.oneAtTime': '한 번에 한 문제씩',
-  'test.how.body.order': ' 먼저 담긴 순서대로 풀어요. 막히면 세 번째 시도부터 단계 힌트가 열려요. 주간 자동 복습은 ',
+  'test.how.body.order': ' 먼저 담긴 순서대로 풀어요. 막히면 세 번째 시도부터 단계 힌트가 열려요.',
   'test.how.body.comingSoon': '준비 중',
   'test.how.body.tail': ' 이에요.',
 
@@ -1179,11 +1179,12 @@ const ko = {
   'reportScreen.outcome.review': '약점 복습 시작',
   'reportScreen.summary': '이번 주 한눈에 보기',
   'reportScreen.hello': '안녕하세요, ',
+  'reportScreen.empty': '이번 주 학습 기록이 아직 없어요. 한 단원을 시작하면 이 주간 리포트가 채워져요.',
   'reportScreen.stat.studyTime': '학습 시간',
   'reportScreen.stat.problems': '푼 문제',
   'reportScreen.stat.problemsPerDay': '하루 ≈ {n}문제',
   'reportScreen.stat.accuracy': '정답률',
-  'reportScreen.stat.aiScore': 'AI 점수',
+  'reportScreen.stat.aiScore': '누적 평균 이해도',
   'reportScreen.stat.noData': '아직 데이터가 없어요',
   'reportScreen.mentor.from': 'AI 멘토',
   'reportScreen.mentor.welcome': '"{name}님, 반가워요. 첫 풀이를 시작하면 주간 멘토 브리프가 잠금 해제됩니다."',
@@ -1201,7 +1202,7 @@ const ko = {
   'reportScreen.achievements.unlocked': '{n}개 잠금 해제',
 
   // ===== Login Page =====
-  'login.subtitleClass': '7~12 학년',
+  'login.subtitleClass': '중1~고3',
   'login.eyebrow': '이어서 공부하기',
   'login.title.short': '로그인',
   'login.tagline': '답만 확인하지 않고, 막힌 한 단계를 찾아 내 힘으로 풀 수 있게 도와줘요.',
@@ -1239,7 +1240,7 @@ const ko = {
 
   // ===== Onboarding Page =====
   'onboarding.back': '이전',
-  'onboarding.classLabel': '7~12 학년',
+  'onboarding.classLabel': '중1~고3',
   'onboarding.welcome.figureLabel': '그림 01 — 정적분',
   'onboarding.welcome.figureSub': '12학년 · 적분',
   'onboarding.welcome.eyebrow': '답보다 이해가 남는 수학',
@@ -1458,7 +1459,7 @@ const ko = {
   'paywall.trust.playDesc': 'Matheo는 카드 번호를 직접 저장하지 않습니다.',
   'paywall.trust.cancelTitle': '언제든지 해지 가능',
   'paywall.trust.cancelDesc': '해지해도 이미 결제한 기간이 끝날 때까지 Premium을 이용할 수 있어요.',
-  'paywall.freeStillAvailable': '지금 구독하지 않아도 사진 풀이와 단계별 풀이는 계속 무료로 쓸 수 있어요.',
+  'paywall.freeStillAvailable': '지금 구독하지 않아도 사진 풀이와 단계별 풀이는 하루 {limit}회까지 계속 쓸 수 있어요.',
   'paywall.member.active': 'PREMIUM 이용 중',
   'paywall.member.plan': '현재 {plan}을 이용하고 있어요.',
   'paywall.member.status': '구독 상태',
@@ -2290,7 +2291,7 @@ const en: typeof ko = {
   'test.how.body.threeDays': 'three days',
   'test.how.body.mid': '—a useful gap for checking understanding that lasts beyond a memorized answer. You solve them ',
   'test.how.body.oneAtTime': 'one at a time',
-  'test.how.body.order': ' in the order they were added. Hints unlock after three wrong tries on the same problem. Auto-scheduled weekly reviews are ',
+  'test.how.body.order': ' in the order they were added. Hints unlock after three wrong tries on the same problem.',
   'test.how.body.comingSoon': 'Coming soon',
   'test.how.body.tail': '.',
 
@@ -2658,11 +2659,12 @@ const en: typeof ko = {
   'reportScreen.outcome.review': 'Start weak-spot review',
   'reportScreen.summary': 'Your week at a glance',
   'reportScreen.hello': 'Hello, ',
+  'reportScreen.empty': 'No study activity yet this week. Start a lesson to fill this weekly report.',
   'reportScreen.stat.studyTime': 'Study time',
   'reportScreen.stat.problems': 'Problems',
   'reportScreen.stat.problemsPerDay': '≈ {n}/day',
   'reportScreen.stat.accuracy': 'Accuracy',
-  'reportScreen.stat.aiScore': 'AI Score',
+  'reportScreen.stat.aiScore': 'Overall mastery',
   'reportScreen.stat.noData': 'No data yet',
   'reportScreen.mentor.from': 'From your AI mentor',
   'reportScreen.mentor.welcome': '"Welcome, {name}. Start practicing to unlock your first weekly mentor brief."',
@@ -2937,7 +2939,7 @@ const en: typeof ko = {
   'paywall.trust.playDesc': 'Matheo never stores your card number.',
   'paywall.trust.cancelTitle': 'Cancel anytime',
   'paywall.trust.cancelDesc': 'After cancellation, Premium remains available until the paid period ends.',
-  'paywall.freeStillAvailable': 'Even without subscribing, photo solving and step-by-step solutions stay free.',
+  'paywall.freeStillAvailable': 'Even without subscribing, photo solving and step-by-step solutions stay free for up to {limit} uses a day.',
   'paywall.member.active': 'PREMIUM ACTIVE',
   'paywall.member.plan': 'You are currently on the {plan} plan.',
   'paywall.member.status': 'Subscription status',

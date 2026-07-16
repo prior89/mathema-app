@@ -80,7 +80,12 @@ export function renderMathHtml(src: string): string {
       parts.push(renderTextOrRescue(tk));
     }
   }
-  return parts.join('');
+  // Bold spans can contain inline math, for example
+  // `**denominator $q$ has only 2 and 5 as prime factors**`. Math tokenizing
+  // splits that into three chunks, so renderTextPart cannot close the marker
+  // inside either prose chunk. Resolve the remaining marker pair after the
+  // safe text and KaTeX HTML have been assembled (KaTeX output contains no `**`).
+  return parts.join('').replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>');
 }
 
 /** OCR frequently drops a closing delimiter (\] or a paired $), so a chunk

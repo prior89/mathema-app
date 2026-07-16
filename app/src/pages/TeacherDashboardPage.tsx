@@ -382,7 +382,7 @@ function WeeklyTable({ rows }: { rows: any[] }) {
               <td style={{ padding: '10px 14px' }}>{r.totalAttempts}</td>
               <td style={{ padding: '10px 14px' }}>{Math.round(r.accuracyPct)}%</td>
               <td style={{ padding: '10px 14px' }}>{r.totalSessions}</td>
-              <td style={{ padding: '10px 14px' }}>{r.aiScore}/10</td>
+              <td style={{ padding: '10px 14px' }}>{Math.min(10, r.aiScore).toFixed(1)}/10</td>
               <td style={{ padding: '10px 14px', color: COLORS.sub }}>{new Date(r.generatedAt).toLocaleDateString()}</td>
             </tr>
           ))}

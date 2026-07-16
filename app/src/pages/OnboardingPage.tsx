@@ -51,7 +51,9 @@ type ConsentMap = Record<ConsentKey, boolean>;
 type CountryId = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'AE' | 'ID';
 
 const STEP_FLOW: StepKey[] = LAUNCH_STUDENT_ONLY
-  ? ['welcome', 'country', 'auth', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready']
+  // KR is the only live launch market. A one-option country screen added a
+  // decision-shaped tap without giving the student a real decision.
+  ? ['welcome', 'auth', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready']
   : ['welcome', 'country', 'auth', 'role', 'profile', 'goal', 'diagnostic', 'results', 'consents', 'ready'];
 
 // CLASS_X (UI) → GradeLevel (backend enum)
@@ -109,9 +111,11 @@ function Flow({ onFinish }: { onFinish: (role?: Role, target?: string) => void }
   // consents. They re-enter the standard funnel at account upgrade.
   const [guest, setGuest] = useState(false);
 
-  // Welcome is shown before country pick — infer market locale from device.
+  // KR-only launch skips the country step, so pre-auth screens must not fall
+  // back to the device locale (an EN welcome for a Korean student). Post-login
+  // <I18nCountrySync /> still handles the country-aware flip for other markets.
   useEffect(() => {
-    setLang(detectOnboardingLang(), { reload: false });
+    setLang(LAUNCH_STUDENT_ONLY ? 'ko' : detectOnboardingLang(), { reload: false });
   }, [setLang]);
   const [role, setRole] = useState<Role | ''>('STUDENT');
   // Empty initial — placeholder/label comes from the input's placeholder

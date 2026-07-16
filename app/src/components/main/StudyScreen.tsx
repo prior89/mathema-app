@@ -137,7 +137,7 @@ export function StudyScreen() {
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--p-ink)', letterSpacing: '-0.005em' }}>
               {t('study.pick.title')}
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--p-muted)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+            <div style={{ fontSize: 12.5, color: 'var(--p-muted)', marginTop: 4, lineHeight: 1.45 }}>
               {t('study.pick.sub')}
             </div>
 
@@ -152,7 +152,7 @@ export function StudyScreen() {
                   aria-label={t('study.pick.chapterAria')}
                   style={{
                     width: '100%', boxSizing: 'border-box', marginTop: 10,
-                    padding: '10px 12px', borderRadius: 10,
+                    minHeight: 46, padding: '10px 12px', borderRadius: 10,
                     border: '1px solid var(--p-border-strong)',
                     background: 'var(--p-surface)', color: 'var(--p-ink)',
                     font: 'inherit', fontSize: 14,

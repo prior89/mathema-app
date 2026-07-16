@@ -698,7 +698,7 @@ export default function PaywallPage() {
             </div>
           </section>
 
-          <p className="paywall-free-note">{t('paywall.freeStillAvailable')}</p>
+          <p className="paywall-free-note">{t('paywall.freeStillAvailable', { limit: quotaLimit })}</p>
 
           <div className="paywall-footer-actions">
             {isAndroidBilling && (

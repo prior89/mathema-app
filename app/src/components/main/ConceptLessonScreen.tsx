@@ -1001,12 +1001,10 @@ function KoreanConceptLessonScreen({ code }: { code: string }) {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '12px 20px 24px' }}>
-          {/* Title + caption */}
+          {/* Student-facing title. Internal chapter codes stay in analytics
+              and routes; they are not useful lesson content. */}
           <div>
-            <div className="caption" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, opacity: 0.7, letterSpacing: '0.1em' }}>
-              {code}
-            </div>
-            <h1 className="display" style={{ marginTop: 6, fontSize: 24, lineHeight: 1.25 }}>{titleKo}</h1>
+            <h1 className="display" style={{ fontSize: 24, lineHeight: 1.25 }}>{titleKo}</h1>
           </div>
 
           {/* BIG IDEA — NCERT 포맷과 동일하게 eyebrow + 큰 헤드라인.
@@ -1231,8 +1229,12 @@ function KoreanPracticePhase({
     <Shell back={onBack} title={titleKo} pill={`${problemIdx + 1} / ${problemTotal}`}>
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ padding: '12px 20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* The Shell pill already shows "문제 X / Y" — repeating it here read
+              as two competing counters. Keep only the step-level context. */}
           <span className="eyebrow" style={{ color: 'var(--p-primary)' }}>
-            문제 {problemIdx + 1} / {problemTotal} · 단계 {stepIdx + 1} / {stepTotal} · {stepLabel}
+            {stepTotal > 1
+              ? `단계 ${stepIdx + 1} / ${stepTotal} · ${stepLabel}`
+              : `문제 풀이 · ${stepLabel}`}
           </span>
           <h3 className="title" style={{ fontSize: 18, lineHeight: 1.3, marginTop: 4 }}>
             <MathText text={step.prompt} />
@@ -1387,6 +1389,10 @@ function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
     if (isFocused) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [isFocused]);
   const tone = STEP_TONE[step.kind] ?? DEFAULT_STEP_TONE;
+  const eyebrow = t(`step.eyebrow.${step.kind}` as any) || tone.eyebrow;
+  // Some seeded steps title themselves identically to the kind chip ("훅" under
+  // a 훅 chip) — rendering both reads as a stutter.
+  const showTitle = step.title.trim().toLocaleLowerCase() !== eyebrow.trim().toLocaleLowerCase();
   return (
     <div
       ref={ref}
@@ -1410,9 +1416,11 @@ function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
           borderColor: 'transparent',
         }}
       >
-        {t(`step.eyebrow.${step.kind}` as any) || tone.eyebrow}
+        {eyebrow}
       </span>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, marginBottom: 10, lineHeight: 1.35, color: 'var(--p-ink)' }}>{step.title}</div>
+      {showTitle && (
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, marginBottom: 10, lineHeight: 1.35, color: 'var(--p-ink)' }}>{step.title}</div>
+      )}
       <div style={{ fontSize: 14.5, lineHeight: 1.75, color: 'var(--p-ink)', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
         <MathText text={step.body} />
       </div>

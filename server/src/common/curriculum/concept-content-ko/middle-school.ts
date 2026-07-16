@@ -235,7 +235,7 @@ export const MIDDLE_SCHOOL_CONTENT: KoreanChapterContentMap = {
     hook: '$\\frac{1}{3} = 0.333...$ 끝없이 이어지는 3. 어떤 분수는 유한소수, 어떤 건 순환소수, 왜 갈릴까?',
     concrete: '$\\frac{3}{20} = 0.15$ (유한). $\\frac{1}{6} = 0.1\\overline{6}$ (순환). $\\frac{5}{12} = 0.41\\overline{6}$.',
     pictorial: '분수 → 소수 나눗셈 알고리듬. 나머지가 0이면 유한소수, 나머지가 반복되면 순환.',
-    abstract: '기약분수 $\\frac{q}{p}$ ($p, q$ 서로소)에서 **분모 $p$의 소인수가 2와 5뿐**이면 유한소수, 그 외 소인수가 있으면 순환소수. 순환소수 → 분수: $0.\\overline{3} = \\frac{3}{9} = \\frac{1}{3}$.',
+    abstract: '기약분수 $\\frac{p}{q}$ ($p, q$ 서로소)에서 **분모 $q$의 소인수가 2와 5뿐**이면 유한소수, 그 외 소인수가 있으면 순환소수. 순환소수 → 분수: $0.\\overline{3} = \\frac{3}{9} = \\frac{1}{3}$.',
     worked: {
       intro: '$x = 0.\\overline{27}$을 분수로.',
       steps: [

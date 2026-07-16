@@ -68,4 +68,10 @@ describe('renderMathHtml — KR exam OCR', () => {
     expect(html).toContain('<strong>핵심</strong>');
     expect(html).not.toContain('class="katex');
   });
+
+  it('renders markdown bold that spans inline math without leaking markers', () => {
+    const html = renderMathHtml('A **denominator $q$ with only 2 and 5** terminates.');
+    expect(html).not.toContain('**');
+    expect(html).toMatch(/<strong>denominator <span class="katex"[\s\S]+?<\/strong>/);
+  });
 });
