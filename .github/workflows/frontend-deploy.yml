@@ -72,6 +72,29 @@ jobs:
       - name: Verify static deployment artifact
         run: node scripts/verify-static-site.mjs --artifact app/dist
 
+      # The frontend OAuth request now includes fields that older backend
+      # revisions reject under forbidNonWhitelisted. Never publish this bundle
+      # until the healthy backend built from this exact commit is live.
+      - name: Require matching healthy backend release
+        shell: bash
+        env:
+          EXPECTED_BACKEND_GIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          curl -fsS --max-time 15 "${VITE_API_BASE_URL}/health/ready" >/dev/null
+          LIVE_SHA=$(
+            curl -fsS --max-time 15 "${VITE_API_BASE_URL}/health/version" |
+              node -e "let s=''; process.stdin.setEncoding('utf8'); process.stdin.on('data', c => s += c); process.stdin.on('end', () => process.stdout.write(JSON.parse(s).gitSha || ''));"
+          )
+
+          if [ "$LIVE_SHA" != "$EXPECTED_BACKEND_GIT_SHA" ]; then
+            echo "::error::Backend release $LIVE_SHA does not match frontend commit $EXPECTED_BACKEND_GIT_SHA"
+            exit 1
+          fi
+
+          echo "Matching backend release is healthy."
+
       # OIDC login — fetches the canonical SWA deployment token from Azure so
       # the stored GH secret can't drift from the actual SWA (rotation,
       # recreate, wrong copy, etc.).

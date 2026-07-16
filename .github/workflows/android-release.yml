@@ -33,6 +33,9 @@ jobs:
       # Public OAuth identifier (not a client secret). This must be the Web
       # client used as the Credential Manager server client ID/audience.
       EXPECTED_GOOGLE_WEB_CLIENT_ID: 780610015758-4sfjjjhtq6p86edr5bsdn5c9b95uav1b.apps.googleusercontent.com
+      # Public fingerprint from Play Console > App signing > Upload key
+      # certificate. Reject bundles signed by any other local/CI key.
+      EXPECTED_PLAY_UPLOAD_CERT_SHA256: 3C:6C:41:EC:FD:1B:E6:A4:15:85:35:4D:67:5B:08:58:20:14:65:53:38:F0:99:EC:54:03:EA:08:76:51:40:17
     steps:
       - uses: actions/checkout@v4
 
@@ -67,16 +70,16 @@ jobs:
           version_code="$DISPATCH_VERSION_CODE"
           if [[ -z "$version_code" && "$GITHUB_REF_TYPE" == "tag" ]]; then
             # Tag builds must use v<semver>+<versionCode>, for example:
-            # v1.0.1+2026071501
+            # v1.0.1+2026071701
             version_code="${GITHUB_REF_NAME##*+}"
           fi
           if [[ ! "$version_code" =~ ^[1-9][0-9]{0,9}$ ]]; then
             echo "Invalid/missing versionCode. Dispatch with version_code or tag as v<semver>+<versionCode>." >&2
             exit 1
           fi
-          # Play already contains 2026071501. Keeping the repository floor in
-          # sync prevents a valid-looking workflow input from producing an AAB
-          # that Play will reject as a reused/lower versionCode.
+          # Play currently contains 2026062102, and CI already generated a
+          # 2026071501 candidate. Reserve both by advancing beyond 2026071501
+          # so an old artifact can never be confused with this release.
           if (( version_code <= 2026071501 || version_code > 2100000000 )); then
             echo "versionCode must be > 2026071501 and <= 2100000000; got $version_code." >&2
             exit 1
@@ -146,11 +149,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export LC_ALL=C
           AAB="app/build/outputs/bundle/release/app-release.aab"
           test -s "$AAB"
           jarsigner -verify -verbose -certs "$AAB" | tee /tmp/matheo-jarsigner.txt
           grep -q "jar verified" /tmp/matheo-jarsigner.txt
-          keytool -printcert -jarfile "$AAB"
+          keytool -printcert -jarfile "$AAB" | tee /tmp/matheo-upload-cert.txt
+          ACTUAL_UPLOAD_CERT_SHA256=$(
+            awk '/^[[:space:]]*SHA256:/{sub(/^[[:space:]]*SHA256:[[:space:]]*/, ""); print; exit}' \
+              /tmp/matheo-upload-cert.txt
+          )
+          if [[ -z "$ACTUAL_UPLOAD_CERT_SHA256" || "$ACTUAL_UPLOAD_CERT_SHA256" != "$EXPECTED_PLAY_UPLOAD_CERT_SHA256" ]]; then
+            echo "::error::AAB upload certificate SHA-256 does not match the Play Console upload key." >&2
+            echo "Expected: $EXPECTED_PLAY_UPLOAD_CERT_SHA256" >&2
+            echo "Actual:   ${ACTUAL_UPLOAD_CERT_SHA256:-missing}" >&2
+            exit 1
+          fi
+          echo "AAB is signed with the Play Console upload key."
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
