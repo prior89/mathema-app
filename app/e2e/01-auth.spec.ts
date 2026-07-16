@@ -156,13 +156,9 @@ async function mockAuthApi(
 
 async function reachOnboardingAuth(page: Page) {
   await page.goto('/onboarding');
+  // KR-only launch drops the one-option country gate: the welcome CTA lands
+  // directly on account creation (country defaults to KR, locale forced ko).
   await page.getByRole('button', { name: /내 수학 코스 만들기|Build my math path/i }).click();
-  const korea = page.getByRole('button', { name: /대한민국/ });
-  await expect(korea).toBeVisible();
-  // Picking KR (not merely relying on its default value) exercises the market
-  // gate and switches the rest of onboarding to the correct locale.
-  await korea.click();
-  await page.getByRole('button', { name: '계속하기', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Matheo 계정 만들기|Create your Matheo account/i })).toBeVisible();
 }
 
