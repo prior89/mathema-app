@@ -12,7 +12,10 @@ const LEGAL_PATHS = [
   '/legal/account-deletion.md',
 ];
 
-const GOOGLE_SITE_VERIFICATION = 'Uv7M7AJ3Vp5JnxfuOI92ykyvqjZh1SpX_eacxEFEE8s';
+const GOOGLE_SITE_VERIFICATIONS = [
+  'Uv7M7AJ3Vp5JnxfuOI92ykyvqjZh1SpX_eacxEFEE8s',
+  '9-nAlOAxVPOf1-EoD1KLNWTLj7k3bs5567K3thNndmA',
+];
 
 function fail(message) {
   throw new Error(message);
@@ -48,12 +51,14 @@ function assetReferences(html) {
 }
 
 function verifyGoogleSiteOwnership(html, label) {
-  const tag = html.match(/<meta\b[^>]*\bname=["']google-site-verification["'][^>]*>/i)?.[0];
-  if (!tag || (
-    !tag.includes(`content="${GOOGLE_SITE_VERIFICATION}"`)
-    && !tag.includes(`content='${GOOGLE_SITE_VERIFICATION}'`)
-  )) {
-    fail(`${label} is missing the pinned Google Search Console verification meta tag.`);
+  const tags = html.match(/<meta\b[^>]*\bname=["']google-site-verification["'][^>]*>/gi) ?? [];
+  for (const verification of GOOGLE_SITE_VERIFICATIONS) {
+    if (!tags.some((tag) => (
+      tag.includes(`content="${verification}"`)
+      || tag.includes(`content='${verification}'`)
+    ))) {
+      fail(`${label} is missing a pinned Google Search Console verification meta tag.`);
+    }
   }
 }
 
