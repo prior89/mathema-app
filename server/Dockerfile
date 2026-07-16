@@ -75,6 +75,7 @@ COPY --from=build --chown=app:app /repo/server/dist          ./dist
 COPY --from=build --chown=app:app /repo/node_modules         ./node_modules
 COPY --from=build --chown=app:app /repo/server/prisma        ./prisma
 COPY --from=build --chown=app:app /repo/server/package.json  ./
+COPY --from=build --chown=app:app /repo/server/scripts/verify-smtp.cjs ./scripts/verify-smtp.cjs
 
 USER app
 EXPOSE 4000

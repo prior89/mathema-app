@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ServiceUnavailableException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { randomBytes, createHash, createHmac, randomUUID, randomInt, timingSafeEqual } from 'crypto';
@@ -31,6 +31,7 @@ import { OtpProviderService } from './otp-provider.service';
 const RESET_TOKEN_TTL_MIN = 30;
 const VERIFY_TOKEN_TTL_HOURS = 24;
 const REFRESH_REVOKE_NAMESPACE = 'jwt:refresh:revoked:';
+const GOOGLE_NONCE_NAMESPACE = 'auth:google:nonce:';
 
 // Phone-OTP hardening.
 const OTP_CODE_TTL_SEC = 300;
@@ -414,7 +415,10 @@ export class AuthService {
   /**
    * Google ID Token 검증 후 user find-or-create.
    */
-  async signInWithGoogle(idToken: string, ctx: { ip?: string; ua?: string; deviceHash?: string } = {}) {
+  async signInWithGoogle(
+    idToken: string,
+    ctx: { ip?: string; ua?: string; deviceHash?: string; nonce?: string } = {},
+  ) {
     if (!this.googleClient) {
       throw new UnauthorizedException('Google sign-in not configured (GOOGLE_CLIENT_ID missing)');
     }
@@ -427,6 +431,36 @@ export class AuthService {
       payload = ticket.getPayload();
     } catch {
       throw new UnauthorizedException('invalid Google ID token');
+    }
+
+    // Native Credential Manager signs the request nonce into the Google ID
+    // token. If either side supplies one, require both sides to match; this
+    // means an attacker cannot bypass the check by stripping nonce from the
+    // API request. Browser GIS and older app builds remain compatible because
+    // their signed tokens have no nonce claim.
+    if (ctx.nonce || payload?.nonce) {
+      if (!ctx.nonce || typeof payload?.nonce !== 'string') {
+        throw new UnauthorizedException('invalid Google sign-in nonce');
+      }
+      const requestNonce = Buffer.from(ctx.nonce, 'utf8');
+      const tokenNonce = Buffer.from(payload.nonce, 'utf8');
+      if (requestNonce.length !== tokenNonce.length || !timingSafeEqual(requestNonce, tokenNonce)) {
+        throw new UnauthorizedException('invalid Google sign-in nonce');
+      }
+
+      const nowSec = Math.floor(Date.now() / 1000);
+      const nonceTtlSec = Math.max(60, Math.min(3_600, (payload.exp ?? nowSec + 600) - nowSec));
+      const nonceKey = GOOGLE_NONCE_NAMESPACE
+        + createHash('sha256').update(ctx.nonce).digest('base64url');
+      let firstUse: boolean;
+      try {
+        firstUse = await this.redis.setNx(nonceKey, '1', nonceTtlSec);
+      } catch {
+        throw new ServiceUnavailableException('Google sign-in is temporarily unavailable');
+      }
+      if (!firstUse) {
+        throw new UnauthorizedException('Google ID token was already used');
+      }
     }
     if (!payload?.email || !payload.email_verified) {
       throw new UnauthorizedException('email not verified by Google');

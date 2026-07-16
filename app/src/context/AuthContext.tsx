@@ -14,6 +14,9 @@ import { unregisterPushToken } from '../native/push-bridge';
 import { track } from '../lib/analytics';
 import { clearSentryUser, tagSentryUser } from '../lib/sentry';
 import { clearPendingRealExams } from '../lib/pending-real-exam';
+import { consumeGoogleSignInNonce } from '../lib/google-sign-in-nonce';
+import { clearNativeGoogleCredentialState } from '../native/google-auth-bridge';
+import { clearPreAuthAgeBand } from '../lib/pre-auth-age-gate';
 
 export type { GradeLevel };
 
@@ -200,7 +203,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /** Google Sign-In — Web GIS or Capacitor plugin 이 발급한 idToken 으로 백엔드 인증. */
   const loginWithGoogle = async (idToken: string, opts?: { skipNavigate?: boolean; redirectTo?: string | null }) => {
-    const t = await post<{ accessToken: string; refreshToken: string }>('/auth/google/id-token', { idToken });
+    const nonce = consumeGoogleSignInNonce(idToken);
+    const t = await post<{ accessToken: string; refreshToken: string }>('/auth/google/id-token', {
+      idToken,
+      ...(nonce ? { nonce } : {}),
+    });
     tokens.set(t.accessToken, t.refreshToken);
     const me = await get<Me>('/users/me');
     setUser(me);
@@ -233,8 +240,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     track('auth.logout');
     const refreshToken = tokens.getRefresh();
     await unregisterPushToken().catch(() => {});
+    await clearNativeGoogleCredentialState().catch(() => {});
     tokens.clear();
     sessionStorage.clear();
+    clearPreAuthAgeBand();
     try { clearPendingRealExams(localStorage); } catch { /* ignore */ }
     // Account-scoped, not device-scoped: a stale completed-flag waves the NEXT
     // account on this device past onboarding (gradeLevel never collected).
@@ -249,6 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refreshToken = tokens.getRefresh();
     tokens.clear();
     sessionStorage.clear();
+    clearPreAuthAgeBand();
     try { clearPendingRealExams(localStorage); } catch { /* ignore */ }
     localStorage.removeItem('mathema.onboarding');
     queryClient.clear();
@@ -257,6 +267,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clearing auth first makes unregisterPushToken perform local/native cleanup only.
     await Promise.allSettled([
       unregisterPushToken(),
+      clearNativeGoogleCredentialState(),
       revokeRefreshToken(refreshToken),
     ]);
     navigate('/login', { replace: true });

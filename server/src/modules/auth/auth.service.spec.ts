@@ -47,6 +47,7 @@ function mockRedis(): AnyMock {
     set: jest.fn().mockResolvedValue(undefined),
     get: jest.fn().mockResolvedValue(null),        // SEC-3 lockout counter read
     incrWithTtl: jest.fn().mockResolvedValue(1),   // SEC-3 lockout counter incr
+    setNx: jest.fn().mockResolvedValue(true),
     del: jest.fn().mockResolvedValue(undefined),   // SEC-3 lockout clear on success
   };
 }
@@ -524,6 +525,96 @@ describe('AuthService', () => {
   });
 
   // ─────── refresh ───────
+  describe('Google ID-token nonce', () => {
+    const nonce = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+    function googleTicket(tokenNonce?: string) {
+      return {
+        getPayload: () => ({
+          sub: 'google-user-1',
+          email: 'student@example.com',
+          email_verified: true,
+          name: 'Student',
+          exp: Math.floor(Date.now() / 1000) + 3_000,
+          ...(tokenNonce ? { nonce: tokenNonce } : {}),
+        }),
+      };
+    }
+
+    function googleService(redis = mockRedis()) {
+      const users = mockUsers();
+      users.findByEmail.mockResolvedValue({
+        id: 'user-1', email: 'student@example.com', emailVerifiedAt: new Date(),
+      });
+      const jwt = mockJwt();
+      jwt.sign.mockImplementation((_payload, options) =>
+        options?.secret === 'access-secret' ? 'access-token' : 'refresh-token');
+      const config = mockConfig({
+        GOOGLE_CLIENT_ID: 'google-client-id',
+        'jwt.accessSecret': 'access-secret',
+        'jwt.refreshSecret': 'refresh-secret',
+        'jwt.accessTtl': '15m',
+        'jwt.refreshTtl': '30d',
+      });
+      return build({ users, jwt, config, redis });
+    }
+
+    it('accepts a matching signed nonce once without storing the raw value', async () => {
+      const redis = mockRedis();
+      const { svc } = googleService(redis);
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(nonce)),
+      };
+
+      await expect(svc.signInWithGoogle('signed-id-token', { nonce }))
+        .resolves.toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
+      expect(redis.setNx).toHaveBeenCalledWith(
+        expect.stringMatching(/^auth:google:nonce:(?!.*0123456789abcdef)/),
+        '1',
+        expect.any(Number),
+      );
+    });
+
+    it('rejects a replay of the same signed nonce', async () => {
+      const redis = mockRedis();
+      redis.setNx.mockResolvedValue(false);
+      const { svc } = googleService(redis);
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(nonce)),
+      };
+
+      await expect(svc.signInWithGoogle('replayed-id-token', { nonce }))
+        .rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('rejects mismatched or stripped request nonces before user lookup', async () => {
+      const redis = mockRedis();
+      const { svc, users } = googleService(redis);
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket(nonce)),
+      };
+
+      await expect(svc.signInWithGoogle('signed-id-token', { nonce: 'f'.repeat(64) }))
+        .rejects.toBeInstanceOf(UnauthorizedException);
+      await expect(svc.signInWithGoogle('signed-id-token'))
+        .rejects.toBeInstanceOf(UnauthorizedException);
+      expect(redis.setNx).not.toHaveBeenCalled();
+      expect(users.findByEmail).not.toHaveBeenCalled();
+    });
+
+    it('keeps nonce-free browser and legacy app tokens compatible', async () => {
+      const redis = mockRedis();
+      const { svc } = googleService(redis);
+      (svc as any).googleClient = {
+        verifyIdToken: jest.fn().mockResolvedValue(googleTicket()),
+      };
+
+      await expect(svc.signInWithGoogle('legacy-id-token'))
+        .resolves.toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
+      expect(redis.setNx).not.toHaveBeenCalled();
+    });
+  });
+
   describe('refresh', () => {
     it('rejects invalid signature', async () => {
       const jwt = mockJwt();

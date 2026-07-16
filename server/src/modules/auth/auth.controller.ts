@@ -113,6 +113,7 @@ export class AuthController {
     return this.service.signInWithGoogle(dto.idToken, {
       ip: ip ?? undefined, ua: ua ?? undefined,
       deviceHash: deviceHash || undefined,
+      nonce: dto.nonce,
     });
   }
 

@@ -398,11 +398,18 @@ Live topology (RG `mathema-prod-cin`):
 
 ### Deploy
 
-1. Push to `main` — workflows auto-trigger by path:
-   - `server/**` → `backend-deploy.yml` (Docker build → ACR push → Container App update → smoke test)
-   - `app/**` → `frontend-deploy.yml` (Vite build → deploy to app.matheo.verastudy.net)
-   - `services/math-helper/**` → `math-helper-deploy.yml`
+1. Push to `main` runs CI only. Production deploy workflows are manually dispatched:
+   - `backend-deploy.yml` (SMTP preflight → Docker build → ACR push → Container App update → smoke test)
+   - `frontend-deploy.yml` (Vite build → artifact integrity check → SWA deploy → MIME/content smoke on the Azure and custom hosts)
+   - `math-helper-deploy.yml`
    - tag `v*` or workflow_dispatch → `android-release.yml` (signed AAB artifact, 30-day retention)
+
+   Before dispatching `backend-deploy.yml`, configure these GitHub Actions
+   secrets with the real mail-provider values: `SMTP_HOST`, `SMTP_PORT`,
+   `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM`. The workflow
+   validates SMTP connectivity/authentication without sending a message, then
+   stores the values as Azure Container App secrets and checks every
+   `secretRef` binding. Do not place SMTP values in source or workflow YAML.
 
 2. Infra changes — `bash scripts/deploy-network-hardening.sh create` (post-deploy hook keeps PG/KV publicNetworkAccess Enabled until VNet + private endpoint sprint lands).
 

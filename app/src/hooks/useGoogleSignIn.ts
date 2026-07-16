@@ -2,6 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { renderGoogleIdentityButton } from '../lib/google-identity';
 import { isGoogleSignInConfigured } from '../lib/google-client-id';
 import { GoogleAuth, isNativeGoogleAuthPlatform } from '../native/google-auth-bridge';
+import {
+  createGoogleSignInNonce,
+  rememberGoogleSignInNonce,
+} from '../lib/google-sign-in-nonce';
 
 type UseGoogleSignInOpts = {
   onCredential: (idToken: string) => void | Promise<void>;
@@ -81,8 +85,12 @@ export function useGoogleSignIn({
     if (!ready) return;
     if (nativePlatform) {
       try {
-        const { idToken } = await GoogleAuth.signIn();
-        if (idToken) await callbackRef.current(idToken);
+        const nonce = createGoogleSignInNonce();
+        const { idToken } = await GoogleAuth.signIn({ nonce });
+        if (idToken) {
+          rememberGoogleSignInNonce(idToken, nonce);
+          await callbackRef.current(idToken);
+        }
       } catch (error) {
         console.warn('Google sign-in was not completed', error);
         errorRef.current?.(error);

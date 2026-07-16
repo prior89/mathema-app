@@ -13,6 +13,7 @@ env:
   # Backend URL injected as VITE_API_BASE_URL at build time so the SPA calls
   # the right API host. Adjust if your Container App FQDN changes.
   VITE_API_BASE_URL: https://mathema-backend.redcoast-6e6508a7.centralindia.azurecontainerapps.io/api/v1
+  PRODUCTION_ORIGIN: https://app.matheo.verastudy.net
 
 jobs:
   build-and-deploy:
@@ -47,6 +48,13 @@ jobs:
           VITE_BILLING_ENABLED: ${{ secrets.BILLING_UI_ENABLED }}
         run: npm -w app run build
 
+      # Validate exactly what will be uploaded. In particular, every hashed
+      # asset referenced by index.html must exist and legal Markdown must stay
+      # outside the SPA fallback. This catches partial/stale artifact layouts
+      # before production is touched.
+      - name: Verify static deployment artifact
+        run: node scripts/verify-static-site.mjs --artifact app/dist
+
       # OIDC login — fetches the canonical SWA deployment token from Azure so
       # the stored GH secret can't drift from the actual SWA (rotation,
       # recreate, wrong copy, etc.).
@@ -80,9 +88,52 @@ jobs:
             --query "{name:name, location:location, sku:sku.name, defaultHostname:defaultHostname, repositoryUrl:repositoryUrl}" \
             -o json
 
-      - name: Deploy to Static Web Apps (swa CLI)
+      - name: Deploy verified artifact to Static Web Apps
         run: |
-          npx -y @azure/static-web-apps-cli@latest deploy ./app/dist \
+          # Pin the deployment client so a new CLI release cannot silently
+          # change artifact discovery or upload behavior between releases.
+          npx -y @azure/static-web-apps-cli@2.0.9 deploy ./app/dist \
             --deployment-token "${{ steps.swa.outputs.token }}" \
             --env production \
             --verbose silly
+
+      - name: Resolve deployed SWA hostname
+        id: target
+        run: |
+          HOSTNAME=$(az staticwebapp show \
+            --name mathema-swa \
+            --resource-group mathema-prod-cin \
+            --query defaultHostname -o tsv)
+          if [ -z "$HOSTNAME" ]; then
+            echo "::error::Could not resolve the Static Web Apps default hostname"
+            exit 1
+          fi
+          echo "hostname=$HOSTNAME" >> "$GITHUB_OUTPUT"
+
+      # A successful upload is not enough: the incident signature was a 200
+      # text/html response for a missing hashed .js file. Compare deployed
+      # bytes to this run's artifact and require correct MIME for JS/CSS and
+      # all Play Console legal Markdown URLs on both Azure and the custom host.
+      - name: Post-deploy static content smoke
+        env:
+          SWA_ORIGIN: https://${{ steps.target.outputs.hostname }}
+        run: |
+          set -euo pipefail
+
+          smoke_with_retry() {
+            local origin="$1"
+            for attempt in $(seq 1 12); do
+              if node scripts/verify-static-site.mjs --artifact app/dist --url "$origin"; then
+                return 0
+              fi
+              if [ "$attempt" -lt 12 ]; then
+                echo "Static content not fully propagated at $origin (attempt $attempt/12); retrying in 10s..."
+                sleep 10
+              fi
+            done
+            echo "::error::Static content smoke failed after 12 attempts for $origin"
+            return 1
+          }
+
+          smoke_with_retry "$SWA_ORIGIN"
+          smoke_with_retry "$PRODUCTION_ORIGIN"

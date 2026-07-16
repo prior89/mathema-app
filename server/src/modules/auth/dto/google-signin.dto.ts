@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, Length } from 'class-validator';
 
 /**
  * Google ID Token (JWT) — frontend GIS button 또는 Capacitor Google Auth plugin 가
@@ -7,4 +7,8 @@ import { IsString, IsNotEmpty } from 'class-validator';
  */
 export class GoogleSignInDto {
   @IsString() @IsNotEmpty() idToken!: string;
+
+  // New Android clients bind the signed ID token to a one-time request.
+  // Optional for browser GIS and already-installed legacy app versions.
+  @IsOptional() @IsString() @Length(32, 128) nonce?: string;
 }

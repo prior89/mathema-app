@@ -13,9 +13,11 @@ import { useT } from '../lib/i18n';
 import { BrandLockup } from '../components/Brand';
 import { LearningOrbit } from '../components/design/LearningOrbit';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
+import { PreAuthAgeGate, usePreAuthAgeGate } from '../components/auth/PreAuthAgeGate';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
 import { googleSignInErrorKey } from '../lib/google-sign-in-error';
+import { canOfferGoogleSignIn } from '../lib/pre-auth-age-gate';
 import '../styles/onboarding.css';
 
 export default function LoginPage() {
@@ -23,6 +25,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useT();
+  const { ageBand, selectAgeBand, resetAgeBand } = usePreAuthAgeGate();
   // PoC dev-login은 DEV 빌드에서만 prefill — production은 빈 폼 (admin/admin 누른 사용자가
   // /auth/dev-login → "dev-login disabled in production" 에러를 받지 않도록).
   const [email, setEmail] = useState(import.meta.env.DEV ? 'admin' : '');
@@ -127,6 +130,14 @@ export default function LoginPage() {
                   <p>{t('login.form.sub')}</p>
                 </div>
 
+              <PreAuthAgeGate
+                ageBand={ageBand}
+                onSelect={selectAgeBand}
+                onReset={resetAgeBand}
+              />
+
+              {ageBand !== null && (
+                <>
               {notice && (
                 <div
                   role="status"
@@ -175,23 +186,29 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <AuthDivider labelKey="login.or" />
-              <GoogleSignInButton
-                mode="continue"
-                onCredential={handleGoogleSignIn}
-                onError={(error) => {
-                  const key = googleSignInErrorKey(error, 'login.google.failed');
-                  if (key) setErr(t(key));
-                }}
-                busy={googleBusy}
-                disabled={busy}
-              />
+              {canOfferGoogleSignIn(ageBand) && (
+                <>
+                  <AuthDivider labelKey="login.or" />
+                  <GoogleSignInButton
+                    mode="continue"
+                    onCredential={handleGoogleSignIn}
+                    onError={(error) => {
+                      const key = googleSignInErrorKey(error, 'login.google.failed');
+                      if (key) setErr(t(key));
+                    }}
+                    busy={googleBusy}
+                    disabled={busy}
+                  />
+                </>
+              )}
 
                 <div className="signup-prompt">
                   <span>{t('login.signupPrompt')}</span>
                   <Link to="/onboarding">{t('login.goOnboarding')} <ArrowRight size={15} /></Link>
                 </div>
                 <div className="login-trust"><ShieldCheck size={15} />{t('login.trust')}</div>
+                </>
+              )}
               </section>
             </div>
           </main>
