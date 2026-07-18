@@ -1,0 +1,150 @@
+name: Play Internal Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'Play versionCode (must be greater than the largest uploaded code)'
+        required: true
+        type: string
+      release_name:
+        description: 'Internal testing release name'
+        required: false
+        default: 'Korea internal testing'
+
+concurrency:
+  group: matheo-play-internal-upload
+  cancel-in-progress: false
+
+jobs:
+  upload-internal:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      MATHEO_KEY_ALIAS: matheo
+      EXPECTED_GOOGLE_WEB_CLIENT_ID: 780610015758-4sfjjjhtq6p86edr5bsdn5c9b95uav1b.apps.googleusercontent.com
+      EXPECTED_PLAY_UPLOAD_CERT_SHA256: 3C:6C:41:EC:FD:1B:E6:A4:15:85:35:4D:67:5B:08:58:20:14:65:53:38:F0:99:EC:54:03:EA:08:76:51:40:17
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install workspace deps
+        run: npm ci
+
+      - name: Require Google OAuth client ID
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: npm run android:require-google-client-id
+
+      - name: Require billing UI in release bundle
+        env:
+          BILLING_UI_ENABLED: ${{ secrets.BILLING_UI_ENABLED }}
+        run: |
+          if [[ "$BILLING_UI_ENABLED" != "true" ]]; then
+            echo "BILLING_UI_ENABLED must be exactly 'true' for a Play release bundle." >&2
+            exit 1
+          fi
+
+      - name: Resolve and validate Play versionCode
+        shell: bash
+        env:
+          DISPATCH_VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          version_code="$DISPATCH_VERSION_CODE"
+          if [[ ! "$version_code" =~ ^[1-9][0-9]{0,9}$ ]]; then
+            echo "Invalid/missing versionCode." >&2
+            exit 1
+          fi
+          if (( version_code <= 2026071801 || version_code > 2100000000 )); then
+            echo "versionCode must be > 2026071801 and <= 2100000000; got $version_code." >&2
+            exit 1
+          fi
+          echo "ANDROID_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+
+      - name: Require Firebase Android config
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          test -n "$GOOGLE_SERVICES_JSON_BASE64" || {
+            echo "GOOGLE_SERVICES_JSON_BASE64 is required for FCM-enabled release builds." >&2
+            exit 1
+          }
+          printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > app/android/app/google-services.json
+          node -e "const f=require('./app/android/app/google-services.json'); const p=f.client?.flatMap(c=>c.client_info?.android_client_info?.package_name?[c.client_info.android_client_info.package_name]:[])??[]; if(!p.includes('ai.matheo.app')) throw new Error('google-services.json does not contain ai.matheo.app')"
+
+      - name: Build Vite SPA
+        env:
+          VITE_API_BASE_URL: https://mathema-backend.redcoast-6e6508a7.centralindia.azurecontainerapps.io/api/v1
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_BILLING_ENABLED: ${{ secrets.BILLING_UI_ENABLED }}
+        run: npm -w app run build
+
+      - name: Verify Google login is present in Android web assets
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: node scripts/require-google-client-id.cjs --artifact app/dist
+
+      - name: Capacitor sync (android)
+        run: npm -w app exec cap sync android
+
+      - name: Decode keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > app/android/app/matheo-release.jks
+
+      - name: Build release bundle
+        working-directory: app/android
+        env:
+          MATHEO_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MATHEO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          MATHEO_KEY_ALIAS: matheo
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          ANDROID_VERSION_CODE: ${{ env.ANDROID_VERSION_CODE }}
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
+
+      - name: Verify release bundle signature
+        working-directory: app/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+          AAB="app/build/outputs/bundle/release/app-release.aab"
+          test -s "$AAB"
+          jarsigner -verify -verbose -certs "$AAB" | tee /tmp/matheo-jarsigner.txt
+          grep -q "jar verified" /tmp/matheo-jarsigner.txt
+          keytool -printcert -jarfile "$AAB" | tee /tmp/matheo-upload-cert.txt
+          ACTUAL_UPLOAD_CERT_SHA256=$(
+            awk '/^[[:space:]]*SHA256:/{sub(/^[[:space:]]*SHA256:[[:space:]]*/, ""); print; exit}' \
+              /tmp/matheo-upload-cert.txt
+          )
+          if [[ -z "$ACTUAL_UPLOAD_CERT_SHA256" || "$ACTUAL_UPLOAD_CERT_SHA256" != "$EXPECTED_PLAY_UPLOAD_CERT_SHA256" ]]; then
+            echo "::error::AAB upload certificate SHA-256 does not match the Play Console upload key." >&2
+            echo "Expected: $EXPECTED_PLAY_UPLOAD_CERT_SHA256" >&2
+            echo "Actual:   ${ACTUAL_UPLOAD_CERT_SHA256:-missing}" >&2
+            exit 1
+          fi
+
+      - name: Upload to Play internal testing
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ai.matheo.app
+          releaseFiles: app/android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+          releaseName: ${{ inputs.release_name }}
