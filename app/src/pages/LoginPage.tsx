@@ -13,11 +13,9 @@ import { useT } from '../lib/i18n';
 import { BrandLockup } from '../components/Brand';
 import { LearningOrbit } from '../components/design/LearningOrbit';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
-import { PreAuthAgeGate, usePreAuthAgeGate } from '../components/auth/PreAuthAgeGate';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
 import { googleSignInErrorKey } from '../lib/google-sign-in-error';
-import { canOfferGoogleSignIn } from '../lib/pre-auth-age-gate';
 import '../styles/onboarding.css';
 
 export default function LoginPage() {
@@ -25,7 +23,6 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useT();
-  const { ageBand, selectAgeBand, resetAgeBand } = usePreAuthAgeGate();
   // PoC dev-login은 DEV 빌드에서만 prefill — production은 빈 폼 (admin/admin 누른 사용자가
   // /auth/dev-login → "dev-login disabled in production" 에러를 받지 않도록).
   const [email, setEmail] = useState(import.meta.env.DEV ? 'admin' : '');
@@ -140,12 +137,6 @@ export default function LoginPage() {
                   <p>{t('login.form.sub')}</p>
                 </div>
 
-              <PreAuthAgeGate
-                ageBand={ageBand}
-                onSelect={selectAgeBand}
-                onReset={resetAgeBand}
-              />
-
               {notice && (
                 <div
                   role="status"
@@ -155,6 +146,26 @@ export default function LoginPage() {
                   {notice}
                 </div>
               )}
+
+              {/* Google first (market-standard). Account age / Family Link is Google's job. */}
+              {googleLinkRequired && (
+                <div className="google-link-confirmation" role="status">
+                  <strong>{t('login.googleLink.title')}</strong>
+                  <span>{t('login.googleLink.help')}</span>
+                  <Link to="/forgot-password">{t('login.googleLink.reset')}</Link>
+                </div>
+              )}
+              <GoogleSignInButton
+                mode="continue"
+                onCredential={handleGoogleSignIn}
+                onError={(error) => {
+                  const key = googleSignInErrorKey(error, 'login.google.failed');
+                  if (key) setErr(t(key));
+                }}
+                busy={googleBusy}
+                disabled={busy}
+              />
+              <AuthDivider labelKey="login.or" />
 
               <form onSubmit={onSubmit} className="login-form">
                 <div className="field">
@@ -193,29 +204,6 @@ export default function LoginPage() {
                   <ArrowRight size={18} />
                 </button>
               </form>
-
-              {canOfferGoogleSignIn(ageBand) && (
-                <>
-                  {googleLinkRequired && (
-                    <div className="google-link-confirmation" role="status">
-                      <strong>{t('login.googleLink.title')}</strong>
-                      <span>{t('login.googleLink.help')}</span>
-                      <Link to="/forgot-password">{t('login.googleLink.reset')}</Link>
-                    </div>
-                  )}
-                  <AuthDivider labelKey="login.or" />
-                  <GoogleSignInButton
-                    mode="continue"
-                    onCredential={handleGoogleSignIn}
-                    onError={(error) => {
-                      const key = googleSignInErrorKey(error, 'login.google.failed');
-                      if (key) setErr(t(key));
-                    }}
-                    busy={googleBusy}
-                    disabled={busy}
-                  />
-                </>
-              )}
 
                 <div className="signup-prompt">
                   <span>{t('login.signupPrompt')}</span>

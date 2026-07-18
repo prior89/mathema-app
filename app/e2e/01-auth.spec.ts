@@ -75,12 +75,6 @@ async function installKoreanLocaleAndGoogleIdentity(page: Page) {
   }, { credential: 'e2e.google.id-token' });
 }
 
-async function passPreAuthAgeGate(page: Page) {
-  await page.locator('.pre-auth-age-birthdate').fill('2000-01-01');
-  await page.locator('.pre-auth-age-region').selectOption('KR');
-  await page.locator('.pre-auth-age-submit').click();
-}
-
 async function mockAuthApi(
   page: Page,
   me: MockMe,
@@ -179,7 +173,6 @@ async function reachOnboardingAuth(page: Page) {
   // directly on account creation (country defaults to KR, locale forced ko).
   await page.getByRole('button', { name: /내 수학 코스 만들기|Build my math path/i }).click();
   await expect(page.getByRole('heading', { name: /Matheo 계정 만들기|Create your Matheo account/i })).toBeVisible();
-  await passPreAuthAgeGate(page);
 }
 
 async function submitPasswordLogin(page: Page, email: string) {
@@ -201,11 +194,11 @@ test.describe('redesigned auth entry points', () => {
     await expect(page.getByLabel(/비밀번호|Password/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /^로그인$|^Sign in$/i })).toBeEnabled();
 
-    await passPreAuthAgeGate(page);
-
+    // Google is offered immediately; age is Google's account / Family Link concern.
     const google = page.getByRole('button', { name: /Google로 계속하기|Continue with Google/i });
     await expect(google).toBeVisible();
     await expect(google).toBeEnabled();
+    await expect(page.locator('.pre-auth-age-gate')).toHaveCount(0);
   });
 
   test('existing external-email account can prove its password and link Google', async ({ page }) => {
@@ -227,7 +220,6 @@ test.describe('redesigned auth entry points', () => {
       },
     });
     await page.goto('/login');
-    await passPreAuthAgeGate(page);
 
     const google = page.getByRole('button', { name: /Google로 계속하기|Continue with Google/i });
     await google.click();
@@ -249,21 +241,10 @@ test.describe('redesigned auth entry points', () => {
 
     await expect(page.getByRole('heading', { name: /matheo를 어떻게 쓰시나요|Who's using Matheo/i })).toBeVisible();
     await expect(page.locator('input[type="email"]').first()).toBeVisible();
-    await passPreAuthAgeGate(page);
     const google = page.getByRole('button', { name: /Google로 가입하기|Sign up with Google/i });
     await expect(google).toBeVisible();
     await expect(google).toBeEnabled();
-  });
-
-  test('child age result never mounts Google Identity on a shared entry page', async ({ page }) => {
-    await page.goto('/login');
-    await page.locator('.pre-auth-age-birthdate').fill('2020-01-01');
-    await page.locator('.pre-auth-age-region').selectOption('KR');
-    await page.locator('.pre-auth-age-submit').click();
-
-    await expect(page.getByRole('button', { name: /Google로 계속하기|Continue with Google/i }))
-      .toHaveCount(0);
-    await expect(page.locator('.pre-auth-age-help')).toBeVisible();
+    await expect(page.locator('.pre-auth-age-gate')).toHaveCount(0);
   });
 
   test('onboarding exposes an actionable Google sign-up after the KR market gate', async ({ page }) => {
@@ -272,6 +253,7 @@ test.describe('redesigned auth entry points', () => {
     const google = page.getByRole('button', { name: /Google로 가입하기|Sign up with Google/i });
     await expect(google).toBeVisible();
     await expect(google).toBeEnabled();
+    await expect(page.locator('.pre-auth-age-gate')).toHaveCount(0);
   });
 
   test('password login preserves an allowed student deep link', async ({ page }) => {

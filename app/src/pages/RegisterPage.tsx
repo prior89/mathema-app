@@ -21,13 +21,11 @@ import { AgeGate } from '../components/onboarding/AgeGate';
 import { Glyph } from '../components/onboarding/Glyph';
 import { BrandLogo } from '../components/Brand';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
-import { PreAuthAgeGate, usePreAuthAgeGate } from '../components/auth/PreAuthAgeGate';
 import { AuthDivider } from '../components/auth/AuthDivider';
 import { formatAuthError } from '../lib/auth-errors';
 import { googleSignInErrorKey } from '../lib/google-sign-in-error';
 import { LAUNCH_STUDENT_ONLY } from '../lib/launch-config';
 import { detectOnboardingLang, langForCountry } from '../lib/onboarding-locale';
-import { canOfferGoogleSignIn } from '../lib/pre-auth-age-gate';
 import '../styles/onboarding.css';
 
 const NCERT_TO_GRADE: Record<NcertClass, GradeLevel> = {
@@ -44,7 +42,6 @@ export default function RegisterPage() {
   const { t, lang, setLang } = useT();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { ageBand, selectAgeBand, resetAgeBand } = usePreAuthAgeGate();
   // Guest → real account upgrade (?upgrade=1). Same form, but submits to
   // /auth/guest/upgrade so the existing userId (and all progress) is kept.
   const upgradeMode = searchParams.get('upgrade') === '1' && user?.isGuest === true;
@@ -196,13 +193,6 @@ export default function RegisterPage() {
             </div>
 
             <div className="screen-body" style={{ gap: 18, paddingTop: 16 }}>
-              {step === 0 && (
-                <PreAuthAgeGate
-                  ageBand={ageBand}
-                  onSelect={selectAgeBand}
-                  onReset={resetAgeBand}
-                />
-              )}
               <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {step === 0 && upgradeMode && (
                   <div
@@ -227,7 +217,7 @@ export default function RegisterPage() {
                       if (key) setErr(t(key));
                     }}
                     formBusy={busy}
-                    hideGoogle={upgradeMode || !canOfferGoogleSignIn(ageBand)}
+                    hideGoogle={upgradeMode}
                     t={t}
                   />
                 )}
@@ -351,6 +341,19 @@ function StepRoleAndCredentials({
         <h2 className="title" style={{ marginTop: 8 }}>{t('reg.step1.title')}</h2>
         <p className="subtitle">{t('reg.step1.sub')}</p>
       </div>
+      {/* Google first (same as Login) — age / Family Link is Google's job. */}
+      {!hideGoogle && (
+        <>
+          <GoogleSignInButton
+            mode="signup"
+            onCredential={onGoogleSignIn}
+            onError={onGoogleError}
+            busy={googleBusy}
+            disabled={formBusy}
+          />
+          <AuthDivider labelKey="reg.or" />
+        </>
+      )}
       {!LAUNCH_STUDENT_ONLY && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {roles.map((r) => {
@@ -431,18 +434,6 @@ function StepRoleAndCredentials({
           })}
         </div>
       </div>
-      )}
-      {!hideGoogle && (
-        <>
-          <AuthDivider labelKey="reg.or" />
-          <GoogleSignInButton
-            mode="signup"
-            onCredential={onGoogleSignIn}
-            onError={onGoogleError}
-            busy={googleBusy}
-            disabled={formBusy}
-          />
-        </>
       )}
     </>
   );

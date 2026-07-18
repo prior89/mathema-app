@@ -58,7 +58,17 @@ export function derivePreAuthAgeBand(
   return age >= MINIMUM_GOOGLE_AGE[region] ? 'eligible' : 'child';
 }
 
-/** Unknown and child users must never mount/initialise Google Identity. */
-export function canOfferGoogleSignIn(ageBand: PreAuthAgeBand | null): boolean {
-  return ageBand === 'eligible';
+/**
+ * Whether the app may show / mount Google Sign-In on auth entry screens.
+ *
+ * Policy (2026-07-18): offer Google immediately; **Google's own account /
+ * Family Link flow** owns age eligibility for the Google credential.
+ * We no longer hide the button behind a pre-auth DOB gate (high drop-off,
+ * not competitive with edtech peers). Optional `ageBand` is ignored.
+ *
+ * Child-directed product rules (guardian consent, grade, etc.) still apply
+ * *after* auth via normal onboarding / register steps — not by blocking GIS.
+ */
+export function canOfferGoogleSignIn(_ageBand?: PreAuthAgeBand | null): boolean {
+  return true;
 }
