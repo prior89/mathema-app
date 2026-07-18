@@ -183,6 +183,16 @@ jobs:
           path: app/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
 
+      - name: Upload AAB to Play internal testing
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ai.matheo.app
+          releaseFiles: app/android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+          releaseName: ${{ env.ANDROID_VERSION_CODE }} internal
+
       # G1 upload (manual): Play Console → Testing → Internal testing →
       # Create new release → upload matheo-aab artifact from this workflow.
       # Preflight: npm run billing:preflight && GET /admin/billing/readiness
