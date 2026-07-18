@@ -25,9 +25,9 @@ describe('pre-auth age gate', () => {
     expect(derivePreAuthAgeBand('2027-01-01', 'KR', today)).toBeNull();
   });
 
-  it('offers Google only after an eligible decision', () => {
-    expect(canOfferGoogleSignIn(null)).toBe(false);
-    expect(canOfferGoogleSignIn('child')).toBe(false);
+  it('always offers Google; account age is delegated to Google', () => {
+    expect(canOfferGoogleSignIn(null)).toBe(true);
+    expect(canOfferGoogleSignIn('child')).toBe(true);
     expect(canOfferGoogleSignIn('eligible')).toBe(true);
   });
 });

@@ -27,6 +27,8 @@ import { useT } from '../lib/i18n';
 const COLORS = {
   bg: 'var(--p-bg)', ink: 'var(--p-ink)', sub: 'var(--p-muted)', line: 'var(--p-border)', card: 'var(--p-surface)',
   good: 'var(--p-success)', warn: 'var(--p-warning)', bad: 'var(--p-danger)',
+  goodInk: 'var(--p-success-ink)', warnInk: 'var(--p-warning-ink)', badInk: 'var(--p-danger-ink)',
+  accent: 'var(--p-accent-ink)',
 };
 
 export function ParentDashboardPage({ embedded = false }: { embedded?: boolean } = {}) {
@@ -61,7 +63,7 @@ export function ParentDashboardPage({ embedded = false }: { embedded?: boolean }
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: COLORS.bg, color: COLORS.ink, fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className="standalone-dashboard" style={{ minHeight: '100vh', backgroundColor: COLORS.bg, color: COLORS.ink, fontFamily: 'Inter, system-ui, sans-serif' }}>
       {!embedded && <TopNav activeNav="대시보드" setActiveNav={handleNav} />}
       <main style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 32px 80px' }}>
         <header style={{ marginBottom: 24 }}>
@@ -119,7 +121,7 @@ export function ParentDashboardPage({ embedded = false }: { embedded?: boolean }
               <StatCard icon={Target} label={lang === 'ko' ? '푼 문제' : 'Problems solved'}
                 value={`${latest.totalAttempts}`} sub={`${lang === 'ko' ? '정답률' : 'Accuracy'} ${Math.round(latest.accuracyPct)}%`} accent={COLORS.good} />
               <StatCard icon={TrendingUp} label={lang === 'ko' ? 'AI 종합 점수' : 'AI score'}
-                value={`${Math.min(10, latest.aiScore).toFixed(1)}/10`} sub={lang === 'ko' ? '학습 패턴 종합' : 'pattern-weighted'} accent={'#C7791F'} />
+                value={`${Math.min(10, latest.aiScore).toFixed(1)}/10`} sub={lang === 'ko' ? '학습 패턴 종합' : 'pattern-weighted'} accent={COLORS.accent} />
               <StatCard icon={AlertTriangle} label={lang === 'ko' ? '주의 신호' : 'Attention'}
                 value={`${patterns.data?.length ?? 0}`} sub={lang === 'ko' ? '반복 실수 패턴' : 'repeated patterns'} accent={COLORS.warn} />
             </div>
@@ -153,7 +155,7 @@ export function ParentDashboardPage({ embedded = false }: { embedded?: boolean }
             <Card>
               {((weekly.data?.[0] as any).recommendedNextGoals as string[]).map((g, i) => (
                 <div key={i} style={{ padding: '10px 0', borderBottom: `1px dashed ${COLORS.line}`, fontSize: 14, display: 'flex', gap: 8 }}>
-                  <span style={{ color: COLORS.warn, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace' }}>{i + 1}</span>
+                  <span style={{ color: COLORS.warnInk, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace' }}>{i + 1}</span>
                   <span>{g}</span>
                 </div>
               ))}
@@ -179,23 +181,28 @@ function ImprovementVerdict({ mastery, patterns, lang }: { mastery: ConceptMaste
 
   let verdict: 'improving' | 'mixed' | 'stable' | 'attention';
   let label: string;
-  let color: string;
+  let accent: string;
+  let textColor: string;
   if (up >= Math.max(2, down + 1)) {
     verdict = 'improving';
     label = lang === 'ko' ? '전반적으로 개선 중' : 'Improving overall';
-    color = COLORS.good;
+    accent = COLORS.good;
+    textColor = COLORS.goodInk;
   } else if (down >= up && down >= 2) {
     verdict = 'attention';
     label = lang === 'ko' ? '주의 — 일부 개념이 약해지고 있어요' : 'Some areas declining';
-    color = COLORS.bad;
+    accent = COLORS.bad;
+    textColor = COLORS.badInk;
   } else if (up === 0 && down === 0) {
     verdict = 'stable';
     label = lang === 'ko' ? '안정적' : 'Stable';
-    color = COLORS.sub;
+    accent = COLORS.sub;
+    textColor = COLORS.sub;
   } else {
     verdict = 'mixed';
     label = lang === 'ko' ? '개선과 보강이 섞여있어요' : 'Mixed progress';
-    color = COLORS.warn;
+    accent = COLORS.warn;
+    textColor = COLORS.warnInk;
   }
 
   const detail = lang === 'ko'
@@ -203,12 +210,12 @@ function ImprovementVerdict({ mastery, patterns, lang }: { mastery: ConceptMaste
     : `${up} up · ${down} down · ${stable} stable · ${activeCount} repeated patterns`;
 
   return (
-    <Card style={{ borderLeft: `4px solid ${color}` }}>
+    <Card style={{ borderLeft: `4px solid ${accent}` }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-        <span style={{ fontSize: 11, color, letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 600 }}>
+        <span style={{ fontSize: 11, color: textColor, letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 600 }}>
           {lang === 'ko' ? '진척 판정' : 'Progress'}
         </span>
-        <span style={{ fontSize: 16, fontWeight: 600, color }}>{label}</span>
+        <span style={{ fontSize: 16, fontWeight: 600, color: textColor }}>{label}</span>
       </div>
       <div style={{ fontSize: 12, color: COLORS.sub }}>{detail}</div>
     </Card>
@@ -234,7 +241,7 @@ function ImprovedList({ rows }: { rows: ConceptMastery[] }) {
       {rows.slice(0, 5).map((m) => (
         <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px dashed ${COLORS.line}`, fontSize: 13 }}>
           <span>{m.concept.name}</span>
-          <span style={{ color: COLORS.good, fontFamily: 'JetBrains Mono, monospace' }}>
+          <span style={{ color: COLORS.goodInk, fontFamily: 'JetBrains Mono, monospace' }}>
             ↑ {Math.round(m.masteryScore)}/100
           </span>
         </div>
@@ -244,12 +251,16 @@ function ImprovedList({ rows }: { rows: ConceptMastery[] }) {
 }
 
 function PatternRow({ p, lang }: { p: ErrorPatternRow; lang: 'ko' | 'en' | 'hi' }) {
-  const sevColor = p.severity === 'high' ? COLORS.bad : p.severity === 'medium' ? COLORS.warn : COLORS.sub;
+  const severityTone = p.severity === 'high'
+    ? { ink: COLORS.badInk, tint: 'var(--p-danger-tint)' }
+    : p.severity === 'medium'
+      ? { ink: COLORS.warnInk, tint: 'var(--p-warning-tint)' }
+      : { ink: COLORS.sub, tint: 'var(--p-surface-2)' };
   return (
     <div style={{ padding: '10px 0', borderBottom: `1px dashed ${COLORS.line}` }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
         <span style={{ fontSize: 13, fontWeight: 600 }}>{p.concept.name}</span>
-        <span style={{ fontSize: 11, padding: '2px 8px', backgroundColor: COLORS.bg, color: sevColor, border: `1px solid ${sevColor}30`, borderRadius: 2 }}>
+        <span style={{ fontSize: 11, padding: '2px 8px', backgroundColor: severityTone.tint, color: severityTone.ink, border: `1px solid ${COLORS.line}`, borderRadius: 2 }}>
           {p.severity}
         </span>
       </div>

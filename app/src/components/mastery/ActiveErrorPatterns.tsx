@@ -48,8 +48,8 @@ export function errorPatternStudentCopy(p: ErrorPatternRow, lang: UiLang): strin
 }
 
 function severityStyle(severity: ErrorPatternRow['severity']) {
-  if (severity === 'high') return { bg: 'var(--p-danger-tint)', fg: 'var(--p-danger)' };
-  if (severity === 'medium') return { bg: 'var(--p-accent-tint)', fg: 'var(--p-accent)' };
+  if (severity === 'high') return { bg: 'var(--p-danger-tint)', fg: 'var(--p-danger-ink)' };
+  if (severity === 'medium') return { bg: 'var(--p-accent-tint)', fg: 'var(--p-accent-ink)' };
   return { bg: 'var(--p-surface-2)', fg: 'var(--p-muted)' };
 }
 
@@ -178,7 +178,7 @@ export function ActiveErrorPatternList({
             {actionable && (() => {
               const unmet = isPrereqUnmet?.(p) ?? false;
               const label = unmet ? (PREREQ_CTA[lang] ?? PREREQ_CTA.en) : (PRACTICE_CTA[lang] ?? PRACTICE_CTA.en);
-              const color = unmet ? 'var(--p-accent)' : 'var(--p-primary)';
+              const color = unmet ? 'var(--p-accent-ink)' : 'var(--p-primary)';
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8, color, fontSize: 12, fontWeight: 600 }}>
                   {label}

@@ -31,14 +31,16 @@ type VisualData =
   | { type: 'function-line'; m: number; c: number; range?: [number, number]; markedPoints?: Array<{ x: number; y: number }> };
 
 const COLORS = {
-  axis: '#5C6B85',
-  grid: '#DDD7C5',
-  curve: '#2A3447',
-  point: '#dc2626',
-  arc: '#0ea5e9',
-  textMuted: '#8B95AB',
-  bgA: 'rgba(14,165,233,0.18)',
-  bgB: 'rgba(234,88,12,0.18)',
+  axis: 'var(--p-ink-2)',
+  grid: 'var(--p-border-strong)',
+  curve: 'var(--p-ink)',
+  point: 'var(--p-danger-ink)',
+  arc: 'var(--p-primary)',
+  accent: 'var(--p-warning)',
+  accentText: 'var(--p-warning-ink)',
+  textMuted: 'var(--p-muted)',
+  bgA: 'var(--p-primary-tint)',
+  bgB: 'var(--p-warning-tint)',
 };
 
 export function GraphRenderer({ data }: { data: VisualData }) {
@@ -170,10 +172,10 @@ function Venn2Set({ a, b, both, labelA, labelB, total }: {
   const onlyB = b - both;
   return (
     <Frame w={W} h={H} caption={`${labelA}: ${a} · ${labelB}: ${b} · both: ${both}${total != null ? ` · neither: ${total - a - b + both}` : ''}`}>
-      <circle cx={cxA} cy={cy} r={r} fill={COLORS.bgA} stroke={COLORS.arc} strokeWidth={1.5} />
-      <circle cx={cxB} cy={cy} r={r} fill={COLORS.bgB} stroke="#ea580c" strokeWidth={1.5} />
+      <circle cx={cxA} cy={cy} r={r} fill={COLORS.bgA} fillOpacity={0.72} stroke={COLORS.arc} strokeWidth={1.5} />
+      <circle cx={cxB} cy={cy} r={r} fill={COLORS.bgB} fillOpacity={0.72} stroke={COLORS.accent} strokeWidth={1.5} />
       <text x={cxA - 40} y={28} fontSize={13} fontWeight={600} fill={COLORS.arc}>{labelA}</text>
-      <text x={cxB - 4} y={28} fontSize={13} fontWeight={600} fill="#ea580c">{labelB}</text>
+      <text x={cxB - 4} y={28} fontSize={13} fontWeight={600} fill={COLORS.accentText}>{labelB}</text>
       <text x={cxA - 35} y={cy + 6} fontSize={16} fontWeight={700} fill={COLORS.curve}>{onlyA}</text>
       <text x={(cxA + cxB) / 2 - 6} y={cy + 6} fontSize={16} fontWeight={700} fill={COLORS.curve}>{both}</text>
       <text x={cxB + 25} y={cy + 6} fontSize={16} fontWeight={700} fill={COLORS.curve}>{onlyB}</text>
@@ -260,7 +262,6 @@ function ComplexPlane({ points }: { points: Array<{ re: number; im: number; labe
 // =========================================================
 function RightTriangle({ opp, adj, angleLabel }: { opp: number; adj: number; angleLabel?: string }) {
   const W = 320, H = 240, padX = 40, padY = 30;
-  const maxLen = Math.max(opp, adj);
   const scale = Math.min((W - 2 * padX) / adj, (H - 2 * padY) / opp);
   const x0 = padX, y0 = H - padY;
   const x1 = x0 + adj * scale;
@@ -268,7 +269,7 @@ function RightTriangle({ opp, adj, angleLabel }: { opp: number; adj: number; ang
   const hyp = Math.sqrt(opp * opp + adj * adj);
   return (
     <Frame w={W} h={H} caption={`opp ${opp} · adj ${adj} · hyp ${hyp.toFixed(2)}`}>
-      <polygon points={`${x0},${y0} ${x1},${y0} ${x1},${y1}`} fill="rgba(14,165,233,0.15)" stroke={COLORS.curve} strokeWidth={2} />
+      <polygon points={`${x0},${y0} ${x1},${y0} ${x1},${y1}`} fill={COLORS.bgA} stroke={COLORS.curve} strokeWidth={2} />
       <text x={(x0 + x1) / 2} y={y0 + 18} textAnchor="middle" fontSize={12} fill={COLORS.curve}>adj = {adj}</text>
       <text x={x1 + 6} y={(y0 + y1) / 2} fontSize={12} fill={COLORS.curve}>opp = {opp}</text>
       <text x={(x0 + x1) / 2 - 30} y={(y0 + y1) / 2 - 10} fontSize={12} fill={COLORS.curve}>hyp = {hyp.toFixed(2)}</text>
@@ -312,8 +313,8 @@ function FunctionLine({ m, c, range = [-5, 5] as [number, number], markedPoints 
 // =========================================================
 function Frame({ w, h, caption, children }: { w: number; h: number; caption: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'inline-block', padding: 12, background: '#FAF8F1', border: '1px solid #DDD7C5', borderRadius: 8, margin: '8px 0' }}>
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label={caption}>
+    <div style={{ display: 'inline-block', maxWidth: '100%', padding: 12, background: 'var(--p-surface-2)', border: '1px solid var(--p-border)', borderRadius: 8, margin: '8px 0' }}>
+      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label={caption} style={{ display: 'block', maxWidth: '100%', height: 'auto' }}>
         {children}
       </svg>
       <div style={{ fontSize: 11, color: COLORS.textMuted, textAlign: 'center', marginTop: 4, fontFamily: 'JetBrains Mono, monospace' }}>

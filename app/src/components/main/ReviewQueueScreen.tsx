@@ -374,7 +374,7 @@ function ActiveProblem({
             style={{
               padding: 10, fontSize: 13,
               background: feedback.kind === 'correct' ? 'var(--p-success-tint)' : 'var(--p-danger-tint)',
-              color: feedback.kind === 'correct' ? 'var(--p-success)' : 'var(--p-danger)',
+              color: feedback.kind === 'correct' ? 'var(--p-success-ink)' : 'var(--p-danger-ink)',
               borderColor: 'transparent',
               fontWeight: 600,
             }}

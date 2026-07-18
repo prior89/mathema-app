@@ -399,7 +399,7 @@ export function SettingsScreen() {
                   style={{
                     flex: 1,
                     background: confirmOk ? 'var(--p-danger)' : 'var(--p-border)',
-                    color: confirmOk ? 'white' : 'var(--p-muted)',
+                    color: confirmOk ? 'var(--p-danger-fg)' : 'var(--p-muted)',
                     cursor: confirmOk && !deleteAccount.isPending ? 'pointer' : 'not-allowed',
                   }}
                 >

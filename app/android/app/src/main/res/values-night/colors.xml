@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Keep these values aligned with the dark tokens in onboarding.css. -->
+    <color name="colorPrimary">#8E83FF</color>
+    <color name="colorPrimaryDark">#8E83FF</color>
+    <color name="colorAccent">#8E83FF</color>
+    <color name="matheo_window_background">#11162A</color>
+    <color name="matheo_navigation_bar_background">#11162A</color>
+</resources>

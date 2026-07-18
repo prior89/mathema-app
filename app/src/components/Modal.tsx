@@ -33,7 +33,11 @@ export default function Modal({ open, onClose, title, subtitle, width = 640, chi
         position: 'fixed', inset: 0, zIndex: 100,
         backgroundColor: 'var(--p-overlay)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 'clamp(12px, 4vw, 24px)', fontFamily: 'var(--font-ui)',
+        paddingTop: 'calc(clamp(12px, 4vw, 24px) + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))',
+        paddingRight: 'calc(clamp(12px, 4vw, 24px) + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))',
+        paddingBottom: 'calc(clamp(12px, 4vw, 24px) + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+        paddingLeft: 'calc(clamp(12px, 4vw, 24px) + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))',
+        boxSizing: 'border-box', fontFamily: 'var(--font-ui)',
         animation: 'fadeIn 0.18s ease-out',
       }}
     >
@@ -41,7 +45,9 @@ export default function Modal({ open, onClose, title, subtitle, width = 640, chi
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width, maxWidth: '100%', maxHeight: '90vh', overflow: 'auto',
+          width, maxWidth: '100%',
+          maxHeight: 'calc(100dvh - clamp(12px, 4vw, 24px) - clamp(12px, 4vw, 24px) - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+          overflow: 'auto',
           backgroundColor: 'var(--p-surface)', border: '1px solid var(--p-border)',
           borderRadius: 'var(--radius-lg)', padding: 'clamp(20px, 5vw, 28px)', position: 'relative',
           color: 'var(--p-ink)',

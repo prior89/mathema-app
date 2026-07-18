@@ -126,7 +126,7 @@ export function WrongNoteDetailScreen() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}>
             <div style={{ display: 'flex', gap: 8, fontSize: 12, color: 'var(--p-muted)', flexWrap: 'wrap' }}>
               <span className="status-chip">{note.diff}</span>
-              <span className="status-chip" style={{ background: 'var(--p-danger-tint)', color: 'var(--p-danger)' }}>
+              <span className="status-chip" style={{ background: 'var(--p-danger-tint)', color: 'var(--p-danger-ink)' }}>
                 {note.errorType}
               </span>
               <span>{note.unit} · {note.subUnit}</span>
@@ -223,7 +223,7 @@ export function WrongNoteDetailScreen() {
                   }}>
                     <CheckCircle2 size={16} color="var(--p-success)" />
                     <div>
-                      <div style={{ fontSize: 10, color: 'var(--p-success)', fontWeight: 700 }}>{t('wn.detail.answer')}</div>
+                      <div style={{ fontSize: 10, color: 'var(--p-success-ink)', fontWeight: 700 }}>{t('wn.detail.answer')}</div>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 600 }}>
                         <MathText text={note.problemAnswer} />
                       </div>
@@ -297,7 +297,7 @@ export function WrongNoteDetailScreen() {
                   {masterMut.isPending ? t('common.loading') : t('wn.detail.permanentMaster')}
                 </button>
               ) : (
-                <span style={{ fontSize: 12, color: 'var(--p-success)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 12, color: 'var(--p-success-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <CheckCircle2 size={14} /> {t('wn.master.completed')}
                 </span>
               )}

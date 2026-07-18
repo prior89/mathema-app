@@ -471,7 +471,7 @@ function Misconception({ data }: { data: ConceptStep['misconception'] }) {
   if (!wrong && !why && !correct) return null;
   return (
     <div className="card" style={{ marginTop: 10, padding: 14, borderColor: 'var(--p-danger)' }}>
-      <div className="eyebrow" style={{ color: 'var(--p-danger)' }}>{t('lesson.common.mistake')}</div>
+      <div className="eyebrow" style={{ color: 'var(--p-danger-ink)' }}>{t('lesson.common.mistake')}</div>
       {wrong && <div style={{ marginTop: 6, fontSize: 14, color: 'var(--p-ink)' }}><MathText text={wrong} /></div>}
       {why && <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--p-muted)' }}>{t('lesson.misconception.whyWrong')} <MathText text={why} /></div>}
       {correct && (
@@ -749,7 +749,7 @@ function FeedbackCard({ result }: { result: StepResult }) {
         borderColor: 'transparent',
       }}
     >
-      <div style={{ fontWeight: 700, color: correct ? 'var(--p-success)' : 'var(--p-danger)', fontSize: 14 }}>
+      <div style={{ fontWeight: 700, color: correct ? 'var(--p-success-ink)' : 'var(--p-danger-ink)', fontSize: 14 }}>
         {correct ? t('lesson.feedback.correct') : t('lesson.feedback.wrong')}
       </div>
       {whyLine && (
@@ -1437,13 +1437,13 @@ function KoreanStepCard({ step }: { step: KoreanConceptStep }) {
 
       {step.kind === 'MISCONCEPTION' && step.misconception && (
         <div style={{ marginTop: 12, display: 'grid', gap: 8, fontSize: 13, lineHeight: 1.65 }}>
-          <div style={{ padding: 10, borderRadius: 8, background: 'var(--p-danger-tint)', color: 'var(--p-danger)' }}>
+          <div style={{ padding: 10, borderRadius: 8, background: 'var(--p-danger-tint)', color: 'var(--p-danger-ink)' }}>
             <strong>잘못된 추론: </strong><MathText text={step.misconception.wrongKo} />
           </div>
           <div style={{ color: 'var(--p-ink-2)' }}>
             <strong>왜 그럴까: </strong><MathText text={step.misconception.whyKo} />
           </div>
-          <div style={{ padding: 10, borderRadius: 8, background: 'var(--p-success-tint)', color: 'var(--p-success)' }}>
+          <div style={{ padding: 10, borderRadius: 8, background: 'var(--p-success-tint)', color: 'var(--p-success-ink)' }}>
             <strong>올바른 사고: </strong><MathText text={step.misconception.correctKo} />
           </div>
         </div>

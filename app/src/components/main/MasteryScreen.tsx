@@ -52,10 +52,10 @@ function L(k: keyof typeof LABELS, lang: 'ko' | 'en' | 'hi'): string {
 }
 
 function masteryColor(score: number): string {
-  if (score >= 80) return 'var(--p-success)';
+  if (score >= 80) return 'var(--p-success-ink)';
   if (score >= 60) return 'var(--p-primary)';
-  if (score >= 40) return 'var(--p-accent)';
-  return 'var(--p-danger)';
+  if (score >= 40) return 'var(--p-accent-ink)';
+  return 'var(--p-danger-ink)';
 }
 
 export function MasteryScreen() {
@@ -220,7 +220,7 @@ function ReviewConceptCard({ row, lang, onClick }: { row: ReviewScheduleRow; lan
           className="status-chip"
           style={{
             background: row.priority === 'high' ? 'var(--p-danger-tint)' : 'var(--p-accent-tint)',
-            color: row.priority === 'high' ? 'var(--p-danger)' : 'var(--p-accent)',
+            color: row.priority === 'high' ? 'var(--p-danger-ink)' : 'var(--p-accent-ink)',
           }}
         >
           {L('risk', lang)} {riskPct}%

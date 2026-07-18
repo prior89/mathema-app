@@ -18,9 +18,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Activity, AlertTriangle, Edit3, FileText } from 'lucide-react';
+import { Edit3 } from 'lucide-react';
 import { TopNav, NAV_TO_HASH, NavKey } from '../components/TopNav';
 import { post } from '../lib/api';
+import { scoreToHeatmapStyle } from '../lib/palette';
 import {
   fetchConceptMastery, fetchActivePatterns, fetchWeeklyList, fetchConceptHistory,
   fetchTeacherStudents, fetchStudentMastery, fetchStudentPatterns, fetchStudentWeekly,
@@ -73,7 +74,7 @@ export function TeacherDashboardPage({ embedded = false }: { embedded?: boolean 
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: COLORS.bg, color: COLORS.ink, fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div className="standalone-dashboard" style={{ minHeight: '100vh', backgroundColor: COLORS.bg, color: COLORS.ink, fontFamily: 'Inter, system-ui, sans-serif' }}>
       {!embedded && <TopNav activeNav="대시보드" setActiveNav={handleNav} />}
       <main style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 32px 80px' }}>
         <header style={{ marginBottom: 24 }}>
@@ -208,22 +209,21 @@ function HeatmapGrid({ rows, onSelect, selected }: {
     <Card style={{ padding: 12 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 6 }}>
         {rows.map((m) => {
-          const c = m.masteryScore >= 80 ? COLORS.good
-            : m.masteryScore >= 60 ? '#A4B574'
-            : m.masteryScore >= 40 ? '#E0A458' : COLORS.bad;
+          const cell = scoreToHeatmapStyle(m.masteryScore, m.evidenceCount > 0);
           const isSel = selected === m.conceptId;
           return (
             <button key={m.id}
               onClick={() => onSelect(m.conceptId)}
               style={{
-                backgroundColor: c, color: '#FAF7EF', padding: '10px 12px',
-                borderRadius: 4, border: isSel ? `2px solid ${COLORS.ink}` : 'none',
+                backgroundColor: cell.bg, color: cell.fg, padding: '10px 12px',
+                borderRadius: 4,
+                border: isSel ? '2px solid var(--p-primary)' : '1px solid var(--p-border)',
                 textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
               }}
             >
-              <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 2 }}>{m.concept.name.slice(0, 18)}</div>
+              <div style={{ fontSize: 11, marginBottom: 2 }}>{m.concept.name.slice(0, 18)}</div>
               <div style={{ fontSize: 16, fontFamily: 'JetBrains Mono, monospace', fontWeight: 700 }}>{Math.round(m.masteryScore)}</div>
-              <div style={{ fontSize: 10, opacity: 0.85, marginTop: 2 }}>n={m.evidenceCount} · {m.trend}</div>
+              <div style={{ fontSize: 10, marginTop: 2 }}>n={m.evidenceCount} · {m.trend}</div>
             </button>
           );
         })}
@@ -267,7 +267,7 @@ function DiagnosticMetricsTable({ rows }: { rows: ConceptMastery[] }) {
     <Card style={{ padding: 0 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
-          <tr style={{ borderBottom: `1px solid ${COLORS.line}`, backgroundColor: '#14285008' }}>
+          <tr style={{ borderBottom: `1px solid ${COLORS.line}`, backgroundColor: 'var(--p-surface-2)' }}>
             {['Concept', 'Mastery', 'Recent Acc.', 'Resp(s)', 'Hint%', 'Conf Gap', 'Trend'].map((h) => (
               <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, letterSpacing: '0.1em', color: COLORS.sub }}>{h}</th>
             ))}
@@ -301,8 +301,10 @@ function ErrorCodeBreakdown({ rows }: { rows: ErrorPatternRow[] }) {
   for (const r of rows) totalsByCode.set(r.errorCode, (totalsByCode.get(r.errorCode) ?? 0) + r.frequency);
   const total = [...totalsByCode.values()].reduce((s, x) => s + x, 0) || 1;
   const palette: Record<string, string> = {
-    SIGN: '#8B3A1F', ALG: '#B5552B', CON: '#C7791F', FORMULA: '#D9A055',
-    GRAPH: '#5C6B85', UNIT: '#A89684', CALC: '#4A5D3A', LOGIC: '#1F1A14',
+    SIGN: 'var(--p-dna-concept)', ALG: 'var(--p-dna-calc)',
+    CON: 'var(--p-warning)', FORMULA: 'var(--p-accent)',
+    GRAPH: 'var(--p-ink-2)', UNIT: 'var(--p-muted)',
+    CALC: 'var(--p-success)', LOGIC: 'var(--p-ink)',
   };
   const items = [...totalsByCode.entries()].sort((a, b) => b[1] - a[1]);
   return (
@@ -315,7 +317,7 @@ function ErrorCodeBreakdown({ rows }: { rows: ErrorPatternRow[] }) {
               <span style={{ fontFamily: 'JetBrains Mono, monospace', color: COLORS.ink }}>{code}</span>
               <span style={{ fontFamily: 'JetBrains Mono, monospace', color: COLORS.sub }}>{count}회 · {pct}%</span>
             </div>
-            <div style={{ height: 6, backgroundColor: '#14285010', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ height: 6, backgroundColor: 'var(--p-surface-2)', borderRadius: 3, overflow: 'hidden' }}>
               <div style={{ width: `${pct}%`, height: '100%', backgroundColor: palette[code] ?? COLORS.sub }} />
             </div>
           </div>
@@ -331,7 +333,7 @@ function PatternTable({ rows, onOverride }: { rows: ErrorPatternRow[]; onOverrid
     <Card style={{ padding: 0 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
-          <tr style={{ borderBottom: `1px solid ${COLORS.line}`, backgroundColor: '#14285008' }}>
+          <tr style={{ borderBottom: `1px solid ${COLORS.line}`, backgroundColor: 'var(--p-surface-2)' }}>
             {['Concept', 'ErrorCode', 'Frequency', 'Recent', 'Severity', 'Status', 'Action'].map((h) => (
               <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, letterSpacing: '0.1em', color: COLORS.sub }}>
                 {h}
@@ -367,7 +369,7 @@ function WeeklyTable({ rows }: { rows: any[] }) {
     <Card style={{ padding: 0 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
         <thead>
-          <tr style={{ borderBottom: `1px solid ${COLORS.line}`, backgroundColor: '#14285008' }}>
+          <tr style={{ borderBottom: `1px solid ${COLORS.line}`, backgroundColor: 'var(--p-surface-2)' }}>
             {['Week', 'Attempts', 'Accuracy', 'Sessions', 'AI', 'Generated'].map((h) => (
               <th key={h} style={{ textAlign: 'left', padding: '10px 14px', fontSize: 11, letterSpacing: '0.1em', color: COLORS.sub }}>
                 {h}
@@ -417,10 +419,17 @@ function OverrideModal({ target, onClose, onSuccess }: {
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: '#14285055', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+      backgroundColor: 'var(--p-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100,
+      paddingTop: 'calc(16px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))',
+      paddingRight: 'calc(16px + var(--safe-area-inset-right, env(safe-area-inset-right, 0px)))',
+      paddingBottom: 'calc(16px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+      paddingLeft: 'calc(16px + var(--safe-area-inset-left, env(safe-area-inset-left, 0px)))',
+      boxSizing: 'border-box',
     }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{
-        backgroundColor: COLORS.bg, borderRadius: 6, padding: 28, width: 480, border: `1px solid ${COLORS.line}`,
+        backgroundColor: COLORS.bg, borderRadius: 6, padding: 28, width: 480, maxWidth: '100%',
+        maxHeight: 'calc(100dvh - 32px - var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)))',
+        overflow: 'auto', border: `1px solid ${COLORS.line}`,
       }}>
         <h3 style={{ margin: 0, marginBottom: 12, fontSize: 18, fontWeight: 600 }}>
           Teacher Override — {target.type}
@@ -496,7 +505,7 @@ const btnGhost: React.CSSProperties = {
 const input: React.CSSProperties = {
   display: 'block', width: '100%', marginTop: 6, padding: '8px 10px',
   border: `1px solid ${COLORS.line}`, borderRadius: 4, fontSize: 13, backgroundColor: COLORS.bg,
-  fontFamily: 'inherit',
+  color: COLORS.ink, fontFamily: 'inherit',
 };
 
 export default TeacherDashboardPage;
