@@ -141,6 +141,25 @@ export function RealExamScreen() {
   const answeredCount = Object.keys(progress.answers).length;
   const markedSet = useMemo(() => new Set(progress.marked), [progress.marked]);
 
+  function completePaperSubmission(result: M.PaperResult | null, auto: boolean) {
+    qc.invalidateQueries({ queryKey: ['mock-summary'] });
+    qc.invalidateQueries({ queryKey: ['traj'] });
+    qc.invalidateQueries({ queryKey: ['exam-results'] });
+    qc.invalidateQueries({ queryKey: ['dashboard'] });
+    qc.invalidateQueries({ queryKey: ['heatmap'] });
+    qc.invalidateQueries({ queryKey: ['wn-list'] });
+    qc.invalidateQueries({ queryKey: ['wn-stats'] });
+    qc.invalidateQueries({ queryKey: ['mock-result', resultId] });
+    try {
+      localStorage.removeItem(sessionKey);
+      localStorage.removeItem(progressKey);
+    } catch { /* ignore */ }
+    nav(`/app/mocks/result/${resultId}`, {
+      replace: true,
+      state: { fromFinalize: true, origin: 'test', timedOut: auto, ...(result ?? {}) },
+    });
+  }
+
   async function submitPaper(auto = false) {
     if (submittedRef.current || !resultId) return;
     submittedRef.current = true;
@@ -154,23 +173,17 @@ export function RealExamScreen() {
         durationSec: Math.max(1, Math.round((timeSpentMs.current[problemId] ?? 0) / 1000)),
       }));
       const r = await M.submitExamPaper(resultId, answers);
-      qc.invalidateQueries({ queryKey: ['mock-summary'] });
-      qc.invalidateQueries({ queryKey: ['traj'] });
-      qc.invalidateQueries({ queryKey: ['exam-results'] });
-      qc.invalidateQueries({ queryKey: ['dashboard'] });
-      qc.invalidateQueries({ queryKey: ['heatmap'] });
-      qc.invalidateQueries({ queryKey: ['wn-list'] });
-      qc.invalidateQueries({ queryKey: ['wn-stats'] });
-      qc.invalidateQueries({ queryKey: ['mock-result', resultId] });
-      try {
-        localStorage.removeItem(sessionKey);
-        localStorage.removeItem(progressKey);
-      } catch { /* ignore */ }
-      nav(`/app/mocks/result/${resultId}`, {
-        replace: true,
-        state: { fromFinalize: true, origin: 'test', timedOut: auto, ...r },
-      });
+      completePaperSubmission(r, auto);
     } catch (e: any) {
+      const status = e?.response?.status;
+      const code = e?.response?.data?.error?.code ?? e?.response?.data?.code;
+      // The first submit may have committed while its response was lost. An
+      // owner-scoped retry then proves the result already exists; recover as a
+      // completed submission instead of trapping the student in an error UI.
+      if (status === 409 && code === 'mock_exam_already_finalized') {
+        completePaperSubmission(null, auto);
+        return;
+      }
       submittedRef.current = false;
       setErr(e?.response?.data?.error?.message ?? t('realExam.submit.failed'));
       setBusy(false);

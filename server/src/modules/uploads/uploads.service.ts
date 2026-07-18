@@ -30,7 +30,7 @@ export interface UploadResult {
   ncertClassGuess: NcertClass | null;
 }
 
-const VISION_SYSTEM_PROMPT = `You are an expert math educator. The user uploaded a photo or PDF scan of a single math problem (NCERT / CBSE / JEE level for an Indian student).
+const VISION_SYSTEM_PROMPT = `You are an expert Korean math educator. The user uploaded a photo or PDF scan of a single math problem for a Korean middle-school or high-school student.
 
 Return ONE JSON object — no markdown fence, no commentary. Schema:
 
@@ -45,7 +45,8 @@ Return ONE JSON object — no markdown fence, no commentary. Schema:
 }
 
 Rules:
-- All strings in English (Mathema's primary content language for Indian users).
+- Return concept, formula, solutionSteps, and answer in Korean unless the original problem is entirely English.
+- Interpret CLASS_7..CLASS_12 only as the app's internal grade codes: CLASS_7=중1, CLASS_8=중2, CLASS_9=중3, CLASS_10=고1, CLASS_11=고2, CLASS_12=고3.
 - If multiple problems are visible, focus on the most prominent/centered one and note this in solutionSteps[0].
 - Output JSON ONLY.`;
 
@@ -140,7 +141,7 @@ export class UploadsService {
     });
 
     // 3) Persist as PENDING ContentDraft. sourceLabel "USER-UPLOAD..." prevents
-    // automatic NCERT attribution matching — reviewer must add SOURCE: line before publish.
+    // automatic textbook attribution matching — reviewer must add SOURCE: line before publish.
     const sourceLabel = `USER-UPLOAD · user${userId.slice(0, 8)} · ${new Date().toISOString().slice(0, 19).replace('T', ' ')}`;
     const totalTokensIn = visionTokensIn + draftRes.tokensIn;
     const totalTokensOut = visionTokensOut + draftRes.tokensOut;
@@ -227,8 +228,8 @@ export class UploadsService {
       `AI-detected concept: ${vision.concept || '—'}`,
       `AI-detected formula: ${vision.formula || '—'}`,
       `AI-detected answer: ${vision.answer || '—'}`,
-      vision.ncertClassGuess ? `Class guess: ${vision.ncertClassGuess}` : null,
-      'License note: requires reviewer to supply SOURCE: line before publish.',
+      vision.ncertClassGuess ? `Internal grade guess: ${vision.ncertClassGuess}` : null,
+      'License note: reviewer must supply a textbook/source line before publishing.',
     ]
       .filter(Boolean)
       .join('\n');

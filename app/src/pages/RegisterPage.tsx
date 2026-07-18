@@ -329,17 +329,8 @@ function StepRoleAndCredentials({
   role, setRole, email, setEmail, password, setPassword, name, setName,
   country, setCountry, setLang, googleBusy, onGoogleSignIn, onGoogleError, formBusy, hideGoogle, t,
 }: any) {
-  // KR-first launch: KR is the only live market. IN is parked (status:'planned'
-  // on the backend), so the register API would 400 on country:'IN' — keep it in
-  // the list but inactive so a stray pick can't hit that reject. Must stay in
-  // sync with COUNTRY_CONFIG.status and OnboardingPage's chip list.
   const COUNTRIES: Array<{ id: 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG'; flag: string; name: string; active: boolean }> = [
     { id: 'KR', flag: '🇰🇷', name: '대한민국', active: true },
-    { id: 'IN', flag: '🇮🇳', name: 'India', active: false },
-    { id: 'US', flag: '🇺🇸', name: 'United States', active: false },
-    { id: 'UK', flag: '🇬🇧', name: 'United Kingdom', active: false },
-    { id: 'AU', flag: '🇦🇺', name: 'Australia', active: false },
-    { id: 'SG', flag: '🇸🇬', name: 'Singapore', active: false },
   ];
   const pickCountry = (c: typeof COUNTRIES[number]['id']) => {
     setCountry(c);
@@ -613,14 +604,14 @@ function StepConsent({ analytics, setAnalytics, aiTraining, setAiTraining, marke
   );
 }
 
-function LangToggle({ lang, setLang }: { lang: 'ko' | 'en' | 'hi'; setLang: (l: 'ko' | 'en' | 'hi') => void }) {
+function LangToggle({ lang, setLang }: { lang: 'ko' | 'en' | 'hi'; setLang: (l: 'ko' | 'en') => void }) {
   return (
     <div style={{
       display: 'flex', gap: 0, padding: 2,
       background: 'var(--p-surface-2)', borderRadius: 6,
       border: '1px solid var(--p-border)',
     }}>
-      {(['hi', 'en', 'ko'] as const).map((l) => (
+      {(['ko', 'en'] as const).map((l) => (
         <button
           key={l} type="button" onClick={() => setLang(l)}
           style={{

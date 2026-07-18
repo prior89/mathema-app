@@ -48,8 +48,7 @@ function build() {
   };
   const attempts = { create: jest.fn() };
   const firstSessionPlan = {
-    seedFirstSession: jest.fn().mockResolvedValue([]),
-    getActiveCards: jest.fn().mockResolvedValue([]),
+    ensureFirstSession: jest.fn().mockResolvedValue([]),
   };
   return {
     prisma,
@@ -154,7 +153,7 @@ describe('DiagnosticService.finish', () => {
       conceptCode: 'INT',
       score: 0,
     }]);
-    expect(firstSessionPlan.seedFirstSession).toHaveBeenCalledWith('user-1', {
+    expect(firstSessionPlan.ensureFirstSession).toHaveBeenCalledWith('user-1', {
       recommendedChapterCodes: ['C8-CH01'],
       weakConceptIds: ['concept-1'],
     });
@@ -190,20 +189,49 @@ describe('DiagnosticService.finish', () => {
     expect(prisma.masteryTrajectory.findMany).not.toHaveBeenCalled();
   });
 
-  it('does not resurrect a completed first-session plan on finish retry', async () => {
+  it('repairs the plan on retry when endedAt committed before the first plan write failed', async () => {
     const { service, prisma, firstSessionPlan } = build();
-    firstSessionPlan.getActiveCards.mockResolvedValue([]);
-    prisma.studySession.findUnique.mockResolvedValue({
+    const recoveredCards = [{
+      chapterCode: 'C8-CH01',
+      label: 'Integers',
+      route: '/app/learn/C8-CH01',
+      priority: 1,
+    }];
+    const session = {
       id: 'session-1',
       userId: 'user-1',
-      endedAt: new Date('2026-07-17T00:00:00Z'),
-      attempts: [],
+      endedAt: null as Date | null,
+      attempts: [{
+        isCorrect: false,
+        problem: {
+          concepts: [{
+            conceptId: 'concept-1',
+            concept: { name: 'Integers', nameKo: '정수', code: 'INT' },
+          }],
+          conceptLesson: { chapterCode: 'C8-CH01' },
+          koreanConceptLesson: null,
+        },
+      }],
+    };
+    prisma.studySession.findUnique.mockImplementation(async () => session);
+    prisma.studySession.update.mockImplementation(async () => {
+      session.endedAt = new Date('2026-07-17T00:00:00Z');
+      return session;
     });
+    firstSessionPlan.ensureFirstSession
+      .mockRejectedValueOnce(new Error('transient plan write failure'))
+      .mockResolvedValueOnce(recoveredCards);
 
+    await expect(service.finish('user-1', 'session-1'))
+      .rejects.toThrow('transient plan write failure');
     const result = await service.finish('user-1', 'session-1');
 
-    expect(result.firstSessionPlan).toEqual([]);
-    expect(firstSessionPlan.getActiveCards).toHaveBeenCalledWith('user-1');
-    expect(firstSessionPlan.seedFirstSession).not.toHaveBeenCalled();
+    expect(result.firstSessionPlan).toEqual(recoveredCards);
+    expect(prisma.studySession.update).toHaveBeenCalledTimes(1);
+    expect(firstSessionPlan.ensureFirstSession).toHaveBeenCalledTimes(2);
+    expect(firstSessionPlan.ensureFirstSession).toHaveBeenLastCalledWith('user-1', {
+      recommendedChapterCodes: ['C8-CH01'],
+      weakConceptIds: ['concept-1'],
+    });
   });
 });

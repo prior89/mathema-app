@@ -1,6 +1,6 @@
 /** Mirrors server guardian-consent.util — keep thresholds in sync.
  *  KR: PIPA Article 22-2 → under 14.
- *  IN / default: DPDP Act 2023 §9 + Rules 2025 Rule 10 → under 18. */
+ *  Default/future markets stay conservative at under 18 until mapped. */
 export const GUARDIAN_CONSENT_AGE_THRESHOLD_KR = 14;
 export const GUARDIAN_CONSENT_AGE_THRESHOLD_DEFAULT = 18;
 

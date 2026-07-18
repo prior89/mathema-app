@@ -1,5 +1,20 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CountryCode, Difficulty, DistractorType, ErrorCode, MockExamType } from '@prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  CountryCode,
+  Difficulty,
+  DistractorType,
+  ErrorCode,
+  MockExamType,
+  Prisma,
+  StepType,
+} from '@prisma/client';
 import { MockExamsRepository } from './mock-exams.repository';
 import { GradingService } from './services/grading.service';
 import { AiRecommendExamService } from './services/ai-recommend-exam.service';
@@ -226,6 +241,7 @@ export class MockExamsService {
           where: {
             id: { not: r.id },
             userId,
+            finalizedAt: { not: null },
             takenAt: { lt: r.takenAt },
             mockExam: { type: MockExamType.RECOMMENDED },
             attempts: { some: {} },
@@ -265,7 +281,13 @@ export class MockExamsService {
     // 최근 10개 + 전체 count 동시 조회.
     const [recent, attemptCount] = await Promise.all([
       this.repo.findRecent(userId, 10),
-      this.prisma.mockExamResult.count({ where: { userId } }),
+      this.prisma.mockExamResult.count({
+        where: {
+          userId,
+          finalizedAt: { not: null },
+          mockExam: { type: { not: MockExamType.MINI } },
+        },
+      }),
     ]);
     const last = recent[0];
     const N = recent.length;
@@ -359,13 +381,13 @@ export class MockExamsService {
       select: { country: true },
     });
     if (kind === 'real') {
-      // REAL is currently an India-only JEE-style +4/-1 paper. Allow-listing
-      // IN prevents Korean, unset, or future-country profiles (including
-      // stale clients and direct API calls) from receiving the wrong model.
+      // REAL full-paper mode is still gated until the Korean full-exam pool is
+      // fully verified. This prevents stale clients/direct API calls from
+      // receiving the wrong model.
       if (user?.country !== CountryCode.IN) {
         throw new ForbiddenException({
           code: 'real_exam_country_unavailable',
-          message: 'This full mock exam is available only for the Indian curriculum.',
+          message: '실전 전체 모의고사는 한국형 문제 풀 검증 후 제공됩니다. 지금은 맞춤형 약점 시험과 오답 재시험을 이용해 주세요.',
         });
       }
     }
@@ -780,9 +802,15 @@ export class MockExamsService {
       return [];
     }
     const unitId = lesson.unitId;
-    const classLabel = lesson.ncertClass.replace('CLASS_', 'Class ');
-    const attribution = `AI generated for Matheo · ${classLabel} Chapter ${lesson.chapterNumber} (${lesson.titleEn}) — derived from NCERT syllabus`;
-    const chapterRef = `${classLabel} · Chapter ${lesson.chapterNumber} · ${lesson.titleEn}`;
+    const classLabel = lesson.ncertClass
+      .replace('CLASS_7', '중1')
+      .replace('CLASS_8', '중2')
+      .replace('CLASS_9', '중3')
+      .replace('CLASS_10', '고1')
+      .replace('CLASS_11', '고2')
+      .replace('CLASS_12', '고3');
+    const attribution = `AI generated for Matheo · ${classLabel} ${lesson.chapterNumber}단원 (${lesson.titleEn}) — Korean math practice`;
+    const chapterRef = `${classLabel} · ${lesson.chapterNumber}단원 · ${lesson.titleEn}`;
     // Per-variant prompt nudges the LLM to vary the problems even when
     // called in parallel. The seed integer + difficulty hint avoids
     // collapsing into the same canonical question N times.
@@ -795,7 +823,7 @@ export class MockExamsService {
       const targetDiff = difficulties[i % difficulties.length];
       const seed = Math.random().toString(36).slice(2, 8);
       return (
-        `[seed=${seed}] Generate a fresh single-step practice problem for NCERT ${chapterRef}. ` +
+        `[seed=${seed}] Generate a fresh single-step Korean math practice problem for ${chapterRef}. ` +
         `Aim for difficulty=${targetDiff}. Variation #${i + 1} (out of ${count}). ` +
         `Pick numeric values that have not appeared in any earlier variation in this batch — change every constant. ` +
         `Make it pedagogically distinct.`
@@ -920,6 +948,7 @@ export class MockExamsService {
     }
     const { result } = await this.repo.createSession(userId, {
       name: p.name, type: p.type, totalProblems: fullProblems.length, totalMinutes: p.totalMinutes,
+      problemIds: fullProblems.map((problem) => problem.id),
     });
     return {
       resultId: result.id,
@@ -948,71 +977,196 @@ export class MockExamsService {
       .filter((p) => p.steps.length > 0 && p.steps.every((step) =>
         step.choices.length > 0 && step.choices.filter((choice) => choice.isCorrect).length === 1,
       ))
+      .filter((p) =>
+        p.steps.filter((step) => step.stepType === StepType.ANSWER).length === 1,
+      )
       .map((p: any) => sanitizeForExam(p, lang));
   }
 
-  /**
-   * 모의고사 — 학습과 같은 방식으로 per-step 제출.
-   * choice를 선택하면 attempt 생성 + isCorrect/distractorType/rationale 즉시 반환.
-   * 학습페이지의 study-sessions/:id/answer 와 동일한 흐름.
-   */
-  async submitStepAnswer(userId: string, resultId: string, dto: {
-    problemId: string; choiceId: string;
-    stepIndex: number; durationSec: number; confidence?: number;
-  }, lang: Lang = 'en') {
-    // Chapter-test sessions (MockExam.type=MINI) come from the Study tab.
-    // Tag those attempts as STUDY rather than EXAM so startChapter's "never
-    // show the same problem twice" filter only excludes Study-context history
-    // — real mock-exam attempts stay eligible for chapter-test pickup.
-    const session = await this.prisma.mockExamResult.findUniqueOrThrow({
-      where: { id: resultId },
-      select: { mockExam: { select: { type: true } } },
-    });
-    const context = session.mockExam.type === 'MINI' ? SessionContext.STUDY : SessionContext.EXAM;
+  /** Lock one owner-scoped result so answer writes and finalization serialize. */
+  private async lockOwnedResult(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    resultId: string,
+  ) {
+    const locked = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT "id"
+      FROM "MockExamResult"
+      WHERE "id" = ${resultId} AND "userId" = ${userId}
+      FOR UPDATE
+    `;
+    if (locked.length === 0) {
+      throw new NotFoundException({
+        code: 'mock_exam_result_not_found',
+        message: 'Mock exam result not found.',
+      });
+    }
 
-    const attempt = await this.attempts.create(userId, {
-      problemId: dto.problemId,
-      answer: '',
-      durationSec: dto.durationSec,
-      confidence: dto.confidence,
-      stepIndex: dto.stepIndex,
-      choiceId: dto.choiceId,
-      context,
-      mockExamResultId: resultId,
+    return tx.mockExamResult.findFirstOrThrow({
+      where: { id: resultId, userId },
+      include: { mockExam: true },
     });
-    const choice = await this.prisma.problemChoice.findUnique({
-      where: { id: dto.choiceId },
+  }
+
+  private assertOpenResult(result: { finalizedAt: Date | null; mockExam: { problemIds: string[] } }) {
+    if (result.finalizedAt) {
+      throw new ConflictException({
+        code: 'mock_exam_already_finalized',
+        message: 'This mock exam has already been finalized.',
+      });
+    }
+    // Existing rows are backfilled as finalized by the migration. This extra
+    // guard makes an empty allowlist fail closed if malformed data ever lands.
+    if (result.mockExam.problemIds.length === 0) {
+      throw new ConflictException({
+        code: 'mock_exam_problem_set_unavailable',
+        message: 'This mock exam has no verifiable problem set.',
+      });
+    }
+  }
+
+  private assertOfferedProblem(problemIds: string[], problemId: string) {
+    if (!problemIds.includes(problemId)) {
+      throw new BadRequestException({
+        code: 'problem_not_in_mock_exam',
+        message: 'The submitted problem is not part of this mock exam.',
+      });
+    }
+  }
+
+  private assertStagedSubmissionMode(type: MockExamType) {
+    if (type === MockExamType.REAL) {
+      throw new BadRequestException({
+        code: 'real_exam_requires_paper_submit',
+        message: 'REAL exams must be submitted through the full-paper endpoint.',
+      });
+    }
+  }
+
+  private assertRealPaperMode(type: MockExamType) {
+    if (type !== MockExamType.REAL) {
+      throw new BadRequestException({
+        code: 'paper_submit_requires_real_exam',
+        message: 'Full-paper submission is only available for REAL exams.',
+      });
+    }
+  }
+
+  private async normalizeExamAttempt(
+    tx: Prisma.TransactionClient,
+    input: {
+      problemId: string;
+      choiceId?: string;
+      answer?: string;
+      stepIndex?: number;
+      durationSec?: number;
+      confidence?: number;
+      context: SessionContext;
+      mockExamResultId: string;
+      requiredStepType?: StepType;
+    },
+  ) {
+    if (!input.choiceId) {
+      return {
+        ...input,
+        stepIndex: typeof input.stepIndex === 'number' ? input.stepIndex : null,
+      };
+    }
+
+    const choice = await tx.problemChoice.findUnique({
+      where: { id: input.choiceId },
       select: {
-        id: true, choiceIndex: true, text: true, isCorrect: true, distractorType: true, rationale: true,
-        step: { select: { stepIndex: true, problem: { select: { source: true } } } },
+        step: { select: { problemId: true, stepIndex: true, stepType: true } },
       },
     });
-    if (choice && lang !== 'ko' && choice.step) {
-      const key = `${choice.step.problem.source}:${choice.step.stepIndex}:${choice.choiceIndex}`;
-      const en = CHOICE_EN[key];
-      if (en) return { ...attempt, choice: { ...choice, text: en.text, rationale: en.rationale ?? null } };
+    if (!choice || choice.step.problemId !== input.problemId) {
+      throw new BadRequestException({
+        code: 'choice_not_in_problem',
+        message: 'The selected choice does not belong to the submitted problem.',
+      });
     }
-    return { ...attempt, choice };
+    if (input.requiredStepType && choice.step.stepType !== input.requiredStepType) {
+      throw new BadRequestException({
+        code: 'choice_not_in_required_step',
+        message: `The selected choice must belong to the ${input.requiredStepType} step.`,
+      });
+    }
+    return { ...input, stepIndex: choice.step.stepIndex };
   }
 
   /**
-   * Per-step submit flow ends here. Delegates to grading.service so /submit
-   * and /finalize produce identical scores on the same MockExamResult — they
-   * used to drift (different grade cuts, attempt-level vs problem-level
-   * accuracy, percentile = score vs table lookup).
+   * Insert one canonical exam step while the result row is locked. Exact
+   * retries are idempotent; a different answer for an occupied step conflicts.
    */
-  async finalize(userId: string, resultId: string) {
-    // Ownership guard — grading.service is user-agnostic so we 404 here.
-    await this.prisma.mockExamResult.findFirstOrThrow({
-      where: { id: resultId, userId },
+  private async persistExamAttempt(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    problemIds: string[],
+    input: {
+      problemId: string;
+      choiceId?: string;
+      answer?: string;
+      stepIndex?: number;
+      durationSec?: number;
+      confidence?: number;
+      context: SessionContext;
+      mockExamResultId: string;
+      requiredStepType?: StepType;
+    },
+  ): Promise<{ attempt: any; isNew: boolean; idempotent: boolean }> {
+    this.assertOfferedProblem(problemIds, input.problemId);
+    const normalized = await this.normalizeExamAttempt(tx, input);
+    const existing = await tx.attempt.findFirst({
+      where: {
+        userId,
+        mockExamResultId: normalized.mockExamResultId,
+        problemId: normalized.problemId,
+        stepIndex: normalized.stepIndex,
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
-    const graded = await this.grading.grade(userId, resultId, {});
-    const saved = await this.repo.saveResult(resultId, {
+
+    if (existing) {
+      const exactRetry = normalized.choiceId
+        ? existing.choiceId === normalized.choiceId
+        : existing.choiceId === null && existing.answer === String(normalized.answer ?? '');
+      if (!exactRetry) {
+        throw new ConflictException({
+          code: 'mock_exam_answer_already_submitted',
+          message: 'This mock-exam step already has an answer.',
+        });
+      }
+      return { attempt: existing, isNew: false, idempotent: true };
+    }
+
+    const attempt = await this.attempts.createInTransaction(userId, normalized, tx);
+    return { attempt, isNew: true, idempotent: false };
+  }
+
+  private async publishNewAttempts(userId: string, attempts: any[]) {
+    for (const attempt of attempts) {
+      await this.attempts.publishCommitted(userId, attempt);
+    }
+  }
+
+  private async gradeAndFinalize(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    resultId: string,
+    dto: unknown,
+  ) {
+    const graded = await this.grading.grade(userId, resultId, dto, tx);
+    const saved = await this.repo.saveResult(userId, resultId, {
       score: graded.score,
       grade: graded.grade,
       percentile: graded.percentile,
       durationMin: graded.durationMin,
-    });
+      finalizedAt: new Date(),
+    }, tx);
+    return { graded, saved };
+  }
+
+  private async refreshFinalizationEffects(userId: string, resultId: string) {
     try {
       const attempts = await this.prisma.attempt.findMany({
         where: { userId, mockExamResultId: resultId },
@@ -1044,18 +1198,99 @@ export class MockExamsService {
       this.logger.warn(`Failed to record recommendation outcomes for exam ${resultId}: ${(error as Error).message}`);
     }
     try {
-      // Await materialisation so a parent opening the dashboard immediately
-      // after the exam sees the latest score/weakness data. Reporting failure
-      // is non-fatal because the graded exam result is already durable.
       await this.weeklyReports.generate(userId);
     } catch (error) {
       this.logger.warn(`Weekly report refresh failed after exam ${resultId}: ${(error as Error).message}`);
     }
+  }
+
+  /**
+   * 모의고사 — 학습과 같은 방식으로 per-step 제출.
+   * choice를 선택하면 attempt 생성 + isCorrect/distractorType/rationale 즉시 반환.
+   * 학습페이지의 study-sessions/:id/answer 와 동일한 흐름.
+   */
+  async submitStepAnswer(userId: string, resultId: string, dto: {
+    problemId: string; choiceId: string;
+    stepIndex: number; durationSec: number; confidence?: number;
+  }, lang: Lang = 'en') {
+    // Chapter-test sessions (MockExam.type=MINI) come from the Study tab.
+    // Tag those attempts as STUDY rather than EXAM so startChapter's "never
+    // show the same problem twice" filter only excludes Study-context history
+    // — real mock-exam attempts stay eligible for chapter-test pickup.
+    const persisted = await this.prisma.$transaction(async (tx) => {
+      const session = await this.lockOwnedResult(tx, userId, resultId);
+      this.assertStagedSubmissionMode(session.mockExam.type);
+      this.assertOpenResult(session);
+      const context = session.mockExam.type === MockExamType.MINI
+        ? SessionContext.STUDY
+        : SessionContext.EXAM;
+      return this.persistExamAttempt(tx, userId, session.mockExam.problemIds, {
+        problemId: dto.problemId,
+        answer: '',
+        durationSec: dto.durationSec,
+        confidence: dto.confidence,
+        stepIndex: dto.stepIndex,
+        choiceId: dto.choiceId,
+        context,
+        mockExamResultId: resultId,
+      });
+    }, { maxWait: 5_000, timeout: 30_000 });
+
+    const attempt = persisted.isNew
+      ? await this.attempts.publishCommitted(userId, persisted.attempt)
+      : await this.attempts.formatCommitted(persisted.attempt);
+    const choice = await this.prisma.problemChoice.findUnique({
+      where: { id: dto.choiceId },
+      select: {
+        id: true, choiceIndex: true, text: true, isCorrect: true, distractorType: true, rationale: true,
+        step: { select: { stepIndex: true, problem: { select: { source: true } } } },
+      },
+    });
+    if (choice && lang !== 'ko' && choice.step) {
+      const key = `${choice.step.problem.source}:${choice.step.stepIndex}:${choice.choiceIndex}`;
+      const en = CHOICE_EN[key];
+      if (en) {
+        return {
+          ...attempt,
+          idempotent: persisted.idempotent,
+          choice: { ...choice, text: en.text, rationale: en.rationale ?? null },
+        };
+      }
+    }
+    return { ...attempt, idempotent: persisted.idempotent, choice };
+  }
+
+  /**
+   * Per-step submit flow ends here. Delegates to grading.service so /submit
+   * and /finalize produce identical scores on the same MockExamResult — they
+   * used to drift (different grade cuts, attempt-level vs problem-level
+   * accuracy, percentile = score vs table lookup).
+   */
+  async finalize(userId: string, resultId: string) {
+    // Owner lock also serializes finalize against every answer writer.
+    const { saved, graded, idempotent } = await this.prisma.$transaction(async (tx) => {
+      const result = await this.lockOwnedResult(tx, userId, resultId);
+      this.assertStagedSubmissionMode(result.mockExam.type);
+      if (result.finalizedAt) {
+        const replayGrade = await this.grading.grade(userId, resultId, {}, tx);
+        const stored = await tx.mockExamResult.findFirstOrThrow({
+          where: { id: resultId, userId },
+        });
+        return { saved: stored, graded: replayGrade, idempotent: true };
+      }
+      this.assertOpenResult(result);
+      const finalized = await this.gradeAndFinalize(tx, userId, resultId, {});
+      return { ...finalized, idempotent: false };
+    }, { maxWait: 5_000, timeout: 30_000 });
+    // Safe on replay: recommendation updates are idempotent and weekly report
+    // generation is an upsert. This repairs response-loss after-effects.
+    await this.refreshFinalizationEffects(userId, resultId);
     return {
       ...saved,
       correctCount: graded.correctCount,
       totalProblems: graded.totalProblems,
       attemptedProblems: graded.attemptedProblems,
+      idempotent,
     };
   }
 
@@ -1074,40 +1309,63 @@ export class MockExamsService {
     // different problems can run in parallel — a 60-problem × 3-step exam
     // used to walk 180 awaits in series (15+s on a warm DB); parallelising
     // by-problem brings it back under a second.
-    await Promise.all(dto.answers.map(async (a) => {
-      if (a.choiceIds && a.choiceIds.length > 0) {
-        const perStepDuration = Math.max(1, Math.round(a.durationSec / a.choiceIds.length));
-        for (let i = 0; i < a.choiceIds.length; i++) {
-          await this.attempts.create(userId, {
-            problemId: a.problemId,
-            answer: '',
-            durationSec: perStepDuration,
-            confidence: a.confidence,
-            stepIndex: i + 1,
-            choiceId: a.choiceIds[i],
+    const { saved, graded, newAttempts, idempotent } = await this.prisma.$transaction(async (tx) => {
+      const result = await this.lockOwnedResult(tx, userId, resultId);
+      this.assertStagedSubmissionMode(result.mockExam.type);
+      if (result.finalizedAt) {
+        const replayGrade = await this.grading.grade(userId, resultId, dto, tx);
+        const stored = await tx.mockExamResult.findFirstOrThrow({
+          where: { id: resultId, userId },
+        });
+        return { saved: stored, graded: replayGrade, newAttempts: [], idempotent: true };
+      }
+      this.assertOpenResult(result);
+      const created: any[] = [];
+
+      for (const answer of dto.answers ?? []) {
+        if (answer.choiceIds && answer.choiceIds.length > 0) {
+          const perStepDuration = Math.max(
+            1,
+            Math.round(answer.durationSec / answer.choiceIds.length),
+          );
+          for (let index = 0; index < answer.choiceIds.length; index++) {
+            const persisted = await this.persistExamAttempt(tx, userId, result.mockExam.problemIds, {
+              problemId: answer.problemId,
+              answer: '',
+              durationSec: perStepDuration,
+              confidence: answer.confidence,
+              stepIndex: index + 1,
+              choiceId: answer.choiceIds[index],
+              context: SessionContext.EXAM,
+              mockExamResultId: resultId,
+            });
+            if (persisted.isNew) created.push(persisted.attempt);
+          }
+        } else {
+          const persisted = await this.persistExamAttempt(tx, userId, result.mockExam.problemIds, {
+            problemId: answer.problemId,
+            answer: answer.answer,
+            durationSec: answer.durationSec,
+            confidence: answer.confidence,
             context: SessionContext.EXAM,
             mockExamResultId: resultId,
           });
+          if (persisted.isNew) created.push(persisted.attempt);
         }
-      } else {
-        await this.attempts.create(userId, {
-          problemId: a.problemId,
-          answer: a.answer,
-          durationSec: a.durationSec,
-          confidence: a.confidence,
-          context: SessionContext.EXAM,
-          mockExamResultId: resultId,
-        });
       }
-    }));
-    const graded = await this.grading.grade(userId, resultId, dto);
-    // saveResult spreads into prisma update — pass only persisted columns.
-    return this.repo.saveResult(resultId, {
-      score: graded.score,
-      grade: graded.grade,
-      percentile: graded.percentile,
-      durationMin: graded.durationMin,
-    });
+
+      const finalized = await this.gradeAndFinalize(tx, userId, resultId, dto);
+      return { ...finalized, newAttempts: created, idempotent: false };
+    }, { maxWait: 5_000, timeout: 120_000 });
+    await this.publishNewAttempts(userId, newAttempts);
+    await this.refreshFinalizationEffects(userId, resultId);
+    return {
+      ...saved,
+      correctCount: graded.correctCount,
+      totalProblems: graded.totalProblems,
+      attemptedProblems: graded.attemptedProblems,
+      idempotent,
+    };
   }
 
   /**
@@ -1115,47 +1373,47 @@ export class MockExamsService {
    * problem (palette navigation, answers changeable until submit) and sends
    * them all at once. Each answer lands as an Attempt with the choice's real
    * stepIndex so wrong-note / mastery listeners see consistent rows, then the
-   * paper is graded with JEE negative marking (grading.service REAL branch).
+   * paper is graded with the configured full-paper marking rule.
    */
   async submitPaper(userId: string, resultId: string, dto: SubmitPaperDto) {
-    await this.prisma.mockExamResult.findFirstOrThrow({
-      where: { id: resultId, userId },
-    });
+    const { saved, graded, newAttempts, idempotent } = await this.prisma.$transaction(async (tx) => {
+      const result = await this.lockOwnedResult(tx, userId, resultId);
+      this.assertRealPaperMode(result.mockExam.type);
+      if (result.finalizedAt) {
+        const replayGrade = await this.grading.grade(userId, resultId, {}, tx);
+        const stored = await tx.mockExamResult.findFirstOrThrow({
+          where: { id: resultId, userId },
+        });
+        return { saved: stored, graded: replayGrade, newAttempts: [], idempotent: true };
+      }
+      this.assertOpenResult(result);
+      const created: any[] = [];
 
-    const answers = dto.answers ?? [];
-    const choiceIds = answers.map((a) => a.choiceId);
-    const choices = choiceIds.length > 0
-      ? await this.prisma.problemChoice.findMany({
-          where: { id: { in: choiceIds } },
-          select: { id: true, step: { select: { stepIndex: true, problemId: true } } },
-        })
-      : [];
-    const choiceById = new Map(choices.map((c) => [c.id, c]));
+      for (const answer of dto.answers ?? []) {
+        // persistExamAttempt rejects both foreign problems and cross-problem
+        // choices instead of silently dropping a tampered answer.
+        const persisted = await this.persistExamAttempt(
+          tx,
+          userId,
+          result.mockExam.problemIds,
+          {
+            problemId: answer.problemId,
+            answer: '',
+            durationSec: Math.max(1, Math.round(answer.durationSec || 1)),
+            choiceId: answer.choiceId,
+            context: SessionContext.EXAM,
+            mockExamResultId: resultId,
+            requiredStepType: StepType.ANSWER,
+          },
+        );
+        if (persisted.isNew) created.push(persisted.attempt);
+      }
+      const finalized = await this.gradeAndFinalize(tx, userId, resultId, {});
+      return { ...finalized, newAttempts: created, idempotent: false };
+    }, { maxWait: 5_000, timeout: 120_000 });
 
-    await Promise.all(answers.map(async (a) => {
-      const choice = choiceById.get(a.choiceId);
-      // Drop answers whose choice doesn't belong to the claimed problem —
-      // a tampered payload must not be able to score one problem's choice
-      // against another problem.
-      if (!choice || choice.step.problemId !== a.problemId) return;
-      await this.attempts.create(userId, {
-        problemId: a.problemId,
-        answer: '',
-        durationSec: Math.max(1, Math.round(a.durationSec || 1)),
-        stepIndex: choice.step.stepIndex,
-        choiceId: a.choiceId,
-        context: SessionContext.EXAM,
-        mockExamResultId: resultId,
-      });
-    }));
-
-    const graded = await this.grading.grade(userId, resultId, {});
-    const saved = await this.repo.saveResult(resultId, {
-      score: graded.score,
-      grade: graded.grade,
-      percentile: graded.percentile,
-      durationMin: graded.durationMin,
-    });
+    await this.publishNewAttempts(userId, newAttempts);
+    await this.refreshFinalizationEffects(userId, resultId);
     return {
       ...saved,
       correctCount: graded.correctCount,
@@ -1165,6 +1423,7 @@ export class MockExamsService {
       maxMarks: graded.maxMarks,
       wrongCount: graded.wrongCount,
       unattemptedCount: graded.unattemptedCount,
+      idempotent,
     };
   }
 }

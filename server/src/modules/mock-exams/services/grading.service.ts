@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { MockExamType, Prisma, StepType } from '@prisma/client';
 import { calcGrade, calcPercentile } from '../../../common/utils/grade-calculator.util';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
@@ -8,15 +9,12 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
  *   - POST /mock-exams/results/:id/finalize (per-step submit then finalize)
  *
  * Scoring rules:
- *   - Problem-level credit: a problem counts as correct iff every answered
- *     step on it was correct. A 3-step MC problem with steps 1+2 right and 3
- *     wrong scores zero, matching how real exams grade.
- *   - Single-answer (no-step) attempts count their own isCorrect directly.
+ *   - Staged exams grant credit only after every actual ProblemStep was
+ *     submitted and every submitted row for those steps is correct.
+ *   - REAL exams grade only the single canonical ANSWER ProblemStep.
  *   - score = round(correctProblems / totalProblems * 100); totalProblems
- *     prefers MockExam.totalProblems (intent at session start) but never goes
- *     below the count of distinct attempted problems, so partial sessions
- *     don't divide by a stale planned total.
- *   - REAL exams use JEE-style negative marking instead: +4 per correct
+ *     uses the immutable MockExam.problemIds allowlist captured at start.
+ *   - REAL exams use the configured full-paper marking rule: +4 per correct
  *     problem, -1 per wrong, 0 per unattempted. The stored score stays on
  *     the 0-100 scale (marks normalised against maxMarks, floored at 0) so
  *     grade/percentile tables and trajectory charts keep working unchanged.
@@ -27,49 +25,105 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 export class GradingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async grade(_userId: string, resultId: string, dto: any) {
-    const [attempts, result] = await Promise.all([
-      this.prisma.attempt.findMany({ where: { mockExamResultId: resultId } }),
-      this.prisma.mockExamResult.findUnique({
-        where: { id: resultId },
-        select: { mockExam: { select: { totalProblems: true, type: true } } },
-      }),
-    ]);
+  async grade(
+    userId: string,
+    resultId: string,
+    _dto: any,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const db = tx ?? this.prisma;
+    const result = await db.mockExamResult.findFirst({
+      where: { id: resultId, userId },
+      select: {
+        mockExam: {
+          select: { totalProblems: true, type: true, problemIds: true },
+        },
+      },
+    });
+    if (!result) throw new NotFoundException('Mock exam result not found');
 
-    // Group by problemId — per-step or single-shot per problem.
-    type ProblemAcc = { correctSteps: Set<number | string>; totalSteps: Set<number | string> };
-    const byProblem = new Map<string, ProblemAcc>();
-    for (const a of attempts) {
-      const cur = byProblem.get(a.problemId) ?? { correctSteps: new Set(), totalSteps: new Set() };
-      // Use stepIndex when present, a stable sentinel ('_') when single-shot,
-      // so the all-steps-correct rule covers both shapes uniformly.
-      const key = a.stepIndex ?? '_';
-      cur.totalSteps.add(key);
-      if (a.isCorrect) cur.correctSteps.add(key);
-      byProblem.set(a.problemId, cur);
+    const offeredProblemIds = [...new Set(result.mockExam.problemIds)];
+    const attempts = await db.attempt.findMany({
+      where: {
+        userId,
+        mockExamResultId: resultId,
+        ...(offeredProblemIds.length > 0
+          ? { problemId: { in: offeredProblemIds } }
+          : {}),
+      },
+    });
+
+    // Empty allowlists only exist on already-closed legacy results. They can
+    // still be replayed for a response, but a new/open result is rejected by
+    // MockExamsService before grading.
+    const scoredProblemIds = offeredProblemIds.length > 0
+      ? offeredProblemIds
+      : [...new Set(attempts.map((attempt) => attempt.problemId))];
+    const requiredSteps = scoredProblemIds.length > 0
+      ? await db.problemStep.findMany({
+          where: { problemId: { in: scoredProblemIds } },
+          select: { problemId: true, stepIndex: true, stepType: true },
+        })
+      : [];
+
+    type StepOutcome = { submitted: boolean; allCorrect: boolean };
+    const outcomeByProblem = new Map<string, Map<number, StepOutcome>>();
+    for (const attempt of attempts) {
+      if (attempt.stepIndex === null) continue;
+      const problem = outcomeByProblem.get(attempt.problemId) ?? new Map<number, StepOutcome>();
+      const step = problem.get(attempt.stepIndex) ?? { submitted: false, allCorrect: true };
+      step.submitted = true;
+      // Legacy duplicates are deliberately conservative: one wrong row keeps
+      // the canonical step wrong even if a later duplicate is correct.
+      step.allCorrect = step.allCorrect && attempt.isCorrect;
+      problem.set(attempt.stepIndex, step);
+      outcomeByProblem.set(attempt.problemId, problem);
+    }
+
+    const requiredByProblem = new Map<string, Array<{ stepIndex: number; stepType: StepType }>>();
+    for (const step of requiredSteps) {
+      const problem = requiredByProblem.get(step.problemId) ?? [];
+      problem.push(step);
+      requiredByProblem.set(step.problemId, problem);
     }
 
     let correctCount = 0;
-    for (const [, v] of byProblem) {
-      if (v.totalSteps.size > 0 && v.correctSteps.size === v.totalSteps.size) correctCount += 1;
-    }
-    const attemptedTotal = byProblem.size;
-    const intendedTotal = result?.mockExam?.totalProblems ?? 0;
-    const totalProblems = Math.max(intendedTotal, attemptedTotal, 1);
+    let attemptedTotal = 0;
+    const isReal = result.mockExam.type === MockExamType.REAL;
+    for (const problemId of scoredProblemIds) {
+      const actualSteps = requiredByProblem.get(problemId) ?? [];
+      const required = isReal
+        ? actualSteps.filter((step) => step.stepType === StepType.ANSWER)
+        : actualSteps;
+      // REAL has exactly one canonical ANSWER step. Any malformed problem
+      // (zero or multiple ANSWER steps) fails closed and cannot gain credit.
+      if (required.length === 0 || (isReal && required.length !== 1)) continue;
 
-    const isReal = result?.mockExam?.type === 'REAL';
+      const submitted = outcomeByProblem.get(problemId);
+      const hasRelevantAttempt = required.some((step) =>
+        submitted?.get(step.stepIndex)?.submitted === true,
+      );
+      if (hasRelevantAttempt) attemptedTotal += 1;
+
+      const completeAndCorrect = required.every((step) => {
+        const outcome = submitted?.get(step.stepIndex);
+        return outcome?.submitted === true && outcome.allCorrect;
+      });
+      if (completeAndCorrect) correctCount += 1;
+    }
+
+    const totalProblems = offeredProblemIds.length > 0
+      ? offeredProblemIds.length
+      : Math.max(result.mockExam.totalProblems, 1);
     const wrongCount = attemptedTotal - correctCount;
     const marks = isReal ? 4 * correctCount - wrongCount : null;
     const maxMarks = isReal ? 4 * totalProblems : null;
 
-    let score = isReal
+    const score = isReal
       ? Math.round((Math.max(0, marks!) / maxMarks!) * 100)
       : Math.round((correctCount / totalProblems) * 100);
-    // Compat: when no attempts exist (the caller is the legacy batch /submit
-    // and chose to pre-compute totalScore in the dto), fall back to it.
-    if (attempts.length === 0 && typeof dto?.totalScore === 'number') {
-      score = dto.totalScore;
-    }
+    // Never trust dto.totalScore. Scores are derived exclusively from durable,
+    // owner-scoped Attempt rows; an empty paper is a real zero.
     const durationMin = attempts.length > 0
       ? Math.max(1, Math.round(attempts.reduce((s, a) => s + (a.durationSec ?? 0), 0) / 60))
       : 0;

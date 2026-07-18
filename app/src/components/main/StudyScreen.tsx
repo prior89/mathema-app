@@ -18,13 +18,14 @@ import {
   fetchConceptLessons, fetchKoreanConceptLessons, fetchMe,
 } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
+import { LAUNCH_STUDENT_ONLY } from '../../lib/launch-config';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import { HeadAvatar } from './HeadAvatar';
 
 const CLASS_SHORT: Record<string, string> = {
-  CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
-  CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
+  CLASS_7: '중1', CLASS_8: '중2', CLASS_9: '중3',
+  CLASS_10: '고1', CLASS_11: '고2', CLASS_12: '고3',
 };
 
 export function StudyScreen() {
@@ -38,7 +39,7 @@ export function StudyScreen() {
   // → KoreanPracticePhase (multi-step Q1부터, mastered 후 다시 풀기 모드 —
   // detail() nextProblemId=null when mastered so startProblemId=null → Q1).
   const me = useQuery({ queryKey: ['me'], queryFn: fetchMe });
-  const isKR = me.data?.country === 'KR';
+  const isKR = LAUNCH_STUDENT_ONLY || me.data?.country === 'KR';
 
   const ncertChapters = useQuery({
     queryKey: ['concept-lessons', 'all'],
@@ -76,7 +77,7 @@ export function StudyScreen() {
       .map((c) => ({
         chapterCode: c.chapterCode,
         label: t('study.pick.chapterOption', {
-          n: (CLASS_SHORT[c.ncertClass] ?? c.ncertClass).replace('Class ', ''),
+          n: CLASS_SHORT[c.ncertClass] ?? c.ncertClass,
           ch: c.chapterNumber,
           title: c.title,
         }),

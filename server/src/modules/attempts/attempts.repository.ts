@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { mathAnswersEqual } from '../../common/utils/normalize-math-answer';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { GradingService } from './grading.service';
@@ -26,8 +27,9 @@ export class AttemptsRepository {
     private readonly grading: GradingService,
   ) {}
 
-  async create(userId: string, dto: any) {
-    const problem = await this.prisma.problem.findUniqueOrThrow({
+  async create(userId: string, dto: any, tx?: Prisma.TransactionClient) {
+    const db = tx ?? this.prisma;
+    const problem = await db.problem.findUniqueOrThrow({
       where: { id: dto.problemId },
       include: {
         concepts: { select: { conceptId: true } },
@@ -42,13 +44,14 @@ export class AttemptsRepository {
     let answerText: string;
     let distractorType: string | null = null;
     let distractorErrorCode: string | null = null;
+    let resolvedStepIndex = typeof dto.stepIndex === 'number' ? dto.stepIndex : null;
 
     if (dto.choiceId) {
       // P0-1 fix: choiceId must belong to a step of dto.problemId. Without
       // this check the client could submit the correct choice from a
       // different problem and score this problem correct — corrupting
       // Attempt, WrongNote, Mastery, and Recommendation downstream.
-      const choice = await this.prisma.problemChoice.findUnique({
+      const choice = await db.problemChoice.findUnique({
         where: { id: dto.choiceId },
         select: {
           id: true, text: true, isCorrect: true, distractorType: true,
@@ -80,6 +83,10 @@ export class AttemptsRepository {
           `problemId=${dto.problemId}`,
         );
       }
+      // The choice relation is authoritative. Persisting a caller-supplied
+      // stale stepIndex would let the same exam step occupy multiple rows and
+      // defeat duplicate-answer protection.
+      resolvedStepIndex = choice.step.stepIndex;
       isCorrect = choice.isCorrect;
       answerText = choice.text;
       distractorType = choice.distractorType ?? null;
@@ -106,12 +113,12 @@ export class AttemptsRepository {
       : null;
 
     // 재시도 판정 — 학습 모드에서 같은 (session, problem, stepIndex) 의 이전 attempt 가 있으면 retry.
-    const isRetry = !!(dto.studySessionId && typeof dto.stepIndex === 'number'
-      && (await this.prisma.attempt.count({
+    const isRetry = !!(dto.studySessionId && typeof resolvedStepIndex === 'number'
+      && (await db.attempt.count({
         where: {
           userId, problemId: dto.problemId,
           studySessionId: dto.studySessionId,
-          stepIndex: dto.stepIndex,
+          stepIndex: resolvedStepIndex,
         },
       })) > 0);
 
@@ -145,12 +152,12 @@ export class AttemptsRepository {
       : errorCodes;
 
     // tenantId — User 로부터 lookup (denormalize).
-    const user = await this.prisma.user.findUnique({
+    const user = await db.user.findUnique({
       where: { id: userId }, select: { tenantId: true },
     });
     const tenantId = user?.tenantId ?? null;
 
-    const attempt = await this.prisma.attempt.create({
+    const attempt = await db.attempt.create({
       data: {
         userId, problemId: dto.problemId, tenantId,
         context: dto.context ?? 'STUDY',
@@ -168,7 +175,7 @@ export class AttemptsRepository {
         errorCodes: attemptErrorCodes,
         deviceType,
         timeOfDay,
-        stepIndex: typeof dto.stepIndex === 'number' ? dto.stepIndex : null,
+        stepIndex: resolvedStepIndex,
         choiceId: dto.choiceId ?? null,
         distractorErrorCode,
         studySessionId: dto.studySessionId ?? null,
@@ -178,7 +185,7 @@ export class AttemptsRepository {
 
     // 오답 + 첫 시도일 때만 WrongNote upsert (호환 유지).
     if (!isCorrect && !isRetry) {
-      await this.prisma.wrongNote.upsert({
+      await db.wrongNote.upsert({
         where: { userId_problemId: { userId, problemId: dto.problemId } },
         update: { occurrences: { increment: 1 } },
         create: {
@@ -197,7 +204,7 @@ export class AttemptsRepository {
       // problem is NOT mastered anymore, but the upsert above only bumps
       // occurrences — without this, a MASTERED note is invisible to the
       // review queue / due list forever while the mistake keeps repeating.
-      await this.prisma.wrongNote.updateMany({
+      await db.wrongNote.updateMany({
         where: { userId, problemId: dto.problemId, status: 'MASTERED' },
         data: {
           status: 'PENDING',
@@ -224,10 +231,10 @@ export class AttemptsRepository {
     // graduation to the SM-2 self-rating step (POST /:id/review).
     if (
       isCorrect
-      && typeof dto.stepIndex !== 'number'
+      && typeof resolvedStepIndex !== 'number'
       && !dto.suppressWrongNoteAutoMaster
     ) {
-      await this.prisma.wrongNote.updateMany({
+      await db.wrongNote.updateMany({
         where: { userId, problemId: dto.problemId, status: { not: 'MASTERED' } },
         data: { status: 'MASTERED', masteredAt: new Date() },
       });
@@ -236,7 +243,7 @@ export class AttemptsRepository {
     // 이벤트 페이로드 — mastery-trajectory.listener 가 이걸로 갱신 수행.
     //   명세서 §1-2: conceptTags / difficultyLevel 도 API 응답에 명시 노출 (Attempt 자체에는 정규화 안 됨, Problem 참조).
     const conceptIds = problem.concepts.map((c) => c.conceptId);
-    const conceptCodes = await this.prisma.concept.findMany({
+    const conceptCodes = await db.concept.findMany({
       where: { id: { in: conceptIds } }, select: { code: true },
     });
     return Object.assign(attempt, {

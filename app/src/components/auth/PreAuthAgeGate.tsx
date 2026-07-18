@@ -4,7 +4,6 @@ import { useT } from '../../lib/i18n';
 import {
   derivePreAuthAgeBand,
   type PreAuthAgeBand,
-  type PreAuthRegion,
 } from '../../lib/pre-auth-age-gate';
 
 export function usePreAuthAgeGate() {
@@ -46,12 +45,11 @@ function todayInputValue(): string {
  * value is kept only in this form and erased immediately after classification.
  */
 export function PreAuthAgeGate({ ageBand, onSelect, onReset }: Props) {
-  const { t, lang } = useT();
+  const { t } = useT();
   const titleId = useId();
   const helpId = useId();
   const errorId = useId();
   const [birthDate, setBirthDate] = useState('');
-  const [region, setRegion] = useState<PreAuthRegion>(lang === 'ko' ? 'KR' : 'OTHER');
   const [error, setError] = useState(false);
 
   const reset = () => {
@@ -62,7 +60,7 @@ export function PreAuthAgeGate({ ageBand, onSelect, onReset }: Props) {
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    const decision = derivePreAuthAgeBand(birthDate, region);
+    const decision = derivePreAuthAgeBand(birthDate, 'KR');
     if (!decision) {
       setError(true);
       return;
@@ -111,18 +109,6 @@ export function PreAuthAgeGate({ ageBand, onSelect, onReset }: Props) {
               }}
               required
             />
-          </label>
-          <label>
-            <span>{t('preAuthAge.region')}</span>
-            <select
-              className="pre-auth-age-region"
-              value={region}
-              onChange={(event) => setRegion(event.target.value as PreAuthRegion)}
-            >
-              <option value="KR">{t('preAuthAge.regionKR')}</option>
-              <option value="IN">{t('preAuthAge.regionIN')}</option>
-              <option value="OTHER">{t('preAuthAge.regionOther')}</option>
-            </select>
           </label>
         </div>
         {error && <p id={errorId} className="pre-auth-age-error" role="alert">{t('preAuthAge.invalid')}</p>}

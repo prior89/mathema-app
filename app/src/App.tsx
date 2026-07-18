@@ -130,7 +130,7 @@ export default function App() {
             }
           />
           {/* Public Privacy / Terms routes — reachable without login so the
-              Play Store / DPDP "Privacy URL" requirement is satisfied. */}
+              Play Store privacy URL requirement is satisfied. */}
           <Route path="/privacy" element={<PolicyPage kind="privacy" />} />
           <Route path="/terms" element={<PolicyPage kind="terms" />} />
 

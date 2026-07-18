@@ -100,7 +100,7 @@ export class CreateAttemptDto {
   @IsUUID()
   studySessionId?: string;
 
-  @IsOptional()
-  @IsUUID()
-  mockExamResultId?: string;
+  // mockExamResultId is intentionally not part of the public /attempts DTO.
+  // Exam attempts must go through /mock-exams/results/:id/* so ownership,
+  // offered-problem membership, duplicate and finalized-state checks run.
 }

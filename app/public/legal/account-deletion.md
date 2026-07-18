@@ -1,97 +1,25 @@
-# Account deletion request
+# Matheo 계정 삭제 안내
 
-This page lets you request deletion of your **matheo** account and all
-associated personal data, without needing to install or open the app. It is
-the canonical web destination registered with Google Play under the
-**Data deletion URL** field, per the Play User Data policy that took effect
-2026-04-15.
+시행일: 2026-07-15
 
-## What gets deleted
+사용자는 언제든 계정 삭제를 요청할 수 있습니다.
 
-When you delete your account, we permanently and irreversibly remove every
-record listed below within **30 days** of your request (most often within
-minutes):
+## 앱에서 삭제하기
 
-- Account profile — name, email, hashed password, class, study goal,
-  exam date, country, school level.
-- Practice attempts, wrong notes, mock-exam results, study sessions,
-  concept-lesson progress, daily-activity log, mastery snapshots and
-  trajectories, weekly reports, recommendation logs, error-pattern
-  profile, feedback entries, teacher overrides (if any).
-- AI solver request/response logs, queued AI-analysis jobs, and per-account
-  security events (including their IP, user-agent, and device-hash metadata).
-- Push notification device tokens.
-- DPDP consent records (Data Processing / Analytics / AI Training /
-  Marketing).
-- Password-reset and email-verification tokens.
+1. Matheo 앱에 로그인합니다.
+2. 설정으로 이동합니다.
+3. 계정 삭제를 선택합니다.
+4. 안내 문구를 확인하고 삭제를 확정합니다.
 
-In addition, your `userId` is set to `NULL` in our anonymised
-`AnalyticsEvent` table so the row no longer ties any interaction to you,
-but the aggregate funnel signal survives.
+## 이메일로 요청하기
 
-## What we retain
+아래 주소로 계정 삭제 요청을 보낼 수 있습니다.
 
-We are required to keep a narrow audit trail under DPDP §6(1) and Indian
-record-keeping law. Specifically:
+VeraStudy01@gmail.com
 
-- **AdminAccessLog** — operator actions taken on the platform, with no
-  link back to your identity once your account is deleted. Retention
-  365 days, then automatic purge.
-- **Backup snapshots** — encrypted offsite backups roll off within an
-  additional 30 days after deletion. Your data is unreachable in those
-  snapshots for restore purposes during that window.
+요청 시 가입 이메일을 함께 적어 주세요. 본인 확인이 필요한 경우 추가 확인 절차를 요청할 수 있습니다.
 
-We do not retain personal data for marketing, analytics enrichment, or any
-purpose other than the above.
+## 삭제되는 정보
 
-## How to request deletion
+계정 정보, 학습 기록, 오답노트, 약점시험 결과, 리포트, 업로드한 문제 이미지 등 서비스 이용 데이터가 삭제 대상입니다. 법령상 보존이 필요한 거래·보안 기록과 백업 처리 기간의 데이터는 필요한 기간 후 삭제됩니다.
 
-### Easiest — inside the app
-
-1. Open matheo on your device.
-2. Tap **Me → Settings → Privacy**.
-3. Tap **Delete my account**.
-4. Type `DELETE` to confirm.
-5. The action is irreversible. You are signed out immediately.
-
-### Web — without opening the app
-
-Email `VeraStudy01@gmail.com` from the email address associated with your
-matheo account, with subject:
-
-```
-Account deletion request — DPDP §12
-```
-
-Include:
-
-- Your account email (so we can match the request to your account).
-- A short statement: *"I request deletion of my matheo account and all
-  associated personal data."*
-
-We confirm receipt within **48 hours** and complete deletion within
-**30 days** as required by the Play User Data policy and DPDP §12.
-
-### Identity verification
-
-For account safety we verify that the deletion request comes from the
-account holder. If we cannot confirm the request matches the registered
-email (for example, because you changed email and never re-verified),
-we may ask you to:
-
-- Sign in once from the original email to confirm ownership, or
-- Provide the signup date / class / a recent receipt of activity.
-
-We never ask for your password or any government ID.
-
-## Privacy Policy
-
-The detailed data-handling practices are described in
-[Privacy Policy](./privacy-policy.md) (DPDP / GDPR / Play Family-Policy
-aligned).
-
-## Contact
-
-- **Grievance Officer**: `VeraStudy01@gmail.com`
-- **General support**: `VeraStudy01@gmail.com`
-- **Response window**: 48 hours acknowledgement, 30 days completion.

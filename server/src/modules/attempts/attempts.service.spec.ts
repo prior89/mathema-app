@@ -1,4 +1,5 @@
 import { AttemptsService } from './attempts.service';
+import { BadRequestException } from '@nestjs/common';
 
 describe('AttemptsService learning-state handoff', () => {
   it('waits for attempt.completed listeners before returning the attempt', async () => {
@@ -42,5 +43,32 @@ describe('AttemptsService learning-state handoff', () => {
       attemptId: 'attempt-1',
       isCorrect: true,
     }));
+  });
+
+  it('blocks mockExamResultId on the generic attempt path', async () => {
+    const repo = { create: jest.fn() };
+    const events = { emitAsync: jest.fn() };
+    const prisma = { problemChoice: { findUnique: jest.fn(), findFirst: jest.fn() } };
+    const service = new AttemptsService(repo as never, events as never, prisma as never);
+
+    await expect(service.create('student-1', {
+      problemId: 'p-1',
+      mockExamResultId: 'result-1',
+    })).rejects.toBeInstanceOf(BadRequestException);
+    expect(repo.create).not.toHaveBeenCalled();
+  });
+
+  it('defers attempt.completed when persisting inside an exam transaction', async () => {
+    const persisted = { id: 'attempt-1', userId: 'student-1' };
+    const tx = { attempt: {} };
+    const repo = { create: jest.fn().mockResolvedValue(persisted) };
+    const events = { emitAsync: jest.fn() };
+    const prisma = { problemChoice: { findUnique: jest.fn(), findFirst: jest.fn() } };
+    const service = new AttemptsService(repo as never, events as never, prisma as never);
+
+    await expect(service.createInTransaction('student-1', { problemId: 'p-1' }, tx as never))
+      .resolves.toBe(persisted);
+    expect(repo.create).toHaveBeenCalledWith('student-1', { problemId: 'p-1' }, tx);
+    expect(events.emitAsync).not.toHaveBeenCalled();
   });
 });

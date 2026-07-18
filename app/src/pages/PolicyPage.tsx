@@ -1,6 +1,6 @@
 /* PolicyPage — public Privacy / Terms screen.
  *
- * Reachable without login at /privacy and /terms. Play Store and DPDP both
+ * Reachable without login at /privacy and /terms. Play Store policy
  * require a public Privacy URL that opens in a browser without an account,
  * so this page intentionally bypasses ProtectedRoute. Pulls live content
  * from the @Public `GET /privacy/policy` endpoint and falls back to a
@@ -30,7 +30,7 @@ export default function PolicyPage({ kind }: Props) {
     retry: 1,
   });
 
-  const locale = lang === 'ko' ? 'ko' : lang === 'hi' ? 'hi' : 'en';
+  const locale = lang === 'ko' ? 'ko' : 'en';
   const doc: PolicyDoc = kind === 'terms'
     ? STATIC_TERMS[locale]
     : policy.data ?? STATIC_PRIVACY_FALLBACK[locale];
@@ -80,7 +80,7 @@ export default function PolicyPage({ kind }: Props) {
 // Last-ditch offline fallback so /privacy still renders if the backend is
 // briefly unreachable. Mirrors the live API shape so the renderer is the
 // same code path either way.
-const STATIC_PRIVACY_FALLBACK: Record<'ko' | 'en' | 'hi', PolicyDoc> = {
+const STATIC_PRIVACY_FALLBACK: Record<'ko' | 'en', PolicyDoc> = {
   ko: {
     version: '2026-07-15',
     effectiveDate: '2026-07-15',
@@ -90,7 +90,7 @@ const STATIC_PRIVACY_FALLBACK: Record<'ko' | 'en' | 'hi', PolicyDoc> = {
       { heading: '이용 목적', body: '학습 진단·맞춤 추천 제공, 서비스 개선, 안내 알림(선택 동의 시)' },
       { heading: '보관 기간', body: '계정 활성 기간 + 삭제 요청 후 30일' },
       { heading: '귀하의 권리', body: '열람·정정·삭제 요청, 동의 철회 (DATA_PROCESSING 철회는 계정 삭제로 처리됨)' },
-      { heading: '아동·보호자', body: '만 14세 미만(KR)·만 18세 미만(IN)은 보호자 이메일 확인이 필요합니다. 분석·AI 학습 활용·마케팅은 기본 OFF이며, 보호자 확인 대상 학생과 게스트 계정은 스스로 활성화할 수 없습니다.' },
+      { heading: '아동·보호자', body: '대한민국 기준 만 14세 미만 학생은 보호자 이메일 확인이 필요합니다. 분석·AI 학습 활용·마케팅은 기본 OFF이며, 보호자 확인 대상 학생과 게스트 계정은 스스로 활성화할 수 없습니다.' },
     ],
   },
   en: {
@@ -102,24 +102,12 @@ const STATIC_PRIVACY_FALLBACK: Record<'ko' | 'en' | 'hi', PolicyDoc> = {
       { heading: 'How we use it', body: 'Diagnostics, personalised recommendations, service improvement, notifications (with consent)' },
       { heading: 'Retention', body: 'Active account period + 30 days after deletion request' },
       { heading: 'Your rights', body: 'Access, rectify, erase data; withdraw consent. Withdrawing DATA_PROCESSING triggers account deletion.' },
-      { heading: 'Children & guardians', body: 'Users under 14 (KR) or under 18 (IN) need parent email confirmation. Analytics, AI-training use, and marketing are off by default; guardian-gated students and guest accounts cannot enable them themselves.' },
-    ],
-  },
-  hi: {
-    version: '2026-07-15',
-    effectiveDate: '2026-07-15',
-    title: 'गोपनीयता नीति v2026-07-15',
-    sections: [
-      { heading: 'एकत्रित जानकारी', body: 'ईमेल, नाम, परीक्षा तिथि, अध्ययन गतिविधि (प्रयास, सटीकता, समय, डिवाइस प्रकार)' },
-      { heading: 'उपयोग का उद्देश्य', body: 'निदान, व्यक्तिगत सिफारिशें, सेवा सुधार, सूचनाएँ (सहमति पर)' },
-      { heading: 'संरक्षण अवधि', body: 'सक्रिय खाता अवधि + विलोपन अनुरोध के 30 दिन बाद तक' },
-      { heading: 'आपके अधिकार', body: 'देखना, सुधारना, मिटाना; सहमति वापस लेना। DATA_PROCESSING वापस लेने पर खाता हटा दिया जाता है।' },
-      { heading: 'बच्चे और अभिभावक', body: '14 से कम (KR) या 18 से कम (IN) उपयोगकर्ताओं के लिए अभिभावक की ईमेल पुष्टि आवश्यक है। विश्लेषण, AI-प्रशिक्षण उपयोग और मार्केटिंग डिफ़ॉल्ट रूप से बंद हैं; अभिभावक-अनुमोदन वाले छात्र और अतिथि खाते इन्हें स्वयं चालू नहीं कर सकते।' },
+      { heading: 'Children & guardians', body: 'Students under 14 in Korea need parent email confirmation. Analytics, AI-training use, and marketing are off by default; guardian-gated students and guest accounts cannot enable them themselves.' },
     ],
   },
 };
 
-const STATIC_TERMS: Record<'ko' | 'en' | 'hi', PolicyDoc> = {
+const STATIC_TERMS: Record<'ko' | 'en', PolicyDoc> = {
   ko: {
     version: '2026-07-15',
     effectiveDate: '2026-07-15',
@@ -202,27 +190,6 @@ const STATIC_TERMS: Record<'ko' | 'en' | 'hi', PolicyDoc> = {
       { heading: '12. Suspension and termination', body: 'You may close your account in account settings. VeraStudy may warn, restrict, suspend, or terminate an account for legal or terms violations or threats to users or the Service. Unless urgent risk prevents it, we will explain the reason and how to appeal.' },
       { heading: '13. Responsibility and statutory rights', body: 'VeraStudy uses reasonable care but cannot guarantee uninterrupted access or perfect accuracy across internet, device, and third-party platform conditions. Nothing excludes liability for intent or gross negligence, privacy obligations, non-waivable consumer rights, or other liability that mandatory law does not allow us to limit.' },
       { heading: '14. Changes to terms, law, and contact', body: 'We will announce the effective date and content of revised terms in advance and follow legally required notice or consent procedures for material adverse changes. Korean law applies, and disputes are handled under applicable consumer dispute standards and competent court procedures. Contact: VeraStudy01@gmail.com' },
-    ],
-  },
-  hi: {
-    version: '2026-07-15',
-    effectiveDate: '2026-07-15',
-    title: 'Matheo सेवा की शर्तें',
-    sections: [
-      { heading: '1. स्वीकृति', body: 'ये शर्तें VeraStudy द्वारा संचालित Matheo सीखने की सेवा पर लागू होती हैं। खाता बनाकर या सेवा का उपयोग करके आप इन शर्तों से सहमत होते हैं।' },
-      { heading: '2. आयु और अभिभावक', body: 'सही आयु और खाता जानकारी दें। कोरियाई कानून या सेवा नीति के अंतर्गत जिस नाबालिग को अभिभावक की सहमति चाहिए, वह कानूनी अभिभावक की मंजूरी के बाद ही सेवा का उपयोग कर सकता है।' },
-      { heading: '3. खाता सुरक्षा', body: 'लॉगिन जानकारी सुरक्षित रखें। खाता बेचना, हस्तांतरित करना या किसी अन्य व्यक्ति का खाता उपयोग करना मना है। संदिग्ध उपयोग की सूचना VeraStudy01@gmail.com पर दें।' },
-      { heading: '4. सेवा', body: 'Matheo गणित सामग्री, अभ्यास, निदान, पुनरावृत्ति, नोट्स और व्यक्तिगत अध्ययन मार्गदर्शन देता है। सुविधाएँ कक्षा, देश, डिवाइस और सदस्यता के अनुसार बदल सकती हैं।' },
-      { heading: '5. स्वीकार्य उपयोग', body: 'गैरकानूनी उपयोग, सुरक्षा को दरकिनार करना, अत्यधिक स्वचालित अनुरोध, सॉफ्टवेयर या सामग्री निकालना, परीक्षा में अनुचित लाभ लेना या किसी और का काम करना मना है।' },
-      { heading: '6. AI की सीमाएँ', body: 'AI के उत्तर, सुझाव और अंक में त्रुटियाँ हो सकती हैं। महत्वपूर्ण परीक्षा या प्रवेश निर्णय के लिए केवल इन पर निर्भर न रहें; शिक्षक और आधिकारिक स्रोत से जाँच करें। किसी परिणाम की गारंटी नहीं है।' },
-      { heading: '7. आपकी सामग्री', body: 'आपके द्वारा भेजे गए नोट्स या चित्रों के लिए आवश्यक अधिकार आपके पास होने चाहिए। माँगी गई सेवा, संग्रह, सिंक और AI सुविधा देने के लिए VeraStudy उन्हें सीमित रूप से संसाधित कर सकता है।' },
-      { heading: '8. बौद्धिक संपदा', body: 'सेवा का सॉफ्टवेयर, डिज़ाइन, चिह्न, प्रश्न और व्याख्याएँ VeraStudy या वैध अधिकारधारकों की हैं। अनुमति के बिना केवल व्यक्तिगत, गैर-व्यावसायिक अध्ययन के लिए उपयोग करें।' },
-      { heading: '9. भुगतान और स्वतः नवीनीकरण', body: 'खरीद स्क्रीन पर कीमत, बिलिंग अवधि और कर दिखते हैं। Google Play सदस्यता अगले भुगतान से पहले Google Play सेटिंग में रद्द न की जाए तो अपने आप नवीनीकृत होती है। ऐप हटाने से सदस्यता रद्द नहीं होती।' },
-      { heading: '10. रिफंड', body: 'रिफंड और वापसी के अधिकार Google Play नीति तथा अनिवार्य कोरियाई उपभोक्ता कानून के अनुसार हैं। ये शर्तें किसी ऐसे अधिकार को सीमित नहीं करतीं जिसे कानूनन छोड़ा नहीं जा सकता।' },
-      { heading: '11. बदलाव और उपलब्धता', body: 'गुणवत्ता, सुरक्षा, रखरखाव या कानूनी कारणों से सुविधा बदली या अस्थायी रूप से रोकी जा सकती है। महत्वपूर्ण प्रतिकूल बदलाव की उचित पूर्व सूचना दी जाएगी, जहाँ संभव हो।' },
-      { heading: '12. निलंबन और समाप्ति', body: 'आप खाता सेटिंग में खाता बंद कर सकते हैं। कानून या इन शर्तों के उल्लंघन पर चेतावनी, रोक, निलंबन या समाप्ति हो सकती है; आपात स्थिति न हो तो कारण और अपील का तरीका बताया जाएगा।' },
-      { heading: '13. जिम्मेदारी और कानूनी अधिकार', body: 'उचित सावधानी के बावजूद निरंतर उपलब्धता या पूर्ण सटीकता की गारंटी नहीं है। जानबूझकर या गंभीर लापरवाही, गोपनीयता दायित्व और अनिवार्य उपभोक्ता अधिकारों की जिम्मेदारी सीमित नहीं की जाती।' },
-      { heading: '14. कानून और संपर्क', body: 'बदली हुई शर्तें लागू होने से पहले बताई जाएँगी और प्रतिकूल बदलाव के लिए आवश्यक सूचना या सहमति ली जाएगी। कोरियाई कानून लागू होता है। संपर्क: VeraStudy01@gmail.com' },
     ],
   },
 };

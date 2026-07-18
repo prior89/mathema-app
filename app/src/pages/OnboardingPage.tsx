@@ -44,12 +44,13 @@ import '../styles/onboarding.css';
 
 type StepKey = 'welcome' | 'country' | 'auth' | 'profile' | 'guardian' | 'goal' | 'diagnostic' | 'results' | 'consents' | 'ready';
 type GradeId = 'CLASS_7' | 'CLASS_8' | 'CLASS_9' | 'CLASS_10' | 'CLASS_11' | 'CLASS_12';
+// Backend enum still uses the legacy `JEE` identifier; in the Korean launch
+// that option is presented to users as 수능·심화 입시 대비.
 type GoalId = 'BOARD' | 'JEE' | 'SCHOOL' | 'CATCHUP';
 type ConsentKey = 'ANALYTICS' | 'AI_TRAINING' | 'MARKETING';
 type ConsentMap = Record<ConsentKey, boolean>;
-// Country chip — active markets are IN + KR + AE. Others stay in the type so a
-// later launch can flip them on without a code change; inactive entries are
-// filtered out of the chip list until then.
+// Country chip values are kept for backend compatibility, but the live v1
+// funnel is Korea-only and skips the country step.
 type CountryId = 'IN' | 'KR' | 'US' | 'UK' | 'AU' | 'SG' | 'AE' | 'ID';
 
 const STEP_FLOW: StepKey[] = LAUNCH_STUDENT_ONLY
@@ -66,7 +67,7 @@ const GRADE_MAP: Record<GradeId, string> = {
 
 /** Curriculum facts used by the Ready screen. Keep these counts aligned with
  *  seed-korean-curriculum.ts and seed-concepts.ts. */
-const NCERT_CHAPTERS_PER_CLASS: Record<GradeId, number> = {
+const LEGACY_CHAPTERS_PER_CLASS: Record<GradeId, number> = {
   CLASS_7: 13, CLASS_8: 13, CLASS_9: 12,
   CLASS_10: 14, CLASS_11: 14, CLASS_12: 13,
 };
@@ -79,10 +80,10 @@ const KR_GRADE_LABEL: Record<GradeId, string> = {
   CLASS_10: '고1', CLASS_11: '고2', CLASS_12: '고3',
 };
 function chapterCountByClass(grade: GradeId, country: CountryId): number {
-  return (country === 'KR' ? KR_CHAPTERS_PER_CLASS : NCERT_CHAPTERS_PER_CLASS)[grade] ?? 0;
+  return (country === 'KR' ? KR_CHAPTERS_PER_CLASS : LEGACY_CHAPTERS_PER_CLASS)[grade] ?? 0;
 }
 function gradeLabel(grade: GradeId, country: CountryId): string {
-  return country === 'KR' ? KR_GRADE_LABEL[grade] : grade.replace('CLASS_', '');
+  return country === 'KR' ? KR_GRADE_LABEL[grade] : KR_GRADE_LABEL[grade];
 }
 
 export default function OnboardingPage() {
@@ -375,22 +376,8 @@ function ScreenCountry({
   step, onBack, onNext, country, setCountry,
 }: { step: number; onBack: () => void; onNext: () => void; country: CountryId; setCountry: (c: CountryId) => void }) {
   const { t, setLang } = useT();
-  // Active markets = IN + KR + AE. Inactive entries (US/UK/AU/SG/ID) stay in the
-  // list so a later launch is one `active` flip away, but they are filtered out
-  // of the render below — users only see live markets, no "Coming soon" chips.
   const COUNTRY_OPTIONS: Array<{ id: CountryId; flag: string; name: string; sub: string; active: boolean }> = [
-    // KR-first launch: KR is the only live market. IN + AE are parked (they
-    // share the NCERT content bank, which is not seeded yet) — keep them here
-    // so a later launch is one `active` flip away. Must stay in sync with the
-    // backend COUNTRY_CONFIG.status gate in country.enum.ts.
     { id: 'KR', flag: '🇰🇷', name: '대한민국',       sub: '2022 개정 교육과정 · 수능', active: true  },
-    { id: 'IN', flag: '🇮🇳', name: 'India',         sub: 'NCERT / CBSE / JEE',     active: false },
-    { id: 'AE', flag: '🇦🇪', name: 'United Arab Emirates', sub: 'CBSE / NCERT',    active: false },
-    { id: 'US', flag: '🇺🇸', name: 'United States', sub: 'Common Core / SAT',      active: false },
-    { id: 'UK', flag: '🇬🇧', name: 'United Kingdom', sub: 'GCSE / A-Level',         active: false },
-    { id: 'AU', flag: '🇦🇺', name: 'Australia',     sub: 'ACARA',                  active: false },
-    { id: 'SG', flag: '🇸🇬', name: 'Singapore',     sub: 'MOE',                    active: false },
-    { id: 'ID', flag: '🇮🇩', name: 'Indonesia',     sub: 'Merdeka',                active: false },
   ];
   const COUNTRIES = COUNTRY_OPTIONS.filter((c) => c.active);
   const pick = (c: CountryId) => {
@@ -779,8 +766,7 @@ function ScreenProfile({
     }
   };
   // Grade chips re-label by country. Backend stores GradeLevel (CLASS_N), so
-  // KR labels (중1~고3) map onto the same CLASS_7..CLASS_12 IDs the IN
-  // pickers use. Mapping mirrors NCERT_TO_KR_GRADE in HomeScreen/LearnScreen:
+  // KR labels (중1~고3) map onto the same CLASS_7..CLASS_12 IDs.
   //   CLASS_7→중1, CLASS_8→중2, CLASS_9→중3, CLASS_10→고1, CLASS_11→고2, CLASS_12→고3
   const grades: Array<{ id: GradeId; num: string; lbl: string }> = country === 'KR'
     ? [

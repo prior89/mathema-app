@@ -340,12 +340,12 @@ const SPEC: ProblemStepsSpec[] = [
   },
 ];
 
-// =============== Class 7 (Korean middle school 1) — 20 problems × 3-step MC (legacy demo) ===============
+// =============== 중1 — 20 problems × 3-step MC (legacy demo) ===============
 // Each step has 1 correct + 4 attractive distractors tagged with an error-pattern category.
 const SPEC_M1: ProblemStepsSpec[] = [
   // ---- Integers and rational numbers (5) ----
   {
-    source: 'Class 7 · Integers and Rationals · 1',
+    source: '중1 · 정수와 유리수 · 1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Rule for adding two numbers with opposite signs:', choices: [
         { text: 'Take the sign of the larger absolute value, then (larger |·|) − (smaller |·|)', isCorrect: true },
@@ -371,7 +371,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Integers and Rationals · 2',
+    source: '중1 · 정수와 유리수 · 2',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'How to handle subtraction of a negative number:', choices: [
         { text: 'Flip the subtracted negative to a positive and add (a − (−b) = a + b)', isCorrect: true },
@@ -397,7 +397,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Integers and Rationals · 3',
+    source: '중1 · 정수와 유리수 · 3',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Rule for the sign of a product of several numbers:', choices: [
         { text: 'Even number of negative factors → +, odd number → −', isCorrect: true },
@@ -423,7 +423,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Integers and Rationals · 4',
+    source: '중1 · 정수와 유리수 · 4',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Definition of |x| (absolute value):', choices: [
         { text: 'Distance from 0 on the number line (always ≥ 0)', isCorrect: true },
@@ -449,7 +449,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Integers and Rationals · 5',
+    source: '중1 · 정수와 유리수 · 5',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'How to convert a decimal to a fraction:', choices: [
         { text: 'Use 10ⁿ in the denominator (n = number of decimal places) and reduce', isCorrect: true },
@@ -477,7 +477,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
 
   // ---- Variables and expressions (4) ----
   {
-    source: 'Class 7 · Algebraic Expressions · 1',
+    source: '중1 · 문자와 식 · 1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Write "5 times x" as an expression:', choices: [
         { text: '5x', isCorrect: true },
@@ -503,7 +503,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Algebraic Expressions · 2',
+    source: '중1 · 문자와 식 · 2',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'What does "combining like terms" mean?', choices: [
         { text: 'Add or subtract the coefficients of terms with the same variable (and degree)', isCorrect: true },
@@ -529,7 +529,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Algebraic Expressions · 3',
+    source: '중1 · 문자와 식 · 3',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'First step when evaluating an expression:', choices: [
         { text: 'Substitute −2 directly for x', isCorrect: true },
@@ -555,7 +555,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Algebraic Expressions · 4',
+    source: '중1 · 문자와 식 · 4',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Rule for handling a negative sign in front of parentheses:', choices: [
         { text: 'Distribute the sign over every term inside (distributive property)', isCorrect: true },
@@ -583,7 +583,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
 
   // ---- Linear equations (7) ----
   {
-    source: 'Class 7 · Linear Equations · 1',
+    source: '중1 · 일차방정식 · 1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'First principle when solving a linear equation:', choices: [
         { text: 'Transpose constants to the right side, keep variable terms on the left', isCorrect: true },
@@ -609,7 +609,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Linear Equations · 2',
+    source: '중1 · 일차방정식 · 2',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'First step for a linear equation with parentheses:', choices: [
         { text: 'Expand using the distributive property', isCorrect: true },
@@ -635,7 +635,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Linear Equations · 3',
+    source: '중1 · 일차방정식 · 3',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Cleanest handling when the variable coefficient is negative:', choices: [
         { text: 'Transpose constants to the right, then divide both sides by the negative coefficient', isCorrect: true },
@@ -661,7 +661,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Linear Equations · 4',
+    source: '중1 · 일차방정식 · 4',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Efficient first step for a linear equation with fractional coefficients:', choices: [
         { text: 'Multiply both sides by the LCM of the denominators to clear fractions', isCorrect: true },
@@ -687,7 +687,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Linear Equations · 5',
+    source: '중1 · 일차방정식 · 5',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'First step for a word problem:', choices: [
         { text: 'Define the unknown and set up an equation', isCorrect: true },
@@ -713,7 +713,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Linear Equations · 6',
+    source: '중1 · 일차방정식 · 6',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'How to represent three consecutive natural numbers:', choices: [
         { text: 'x, x + 1, x + 2', isCorrect: true },
@@ -739,7 +739,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Linear Equations · 7',
+    source: '중1 · 일차방정식 · 7',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Condition for the proportion a : b = c : d:', choices: [
         { text: 'Product of the means equals product of the extremes (b · c = a · d)', isCorrect: true },
@@ -767,7 +767,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
 
   // ---- Coordinate plane and graphs (4) ----
   {
-    source: 'Class 7 · Coordinates and Graphs · 1',
+    source: '중1 · 좌표평면과 그래프 · 1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Relationship between quadrant number and the signs of coordinates:', choices: [
         { text: 'Q1: (+,+), Q2: (−,+), Q3: (−,−), Q4: (+,−)', isCorrect: true },
@@ -793,7 +793,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Coordinates and Graphs · 2',
+    source: '중1 · 좌표평면과 그래프 · 2',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Effect of reflection across the x-axis:', choices: [
         { text: 'x stays the same; only the sign of y flips', isCorrect: true },
@@ -819,7 +819,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Coordinates and Graphs · 3',
+    source: '중1 · 좌표평면과 그래프 · 3',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'For the proportional relation y = ax, how do you find the constant of proportionality a?', choices: [
         { text: 'Compute y / x; that gives a', isCorrect: true },
@@ -845,7 +845,7 @@ const SPEC_M1: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 7 · Coordinates and Graphs · 4',
+    source: '중1 · 좌표평면과 그래프 · 4',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Characteristics of the graph y = ax with a < 0:', choices: [
         { text: 'Passes through the origin going upper-left to lower-right (through Q2 and Q4)', isCorrect: true },
@@ -872,11 +872,11 @@ const SPEC_M1: ProblemStepsSpec[] = [
   },
 ];
 
-// =============== NCERT Class 8/9/10 — 12 problems (India Phase 1 additional content) ===============
-const SPEC_NCERT: ProblemStepsSpec[] = [
-  // ---- Class 8 ----
+// =============== Korean middle/high review — 12 problems ===============
+const SPEC_KR_REVIEW: ProblemStepsSpec[] = [
+  // ---- 중2 ----
   {
-    source: 'Class 8 · Rational Numbers · Q1',
+    source: '중2 · 유리수와 순환소수 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'How do you convert a repeating decimal to a fraction?', choices: [
         { text: 'Let x equal the decimal, multiply by 10ⁿ where n = repeating block length, then subtract', isCorrect: true },
@@ -902,7 +902,7 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 8 · Algebraic Identities · Q1',
+    source: '중2 · 곱셈공식 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Which identity expands (a + b)²?', choices: [
         { text: '(a + b)² = a² + 2ab + b²', isCorrect: true },
@@ -928,7 +928,7 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 8 · Linear Equations · Q1',
+    source: '중2 · 일차방정식 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'First step to solve 2x − 3 = 5x + 9?', choices: [
         { text: 'Move x-terms to one side, constants to the other (transposition flips signs)', isCorrect: true },
@@ -954,7 +954,7 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 8 · Graphs · Q1',
+    source: '중2 · 일차함수 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Slope of a line between two points?', choices: [
         { text: 'm = (y₂ − y₁) / (x₂ − x₁)', isCorrect: true },
@@ -980,9 +980,9 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
 
-  // ---- Class 9 ----
+  // ---- 중3 ----
   {
-    source: 'Class 9 · Number Systems · Q1',
+    source: '중3 · 제곱근과 실수 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'How do you simplify √50?', choices: [
         { text: 'Factor 50 = 25·2 = 5²·2 ⇒ √50 = 5√2', isCorrect: true },
@@ -1008,7 +1008,7 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 9 · Polynomials · Q1',
+    source: '중3 · 인수분해 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'To factorise x² + 7x + 12, what do you look for?', choices: [
         { text: 'Two numbers that add to 7 and multiply to 12', isCorrect: true },
@@ -1034,7 +1034,7 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 9 · Coordinate Geometry · Q1',
+    source: '중3 · 좌표평면 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Distance between two points (x₁, y₁) and (x₂, y₂)?', choices: [
         { text: 'd = √[(x₂ − x₁)² + (y₂ − y₁)²]', isCorrect: true },
@@ -1060,7 +1060,7 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 9 · Polynomials · Q2',
+    source: '중3 · 이차함수 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'How do you compute p(2) for p(x) = 2x² − 3x − 2?', choices: [
         { text: 'Substitute x = 2 and simplify each term', isCorrect: true },
@@ -1086,9 +1086,9 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
 
-  // ---- Class 10 ----
+  // ---- 고1 ----
   {
-    source: 'Class 10 · Polynomials · Q1',
+    source: '고1 · 나머지정리 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Remainder Theorem says:', choices: [
         { text: 'When p(x) is divided by (x − c), the remainder equals p(c)', isCorrect: true },
@@ -1114,7 +1114,7 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 10 · Quadratic Equations · Q1',
+    source: '고1 · 이차방정식 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'To factorise x² − 4x − 5, look for two numbers that:', choices: [
         { text: 'Multiply to −5 and add to −4', isCorrect: true },
@@ -1140,7 +1140,7 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 10 · Coordinate Geometry · Q1',
+    source: '고1 · 좌표기하 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Midpoint formula:', choices: [
         { text: 'M = ((x₁ + x₂)/2, (y₁ + y₂)/2)', isCorrect: true },
@@ -1166,7 +1166,7 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
     ],
   },
   {
-    source: 'Class 10 · Trigonometry · Q1',
+    source: '고1 · 삼각비 · Q1',
     steps: [
       { stepIndex: 1, stepType: 'CONCEPT', prompt: 'Pythagorean identity:', choices: [
         { text: 'sin²θ + cos²θ = 1', isCorrect: true },
@@ -1194,9 +1194,9 @@ const SPEC_NCERT: ProblemStepsSpec[] = [
 ];
 
 export async function seedSteps(prisma: PrismaClient, problemIdsBySource: Record<string, string>) {
-  // SPEC_M1 (Class 7 Korean legacy seed) is excluded — it does not match the PoC persona (Class 11).
-  // Kept defined for future reactivation if we add a Class 7 demo persona.
-  const ALL_SPEC = [...SPEC, ...SPEC_NCERT];
+  // SPEC_M1 is excluded from the Korea-first smoke seed because the demo
+  // account starts at the high-school track.
+  const ALL_SPEC = [...SPEC, ...SPEC_KR_REVIEW];
 
   // Wipe existing steps / choices so re-seeding starts clean.
   for (const spec of ALL_SPEC) {

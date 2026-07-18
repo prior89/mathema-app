@@ -268,8 +268,8 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
       en: 'Same 10% rate, simple vs compound interest — how big is the gap after 10 years?',
     },
     concrete: {
-      ko: '₹1000, 10%, 10년. 단리 = 1000 + 100·10 = ₹2000. 복리 = 1000·(1.1)¹⁰ ≈ ₹2594. 차이 ≈ ₹594.',
-      en: '₹1000 @ 10% for 10 yrs. Simple = 1000 + 100·10 = ₹2000. Compound = 1000·(1.1)¹⁰ ≈ ₹2594. Gap ≈ ₹594.',
+      ko: '10,000원, 연 10%, 10년. 단리 = 10,000 + 1,000·10 = 20,000원. 복리 = 10,000·(1.1)¹⁰ ≈ 25,937원. 차이 ≈ 5,937원.',
+      en: '₩10,000 at 10% for 10 years. Simple = ₩10,000 + ₩1,000·10 = ₩20,000. Compound = ₩10,000·(1.1)¹⁰ ≈ ₩25,937. Gap ≈ ₩5,937.',
     },
     pictorial: {
       ko: '단리는 직선 (선형), 복리는 위로 휘어진 지수 곡선. 시간이 길수록 두 선의 차이가 커짐.',
@@ -277,14 +277,14 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
     },
     abstract: {
       ko: '단리 SI = P·r·t.  복리 A = P(1 + r/n)^(nt). 복리는 지수 성장.',
-      en: 'Simple interest grows linearly: SI = P·r·t — earnings depend only on principal, rate, and elapsed time. Compound interest grows exponentially: A = P(1 + r/n)^(nt), where each period\'s interest joins the principal for the next round. The gap between them widens with time — at 10% over 10 years, ₹1,000 becomes ₹2,000 (simple) versus ₹2,594 (compound). Every Indian financial product (FDs, EMIs, mutual funds, credit cards) ultimately reduces to one of these two formulas.',
+      en: 'Simple interest grows linearly: SI = P·r·t — earnings depend only on principal, rate, and elapsed time. Compound interest grows exponentially: A = P(1 + r/n)^(nt), where each period\'s interest joins the principal for the next round. The gap between them widens with time — at 10% over 10 years, ₩10,000 becomes ₩20,000 (simple) versus about ₩25,937 (compound).',
     },
     worked: {
-      ko: 'P=₹1000, r=10%, t=2년 복리(연간복리).',
-      en: 'P=₹1000, r=10%, t=2 yr, annual compounding.',
+      ko: 'P=10,000원, r=10%, t=2년 복리(연간복리).',
+      en: 'P=₩10,000, r=10%, t=2 years, annual compounding.',
       steps: [
         { math: 'A = 1000(1.10)² = 1000·1.21', narrationKo: '복리 공식.', narrationEn: 'Apply formula.' },
-        { math: '= ₹1210',                     narrationKo: '값.',       narrationEn: 'Evaluate.' },
+        { math: '= ₩12,100',                   narrationKo: '값.',       narrationEn: 'Evaluate.' },
       ],
     },
     misconception: {
@@ -296,9 +296,9 @@ export const CLASS_8_CONTENT: ChapterContentMap = {
       correctEn: 'Compound grows faster than simple — exponentially with time.',
     },
     retrieval: {
-      promptKo: '₹500 단리, 8%, 3년. 이자?',
-      promptEn: '₹500 simple interest, 8%, 3 yr. Interest?',
-      accept: ['120', '₹120'],
+      promptKo: '5,000원 단리, 연 8%, 3년. 이자?',
+      promptEn: '₩5,000 simple interest, 8%, 3 years. Interest?',
+      accept: ['1200', '₩1200', '1,200', '₩1,200'],
       explainKo: '500·0.08·3 = 120.',
       explainEn: '500·0.08·3 = 120.',
     },

@@ -54,6 +54,8 @@ export const startStudySessionFromProblem = (problemId: string) =>
 export type ExamStepAnswerResponse = {
   id: string;
   isCorrect: boolean;
+  /** False for the first write; true when the server safely replays the same accepted answer. */
+  idempotent: boolean;
   choice: {
     id: string; choiceIndex: number; text: string; isCorrect: boolean;
     distractorType: string | null; rationale: string | null;
@@ -165,4 +167,3 @@ export const checkConceptRetrieval = (code: string, stepIndex: number, answer: s
     explain: { ko: string; en: string } | null;
     hint: { ko: string; en: string } | null;
   }>(`/concept-lessons/${code}/check`, { stepIndex, answer });
-

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 
 @Injectable()
@@ -14,7 +15,11 @@ export class MockExamsRepository {
 
   findTrajectory(userId: string, count: number) {
     return this.prisma.mockExamResult.findMany({
-      where: { userId, mockExam: this.EXCLUDE_FROM_MOCK_STATS },
+      where: {
+        userId,
+        finalizedAt: { not: null },
+        mockExam: this.EXCLUDE_FROM_MOCK_STATS,
+      },
       orderBy: { takenAt: 'asc' },
       take: count,
       include: { mockExam: true },
@@ -23,34 +28,60 @@ export class MockExamsRepository {
 
   findRecent(userId: string, count: number) {
     return this.prisma.mockExamResult.findMany({
-      where: { userId, mockExam: this.EXCLUDE_FROM_MOCK_STATS },
+      where: {
+        userId,
+        finalizedAt: { not: null },
+        mockExam: this.EXCLUDE_FROM_MOCK_STATS,
+      },
       orderBy: { takenAt: 'desc' },
       take: count,
       include: { mockExam: true },
     });
   }
 
-  saveResult(id: string, data: any) {
-    return this.prisma.mockExamResult.update({ where: { id }, data });
+  saveResult(
+    userId: string,
+    id: string,
+    data: Prisma.MockExamResultUpdateInput,
+    tx?: Prisma.TransactionClient,
+  ) {
+    const db = tx ?? this.prisma;
+    return db.mockExamResult.update({ where: { id, userId }, data });
   }
 
   /**
    * 응시 시작: MockExam(메타) + MockExamResult(빈 결과) 동시 생성.
    * 각 응시는 새 record (재현 가능성·통계 무결성 위해).
    */
-  async createSession(userId: string, params: { name: string; type: any; totalProblems: number; totalMinutes: number }) {
-    const exam = await this.prisma.mockExam.create({
-      data: {
-        name: params.name, type: params.type,
-        totalProblems: params.totalProblems, totalMinutes: params.totalMinutes,
-      },
+  async createSession(userId: string, params: {
+    name: string;
+    type: any;
+    totalProblems: number;
+    totalMinutes: number;
+    problemIds: string[];
+  }) {
+    return this.prisma.$transaction(async (tx) => {
+      const exam = await tx.mockExam.create({
+        data: {
+          name: params.name,
+          type: params.type,
+          totalProblems: params.totalProblems,
+          totalMinutes: params.totalMinutes,
+          problemIds: params.problemIds,
+        },
+      });
+      const result = await tx.mockExamResult.create({
+        data: {
+          userId,
+          mockExamId: exam.id,
+          score: 0,
+          grade: 9,
+          percentile: 0,
+          durationMin: 0,
+          finalizedAt: null,
+        },
+      });
+      return { exam, result };
     });
-    const result = await this.prisma.mockExamResult.create({
-      data: {
-        userId, mockExamId: exam.id,
-        score: 0, grade: 9, percentile: 0, durationMin: 0,
-      },
-    });
-    return { exam, result };
   }
 }

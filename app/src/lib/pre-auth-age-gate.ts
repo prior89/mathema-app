@@ -9,7 +9,7 @@ export type PreAuthRegion = 'KR' | 'IN' | 'OTHER';
 const MINIMUM_GOOGLE_AGE: Record<PreAuthRegion, number> = {
   // Google Accounts can be self-managed from age 14 in South Korea.
   KR: 14,
-  // India's DPDP child protections apply until age 18.
+  // Legacy/future non-KR markets stay conservative until their policy is mapped.
   IN: 18,
   // Unknown/future markets fail conservatively until their policy is mapped.
   OTHER: 18,

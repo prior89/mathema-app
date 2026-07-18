@@ -34,10 +34,11 @@ const playable: ExamPackage = {
 
 describe('buildRecommendedExamLaunch', () => {
   it('routes a playable backend package into the Test-origin mock player', () => {
-    expect(buildRecommendedExamLaunch(playable)).toEqual({
+    expect(buildRecommendedExamLaunch(playable, 'student-1')).toEqual({
       path: '/app/mocks/play/result%2Fwith%20space',
       state: {
         resultId: 'result/with space',
+        userId: 'student-1',
         name: 'AI-tailored Mock',
         totalMinutes: 50,
         problems: playable.problems,
@@ -48,11 +49,11 @@ describe('buildRecommendedExamLaunch', () => {
   });
 
   it('does not open the player when the backend cannot create a result', () => {
-    expect(buildRecommendedExamLaunch({ ...playable, resultId: null })).toBeNull();
+    expect(buildRecommendedExamLaunch({ ...playable, resultId: null }, 'student-1')).toBeNull();
   });
 
   it('does not open an empty exam', () => {
-    expect(buildRecommendedExamLaunch({ ...playable, problems: [] })).toBeNull();
+    expect(buildRecommendedExamLaunch({ ...playable, problems: [] }, 'student-1')).toBeNull();
   });
 
   it.each([
@@ -62,7 +63,7 @@ describe('buildRecommendedExamLaunch', () => {
     expect(buildRecommendedExamLaunch({
       ...playable,
       problems: [{ ...playable.problems[0], steps }],
-    })).toBeNull();
+    }, 'student-1')).toBeNull();
   });
 
   it('does not open an exam when any step has no choices', () => {
@@ -73,7 +74,7 @@ describe('buildRecommendedExamLaunch', () => {
         ...playable.problems[0],
         steps: [{ ...steps[0], choices: [] }],
       }],
-    })).toBeNull();
+    }, 'student-1')).toBeNull();
   });
 
   it('rejects the whole server session when only one problem is unplayable', () => {
@@ -83,6 +84,10 @@ describe('buildRecommendedExamLaunch', () => {
         playable.problems[0],
         { ...playable.problems[0], id: 'problem-2', steps: [] },
       ],
-    })).toBeNull();
+    }, 'student-1')).toBeNull();
+  });
+
+  it('does not create an account-unbound launch payload', () => {
+    expect(buildRecommendedExamLaunch(playable, '')).toBeNull();
   });
 });

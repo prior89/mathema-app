@@ -56,7 +56,7 @@ export class AuthController {
     return this.service.login(dto, { ip, ua, deviceHash: deviceHash || undefined });
   }
 
-  /** PoC dev login — admin/admin (or any creds). 자동 admin 시드 + DPDP 동의 + 토큰 발급. non-production only. */
+  /** PoC dev login — admin/admin (or any creds). 자동 admin 시드 + 필수 동의 + 토큰 발급. non-production only. */
   @Throttle({ auth: { ttl: 60_000, limit: 30 } })
   @Public() @Post('dev-login')
   devLogin(@Req() req: any, @Headers('x-device-hash') deviceHash?: string) {
@@ -139,7 +139,7 @@ export class AuthController {
     });
   }
 
-  // India phone-OTP rail. start sends a code; verify exchanges (phone, code)
+  // Legacy phone-OTP rail. start sends a code; verify exchanges (phone, code)
   // for a session. Truecaller is the one-tap fast path. Tight per-IP throttle
   // (the per-phone send cap lives in the service via Redis).
   @Throttle({ auth: { ttl: 60_000, limit: 5 } })

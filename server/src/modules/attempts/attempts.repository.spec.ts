@@ -162,6 +162,21 @@ describe('AttemptsRepository.create', () => {
     expect(prisma.wrongNote.updateMany).not.toHaveBeenCalled();
   });
 
+  it('persists the choice relation stepIndex instead of a stale caller value', async () => {
+    const prisma = mockPrisma();
+    prisma.problemChoice.findUnique = jest.fn().mockResolvedValue({
+      id: 'ch-2', text: '42', isCorrect: true, distractorType: null, stepId: 's-2',
+      step: { problemId: 'p1', stepIndex: 2 },
+    });
+    const { repo } = build({ prisma });
+
+    await repo.create('u1', { problemId: 'p1', choiceId: 'ch-2', stepIndex: 1 });
+
+    expect(prisma.attempt.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ stepIndex: 2 }),
+    }));
+  });
+
   // ─── retry guard ───
   it('skips WrongNote upsert on a wrong retry (same session+problem+stepIndex)', async () => {
     const prisma = mockPrisma();

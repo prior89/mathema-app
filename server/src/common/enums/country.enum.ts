@@ -34,26 +34,22 @@ export type CountryConfig = {
 export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
   IN: {
     code: 'IN',
-    name: 'India',
+    name: 'Outside Korea',
     defaultLang: 'en',
-    currency: '₹',
-    currencyCode: 'INR',
+    currency: '₩',
+    currencyCode: 'KRW',
     dateFormat: 'dd/MM/yyyy',
-    numberFormat: { thousands: ',', decimal: '.' }, // Indian numbering (lakhs/crores)는 라이브러리 별도
-    curriculum: 'NCERT',
-    gradeLabel: 'Class',
+    numberFormat: { thousands: ',', decimal: '.' },
+    curriculum: 'GENERIC',
+    gradeLabel: 'Grade',
     examNames: {
-      mini: 'Chapter Mini Test',
-      mock: 'Board Mock Exam',
+      mini: 'Topic Mini Test',
+      mock: 'Full Mock Exam',
       recommended: 'AI Diagnostic Mock',
-      wrongRedo: 'Revision Test',
+      wrongRedo: 'Review Test',
     },
-    // Parked for the KR-first launch: India has zero hand-authored problems
-    // yet, and DPDP under-18 verifiable-consent machinery (enforced 2027-05-13)
-    // is not built. 'planned' hides IN from the onboarding chip AND makes the
-    // register API reject country:'IN', so no minor lands on an empty bank and
-    // no under-18 India PII is collected pre-compliance. Flip back to 'live'
-    // once NCERT content is seeded and the consent flow is verified.
+    // Parked for the KR-first launch. 'planned' hides this legacy region from
+    // onboarding and makes the register API reject country:'IN' cleanly.
     status: 'planned',
   },
   KR: {
@@ -75,7 +71,7 @@ export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
     status: 'live',
   },
   US: {
-    code: 'US', name: 'United States', defaultLang: 'en',
+    code: 'US', name: 'Outside Korea (US)', defaultLang: 'en',
     currency: '$', currencyCode: 'USD', dateFormat: 'MM/dd/yyyy',
     numberFormat: { thousands: ',', decimal: '.' },
     curriculum: 'COMMON_CORE', gradeLabel: 'Grade',
@@ -83,7 +79,7 @@ export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
     status: 'planned',
   },
   UK: {
-    code: 'UK', name: 'United Kingdom', defaultLang: 'en',
+    code: 'UK', name: 'Outside Korea (UK)', defaultLang: 'en',
     currency: '£', currencyCode: 'GBP', dateFormat: 'dd/MM/yyyy',
     numberFormat: { thousands: ',', decimal: '.' },
     curriculum: 'GCSE', gradeLabel: 'Year',
@@ -91,7 +87,7 @@ export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
     status: 'planned',
   },
   AU: {
-    code: 'AU', name: 'Australia', defaultLang: 'en',
+    code: 'AU', name: 'Outside Korea (AU)', defaultLang: 'en',
     currency: 'A$', currencyCode: 'AUD', dateFormat: 'dd/MM/yyyy',
     numberFormat: { thousands: ',', decimal: '.' },
     curriculum: 'ACARA', gradeLabel: 'Year',
@@ -99,7 +95,7 @@ export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
     status: 'planned',
   },
   SG: {
-    code: 'SG', name: 'Singapore', defaultLang: 'en',
+    code: 'SG', name: 'Outside Korea (SG)', defaultLang: 'en',
     currency: 'S$', currencyCode: 'SGD', dateFormat: 'dd/MM/yyyy',
     numberFormat: { thousands: ',', decimal: '.' },
     curriculum: 'MOE_SG', gradeLabel: 'Grade',
@@ -107,16 +103,13 @@ export const COUNTRY_CONFIG: Record<CountryCode, CountryConfig> = {
     status: 'planned',
   },
   AE: {
-    code: 'AE', name: 'United Arab Emirates', defaultLang: 'en',
+    code: 'AE', name: 'Outside Korea (AE)', defaultLang: 'en',
     currency: 'AED', currencyCode: 'AED', dateFormat: 'dd/MM/yyyy',
     numberFormat: { thousands: ',', decimal: '.' },
-    // Most UAE private schools follow a CBSE/NCERT-aligned syllabus, so the
-    // Indian curriculum content is reused directly for the first launch.
-    curriculum: 'NCERT', gradeLabel: 'Grade',
+    // Parked for the KR-first launch.
+    curriculum: 'GENERIC', gradeLabel: 'Grade',
     examNames: { mini: 'Chapter Mini Test', mock: 'Board Mock Exam', recommended: 'AI Diagnostic Mock', wrongRedo: 'Revision Test' },
-    // Parked alongside IN for the KR-first launch: AE reuses the Indian NCERT
-    // content, which is not seeded yet, so a live AE market would land users on
-    // an empty problem bank. Unblocks together with IN.
+    // Parked alongside other non-KR markets for the KR-first launch.
     status: 'planned',
   },
   ID: {

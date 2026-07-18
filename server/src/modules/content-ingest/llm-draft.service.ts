@@ -1,4 +1,4 @@
-/* LLM Draft Service — raw NCERT (or EBS, etc.) problem text → 3-step MC (CONCEPT / PROCESS / ANSWER) draft.
+/* LLM Draft Service — raw textbook / uploaded problem text → 3-step MC (CONCEPT / PROCESS / ANSWER) draft.
  *
  * Policy:
  *   - The product rule is "AI does not generate user-facing content", but this is not the student learning flow —
@@ -69,12 +69,12 @@ export type DraftResult = {
  */
 export type DraftMode = 'multi-step' | 'single-step';
 
-export const SYSTEM_PROMPT_MULTI_STEP = `You are an expert math educator transforming NCERT (Indian Class 7-12) and similar problems into a strict 3-step multiple-choice format for the Matheo learning app.
+export const SYSTEM_PROMPT_MULTI_STEP = `You are an expert Korean math educator transforming Korean middle/high-school math problems into a strict 3-step multiple-choice format for the Matheo learning app.
 
 You MUST return a single JSON object with this exact schema (no markdown, no commentary):
 
 {
-  "problemBody": "<the cleaned NCERT problem statement, preserving LaTeX where present>",
+  "problemBody": "<the cleaned problem statement, preserving LaTeX where present>",
   "hint": "<one-sentence hint that nudges the student toward the right concept without giving away the answer>",
   "concept": "<one or two sentences naming the key idea/formula the student must apply>",
   "difficulty": "MIDDLE" | "UPPER_MIDDLE" | "SEMI_KILLER" | "KILLER",
@@ -101,9 +101,9 @@ Rules:
 - Exactly 5 choices per step. Exactly one isCorrect:true.
 - distractorType MUST be one of: CONCEPT_CONFUSION, CALC_ERROR, PROCESS_SKIP, TIME_PRESSURE_GUESS (and null only for the correct choice).
 - For EVERY wrong choice, produce a **student-facing elaborated rationale** (2–4 full sentences). Structure: (1) name the specific misconception or error the student is likely making, (2) explain *why this thinking fails in this exact problem/context*, (3) contrast with the correct reasoning ("올바른 생각은..." / "The correct approach is..."), (4) give one actionable next step or re-teach hint. Never write analyst-only notes. The student will read this directly in feedback.
-- ANSWER choices must be concrete answers (numbers / expressions). If the NCERT problem's correct answer is ambiguous, choose the canonical answer from the NCERT solution manual.
+- ANSWER choices must be concrete answers (numbers / expressions). If the source problem's correct answer is ambiguous, choose the mathematically canonical answer and flag the ambiguity in the hint.
 - Do not invent problems; faithfully transcribe the input. If the input is broken/unparseable, set every field to "UNCLEAR" and isCorrect:true on the first choice of each step.
-- All strings in English (the app's primary content language is English for Indian users). For Korean curriculum (KSAT/KR_* formats) produce natural Korean where appropriate.
+- Produce natural Korean for Korean curriculum formats (KSAT/KR_*). If the original source is entirely English, English is acceptable, but never reference foreign curriculum labels in student-facing text.
 - Output JSON ONLY. No leading/trailing prose.
 
 Additional rule for high-quality conceptual teaching:
@@ -114,7 +114,7 @@ Hattie & Timperley feedback layering (apply per wrong choice; do not flatten):
 - Self-regulation layer: end every rationale with one concrete check the student can run before attempting a similar problem ("Next time: …", "다음에는 …", "Check: …"). One short sentence; no praise, no self-level commentary.
 Research caveat (Chi et al. 2024): a generic "explain why" prompt can lower the worked-example benefit. Keep self-regulation hints tightly scoped to the actual error type instead of asking the student to self-explain in general.`;
 
-export const SYSTEM_PROMPT_SINGLE_STEP = `You are an expert math educator generating a single-step multiple-choice question for Matheo (Indian NCERT Class 7-12 students).
+export const SYSTEM_PROMPT_SINGLE_STEP = `You are an expert Korean math educator generating a single-step multiple-choice question for Matheo Korean middle/high-school students.
 
 Return a single JSON object with this exact schema (no markdown, no commentary):
 
@@ -146,9 +146,9 @@ Rules:
 - distractorType MUST be one of: CONCEPT_CONFUSION, CALC_ERROR, PROCESS_SKIP, TIME_PRESSURE_GUESS (null only for the correct choice).
 - For EVERY wrong choice, produce a **student-facing elaborated rationale** (2–4 full sentences). Structure: (1) name the specific misconception or error the student is likely making, (2) explain *why this thinking fails in this exact problem/context*, (3) contrast with the correct reasoning ("올바른 생각은..." / "The correct approach is..."), (4) give one actionable next step or re-teach hint. Never write analyst-only notes. The student will read this directly in feedback.
 - The answer choices must be concrete final answers (numbers / expressions / coordinates), not procedural fragments.
-- The four distractors must each represent a plausible mistake a real Class 7-12 student would make — never random or absurd wrong values.
-- Match the requested NCERT class + chapter difficulty band. Do not exceed the chapter's topic boundary.
-- All strings in English (primary for Indian users). For Korean curriculum formats produce natural Korean where appropriate.
+- The four distractors must each represent a plausible mistake a real Korean middle/high-school student would make — never random or absurd wrong values.
+- Match the requested grade/chapter difficulty band. Do not exceed the chapter's topic boundary.
+- Produce natural Korean for Korean curriculum formats. If the original source is entirely English, English is acceptable, but never reference foreign curriculum labels in student-facing text.
 - Output JSON ONLY.
 
 Hattie & Timperley feedback layering (apply per wrong choice; do not flatten):
@@ -158,13 +158,14 @@ Research caveat (Chi et al. 2024): a generic "explain why" prompt can lower the 
 
 /**
  * Per-exam-style framing prepended to the LLM prompt. Each line is a short
- * directive the LLM applies on top of the base system prompt. NCERT_TEXTBOOK
- * (the default) returns null because the base prompts already match its
+ * directive the LLM applies on top of the base system prompt. Legacy external
+ * textbook formats return a style hint only when explicitly requested; otherwise
+ * the base prompts use the Korea-first voice.
  * voice — the hint adds nothing.
  *
  * Calibrated for the 2026-05-22 user spec ([[matheo-ux-spec-full]]):
- *   - India: NCERT base + JEE/NEET/CBSE variants
  *   - Korea: KSAT (수능) + 내신 + 평가원 모의고사 variants
+ *   - Legacy external formats: retained only for backward-compatible admin ingest
  *
  * 2026-06-14 Analysis-driven update (see CONTENT_QUALITY_RUBRIC.md):
  * All generated content and rationales must meet the "sufficient" bar for
@@ -174,11 +175,11 @@ function examStyleHint(format: DraftPayload['examFormat'] | undefined): string |
   if (!format || format === 'NCERT_TEXTBOOK') return null;
   switch (format) {
     case 'CBSE_BOARD':
-      return 'Authoring style: CBSE Class 10/12 board exam. Step marks visible in the solution flow, formal language, formula-recall over trick shortcuts.';
+      return 'Legacy external-board style. Keep student-facing text curriculum-neutral unless a reviewer explicitly requests otherwise.';
     case 'JEE_MAIN':
-      return 'Authoring style: JEE Main (NTA). Concise numerical / single-correct MCQ. Distractors must reflect classic shortcut errors and sign / index slips under 2-min-per-question pressure.';
+      return 'Legacy competitive-exam style. Concise numerical / single-correct MCQ. Avoid foreign curriculum labels in student-facing text.';
     case 'JEE_ADVANCED':
-      return 'Authoring style: JEE Advanced. Multi-concept fusion (e.g. coordinate + calculus + trig in one problem). One distractor should target the "wrong concept invoked" misread; another the "right concept, off-by-one limit" slip.';
+      return 'Legacy advanced-exam style. Multi-concept fusion where appropriate. Avoid foreign curriculum labels in student-facing text.';
     case 'NEET':
       return 'Authoring style: NEET. Bias toward formula-recall and direct application. Distractors should target unit-conversion slips, sign flips, and trigonometric-identity confusions common in biology-bound students with weaker math fluency.';
     case 'KSAT':

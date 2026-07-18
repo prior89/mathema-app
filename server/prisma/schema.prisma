@@ -826,6 +826,9 @@ model MockExam {
   scheduledAt   DateTime?
   totalProblems Int          @default(30)
   totalMinutes  Int          @default(100)
+  /// Immutable problem allowlist captured when this per-user exam is created.
+  /// Submission endpoints reject every problem outside this list.
+  problemIds    String[]     @default([])
   createdAt     DateTime     @default(now())
 
   results MockExamResult[]
@@ -840,6 +843,8 @@ model MockExamResult {
   percentile  Int // 0~100
   durationMin Int
   takenAt     DateTime @default(now())
+  /// Null while answers may be written; set atomically with the final score.
+  finalizedAt DateTime?
 
   user     User      @relation(fields: [userId], references: [id])
   mockExam MockExam  @relation(fields: [mockExamId], references: [id])

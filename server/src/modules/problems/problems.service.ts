@@ -134,8 +134,8 @@ export class ProblemsService {
       (koreanProblem
         ? 'You are tutoring a Korean middle/high-school student through a math problem.\n' +
           'Walk them through the solution step by step in natural Korean (친근한 해요체).\n'
-        : 'You are tutoring an Indian Class 7-12 student through a math problem.\n' +
-          'Walk them through the solution step by step in plain English.\n') +
+        : 'You are tutoring a Korean middle/high-school student through a math problem written in English.\n' +
+          'Walk them through the solution step by step in plain English without referencing a foreign curriculum.\n') +
       'Wrap EVERY math expression in inline LaTeX delimiters $...$ — even single variables ' +
       'like $x$ and standalone numbers used as math. Convert unicode math symbols ' +
       '(∫, π, √, ²) to LaTeX commands inside the delimiters.\n' +

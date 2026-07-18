@@ -26,6 +26,15 @@ const PLAN_BADGE: Record<string, { glyph: string; bg: string; fg: string }> = {
   mock: { glyph: '∑', bg: 'var(--p-success-tint)', fg: 'var(--p-success)' },
 };
 
+const KOREAN_CLASS_LABEL: Record<string, string> = {
+  CLASS_7: '중1',
+  CLASS_8: '중2',
+  CLASS_9: '중3',
+  CLASS_10: '고1',
+  CLASS_11: '고2',
+  CLASS_12: '고3',
+};
+
 function planBadge(type: string) {
   return PLAN_BADGE[type] ?? PLAN_BADGE.concept;
 }
@@ -59,10 +68,9 @@ export function HomeScreen() {
   // (Sprint 3 A12) still consumes sessionStorage 'adaptive:queue'.
 
   const userName = me.data?.name ?? '';
-  // Locale follows user lang (set by I18nCountrySync from User.country).
-  // 'ko' → 'ko-KR' shows "5월 24일 일요일", everything else → 'en-IN' keeps
-  // the India PoC default "Sunday, 24 May".
-  const dateLocale = lang === 'ko' ? 'ko-KR' : 'en-IN';
+  // v1 launch is Korea-first; avoid falling back to an India-style date if an
+  // old account or browser locale has not synced yet.
+  const dateLocale = lang === 'en' ? 'en-US' : 'ko-KR';
   const dateStr = new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'short' });
   const isColdStart = !!(
     summary.data
@@ -469,13 +477,9 @@ function ChapterProgressCard({ row, onClick }: { row: ChapterProgressRow; onClic
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: 11, color: 'var(--p-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
-            {/* KR rows pack a KoreanGrade enum ("MIDDLE_1" / "HIGH_2_ALG") into
-                ncertClass — un-localized and confusing in the UI. User decision
-                2026-05-27: just drop the grade label on KR cards and keep
-                only "CH N". NCERT (IN) still renders the localized class. */}
             {row.chapterCode.startsWith('K-')
               ? `CH ${row.chapterNumber}`
-              : `${row.ncertClass.replace('CLASS_', 'Class ')} · CH ${row.chapterNumber}`}
+              : `${KOREAN_CLASS_LABEL[row.ncertClass] ?? '내 학년'} · CH ${row.chapterNumber}`}
           </div>
           <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--p-ink)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {row.titleEn}

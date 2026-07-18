@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { translations, TranslationKey } from './translations';
 import { detectOnboardingLang } from './onboarding-locale';
 
-// Future expansion: add 'es' (Latin America) when ready. Keep in sync with
+// Future expansion: add extra languages when ready. Keep in sync with
 // `server/src/common/i18n/current-lang.decorator.ts` and `translations.ts`.
 export type Lang = 'ko' | 'en' | 'hi';
 
@@ -16,12 +16,12 @@ const Ctx = createContext<I18nContext | null>(null);
 const STORAGE_KEY = 'mathema.lang';
 
 /**
- * 다국어 컨텍스트 — UI 라벨 번역 (ko/en/hi).
+ * 다국어 컨텍스트 — UI 라벨 번역 (ko/en).
  *
  * 백엔드 생성 텍스트(문제 본문·AI 코치 메시지·distractor rationale 등)는
  * KO/EN 양방향 사전(content-en.ts) 으로 동시 지원.
- * Matheo는 IN/KR 양국 co-primary 마켓 (project_mathema_kr_merged) 이라
- * 기기 언어가 ko-KR이면 한국어로, hi-IN이면 힌디어로, 그 외엔 영어로 시작.
+ * Matheo v1은 한국 출시가 우선이므로 기기 언어가 ko-KR이면 한국어,
+ * 그 외에는 영어 보조 문구로 시작한다.
  *
  * 사용:
  *   const { t, lang, setLang } = useT();
@@ -31,7 +31,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => {
     if (typeof window === 'undefined') return 'en';
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'ko' || saved === 'en' || saved === 'hi') return saved;
+    if (saved === 'ko' || saved === 'en') return saved;
     const path = window.location.pathname;
     // Pre-auth onboarding/register: market locale (KR→ko, IN/ID/AE→en), no hi flash.
     if (path.startsWith('/onboarding') || path.startsWith('/register')) {
@@ -40,7 +40,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     // Logged-in surfaces: browser language pick.
     const nav = navigator.language.toLowerCase();
     if (nav.startsWith('ko')) return 'ko';
-    if (nav.startsWith('hi')) return 'hi';
     return 'en';
   });
 
@@ -71,7 +70,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = (key: TranslationKey, params?: Record<string, string | number>): string => {
     const dict = translations[lang] as Record<string, string>;
-    // HI 가 누락된 키는 EN 으로, EN도 없으면 KO 로, 모두 없으면 key 그대로.
+    // EN이 없으면 KO로, 모두 없으면 key 그대로.
     const en = translations.en as Record<string, string>;
     const ko = translations.ko as Record<string, string>;
     let str = dict[key] ?? en[key] ?? ko[key] ?? key;

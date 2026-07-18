@@ -202,12 +202,13 @@ export class DiagnosticService {
       ),
     ].slice(0, 5);
 
-    const firstSessionPlan = wasAlreadyFinished
-      ? await this.firstSessionPlan.getActiveCards(userId)
-      : await this.firstSessionPlan.seedFirstSession(userId, {
-          recommendedChapterCodes,
-          weakConceptIds,
-        });
+    // Always ensure the plan, including on a finish replay. endedAt may have
+    // committed while the original plan seed failed. The plan service itself
+    // protects completed and already-complete plans from being overwritten.
+    const firstSessionPlan = await this.firstSessionPlan.ensureFirstSession(userId, {
+      recommendedChapterCodes,
+      weakConceptIds,
+    });
 
     return {
       sessionId,

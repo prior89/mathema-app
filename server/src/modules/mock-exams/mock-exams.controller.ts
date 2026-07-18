@@ -73,7 +73,7 @@ export class MockExamsController {
     return this.service.submit(userId, id, dto);
   }
 
-  /** Full-paper batch submit (REAL exams) — one final choice per problem, JEE marking. */
+  /** Full-paper batch submit (REAL exams) — one final choice per problem. */
   @Post('results/:id/submit-paper')
   submitPaper(@CurrentUser('id') userId: string, @Param('id') id: string, @Body() dto: SubmitPaperDto) {
     return this.service.submitPaper(userId, id, dto);

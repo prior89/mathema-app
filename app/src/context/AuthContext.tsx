@@ -14,6 +14,7 @@ import { unregisterPushToken } from '../native/push-bridge';
 import { track } from '../lib/analytics';
 import { clearSentryUser, tagSentryUser } from '../lib/sentry';
 import { clearPendingRealExams } from '../lib/pending-real-exam';
+import { clearPendingMockExams } from '../lib/mock-exam-progress';
 import { consumeGoogleSignInNonce } from '../lib/google-sign-in-nonce';
 import { clearNativeGoogleCredentialState } from '../native/google-auth-bridge';
 
@@ -250,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokens.clear();
     sessionStorage.clear();
     try { clearPendingRealExams(localStorage); } catch { /* ignore */ }
+    try { clearPendingMockExams(localStorage); } catch { /* ignore */ }
     // Account-scoped, not device-scoped: a stale completed-flag waves the NEXT
     // account on this device past onboarding (gradeLevel never collected).
     localStorage.removeItem('mathema.onboarding');
@@ -264,6 +266,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokens.clear();
     sessionStorage.clear();
     try { clearPendingRealExams(localStorage); } catch { /* ignore */ }
+    try { clearPendingMockExams(localStorage); } catch { /* ignore */ }
     localStorage.removeItem('mathema.onboarding');
     queryClient.clear();
     setUser(null);

@@ -14,6 +14,7 @@ import type { TranslationKey } from '../../lib/translations';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
+import { useAuth } from '../../context/AuthContext';
 
 function gradeBand(n: number): string {
   if (n <= 1) return 'A1';
@@ -44,6 +45,7 @@ export function MockResultDetailScreen() {
   const loc = useLocation();
   const resultState = loc.state as ResultLocationState | null;
   const { t } = useT();
+  const { user } = useAuth();
   const detail = useQuery({
     queryKey: ['mock-result', resultId],
     queryFn: () => fetchMockResultDetail(resultId!),
@@ -56,7 +58,7 @@ export function MockResultDetailScreen() {
   const startNextExam = useMutation({
     mutationFn: startRecommendedExam,
     onSuccess: (exam) => {
-      const launch = buildRecommendedExamLaunch(exam);
+      const launch = buildRecommendedExamLaunch(exam, user?.id ?? '');
       if (!launch) {
         setNextExamState('empty');
         return;

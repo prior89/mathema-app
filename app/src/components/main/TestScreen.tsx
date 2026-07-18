@@ -33,7 +33,7 @@ export function TestScreen() {
   const startRecommended = useMutation({
     mutationFn: M.startRecommendedExam,
     onSuccess: (exam) => {
-      const launch = buildRecommendedExamLaunch(exam);
+      const launch = buildRecommendedExamLaunch(exam, user?.id ?? '');
       if (!launch) {
         setRecommendedState('empty');
         return;

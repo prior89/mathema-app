@@ -185,7 +185,7 @@ export class AuthService {
 
     // ── STUDENT 만 examDate/targetGrade/gradeLevel 의미 ──────────
     const isStudent = role === 'STUDENT';
-    const examDate = isStudent && dto.examDate ? new Date(dto.examDate) : new Date('2027-02-14'); // 인도 기본 board exam 날짜
+    const examDate = isStudent && dto.examDate ? new Date(dto.examDate) : new Date('2027-11-18'); // 한국 수능 기본 목표일
     const targetGrade = isStudent ? (dto.targetGrade ?? 3) : 1; // 학부모/교사는 N/A 라 1
     const gradeLevel = isStudent ? dto.gradeLevel : undefined;
     const studyGoal = isStudent ? dto.studyGoal : undefined;
@@ -234,7 +234,7 @@ export class AuthService {
       });
     }
 
-    // DPDP/GDPR — 가입 시 필수 동의(DATA_PROCESSING) + 선택 동의(가입 폼에서 보낸 값)
+    // PIPA/GDPR principles — 가입 시 필수 동의(DATA_PROCESSING) + 선택 동의(가입 폼에서 보낸 값)
     await this.privacy.grantInitial(user.id, {
       analytics:  dto.consentAnalytics  === true,
       marketing:  dto.consentMarketing  === true,
@@ -345,7 +345,7 @@ export class AuthService {
         examDate: new Date('2027-02-14'),
         targetGrade: 1,
         // KR-first: dev-login lands on the live market so local testing hits
-        // the seeded KR curriculum instead of the empty India bank.
+        // the seeded KR curriculum instead of a legacy empty curriculum bank.
         country: 'KR' as any,
         gradeLevel: 'CLASS_11' as any,
         role: 'STUDENT' as any,
@@ -361,7 +361,7 @@ export class AuthService {
         data: { emailVerifiedAt: new Date() },
       }) as any;
     }
-    // DPDP 컴플라이언스 — DATA_PROCESSING 이 아직 활성 아니면 부여 (idempotent).
+    // 개인정보 처리 필수 동의 — DATA_PROCESSING 이 아직 활성 아니면 부여 (idempotent).
     // 선택 동의(ANALYTICS/AI_TRAINING/MARKETING)는 온보딩 08 화면에서 별도 grant.
     const verifiedUser = user!;
     const hasDP = await this.privacy.isActive(verifiedUser.id, 'DATA_PROCESSING' as any);
@@ -736,14 +736,14 @@ export class AuthService {
     return user!;
   }
 
-  // ---------- India phone-OTP rail ----------
+  // ---------- Legacy phone-OTP rail ----------
 
   /** Digits-only, +country-prefixed key. Bare 10-digit numbers default to +91. */
   private normalizePhone(raw: string): string {
     const digits = raw.replace(/[^0-9]/g, '');
     if (raw.trim().startsWith('+')) return `+${digits}`;
     // Strip a leading trunk '0' so 09812345678 and 9812345678 map to one
-    // identity before defaulting to +91 (Indian mobiles never start with 0).
+    // identity before applying the legacy fallback normalization.
     const local = digits.replace(/^0+/, '');
     if (local.length === 10) return `+91${local}`;
     return `+${digits}`;
@@ -788,7 +788,7 @@ export class AuthService {
   private otpFailKey(phone: string): string { return `otp:fail:${this.phoneFingerprint(phone)}`; }
 
   /**
-   * Send a one-time code to a phone (India default rail). Rate-limited per phone
+   * Send a one-time code to a phone. Rate-limited per phone
    * (sends/hour + a persistent failed-verify lock). The code is delivered BEFORE
    * it is persisted, so a failed send never leaves a usable code in Redis.
    */
@@ -885,7 +885,7 @@ export class AuthService {
   /**
    * Try-first guest account — zero-PII by construction: synthetic email,
    * placeholder name, no birthDate. With no personal data collected, the
-   * DPDP/PIPA guardian-consent gates are inapplicable (JwtAuthGuard exempts
+   * PIPA guardian-consent gates are inapplicable (JwtAuthGuard exempts
    * isGuest users), and emailVerifiedAt is stamped so the email gate passes.
    *
    * Device reuse: if this deviceHash already owns a live guest account,

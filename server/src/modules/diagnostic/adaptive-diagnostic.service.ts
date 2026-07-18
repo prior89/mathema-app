@@ -260,13 +260,14 @@ export class AdaptiveDiagnosticService {
       },
     });
 
-    const firstSessionPlan = wasAlreadyFinished
-      ? await this.firstSessionPlan.getActiveCards(userId)
-      : await this.firstSessionPlan.seedFirstSession(userId, {
-          recommendedChapterCodes,
-          weakConceptIds,
-          estimatedGradeBand,
-        });
+    // A replay must also repair a missing/incomplete plan when the first
+    // request committed endedAt but failed during plan persistence. Completed
+    // plans remain immutable inside the shared ensure contract.
+    const firstSessionPlan = await this.firstSessionPlan.ensureFirstSession(userId, {
+      recommendedChapterCodes,
+      weakConceptIds,
+      estimatedGradeBand,
+    });
 
     if (this.flags.isEnabled('adaptive_diagnostic', userId)) {
       const country = user?.country === 'KR' ? 'KR' : 'IN';

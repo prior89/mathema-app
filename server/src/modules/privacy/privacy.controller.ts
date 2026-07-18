@@ -14,7 +14,7 @@ const POLICY_SUMMARY: Record<Lang, { title: string; sections: Array<{ heading: s
       { heading: '이용 목적', body: '학습 진단·맞춤 추천 제공, 서비스 개선, 안내 알림(선택 동의 시)' },
       { heading: '보관 기간', body: '계정 활성 기간 + 삭제 요청 후 30일' },
       { heading: '귀하의 권리', body: '열람·정정·삭제 요청, 동의 철회 (DATA_PROCESSING 철회는 계정 삭제로 처리됨)' },
-      { heading: '아동·보호자', body: '만 14세 미만(KR)·만 18세 미만(IN)은 보호자 이메일 확인이 필요합니다. 분석·AI 학습 활용·마케팅은 기본 OFF이며, 보호자 확인 대상 학생과 게스트 계정은 스스로 활성화할 수 없습니다.' },
+      { heading: '아동·보호자', body: '대한민국 기준 만 14세 미만 학생은 보호자 이메일 확인이 필요합니다. 분석·AI 학습 활용·마케팅은 기본 OFF이며, 보호자 확인 대상 학생과 게스트 계정은 스스로 활성화할 수 없습니다.' },
     ],
   },
   en: {
@@ -24,17 +24,17 @@ const POLICY_SUMMARY: Record<Lang, { title: string; sections: Array<{ heading: s
       { heading: 'How we use it', body: 'Diagnostics, personalised recommendations, service improvement, notifications (with consent)' },
       { heading: 'Retention', body: 'Active account period + 30 days after deletion request' },
       { heading: 'Your rights', body: 'Access, rectify, erase data; withdraw consent. Withdrawing DATA_PROCESSING triggers account deletion.' },
-      { heading: 'Children & guardians', body: 'Users under 14 (KR) or under 18 (IN) need parent email confirmation. Analytics, AI-training use, and marketing are off by default; guardian-gated students and guest accounts cannot enable them themselves.' },
+      { heading: 'Children & guardians', body: 'Students under 14 in Korea need parent email confirmation. Analytics, AI-training use, and marketing are off by default; guardian-gated students and guest accounts cannot enable them themselves.' },
     ],
   },
   hi: {
-    title: 'गोपनीयता नीति v' + CURRENT_POLICY_VERSION,
+    title: 'Privacy Policy v' + CURRENT_POLICY_VERSION,
     sections: [
-      { heading: 'एकत्रित जानकारी', body: 'ईमेल, नाम, परीक्षा तिथि, अध्ययन गतिविधि (प्रयास, सटीकता, समय, डिवाइस प्रकार)' },
-      { heading: 'उपयोग का उद्देश्य', body: 'निदान, व्यक्तिगत सिफारिशें, सेवा सुधार, सूचनाएँ (सहमति पर)' },
-      { heading: 'संरक्षण अवधि', body: 'सक्रिय खाता अवधि + विलोपन अनुरोध के 30 दिन बाद तक' },
-      { heading: 'आपके अधिकार', body: 'देखना, सुधारना, मिटाना; सहमति वापस लेना। DATA_PROCESSING वापस लेने पर खाता हटा दिया जाता है।' },
-      { heading: 'बच्चे और अभिभावक', body: '14 से कम (KR) या 18 से कम (IN) उपयोगकर्ताओं के लिए अभिभावक की ईमेल पुष्टि आवश्यक है। विश्लेषण, AI-प्रशिक्षण उपयोग और मार्केटिंग डिफ़ॉल्ट रूप से बंद हैं; अभिभावक-अनुमोदन वाले छात्र और अतिथि खाते इन्हें स्वयं चालू नहीं कर सकते।' },
+      { heading: 'Data we collect', body: 'Email, name, target exam date, study activity (attempts, accuracy, duration, device type)' },
+      { heading: 'How we use it', body: 'Diagnostics, personalised recommendations, service improvement, notifications (with consent)' },
+      { heading: 'Retention', body: 'Active account period + 30 days after deletion request' },
+      { heading: 'Your rights', body: 'Access, rectify, erase data; withdraw consent. Withdrawing DATA_PROCESSING triggers account deletion.' },
+      { heading: 'Children & guardians', body: 'Students under 14 in Korea need parent email confirmation. Analytics, AI-training use, and marketing are off by default; guardian-gated students and guest accounts cannot enable them themselves.' },
     ],
   },
 };
@@ -46,7 +46,7 @@ export class PrivacyController {
 
   /**
    * Public policy document — surfaced on the unauthenticated /privacy and
-   * /terms SPA routes plus the Settings screen. Play Store + DPDP require a
+   * /terms SPA routes plus the Settings screen. Play Store policy requires a
    * Privacy URL reachable without login, so this is the one endpoint in the
    * controller that escapes the JwtAuthGuard.
    */

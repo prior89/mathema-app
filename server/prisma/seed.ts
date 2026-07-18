@@ -7,8 +7,8 @@ import { seedConceptLessons } from './seed-concepts';
 const prisma = new PrismaClient();
 
 /**
- * PoC seed — NCERT Class 7~12 units + English sample problems for Class 8~11.
- * Seed user: Arjun Sharma (polopot123@gmail.com / password1234) — Class 11 / JEE prep.
+ * PoC seed — Korean middle/high-school units + sample problems.
+ * Seed user: demo student (polopot123@gmail.com / password1234) — Korean high-school math.
  * Admin: admin@mathema.app / admin1234 (dev-login enters automatically when you type admin/admin).
  */
 async function main() {
@@ -43,24 +43,21 @@ async function main() {
     units[name] = { id: unit.id, subs };
   }
 
-  // ===== Demo user — PoC persona: Class 11 (JEE prep) =====
-  // Seed user is a Class 11 student (CLASS_11 = NCERT Class 11), preparing for JEE Main
-  // (January or April session). examDate ≈ 150 days out (close to the April session).
-  // targetGrade=1 means "top rank band". mastery / wrongNote / mockExam are all seeded
-  // consistently in a Class 11 context.
+  // ===== Demo user — Korea-first PoC persona: 고2 수학 학습자 =====
+  // CLASS_11 is retained as an internal compatibility code and displayed as 고2 in the app.
   const examDate = new Date();
   examDate.setDate(examDate.getDate() + 150);
   const user = await prisma.user.upsert({
     where: { email: 'polopot123@gmail.com' },
-    update: { gradeLevel: 'CLASS_11', country: 'IN', name: 'Arjun Sharma' } as any,
+    update: { gradeLevel: 'CLASS_11', country: 'KR', name: '유도훈' } as any,
     create: {
       email: 'polopot123@gmail.com',
       passwordHash: await bcrypt.hash('password1234', 10),
-      name: 'Arjun Sharma',
+      name: '유도훈',
       examDate,
       targetGrade: 1,
       gradeLevel: 'CLASS_11',
-      country: 'IN' as any,
+      country: 'KR' as any,
     },
   });
 
@@ -73,48 +70,41 @@ async function main() {
     difficulty: Difficulty; body: string; answer: string;
   };
 
-  // featured NCERT/JEE problems (3-step MC + distractor metadata) — paired with seed-steps.ts SPEC_NCERT.
+  // Featured Korean-market practice problems (3-step MC + distractor metadata).
   const featured: ProblemSpec[] = [];
 
-  // Class 11 NCERT (JEE Main Class 11 syllabus) — the core chapters matching the PoC demo persona.
-  // All sources use English labels (DB key) so they read naturally for English users without
-  // any extra mapping in content-en.ts.
+  // Korean middle/high review problems. CLASS_* remains an internal grade code;
+  // visible labels use 중/고 terminology.
   const general: ProblemSpec[] = [
-    // Class 11 problems are imported via scripts/import-ncert.ts (Draft →
-    // DraftPublisher), which always emits stepIndex=1..3. We intentionally
-    // do NOT add Class 11 placeholders here: seed-steps.ts has no matching
-    // specs for them, so they would land in the DB without a stepIndex=1
-    // row, be unreachable in the UI, and inflate chapter-progress counts.
+    // ============ 중2 복습 (4) ============
+    { source: '중2 · 유리수와 순환소수 · Q1', unit: '유리수와 순환소수', sub: '순환소수와 분수', difficulty: 'MIDDLE',
+      body: '순환소수 0.\\overline{3}을 기약분수로 나타내세요.', answer: '1/3' },
+    { source: '중2 · 곱셈공식 · Q1', unit: '식의 계산', sub: '곱셈공식', difficulty: 'UPPER_MIDDLE',
+      body: '곱셈공식을 이용하여 (x + 5)²을 전개하세요.', answer: 'x² + 10x + 25' },
+    { source: '중2 · 일차방정식 · Q1', unit: '식의 계산', sub: '동류항 정리', difficulty: 'MIDDLE',
+      body: '방정식 2x − 3 = 5x + 9를 푸세요.', answer: 'x = -4' },
+    { source: '중2 · 일차함수 · Q1', unit: '일차함수', sub: '기울기와 절편', difficulty: 'MIDDLE',
+      body: '두 점 (0, 2), (3, 8)을 지나는 직선의 기울기를 구하세요.', answer: '2' },
 
-    // ============ Class 8 NCERT (4) — prerequisite review ============
-    { source: 'Class 8 · Rational Numbers · Q1', unit: '유리수와 순환소수', sub: '순환소수와 분수', difficulty: 'MIDDLE',
-      body: 'Express 0.\\overline{3} (0.3 repeating) as a fraction in lowest terms.', answer: '1/3' },
-    { source: 'Class 8 · Algebraic Identities · Q1', unit: '식의 계산', sub: '곱셈공식', difficulty: 'UPPER_MIDDLE',
-      body: 'Use an identity to expand (x + 5)².', answer: 'x² + 10x + 25' },
-    { source: 'Class 8 · Linear Equations · Q1', unit: '식의 계산', sub: '동류항 정리', difficulty: 'MIDDLE',
-      body: 'Solve for x:  2x − 3 = 5x + 9.', answer: 'x = -4' },
-    { source: 'Class 8 · Graphs · Q1', unit: '일차함수', sub: '기울기와 절편', difficulty: 'MIDDLE',
-      body: 'A line passes through (0, 2) and (3, 8). Find its slope.', answer: '2' },
+    // ============ 중3 복습 (4) ============
+    { source: '중3 · 제곱근과 실수 · Q1', unit: '제곱근과 실수', sub: '근호의 사칙연산', difficulty: 'MIDDLE',
+      body: '√50 + √8을 간단히 하세요.', answer: '7√2' },
+    { source: '중3 · 인수분해 · Q1', unit: '인수분해', sub: '인수분해 공식', difficulty: 'UPPER_MIDDLE',
+      body: 'x² + 7x + 12를 인수분해하세요.', answer: '(x + 3)(x + 4)' },
+    { source: '중3 · 좌표평면 · Q1', unit: '좌표평면과 그래프', sub: '순서쌍과 좌표', difficulty: 'MIDDLE',
+      body: '두 점 A(2, 3), B(5, 7) 사이의 거리를 구하세요.', answer: '5' },
+    { source: '중3 · 이차함수 · Q1', unit: '이차함수', sub: '이차함수의 그래프', difficulty: 'UPPER_MIDDLE',
+      body: 'p(x) = 2x² − 3x − 2일 때 p(2)의 값을 구하세요.', answer: '0' },
 
-    // ============ Class 9 NCERT (4) ============
-    { source: 'Class 9 · Number Systems · Q1', unit: '제곱근과 실수', sub: '근호의 사칙연산', difficulty: 'MIDDLE',
-      body: 'Simplify √50 + √8.', answer: '7√2' },
-    { source: 'Class 9 · Polynomials · Q1', unit: '인수분해', sub: '인수분해 공식', difficulty: 'UPPER_MIDDLE',
-      body: 'Factorise x² + 7x + 12.', answer: '(x + 3)(x + 4)' },
-    { source: 'Class 9 · Coordinate Geometry · Q1', unit: '좌표평면과 그래프', sub: '순서쌍과 좌표', difficulty: 'MIDDLE',
-      body: 'Find the distance between A(2, 3) and B(5, 7).', answer: '5' },
-    { source: 'Class 9 · Polynomials · Q2', unit: '이차함수', sub: '이차함수의 그래프', difficulty: 'UPPER_MIDDLE',
-      body: 'For p(x) = 2x² − 3x − 2, find p(2).', answer: '0' },
-
-    // ============ Class 10 NCERT (4) ============
-    { source: 'Class 10 · Polynomials · Q1', unit: '다항식', sub: '나머지정리', difficulty: 'UPPER_MIDDLE',
-      body: 'Find the remainder when p(x) = x³ − 3x² + 4 is divided by (x − 2).', answer: '0' },
-    { source: 'Class 10 · Quadratic Equations · Q1', unit: '이차방정식', sub: '근의 공식', difficulty: 'UPPER_MIDDLE',
-      body: 'Solve x² − 4x − 5 = 0 using factorisation.', answer: 'x = 5 or x = -1' },
-    { source: 'Class 10 · Coordinate Geometry · Q1', unit: '도형의 방정식', sub: '직선의 방정식', difficulty: 'UPPER_MIDDLE',
-      body: 'Find the midpoint of the segment joining A(-2, 4) and B(6, -2).', answer: '(2, 1)' },
-    { source: 'Class 10 · Trigonometry · Q1', unit: '도형의 방정식', sub: '직선의 방정식', difficulty: 'UPPER_MIDDLE',
-      body: 'In a right triangle, sin θ = 3/5. Find cos θ.', answer: '4/5' },
+    // ============ 고1 복습 (4) ============
+    { source: '고1 · 나머지정리 · Q1', unit: '다항식', sub: '나머지정리', difficulty: 'UPPER_MIDDLE',
+      body: 'p(x) = x³ − 3x² + 4를 (x − 2)로 나눌 때의 나머지를 구하세요.', answer: '0' },
+    { source: '고1 · 이차방정식 · Q1', unit: '이차방정식', sub: '근의 공식', difficulty: 'UPPER_MIDDLE',
+      body: 'x² − 4x − 5 = 0을 인수분해로 푸세요.', answer: 'x = 5 or x = -1' },
+    { source: '고1 · 좌표기하 · Q1', unit: '도형의 방정식', sub: '직선의 방정식', difficulty: 'UPPER_MIDDLE',
+      body: '두 점 A(-2, 4), B(6, -2)를 잇는 선분의 중점을 구하세요.', answer: '(2, 1)' },
+    { source: '고1 · 삼각비 · Q1', unit: '도형의 방정식', sub: '직선의 방정식', difficulty: 'UPPER_MIDDLE',
+      body: '직각삼각형에서 sin θ = 3/5일 때 cos θ를 구하세요.', answer: '4/5' },
   ];
 
   const problemsSpec: ProblemSpec[] = [...featured, ...general];
@@ -126,48 +116,47 @@ async function main() {
 
   // source → the core formula (shown in the formula box on the concept panel). Null/empty hides it.
   const FORMULA_KO: Record<string, string> = {
-    // Class 8
-    'Class 8 · Rational Numbers · Q1':     'x = 0.\\overline{abc...n}  ⇒  10ⁿx − x = (integer part) ⇒ x = (integer part)/(10ⁿ − 1)',
-    'Class 8 · Algebraic Identities · Q1': '(a + b)² = a² + 2ab + b²',
-    'Class 8 · Linear Equations · Q1':     'ax + b = cx + d  ⇒  (a − c)x = d − b  ⇒  x = (d − b)/(a − c)',
-    'Class 8 · Graphs · Q1':               'slope m = (y₂ − y₁)/(x₂ − x₁)',
-    // Class 9
-    'Class 9 · Number Systems · Q1':       '√(a²·b) = a√b ;  √m + √n can be combined only when they are like surds',
-    'Class 9 · Polynomials · Q1':          'x² + (p+q)x + pq = (x + p)(x + q)',
-    'Class 9 · Coordinate Geometry · Q1':  'd = √[(x₂ − x₁)² + (y₂ − y₁)²]',
-    'Class 9 · Polynomials · Q2':          'p(c) = value of the polynomial with c substituted for the variable (function evaluation)',
-    // Class 10
-    'Class 10 · Polynomials · Q1':         'remainder on division by (x − c) = p(c)  (Remainder Theorem)',
-    'Class 10 · Quadratic Equations · Q1': 'x² − (sum)x + (product) = 0  ⇒  factor as (x − r₁)(x − r₂) = 0',
-    'Class 10 · Coordinate Geometry · Q1': 'midpoint M = ((x₁ + x₂)/2, (y₁ + y₂)/2)',
-    'Class 10 · Trigonometry · Q1':        'sin²θ + cos²θ = 1  ⇒  cos θ = √(1 − sin²θ) (acute angle)',
+    // 중2
+    '중2 · 유리수와 순환소수 · Q1': 'x = 순환소수, 10ⁿx − x로 순환 부분을 제거',
+    '중2 · 곱셈공식 · Q1':          '(a + b)² = a² + 2ab + b²',
+    '중2 · 일차방정식 · Q1':        'ax + b = cx + d  ⇒  (a − c)x = d − b',
+    '중2 · 일차함수 · Q1':          '기울기 m = (y₂ − y₁)/(x₂ − x₁)',
+    // 중3
+    '중3 · 제곱근과 실수 · Q1':     '√(a²·b) = a√b, 같은 근호끼리만 덧셈 가능',
+    '중3 · 인수분해 · Q1':          'x² + (p+q)x + pq = (x + p)(x + q)',
+    '중3 · 좌표평면 · Q1':          '두 점 사이의 거리 d = √[(x₂ − x₁)² + (y₂ − y₁)²]',
+    '중3 · 이차함수 · Q1':          'p(c)는 다항식 p(x)에 x=c를 대입한 값',
+    // 고1
+    '고1 · 나머지정리 · Q1':        '(x − c)로 나눈 나머지 = p(c)',
+    '고1 · 이차방정식 · Q1':        '합과 곱을 이용해 x² − (합)x + (곱)을 인수분해',
+    '고1 · 좌표기하 · Q1':          '중점 M = ((x₁ + x₂)/2, (y₁ + y₂)/2)',
+    '고1 · 삼각비 · Q1':            'sin²θ + cos²θ = 1',
   };
 
   // source → core concept explanation (shown in study feedback and wrong-note detail).
   const CONCEPT_KO: Record<string, string> = {
-    // Class 8 NCERT
-    'Class 8 · Rational Numbers · Q1':     'Repeating decimals: multiply by 10ⁿ (n = repeating block length), subtract original, solve for x. Every repeating decimal is rational.',
-    'Class 8 · Algebraic Identities · Q1': 'Square of a binomial identity: (a + b)² = a² + 2ab + b². Always check the cross-term 2ab — most-missed step.',
-    'Class 8 · Linear Equations · Q1':     'Linear equation in one variable: collect x terms on one side, constants on the other (transposition flips signs), then divide.',
-    'Class 8 · Graphs · Q1':               'Slope (gradient) of a line through two points = rise / run = (Δy)/(Δx). Sign of slope tells direction.',
-    // Class 9 NCERT
-    'Class 9 · Number Systems · Q1':       'Surds: √(a²·b) simplifies to a√b. Only like surds (same b) can be added or subtracted directly.',
-    'Class 9 · Polynomials · Q1':          'Factorising a quadratic x² + bx + c: find two numbers p, q with p + q = b and pq = c. Then split bx and group.',
-    'Class 9 · Coordinate Geometry · Q1':  'Distance formula derives from the Pythagorean theorem applied to the horizontal and vertical legs of the segment.',
-    'Class 9 · Polynomials · Q2':          'Evaluating a polynomial at x = c means substituting and computing — a building block for the Remainder Theorem (Class 10).',
-    // Class 10 NCERT
-    'Class 10 · Polynomials · Q1':         'Remainder Theorem: when polynomial p(x) is divided by (x − c), the remainder equals p(c). If p(c) = 0, then (x − c) is a factor (Factor Theorem).',
-    'Class 10 · Quadratic Equations · Q1': 'Solving by factorisation: write as (x − r₁)(x − r₂) = 0. Look for two numbers that multiply to the constant term and add to the linear coefficient (with sign).',
-    'Class 10 · Coordinate Geometry · Q1': 'Midpoint formula: average of x-coordinates and average of y-coordinates. Section formula generalises to any ratio.',
-    'Class 10 · Trigonometry · Q1':        'Pythagorean identity sin²θ + cos²θ = 1. Given one ratio, the others can be derived (mind the sign by quadrant for general angles).',
+    // 중2
+    '중2 · 유리수와 순환소수 · Q1': '순환소수는 10ⁿ을 곱해 순환 부분을 맞춘 뒤 빼면 분수로 바꿀 수 있습니다.',
+    '중2 · 곱셈공식 · Q1':          '(a + b)² 전개에서 가운데 항 2ab를 빠뜨리는 실수가 가장 흔합니다.',
+    '중2 · 일차방정식 · Q1':        '일차방정식은 x항과 상수항을 각각 한쪽으로 모으고 부호 변화를 확인한 뒤 계수로 나눕니다.',
+    '중2 · 일차함수 · Q1':          '두 점 사이의 기울기는 y의 변화량을 x의 변화량으로 나눈 값입니다.',
+    // 중3
+    '중3 · 제곱근과 실수 · Q1':     '근호 안의 제곱인수를 밖으로 빼고, 같은 근호끼리만 계수를 더합니다.',
+    '중3 · 인수분해 · Q1':          'x² + bx + c는 합이 b, 곱이 c인 두 수를 찾아 묶어 인수분해합니다.',
+    '중3 · 좌표평면 · Q1':          '두 점 사이의 거리는 가로·세로 차이를 직각삼각형의 두 변으로 보고 피타고라스 정리를 적용합니다.',
+    '중3 · 이차함수 · Q1':          'p(2)는 방정식을 푸는 것이 아니라 다항식에 x=2를 대입해 계산하는 값입니다.',
+    // 고1
+    '고1 · 나머지정리 · Q1':        '다항식 p(x)를 (x − c)로 나눌 때의 나머지는 p(c)입니다.',
+    '고1 · 이차방정식 · Q1':        '인수분해로 풀 때는 상수항의 곱과 일차항 계수의 합을 동시에 만족하는 두 수를 찾습니다.',
+    '고1 · 좌표기하 · Q1':          '중점은 두 x좌표의 평균과 두 y좌표의 평균으로 구합니다.',
+    '고1 · 삼각비 · Q1':            'sin²θ + cos²θ = 1을 이용하면 한 삼각비에서 다른 삼각비를 구할 수 있습니다.',
   };
 
-  // (NCERT problems already use English / math notation in body and formula — no extra EN
-  // dictionary in content-en.ts is needed.)
+  // Korean launch seed keeps body/concept/formula in Korean so dev and smoke-test
+  // accounts do not show legacy foreign-curriculum wording.
 
-  // Legacy Korean unit name → NCERT chapter Korean name mapping.
-  // Compatibility shim used while a few seed ProblemSpec.unit fields still use the old
-  // Korean curriculum names. New seeds should use NCERT unit names directly.
+  // Legacy unit-name compatibility shim used while a few seed ProblemSpec.unit fields
+  // still use old Korean curriculum names.
   const LEGACY_UNIT_ALIAS: Record<string, string> = {
     '정수와 유리수':       '정수',
     '문자와 식':           '대수식',
@@ -207,7 +196,7 @@ async function main() {
         difficulty: p.difficulty, body: p.body, answer: p.answer,
         concept: CONCEPT_KO[p.source] ?? null,
         formula: FORMULA_KO[p.source] ?? null,
-        hint: 'Open the AI Guide panel on the study page for step-by-step coaching.',
+        hint: '학습 화면의 AI 가이드를 열면 단계별 풀이 코칭을 볼 수 있어요.',
       },
     });
     problems[p.source] = created.id;
@@ -217,8 +206,8 @@ async function main() {
   console.log('🪜 Seeding problem steps + choices for featured problems...');
   await seedSteps(prisma, problems);
 
-  // ===== Concept Lessons — preparatory concept lessons per NCERT 7~12 grade and chapter =====
-  console.log('📚 Seeding NCERT concept lessons (Class 7~12)...');
+  // ===== Concept Lessons — compatibility concept lessons plus Korean lesson tables =====
+  console.log('📚 Seeding concept lessons and Korean curriculum content...');
   await seedConceptLessons(prisma, units);
 
   // =============================================================
@@ -249,17 +238,26 @@ async function main() {
   // ===== MockExam (system content) — register only the available mock exams that can be taken =====
   // User results (MockExamResult) are never seeded — they only exist after a real attempt.
   const systemMockExams: Array<{ name: string; type: MockExamType; totalProblems: number; totalMinutes: number }> = [
-    { name: 'AI Diagnostic Mock',        type: 'RECOMMENDED', totalProblems: 30, totalMinutes: 100 },
-    { name: 'Mini · per unit (Class 11)', type: 'MINI',       totalProblems: 10, totalMinutes: 25  },
-    { name: 'Mini · per unit (Class 12)', type: 'MINI',       totalProblems: 10, totalMinutes: 25  },
-    { name: 'Wrong-note Redo',           type: 'WRONG_REDO',  totalProblems: 15, totalMinutes: 40  },
-    { name: 'Board Simulation · Class 10', type: 'REAL',      totalProblems: 30, totalMinutes: 100 },
-    { name: 'Board Simulation · Class 12', type: 'REAL',      totalProblems: 30, totalMinutes: 100 },
+    { name: 'AI 맞춤형 약점 시험',       type: 'RECOMMENDED', totalProblems: 30, totalMinutes: 100 },
+    { name: '단원 미니 테스트 · 고2',     type: 'MINI',        totalProblems: 10, totalMinutes: 25  },
+    { name: '단원 미니 테스트 · 고3',     type: 'MINI',        totalProblems: 10, totalMinutes: 25  },
+    { name: '오답 다시 풀기',             type: 'WRONG_REDO',  totalProblems: 15, totalMinutes: 40  },
+    { name: '실전 모의고사 · 고1',        type: 'REAL',        totalProblems: 30, totalMinutes: 100 },
+    { name: '실전 모의고사 · 고3',        type: 'REAL',        totalProblems: 30, totalMinutes: 100 },
   ];
+  const seedExamProblemIds = featured
+    .map((problem) => problems[problem.source])
+    .filter((id): id is string => Boolean(id));
+  if (seedExamProblemIds.length === 0) {
+    throw new Error('Cannot seed MockExam templates without canonical problem IDs.');
+  }
   for (const m of systemMockExams) {
     const exists = await prisma.mockExam.findFirst({ where: { name: m.name } });
     if (!exists) {
-      await prisma.mockExam.create({ data: m });
+      const problemIds = seedExamProblemIds.slice(0, m.totalProblems);
+      await prisma.mockExam.create({
+        data: { ...m, totalProblems: problemIds.length, problemIds },
+      });
     }
   }
 

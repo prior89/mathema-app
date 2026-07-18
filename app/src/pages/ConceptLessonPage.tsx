@@ -34,6 +34,15 @@ import {
 // MathLearningApp 가 읽는 sessionStorage 키 — 여기 값이 있으면 /app#/study 가 자동으로 그 세션 진입.
 const ACTIVE_SESSION_KEY = 'mathema.activeSession';
 
+const KR_CLASS_LABEL: Record<string, string> = {
+  CLASS_7: '중1',
+  CLASS_8: '중2',
+  CLASS_9: '중3',
+  CLASS_10: '고1',
+  CLASS_11: '고2',
+  CLASS_12: '고3',
+};
+
 const STEP_COLORS: Record<ConceptStepKind, string> = {
   HOOK: '#7c3aed',
   CONCRETE: '#0ea5e9',
@@ -272,7 +281,7 @@ export default function ConceptLessonPage() {
           </button>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 11, letterSpacing: '0.2em', color: '#8B95AB' }}>
-              NCERT · {data.ncertClass.replace('CLASS_', 'Class ')} · {L.chapter} {data.chapterNumber}
+              한국 수학 · {KR_CLASS_LABEL[data.ncertClass] ?? '내 학년'} · {L.chapter} {data.chapterNumber}
             </div>
             <h1 style={titleStyle}>{data.title}</h1>
             <p style={bigIdeaStyle}><MathText text={data.bigIdea} /></p>

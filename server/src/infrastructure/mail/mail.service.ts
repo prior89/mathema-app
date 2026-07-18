@@ -104,7 +104,7 @@ export class MailService {
         <tr>
           <td align="center" style="padding:32px 32px 20px 32px;border-bottom:1px solid #eef0f3;">
             <div style="font-size:26px;font-weight:700;color:#111827;letter-spacing:-0.5px;line-height:1;">Matheo</div>
-            <div style="font-size:12px;color:#6b7280;margin-top:6px;letter-spacing:0.3px;">NCERT MATH LEARNING</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:6px;letter-spacing:0.3px;">KOREAN MATH LEARNING</div>
           </td>
         </tr>
         <tr>
@@ -112,7 +112,7 @@ export class MailService {
         </tr>
         <tr>
           <td style="padding:20px 32px;background-color:#fafbfc;border-top:1px solid #eef0f3;font-size:12px;color:#6b7280;line-height:1.6;text-align:center;">
-            <div>Matheo helps students in Class 7&ndash;12 master the NCERT mathematics curriculum with adaptive practice, mock exams, and a personal wrong-note review system.</div>
+            <div>Matheo helps Korean middle- and high-school students master math with adaptive practice, mock exams, and a personal wrong-note review system.</div>
             <div style="margin-top:12px;">&copy; 2026 Matheo &middot; <a href="${origin}" style="color:#4f46e5;text-decoration:none;">${origin.replace(/^https?:\/\//, '')}</a></div>
           </td>
         </tr>
@@ -155,7 +155,7 @@ ${this.ctaButton(link, 'Reset password')}
       'If you did not request a password reset, you can safely ignore this email.',
       '',
       '--',
-      'Matheo --- Adaptive NCERT mathematics learning',
+      'Matheo --- Adaptive Korean mathematics learning',
       this.appUrl(),
     ].join('\n');
     await this.deliver(
@@ -174,7 +174,7 @@ ${this.ctaButton(link, 'Reset password')}
     const link = `${this.appUrl()}/verify-email?token=${encodeURIComponent(token)}`;
     const bodyHtml = `
 <h1 style="font-size:22px;font-weight:700;color:#111827;margin:0 0 16px 0;line-height:1.35;">Welcome to Matheo!</h1>
-<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">Thanks for creating your Matheo account. We are an adaptive math learning service aligned to the Indian NCERT curriculum for Class 7&ndash;12, with diagnostic practice, mock exams, and a wrong-note review system built around spaced repetition.</p>
+<p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">Thanks for creating your Matheo account. We are an adaptive math learning service for Korean middle- and high-school students, with diagnostic practice, mock exams, and a wrong-note review system built around spaced repetition.</p>
 <p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">To finish setting up your account and unlock your personalised learning path, please confirm that this email address belongs to you.</p>
 ${this.ctaButton(link, 'Confirm my email')}
 <p style="font-size:13px;line-height:1.6;color:#6b7280;margin:24px 0 0 0;">If the button does not work, copy and paste this link into your browser:</p>
@@ -184,8 +184,8 @@ ${this.ctaButton(link, 'Confirm my email')}
       'Welcome to Matheo!',
       '',
       'Thanks for creating your Matheo account. Matheo is an adaptive math learning service',
-      'aligned to the Indian NCERT curriculum for Class 7 to 12, with diagnostic practice,',
-      'mock exams, and a wrong-note review system built around spaced repetition.',
+      'for Korean middle- and high-school students, with diagnostic practice, mock exams,',
+      'and a wrong-note review system built around spaced repetition.',
       '',
       'To finish setting up your account, please confirm your email address by opening the',
       'link below:',
@@ -196,7 +196,7 @@ ${this.ctaButton(link, 'Confirm my email')}
       'If you did not create a Matheo account, you can safely ignore this email.',
       '',
       '--',
-      'Matheo --- Adaptive NCERT mathematics learning',
+      'Matheo --- Adaptive Korean mathematics learning',
       this.appUrl(),
     ].join('\n');
     await this.deliver(
@@ -205,7 +205,7 @@ ${this.ctaButton(link, 'Confirm my email')}
       'Confirm your email to finish setting up Matheo',
       text,
       this.htmlLayout({
-        preheader: 'Confirm your email to start your personalised NCERT math learning path.',
+        preheader: 'Confirm your email to start your personalised Korean math learning path.',
         bodyHtml,
       }),
     );
@@ -224,9 +224,7 @@ ${this.ctaButton(link, 'Confirm my email')}
     const verifyLink = `${this.appUrl()}/guardian-consent/verify?token=${encodeURIComponent(token)}`;
     const regionNote = opts.country === 'KR'
       ? 'Matheo requires parent/guardian approval for students under 14 in Korea.'
-      : opts.country === 'IN'
-        ? 'Matheo requires parent/guardian approval for students under 18 in India.'
-        : 'Matheo requires parent/guardian approval for this student based on their age and country.';
+      : 'Matheo requires parent/guardian approval for this student based on their age and region.';
     const bodyHtml = `
 <h1 style="font-size:20px;font-weight:700;color:#111827;margin:0 0 16px 0;line-height:1.35;">Parent/guardian consent required</h1>
 <p style="font-size:15px;line-height:1.6;color:#374151;margin:0 0 16px 0;">Hello <strong>${opts.parentName}</strong>,</p>
@@ -381,7 +379,7 @@ ${this.ctaButton(resetLink, 'Reset password')}
       resetLink,
       '',
       '--',
-      'Matheo --- Adaptive NCERT mathematics learning',
+      'Matheo --- Adaptive Korean mathematics learning',
       this.appUrl(),
     ].join('\n');
     await this.deliver(

@@ -18,6 +18,7 @@ import {
   type KoreanGrade, type KoreanSubject, type KoreanConceptLessonSummary,
 } from '../../lib/queries';
 import { useT } from '../../lib/i18n';
+import { LAUNCH_STUDENT_ONLY } from '../../lib/launch-config';
 import { Glyph } from '../onboarding/Glyph';
 import MathText from '../MathText';
 import { TabBar } from './TabBar';
@@ -29,8 +30,8 @@ const GRADE_TO_CLASS: Record<string, NcertClass> = {
 };
 
 const CLASS_LABEL: Record<NcertClass, string> = {
-  CLASS_7: 'Class 7', CLASS_8: 'Class 8', CLASS_9: 'Class 9',
-  CLASS_10: 'Class 10', CLASS_11: 'Class 11', CLASS_12: 'Class 12',
+  CLASS_7: '중1', CLASS_8: '중2', CLASS_9: '중3',
+  CLASS_10: '고1', CLASS_11: '고2', CLASS_12: '고3',
 };
 
 const KOREAN_GRADE_LABEL: Record<KoreanGrade, string> = {
@@ -79,7 +80,7 @@ export function LearnScreen() {
       </LearnStateShell>
     );
   }
-  if (me.data.country === 'KR') return <KoreanLearnHub me={me.data} />;
+  if (LAUNCH_STUDENT_ONLY || me.data.country === 'KR') return <KoreanLearnHub me={me.data} />;
   return <NcertLearnHub me={me.data ?? null} />;
 }
 

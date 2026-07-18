@@ -6,6 +6,16 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { post } from '../../lib/api';
+import { submitExamStepAnswer } from '../../lib/mutations';
+import {
+  buildMockExamProgress,
+  clearMockExamResult,
+  isMockExamSessionForUser,
+  mockExamProgressKey,
+  MOCK_EXAM_SESSION_PREFIX,
+  parseMockExamProgress,
+  type MockExamStepFeedback,
+} from '../../lib/mock-exam-progress';
 import { useShuffledChoices } from '../../lib/shuffle';
 import { useT } from '../../lib/i18n';
 import type { TranslationKey } from '../../lib/translations';
@@ -13,8 +23,7 @@ import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import MathText from '../MathText';
 import { HandwritingCanvas, type HandwritingCanvasHandle } from '../HandwritingCanvas';
-
-const STORAGE_PREFIX = 'mathema.mock.';
+import { useAuth } from '../../context/AuthContext';
 
 type Choice = { id: string; choiceIndex: number; text: string };
 type Step = { id: string; stepIndex: number; stepType: 'CONCEPT' | 'PROCESS' | 'ANSWER'; prompt: string; choices: Choice[] };
@@ -24,6 +33,7 @@ type ExamProblem = {
 };
 type LocState = {
   resultId: string;
+  userId: string;
   name: string;
   totalMinutes: number;
   problems: ExamProblem[];
@@ -58,44 +68,106 @@ function gradeBand(n: number): string {
   return n <= 7 ? 'D' : 'E';
 }
 
-type StepFeedback = {
-  isCorrect: boolean;
-  choice: { isCorrect: boolean; text: string; rationale: string | null; distractorType: string | null } | null;
-};
-
 export function MockExamPlayScreen() {
   const { resultId } = useParams<{ resultId: string }>();
   const loc = useLocation();
   const nav = useNavigate();
   const qc = useQueryClient();
   const { t } = useT();
+  const { user } = useAuth();
 
   // Hydrate state from location OR from localStorage (refresh-survives).
-  const storageKey = STORAGE_PREFIX + (resultId ?? '');
+  const storageKey = MOCK_EXAM_SESSION_PREFIX + (resultId ?? '');
+  const progressKey = mockExamProgressKey(resultId ?? '');
   const hydrated = useMemo<LocState>(() => {
-    if (loc.state) return loc.state as LocState;
+    if (!resultId || !user?.id) return null;
+    if (loc.state) {
+      const candidate = loc.state as LocState;
+      return isMockExamSessionForUser(candidate, resultId, user.id) ? candidate : null;
+    }
     try {
       const raw = localStorage.getItem(storageKey);
-      if (raw) return JSON.parse(raw) as LocState;
+      if (raw) {
+        const candidate = JSON.parse(raw) as LocState;
+        return isMockExamSessionForUser(candidate, resultId, user.id) ? candidate : null;
+      }
     } catch { /* ignore */ }
     return null;
-  }, [loc.state, storageKey]);
+  }, [loc.state, resultId, storageKey, user?.id]);
 
   // Persist initial state once (on first mount with state).
   useEffect(() => {
-    if (loc.state && resultId) {
+    const candidate = loc.state as LocState;
+    if (resultId && user?.id && isMockExamSessionForUser(candidate, resultId, user.id)) {
       try { localStorage.setItem(storageKey, JSON.stringify(loc.state)); } catch { /* ignore */ }
     }
-  }, [loc.state, resultId, storageKey]);
+  }, [loc.state, resultId, storageKey, user?.id]);
 
   const state = hydrated;
-  const [problemIdx, setProblemIdx] = useState(0);
-  const [stepIdx, setStepIdx] = useState(0);
-  const [pickedId, setPickedId] = useState<string | null>(null);
+  const restoredProgress = useMemo(() => {
+    if (!resultId || !user?.id || !state) return null;
+    try {
+      return parseMockExamProgress(localStorage.getItem(progressKey), resultId, user.id, state.problems);
+    } catch {
+      return null;
+    }
+  }, [progressKey, resultId, state, user?.id]);
+
+  // Reject and remove only this result's stale account-bound snapshot. This
+  // covers browser Back/history after another learner signs in on the device.
+  useEffect(() => {
+    if (!resultId || !user?.id) return;
+    try {
+      if (loc.state && !isMockExamSessionForUser(loc.state, resultId, user.id)) {
+        clearMockExamResult(localStorage, resultId);
+        return;
+      }
+
+      const rawSession = localStorage.getItem(storageKey);
+      if (rawSession) {
+        const candidate = JSON.parse(rawSession) as unknown;
+        if (!isMockExamSessionForUser(candidate, resultId, user.id)) {
+          clearMockExamResult(localStorage, resultId);
+          return;
+        }
+      }
+
+      const rawProgress = localStorage.getItem(progressKey);
+      if (rawProgress && (!state
+        || !parseMockExamProgress(rawProgress, resultId, user.id, state.problems))) {
+        localStorage.removeItem(progressKey);
+      }
+    } catch {
+      try { clearMockExamResult(localStorage, resultId); } catch { /* ignore */ }
+    }
+  }, [loc.state, progressKey, resultId, state, storageKey, user?.id]);
+
+  const [problemIdx, setProblemIdx] = useState(() => restoredProgress?.problemIdx ?? 0);
+  const [stepIdx, setStepIdx] = useState(() => restoredProgress?.stepIdx ?? 0);
+  const [pickedId, setPickedId] = useState<string | null>(() => restoredProgress?.pickedId ?? null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<StepFeedback | null>(null);
+  const [feedback, setFeedback] = useState<MockExamStepFeedback | null>(() => restoredProgress?.feedback ?? null);
   const canvasRef = useRef<HandwritingCanvasHandle>(null);
+  const submitInFlight = useRef(false);
+  const finalizeInFlight = useRef(false);
+  const sessionOwnerKey = `${user?.id ?? ''}:${resultId ?? ''}`;
+  const activeSessionOwner = useRef(sessionOwnerKey);
+
+  // React Router may reuse this component when only :resultId changes.
+  // Re-key every local UI field so one result cannot leak into another.
+  useEffect(() => {
+    if (activeSessionOwner.current === sessionOwnerKey) return;
+    activeSessionOwner.current = sessionOwnerKey;
+    setProblemIdx(restoredProgress?.problemIdx ?? 0);
+    setStepIdx(restoredProgress?.stepIdx ?? 0);
+    setPickedId(restoredProgress?.pickedId ?? null);
+    setFeedback(restoredProgress?.feedback ?? null);
+    setBusy(false);
+    setErr(null);
+    submitInFlight.current = false;
+    finalizeInFlight.current = false;
+  }, [restoredProgress, sessionOwnerKey]);
 
   // Visibility-aware timer — pauses when tab is hidden.
   const stepActiveMs = useRef(0);
@@ -129,6 +201,26 @@ export function MockExamPlayScreen() {
   const total = problems.length;
   const cur = problems[problemIdx] ?? null;
   const curStep = cur?.steps[stepIdx] ?? null;
+
+  function persistProgress(
+    nextProblemIdx: number,
+    nextStepIdx: number,
+    nextPickedId: string | null,
+    nextFeedback: MockExamStepFeedback | null,
+  ) {
+    if (!resultId || !user?.id) return;
+    const checkpoint = buildMockExamProgress(
+      resultId,
+      user.id,
+      problems,
+      nextProblemIdx,
+      nextStepIdx,
+      nextPickedId,
+      nextFeedback,
+    );
+    if (!checkpoint) return;
+    try { localStorage.setItem(progressKey, JSON.stringify(checkpoint)); } catch { /* ignore */ }
+  }
   // 보기 셔플 — step 이 바뀔 때마다 자동 재셔플.
   const shuffledChoices = useShuffledChoices(curStep?.choices ?? []);
 
@@ -157,22 +249,25 @@ export function MockExamPlayScreen() {
   }
 
   async function submitStep() {
-    if (busy || !cur || !curStep || !pickedId) return;
+    if (busy || submitInFlight.current || feedback || !resultId || !cur || !curStep || !pickedId) return;
+    submitInFlight.current = true;
     setBusy(true);
     setErr(null);
     try {
-      const r = await post<{
-        choice: { isCorrect: boolean; text: string; rationale: string | null; distractorType: string | null } | null;
-        isCorrect: boolean;
-      }>(`/mock-exams/results/${resultId}/answer`, {
+      const submittedChoiceId = pickedId;
+      const r = await submitExamStepAnswer(resultId, {
         problemId: cur.id,
-        choiceId: pickedId,
+        choiceId: submittedChoiceId,
         stepIndex: curStep.stepIndex,
         durationSec: stepDurationSec(),
       });
-      setFeedback({ isCorrect: !!r.choice?.isCorrect, choice: r.choice });
+      const nextFeedback: MockExamStepFeedback = { isCorrect: r.isCorrect, choice: r.choice };
+      // Commit the server receipt before updating React. A WebView reload after
+      // this point restores feedback and cannot expose the submit button again.
+      persistProgress(problemIdx, stepIdx, submittedChoiceId, nextFeedback);
+      setFeedback(nextFeedback);
       // Invalidate wrong-notes / mastery / dashboard caches so Notes tab updates immediately.
-      if (!r.choice?.isCorrect) {
+      if (!r.isCorrect) {
         qc.invalidateQueries({ queryKey: ['wn-list'] });
         qc.invalidateQueries({ queryKey: ['wn-stats'] });
         qc.invalidateQueries({ queryKey: ['wn-recent'] });
@@ -182,27 +277,34 @@ export function MockExamPlayScreen() {
     } catch (e: any) {
       setErr(e?.response?.data?.error?.message ?? t('mockPlay.submit.failed'));
     } finally {
+      submitInFlight.current = false;
       setBusy(false);
     }
   }
 
   async function advanceFromFeedback() {
-    if (busy) return;
-    setFeedback(null);
-    if (!cur) return;
+    if (busy || finalizeInFlight.current || !resultId || !feedback || !cur) return;
     // Advance: next step → next problem → finalize.
     if (stepIdx + 1 < cur.steps.length) {
+      persistProgress(problemIdx, stepIdx + 1, null, null);
       setStepIdx(stepIdx + 1);
       setPickedId(null);
+      setFeedback(null);
+      setErr(null);
       return;
     }
     if (problemIdx + 1 < total) {
+      persistProgress(problemIdx + 1, 0, null, null);
       setProblemIdx(problemIdx + 1);
       setStepIdx(0);
       setPickedId(null);
+      setFeedback(null);
+      setErr(null);
       return;
     }
+    finalizeInFlight.current = true;
     setBusy(true);
+    setErr(null);
     try {
       const r = await post<FinalizeResult>(`/mock-exams/results/${resultId}/finalize`, {});
       // Invalidate caches so Mocks tab + dashboard reflect the new result.
@@ -212,7 +314,7 @@ export function MockExamPlayScreen() {
       qc.invalidateQueries({ queryKey: ['dashboard'] });
       qc.invalidateQueries({ queryKey: ['mock-result', resultId] });
       // 시험 끝났으니 localStorage 진행 상태 정리.
-      try { localStorage.removeItem(storageKey); } catch { /* ignore */ }
+      try { clearMockExamResult(localStorage, resultId); } catch { /* ignore */ }
       // Score + per-question review 페이지로 자동 이동.
       // Preserve origin so the result detail screen's Back also routes home.
       nav(`/app/mocks/result/${resultId}`, {
@@ -226,6 +328,7 @@ export function MockExamPlayScreen() {
       });
     } catch (e: any) {
       setErr(e?.response?.data?.error?.message ?? t('mockPlay.finalize.failed'));
+      finalizeInFlight.current = false;
       setBusy(false);
     }
   }
@@ -312,7 +415,11 @@ export function MockExamPlayScreen() {
                     className={cls}
                     aria-pressed={sel}
                     disabled={lockedNow}
-                    onClick={() => !lockedNow && setPickedId(c.id)}
+                    onClick={() => {
+                      if (lockedNow) return;
+                      persistProgress(problemIdx, stepIdx, c.id, null);
+                      setPickedId(c.id);
+                    }}
                   >
                     <div className="letter">{letters[i] ?? c.choiceIndex}</div>
                     <span className="text"><MathText text={c.text} /></span>

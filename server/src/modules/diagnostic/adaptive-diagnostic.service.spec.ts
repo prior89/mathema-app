@@ -48,8 +48,7 @@ function build() {
   const config = { get: jest.fn().mockReturnValue('100') };
   const flags = new FeatureFlagsService(config as unknown as ConfigService);
   const firstSessionPlan = {
-    seedFirstSession: jest.fn().mockResolvedValue([]),
-    getActiveCards: jest.fn().mockResolvedValue([]),
+    ensureFirstSession: jest.fn().mockResolvedValue([]),
   };
   const metrics = { observeAdaptiveItems: jest.fn() };
   const svc = new AdaptiveDiagnosticService(
@@ -146,19 +145,53 @@ describe('AdaptiveDiagnosticService', () => {
     expect(prisma.masteryTrajectory.findMany).not.toHaveBeenCalled();
   });
 
-  it('does not reset a completed first-session plan when finish is retried', async () => {
+  it('repairs the plan on retry when endedAt committed before the first plan write failed', async () => {
     const { svc, prisma, firstSessionPlan } = build();
-    prisma.studySession.findUnique.mockResolvedValue({
+    const recoveredCards = [{
+      chapterCode: 'C11-CH01',
+      label: 'Sets',
+      route: '/app/learn/C11-CH01',
+      priority: 1,
+    }];
+    const session = {
       id: 'sess-1',
       userId: 'user-1',
-      endedAt: new Date('2026-07-17T00:00:00Z'),
-      attempts: [],
+      endedAt: null as Date | null,
+      attempts: [{
+        isCorrect: false,
+        confidence: 3,
+        problemId: 'p1',
+        problem: {
+          concepts: [{
+            conceptId: 'c1',
+            concept: { name: 'Sets', nameKo: '집합', code: 'SETS' },
+          }],
+          conceptLesson: { chapterCode: 'C11-CH01' },
+          koreanConceptLesson: null,
+        },
+      }],
+    };
+    prisma.studySession.findUnique.mockImplementation(async () => session);
+    prisma.studySession.update.mockImplementation(async () => {
+      session.endedAt = new Date('2026-07-17T00:00:00Z');
+      return session;
     });
     prisma.user.findUnique.mockResolvedValue({ gradeLevel: 'CLASS_11', country: 'IN' });
+    firstSessionPlan.ensureFirstSession
+      .mockRejectedValueOnce(new Error('transient plan write failure'))
+      .mockResolvedValueOnce(recoveredCards);
 
-    await svc.finish('user-1', 'sess-1');
+    await expect(svc.finish('user-1', 'sess-1'))
+      .rejects.toThrow('transient plan write failure');
+    const result = await svc.finish('user-1', 'sess-1');
 
-    expect(firstSessionPlan.getActiveCards).toHaveBeenCalledWith('user-1');
-    expect(firstSessionPlan.seedFirstSession).not.toHaveBeenCalled();
+    expect(result.firstSessionPlan).toEqual(recoveredCards);
+    expect(prisma.studySession.update).toHaveBeenCalledTimes(1);
+    expect(firstSessionPlan.ensureFirstSession).toHaveBeenCalledTimes(2);
+    expect(firstSessionPlan.ensureFirstSession).toHaveBeenLastCalledWith('user-1', {
+      recommendedChapterCodes: ['C11-CH01'],
+      weakConceptIds: ['c1'],
+      estimatedGradeBand: 'CLASS_11',
+    });
   });
 });

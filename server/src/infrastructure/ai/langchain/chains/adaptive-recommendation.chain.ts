@@ -48,10 +48,10 @@ export interface AdaptivePlanInput {
 const LANG_INSTRUCTION = {
   ko: '한국어로 응답하세요.',
   en: 'Respond in English.',
-  hi: 'हिंदी में उत्तर दें।',
+  hi: 'Respond in English.',
 } as const;
 
-const PROMPT = PromptTemplate.fromTemplate(`You are an adaptive math learning coach for the NCERT (India) curriculum, helping student prepare for JEE / Board exams.
+const PROMPT = PromptTemplate.fromTemplate(`You are an adaptive math learning coach for Korean middle- and high-school mathematics. Help the student improve school math performance through concept review, targeted practice, wrong-note redo, and weakness-based mock exams.
 
 {langInstruction}
 

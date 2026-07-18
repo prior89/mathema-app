@@ -8,6 +8,7 @@ export type RecommendedExamLaunch = {
   path: string;
   state: {
     resultId: string;
+    userId: string;
     name: string;
     totalMinutes: number;
     problems: ExamProblem[];
@@ -30,9 +31,11 @@ export function isPlayableExamProblem(problem: ExamProblem): boolean {
 
 export function buildRecommendedExamLaunch(
   exam: ExamPackage,
+  userId: string,
 ): RecommendedExamLaunch | null {
   if (
     !exam.resultId?.trim()
+    || !userId.trim()
     || !Array.isArray(exam.problems)
     || exam.problems.length === 0
     || !exam.problems.every(isPlayableExamProblem)
@@ -44,6 +47,7 @@ export function buildRecommendedExamLaunch(
     path: `/app/mocks/play/${encodeURIComponent(exam.resultId)}`,
     state: {
       resultId: exam.resultId,
+      userId,
       name: exam.name,
       totalMinutes: exam.totalMinutes,
       problems: exam.problems,

@@ -7,11 +7,16 @@
  *   • Forbidden when Mastery has not been completed for the chapter
  *   • Returns null when the pool is empty AND LLM top-up generates nothing
  */
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { MockExamsService } from './mock-exams.service';
 
 function mockPrisma(over: any = {}) {
-  return {
+  const prisma: any = {
     user: {
       findUnique: jest.fn().mockResolvedValue({ country: 'IN' }),
       ...over.user,
@@ -26,11 +31,17 @@ function mockPrisma(over: any = {}) {
     },
     attempt: {
       findMany: jest.fn().mockResolvedValue([]),
+      findFirst: jest.fn().mockResolvedValue(null),
       ...over.attempt,
     },
     mockExamResult: {
       findFirst: jest.fn().mockResolvedValue(null),
-      findFirstOrThrow: jest.fn().mockResolvedValue({ id: 'result-1' }),
+      findFirstOrThrow: jest.fn().mockResolvedValue({
+        id: 'result-1',
+        userId: 'student-1',
+        finalizedAt: null,
+        mockExam: { type: 'RECOMMENDED', problemIds: ['p-1'] },
+      }),
       ...over.mockExamResult,
     },
     recommendationLog: {
@@ -55,9 +66,16 @@ function mockPrisma(over: any = {}) {
       ...over.masteryTrajectory,
     },
     problem: { findMany: jest.fn().mockResolvedValue([]), ...over.problem },
+    problemChoice: {
+      findUnique: jest.fn().mockResolvedValue(null),
+      ...over.problemChoice,
+    },
+    $queryRaw: jest.fn().mockResolvedValue([{ id: 'result-1' }]),
     $queryRawUnsafe: jest.fn().mockResolvedValue([]),
     ...over.rest,
   };
+  prisma.$transaction = over.$transaction ?? jest.fn(async (callback: any) => callback(prisma));
+  return prisma;
 }
 
 function build(over: any = {}) {
@@ -80,7 +98,7 @@ function build(over: any = {}) {
     det as any,
     weeklyReports as any,
   );
-  return { svc, prisma, llmDraft, weeklyReports };
+  return { svc, prisma, repo, grading, attempts, llmDraft, weeklyReports };
 }
 
 describe('MockExamsService.nextChapterProblem', () => {
@@ -177,6 +195,7 @@ describe('MockExamsService recommended weakness loop', () => {
       type: 'RECOMMENDED',
       totalProblems: 1,
       totalMinutes: 50,
+      problemIds: ['p-1'],
     });
     expect(prisma.recommendationLog.createMany).toHaveBeenCalledWith({
       data: [expect.objectContaining({
@@ -306,6 +325,258 @@ describe('MockExamsService recommended weakness loop', () => {
     jest.spyOn((svc as any).logger, 'warn').mockImplementation(() => undefined);
 
     await expect(svc.finalize('student-1', 'result-1')).resolves.toMatchObject({ score: 80 });
+  });
+});
+
+describe('MockExamsService result write boundaries', () => {
+  const answerDto = {
+    problemId: 'p-1',
+    choiceId: 'choice-p-1-2',
+    stepIndex: 1,
+    durationSec: 12,
+  };
+
+  function ownedResult(over: any = {}) {
+    return {
+      id: 'result-1',
+      userId: 'student-1',
+      finalizedAt: null,
+      mockExam: { type: 'RECOMMENDED', problemIds: ['p-1'] },
+      ...over,
+    };
+  }
+
+  function choice() {
+    return {
+      id: answerDto.choiceId,
+      choiceIndex: 2,
+      text: '2',
+      isCorrect: true,
+      distractorType: null,
+      rationale: 'because',
+      step: {
+        stepIndex: 1,
+        stepType: 'ANSWER',
+        problemId: 'p-1',
+        problem: { source: 'seed' },
+      },
+    };
+  }
+
+  it('hides and rejects another account result before any attempt write', async () => {
+    const prisma = mockPrisma();
+    prisma.$queryRaw.mockResolvedValue([]);
+    const attempts = { createInTransaction: jest.fn() };
+    const { svc } = build({ prisma, attempts });
+
+    await expect(svc.submitStepAnswer('attacker', 'result-1', answerDto))
+      .rejects.toBeInstanceOf(NotFoundException);
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+  });
+
+  it('applies the same owner lock to the legacy batch submit route', async () => {
+    const prisma = mockPrisma();
+    prisma.$queryRaw.mockResolvedValue([]);
+    const attempts = { createInTransaction: jest.fn() };
+    const { svc } = build({ prisma, attempts });
+
+    await expect(svc.submit('attacker', 'result-1', { answers: [] }))
+      .rejects.toBeInstanceOf(NotFoundException);
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+  });
+
+  it('does not grade or reveal another account result through finalize', async () => {
+    const prisma = mockPrisma();
+    prisma.$queryRaw.mockResolvedValue([]);
+    const grading = { grade: jest.fn() };
+    const { svc } = build({ prisma, grading });
+
+    await expect(svc.finalize('attacker', 'result-1'))
+      .rejects.toBeInstanceOf(NotFoundException);
+    expect(grading.grade).not.toHaveBeenCalled();
+  });
+
+  it('rejects a problem outside the immutable offered-problem list', async () => {
+    const prisma = mockPrisma();
+    const attempts = { createInTransaction: jest.fn() };
+    const { svc } = build({ prisma, attempts });
+
+    await expect(svc.submitStepAnswer('student-1', 'result-1', {
+      ...answerDto,
+      problemId: 'p-not-offered',
+    })).rejects.toBeInstanceOf(BadRequestException);
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects arbitrary problems on the staged batch submission contract', async () => {
+    const prisma = mockPrisma();
+    const attempts = { createInTransaction: jest.fn() };
+    const { svc } = build({ prisma, attempts });
+
+    await expect(svc.submit('student-1', 'result-1', {
+      answers: [{
+        problemId: 'p-not-offered', answer: '1', durationSec: 10,
+      }],
+    })).rejects.toBeInstanceOf(BadRequestException);
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects an arbitrary problem on the REAL paper submission contract', async () => {
+    const prisma = mockPrisma({
+      mockExamResult: {
+        findFirstOrThrow: jest.fn().mockResolvedValue(
+          ownedResult({ mockExam: { type: 'REAL', problemIds: ['p-1'] } }),
+        ),
+      },
+    });
+    const attempts = { createInTransaction: jest.fn() };
+    const { svc } = build({ prisma, attempts });
+
+    await expect(svc.submitPaper('student-1', 'result-1', {
+      answers: [{
+        problemId: 'p-not-offered', choiceId: answerDto.choiceId, durationSec: 10,
+      }],
+    })).rejects.toBeInstanceOf(BadRequestException);
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rejects per-step answer writes after finalization', async () => {
+    const prisma = mockPrisma({
+      mockExamResult: {
+        findFirstOrThrow: jest.fn().mockResolvedValue(
+          ownedResult({ finalizedAt: new Date('2026-07-17T10:00:00Z') }),
+        ),
+      },
+    });
+    const attempts = { createInTransaction: jest.fn() };
+    const { svc } = build({ prisma, attempts });
+
+    await expect(svc.submitStepAnswer('student-1', 'result-1', answerDto))
+      .rejects.toBeInstanceOf(ConflictException);
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+  });
+
+  it('makes submit-paper REAL-only and blocks every staged route for REAL', async () => {
+    const real = ownedResult({ mockExam: { type: 'REAL', problemIds: ['p-1'] } });
+    const prisma = mockPrisma({
+      mockExamResult: { findFirstOrThrow: jest.fn().mockResolvedValue(real) },
+    });
+    const attempts = { createInTransaction: jest.fn() };
+    const grading = { grade: jest.fn() };
+    const { svc } = build({ prisma, attempts, grading });
+
+    await expect(svc.submitStepAnswer('student-1', 'result-1', answerDto))
+      .rejects.toMatchObject({ response: { code: 'real_exam_requires_paper_submit' } });
+    await expect(svc.finalize('student-1', 'result-1'))
+      .rejects.toMatchObject({ response: { code: 'real_exam_requires_paper_submit' } });
+    await expect(svc.submit('student-1', 'result-1', { answers: [] }))
+      .rejects.toMatchObject({ response: { code: 'real_exam_requires_paper_submit' } });
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+    expect(grading.grade).not.toHaveBeenCalled();
+
+    const stagedPrisma = mockPrisma();
+    const staged = build({ prisma: stagedPrisma, attempts });
+    await expect(staged.svc.submitPaper('student-1', 'result-1', { answers: [] }))
+      .rejects.toMatchObject({ response: { code: 'paper_submit_requires_real_exam' } });
+  });
+
+  it('rejects a REAL paper choice that is not from the canonical ANSWER step', async () => {
+    const prisma = mockPrisma({
+      mockExamResult: {
+        findFirstOrThrow: jest.fn().mockResolvedValue(
+          ownedResult({ mockExam: { type: 'REAL', problemIds: ['p-1'] } }),
+        ),
+      },
+      problemChoice: {
+        findUnique: jest.fn().mockResolvedValue({
+          step: { problemId: 'p-1', stepIndex: 2, stepType: 'PROCESS' },
+        }),
+      },
+    });
+    const attempts = { createInTransaction: jest.fn() };
+    const { svc } = build({ prisma, attempts });
+
+    await expect(svc.submitPaper('student-1', 'result-1', {
+      answers: [{ problemId: 'p-1', choiceId: answerDto.choiceId, durationSec: 10 }],
+    })).rejects.toMatchObject({ response: { code: 'choice_not_in_required_step' } });
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+  });
+
+  it('returns an exact open-step retry idempotently without replaying listeners', async () => {
+    const existing = {
+      id: 'attempt-1',
+      userId: 'student-1',
+      problemId: 'p-1',
+      mockExamResultId: 'result-1',
+      choiceId: answerDto.choiceId,
+      answer: '2',
+      stepIndex: 1,
+      isCorrect: true,
+      errorCodes: [],
+      hintUsed: false,
+      durationSec: 12,
+    };
+    const prisma = mockPrisma({
+      attempt: { findFirst: jest.fn().mockResolvedValue(existing) },
+      problemChoice: { findUnique: jest.fn().mockResolvedValue(choice()) },
+    });
+    const attempts = {
+      createInTransaction: jest.fn(),
+      publishCommitted: jest.fn(),
+      formatCommitted: jest.fn().mockResolvedValue({ ...existing, attemptId: existing.id }),
+    };
+    const { svc } = build({ prisma, attempts });
+
+    await expect(svc.submitStepAnswer('student-1', 'result-1', answerDto))
+      .resolves.toMatchObject({ attemptId: 'attempt-1', idempotent: true });
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+    expect(attempts.publishCommitted).not.toHaveBeenCalled();
+    expect(attempts.formatCommitted).toHaveBeenCalledWith(existing);
+  });
+
+  it('rejects a different choice for an already occupied result/problem/step', async () => {
+    const prisma = mockPrisma({
+      attempt: {
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'attempt-1', choiceId: 'different-choice', answer: '1', stepIndex: 1,
+        }),
+      },
+      problemChoice: { findUnique: jest.fn().mockResolvedValue(choice()) },
+    });
+    const attempts = { createInTransaction: jest.fn() };
+    const { svc } = build({ prisma, attempts });
+
+    await expect(svc.submitStepAnswer('student-1', 'result-1', answerDto))
+      .rejects.toBeInstanceOf(ConflictException);
+    expect(attempts.createInTransaction).not.toHaveBeenCalled();
+  });
+
+  it('replays finalize for the owner without reopening or rewriting the score', async () => {
+    const stored = {
+      id: 'result-1', userId: 'student-1', score: 80, grade: 2,
+      percentile: 82, durationMin: 20, finalizedAt: new Date('2026-07-17T10:00:00Z'),
+    };
+    const prisma = mockPrisma({
+      mockExamResult: {
+        findFirstOrThrow: jest.fn()
+          .mockResolvedValueOnce(ownedResult({ finalizedAt: stored.finalizedAt }))
+          .mockResolvedValueOnce(stored),
+      },
+    });
+    const grading = { grade: jest.fn().mockResolvedValue({
+      score: 80, grade: 2, percentile: 82, durationMin: 20,
+      correctCount: 8, totalProblems: 10, attemptedProblems: 10,
+    }) };
+    const repo = { saveResult: jest.fn() };
+    const weeklyReports = { generate: jest.fn().mockResolvedValue({ id: 'weekly-1' }) };
+    const { svc } = build({ prisma, grading, repo, weeklyReports });
+
+    await expect(svc.finalize('student-1', 'result-1')).resolves.toMatchObject({
+      id: 'result-1', score: 80, idempotent: true, correctCount: 8,
+    });
+    expect(repo.saveResult).not.toHaveBeenCalled();
+    expect(grading.grade).toHaveBeenCalledWith('student-1', 'result-1', {}, prisma);
+    expect(weeklyReports.generate).toHaveBeenCalledWith('student-1');
   });
 });
 

@@ -1,176 +1,22 @@
-# Matheo Data Safety Summary
+# Matheo 데이터 보안 요약
 
-This document explains what data Matheo collects, why it is collected, and
-which trusted service providers may process it. It is intended to mirror the
-Google Play Data Safety disclosures for the Android app.
+시행일: 2026-07-15
 
-Last updated: 2026-07-15 (production-console declaration audit)
+## 수집 및 사용
 
-For Google Play's form, Matheo declares **collection: Yes** and **sharing:
-No**. Transfers to Mathpix, OpenAI, Google, Sentry, and Microsoft are limited
-to processors acting on VeraStudy's instructions or to a user-initiated
-action. Google Play excludes those transfers from its "sharing" definition.
-They are still disclosed below for transparency.
+Matheo는 한국 수학 학습 서비스를 제공하기 위해 계정 정보, 학습 기록, 문제 이미지, 구독 상태, 오류 로그를 처리합니다. 정보는 로그인, 학습 진단, 약점시험, 리포트, 결제 복원, 보안 및 서비스 안정화 목적으로 사용됩니다.
 
-The selected Play data types are: name, email address, user IDs, phone number
-(optional guardian flow), other personal info, purchase history, photos,
-files and documents, app interactions, other user-generated content, other
-actions, crash logs, diagnostics, and device or other IDs. Location, payment
-card/bank data, health, messages, contacts, audio, installed apps, browsing
-history, and advertising data are not collected.
+## 결제
 
----
+결제수단 원문은 Google Play가 처리합니다. Matheo는 구독 상품 ID, 구매 토큰 검증 결과, 구독 상태만 서버에서 확인합니다.
 
-## 1. Categories collected
+## 아동 보호
 
-Mapping uses Google Play's official categories.
-"Required" = the app cannot function without it.
-"Optional" = the user can refuse via DPDP `Consent.revokedAt` and the app
-still works (degraded for the relevant feature).
+대한민국 기준 만 14세 미만 학생은 보호자 이메일 확인 후 사용할 수 있습니다. 선택 동의 항목은 기본 OFF입니다.
 
-### 1.1 Personal info
+## 삭제
 
-| Field | Where | Purpose | Req / Opt | Shared with 3P |
-|---|---|---|---|---|
-| Email | `User.email` | Account management, login, password reset | Required | — |
-| Name | `User.name` | Account management, personalised greeting | Required | — |
-| User ID | `User.id`, Google `sub` when Google sign-in is used | Account management, security | Required | Google sign-in is user initiated |
-| Guardian contact | `GuardianConsentRequest.parentName`, `parentEmail`, optional `parentPhone` | Guardian verification | Optional | Email delivery provider |
-| Other (school level, grade level, study goal, country, target grade, exam date) | `User.gradeLevel`, `User.schoolLevel`, `User.studyGoal`, `User.country`, `User.targetGrade`, `User.examDate` | App functionality — NCERT curriculum mapping, recommendation tailoring | Required | — |
-| Parent-child link (parent's account references the student's user id) | `User.childOfUserId` | App functionality — PARENT role dashboards | Optional (only PARENT users) | — |
-| Password hash | `User.passwordHash` | Account management (bcrypt, never reversible) | Required | — |
-| IP address + user agent | `Consent.ipAddress`, `Consent.userAgent`, `PasswordResetToken.requestIp` | Legal — DPDP 2023 evidence of consent | Required (for users granting consent) | — |
+사용자는 앱 또는 이메일을 통해 계정 삭제를 요청할 수 있습니다. 삭제 요청 후 법령상 필요한 보존분과 백업 처리 기간을 제외하고 학습 데이터 삭제 절차를 진행합니다.
 
-### 1.2 Financial info
+문의: VeraStudy01@gmail.com
 
-Matheo offers an optional **Premium subscription** via **Google Play Billing**.
-We do **not** collect payment card, UPI, or bank details — Google Play processes
-payments. Our servers store purchase-metadata needed for entitlement only.
-
-| Field | Where | Purpose | Req / Opt | Shared with 3P |
-|---|---|---|---|---|
-| Purchase history (productId, status, start/expiry, autoRenewing, intro offer, countryCode) | `Subscription` | Entitlement gating, renewal handling | Required (Premium subscribers only) | — |
-| Google Play purchase token (opaque reference; stored as received for API re-verification) | `Subscription.purchaseToken` | Play Developer API verification | Required (Premium subscribers only) | Google Play Developer API |
-| Subscription audit events | `SubscriptionEvent` | RTDN / verify audit trail | Required (Premium subscribers only) | — |
-
-**Not collected:** credit card number, UPI ID, bank account, billing address.
-Regional prices are shown and processed by Google Play; they are not
-payment-instrument data collected by Matheo.
-
-### 1.3 Location
-**None precise / approximate.** `User.country` is set by the user at signup —
-not derived from GPS, IP geo, or network — and is treated as a profile
-preference, not location data.
-
-### 1.4 Web browsing
-**None.** The app does not record external browsing history.
-
-### 1.5 App activity
-
-User-selected solver photos and PDFs are transmitted for OCR and processed in
-memory. Matheo does not retain the uploaded bytes after the request, although
-the extracted question text, answer, and solver result can be retained as
-account-linked learning/quality records.
-
-| Field | Where | Purpose | Req / Opt | Shared with 3P |
-|---|---|---|---|---|
-| Problem attempts (answer, isCorrect, durationSec, confidence, hintUsed, errorCodes, deviceType, timeOfDay) | `Attempt` model | App functionality — grading, mastery, recommendation | Required | OpenAI (LLM analysis on `AI_TRAINING` consent only) |
-| Step-by-step solution input | `Attempt.stepByStepInput` | Personalisation — LLM diagnoses misconceptions | Optional (`AI_TRAINING` consent) | OpenAI |
-| Wrong notes (errorType, occurrences, insight, SM-2 schedule) | `WrongNote` model | App functionality — review queue, spaced repetition | Required | — |
-| Study sessions (sessionNumber, durationSec, focusScore, fatigueSignal) | `StudySession` model | App functionality — session history | Required | — |
-| Mock exam results (score, grade, percentile, durationMin) | `MockExamResult` model | App functionality — exam scoring + progress | Required | — |
-| Concept lesson progress (currentStep, completedSteps, retrievalScore) | `ConceptProgress` model | App functionality — lesson resume + gating | Required | — |
-| Daily activity (durationMin, problemsSolved, accuracyPct, intensity) | `DailyActivity` model | App functionality — streak + heatmap | Required | — |
-| Mastery snapshots (per concept score, evidence count, recent accuracy, confidence gap) | `MasterySnapshot`, `MasteryTrajectory`, `MasteryEvent` | App functionality — adaptive recommendation | Required | OpenAI (LLM analysis on `AI_TRAINING` consent only) |
-| Error pattern profile (errorCode frequency, severity, status) | `ErrorPatternProfile` model | Personalisation | Optional (`AI_TRAINING` consent) | OpenAI |
-| Recommendation log (target concept, expected difficulty, result) | `RecommendationLog` model | Personalisation + algorithm evaluation | Optional (`ANALYTICS` consent) | — |
-| Weekly report aggregates | `WeeklyReport` model | App functionality — auto-generated insights | Required | — |
-| In-app interaction events (page view, CTA click, perspective change) | `AnalyticsEvent` model | Analytics — funnel + engagement | Optional (`ANALYTICS` consent) | — |
-| Feedback (rating, comment) | `Feedback` model | App functionality — feedback + service improvement | Optional (user-initiated) | — |
-| Teacher override (manual mastery adjustments by teacher role) | `TeacherOverride` model | App functionality — teacher dashboards | Required (TEACHER role only) | — |
-
-### 1.6 App info and performance
-
-| Field | Where | Purpose | Req / Opt | Shared with 3P |
-|---|---|---|---|---|
-| Crash logs (stack traces and breadcrumbs, without a stable Matheo user ID) | Sentry (`@sentry/react` + `@sentry/node`) | Diagnostics | Required when diagnostics are enabled | Sentry |
-| Performance telemetry (route timing, server latency, request volume) | Azure Application Insights | Diagnostics | Optional (anonymous) | Microsoft |
-| Server-side audit (admin actions, auth events) | `AdminAccessLog`, `LLMAnalysisLog`, `LLMAnalysisJob` | App functionality — operational audit, AI cost tracking | Required (admin/system level — not user data) | — |
-
-### 1.7 Device or other IDs
-
-| Field | Where | Purpose | Req / Opt | Shared with 3P |
-|---|---|---|---|---|
-| Push notification token | `DeviceToken.token` | App functionality — push notifications via FCM | Optional (`MARKETING` consent, plus per-OS notification permission) | Firebase Cloud Messaging |
-| Platform + app version | `DeviceToken.platform`, `DeviceToken.appVersion` | App functionality | Required (when push enabled) | — |
-| Session ID (browser sessionStorage UUID) | `AnalyticsEvent.sessionId` | Security — request-tracing | Required | — |
-
----
-
-## 2. Data shared with third parties
-
-Matheo uses the following service providers to operate learning, sign-in,
-notifications, diagnostics, and billing-related features.
-
-| Recipient | Purpose | Data sent | Consent gate |
-|---|---|---|---|
-| **Mathpix Convert API** | Primary OCR for uploaded math problem images | Photo image bytes | Per-use (the upload action is the consent surface) |
-| **OpenAI (gpt-5.4-mini / gpt-5.5 fallback)** | Math-helper solver, graph/diagram OCR repair, AI hint walkthrough, LLM analysis (wrong-note diagnostic) | Problem body, OCR text, student step-by-step input, student answer, wrong-note context; photo/PDF image bytes only for OCR fallback or graph/diagram repair | `AI_TRAINING` (analysis) - fallback to rule-based when absent; math-helper `/solve` always uses OpenAI when enabled; upload action gates OCR |
-| **Google OAuth 2.0** | Sign-in flow | Email, name, Google `sub` id | User-initiated sign-in |
-| **Firebase Cloud Messaging** | Push notification delivery | `DeviceToken.token`, message payload | `MARKETING` consent + OS-level permission |
-| **Sentry** | Crash + error capture | Stack trace, breadcrumb, environment; no stable Matheo user ID | Operational diagnostics; engineering-only viewers |
-| **Microsoft Azure Application Insights** | Backend performance telemetry | Request path, latency, response size, anonymised user id | Required (operational) |
-| **Google Play Developer API** | Subscription purchase verification and renewal handling | Product id + purchase token, no payment instrument | User-initiated purchase via Google Play Billing |
-
----
-
-## 3. Data security practices
-
-- **In transit**: HTTPS only. `app/capacitor.config.ts` enforces
-  `androidScheme=https`, `cleartext=false`, `allowMixedContent=false`. Network
-  security config on Android pins to production domain.
-- **At rest**: Azure Database for PostgreSQL Flexible Server — Transparent
-  Data Encryption (TDE) by Microsoft-managed keys. Sensitive fields
-  (`User.passwordHash`) are bcrypt-hashed before persistence.
-- **Auth tokens**: JWT access (short-lived) + refresh (Redis-backed
-  blacklist for revocation, `jwt:refresh:revoked:*`). Reset / verification
-  tokens are stored as SHA-256 hashes in DB, never plaintext.
-- **Account deletion**: `DELETE /users/me` immediately removes the User and
-  all account-linked records. Non-FK audit/AI tables (`SolverAttempt`,
-  `LLMAnalysisJob`, and `SecurityEvent`) are explicitly purged in the same
-  transaction; aggregate analytics survive only after `userId` is null.
-- **Data export**: `GET /users/me/export` returns the full per-user dataset
-  as JSON for portability (DPDP §13 / GDPR Art. 20).
-- **Consent revocation**: `DELETE /privacy/consents/:kind`. `DATA_PROCESSING`
-  cannot be revoked while the account is active — revoking deactivates the
-  account.
-- **Token revocation**: logout writes the JWT `jti` into the Redis blacklist
-  with TTL equal to remaining token lifetime.
-- **Audit log**: `AdminAccessLog` records every admin-level action (user
-  lookups, manual overrides, content-ingest decisions).
-
----
-
-## 4. Google Play Data Safety answers
-
-The Android app uses these Data Safety disclosures:
-
-1. *Does your app collect any of the required user data types?* — **Yes**.
-2. *Is all of the user data collected by your app encrypted in transit?* — **Yes**.
-3. *Do you provide a way for users to request that their data be deleted?* — **Yes** (`DELETE /users/me` is exposed from Settings → Privacy).
-4. *Will users be able to request that their data be deleted, but not through your app?* — **Also yes** (any user can email the developer; the in-app path is canonical).
-5. *Has your app committed to the Google Play Families Policy?* — **Yes** (Class 7-12 audience; guardian approval is required for users under 18 in India and under 14 in Korea; optional PARENT role for supervision).
-6. *Does your app contain in-app purchases?* — **Yes** (Premium subscription via Google Play Billing v8 — `premium_monthly`, `premium_yearly`; the cardless `premium_preview_3d` preview is an internal entitlement, not a Play free-trial offer).
-
----
-
-## 5. User controls
-
-- **Delete account**: Settings -> Privacy -> Delete account permanently deletes
-  the account and associated learning data.
-- **Export data**: Settings -> Privacy -> Export data returns the user's
-  account and learning records in a portable JSON format.
-- **Consent choices**: optional analytics, AI improvement, and marketing
-  consents can be changed from Settings -> Privacy.
-- **Subscriptions**: Premium subscriptions are managed through Google Play's
-  subscription center.

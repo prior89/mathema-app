@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ErrorCode } from '@prisma/client';
+import { ErrorCode, Prisma } from '@prisma/client';
 import { AttemptsRepository } from './attempts.repository';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 
@@ -26,7 +26,27 @@ export class AttemptsService {
   ) {}
 
   async create(userId: string, dto: any) {
+    if (dto?.mockExamResultId) {
+      throw new BadRequestException({
+        code: 'mock_exam_submission_route_required',
+        message: 'Mock-exam attempts must use the mock-exam submission endpoint.',
+      });
+    }
     const attempt = await this.repo.create(userId, dto);
+    return this.publishCommitted(userId, attempt);
+  }
+
+  /**
+   * Persist an attempt on the caller's transaction. Event listeners are
+   * deliberately deferred until the outer transaction commits so they never
+   * observe an uncommitted row or deadlock on the exam-result lock.
+   */
+  createInTransaction(userId: string, dto: any, tx: Prisma.TransactionClient) {
+    return this.repo.create(userId, dto, tx);
+  }
+
+  /** Publish learning-state effects for an attempt that is already durable. */
+  async publishCommitted(userId: string, attempt: any) {
     // Wait for the learning-state listeners before returning. Recommended
     // weakness retests are often started immediately after an answer; the old
     // fire-and-forget emit let that request read stale mastery and recommend
@@ -55,6 +75,11 @@ export class AttemptsService {
       });
     }
 
+    return this.formatCommitted(attempt);
+  }
+
+  /** Build the normal HTTP payload without replaying attempt.completed. */
+  async formatCommitted(attempt: any) {
     // Pull selected choice + correct choice for rationale rendering.
     let selectedChoice: any = null;
     let correctChoice: any = null;

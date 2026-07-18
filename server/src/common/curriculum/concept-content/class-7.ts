@@ -276,8 +276,8 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       en: '"25% off" — what does it really mean? You pay one-quarter less.',
     },
     concrete: {
-      ko: '₹800 의 25% 할인: 할인액 200, 판매가 600. 25% + 10% 할인 같은 게 아니라 (1−0.25)(1−0.1) = 0.675 = 32.5% 할인.',
-      en: '₹800 at 25% off: discount 200, sale 600. 25% then 10% off ≠ 35% off — it\'s 1 − 0.675 = 32.5% off.',
+      ko: '8,000원의 25% 할인: 할인액 2,000원, 판매가 6,000원. 25% + 10% 할인 같은 게 아니라 (1−0.25)(1−0.1) = 0.675 = 32.5% 할인.',
+      en: '₩8,000 at 25% off: discount ₩2,000, sale price ₩6,000. 25% then 10% off ≠ 35% off — it is 1 − 0.675 = 32.5% off.',
     },
     pictorial: {
       ko: '백분율 막대: 100% = 전체, 25% = 1/4 부분 색칠. 비율로 시각화하면 곱셈 의미가 직관적.',
@@ -288,8 +288,8 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       en: 'A percentage p% is the fraction p/100 — a way to compare a part to a whole of 100. Discounts, taxes, profit, and loss all reduce to multiplying or dividing by (1 ± p/100). Successive percentages multiply rather than add: 25% off followed by 10% off equals (1 − 0.25)(1 − 0.10) = 32.5% off, not 35%. Ratios a : b and proportions a/b = c/d generalise the same comparison idea.',
     },
     worked: {
-      ko: '₹800 상품의 25% 할인가는?',
-      en: 'Sale price of a ₹800 item at 25% off.',
+      ko: '8,000원 상품의 25% 할인가는?',
+      en: 'Sale price of a ₩8,000 item at 25% off.',
       steps: [
         { math: 'Discount = 800 × 0.25 = 200', narrationKo: '할인 금액.', narrationEn: 'Discount amount.' },
         { math: 'Sale price = 800 − 200 = 600',  narrationKo: '원가에서 차감.', narrationEn: 'Subtract.' },
@@ -304,9 +304,9 @@ export const CLASS_7_CONTENT: ChapterContentMap = {
       correctEn: 'Real effect (1 − 0.25)(1 − 0.10) = 0.675 ⇒ 32.5% off.',
     },
     retrieval: {
-      promptKo: '₹500 의 30% 는?',
-      promptEn: '30% of ₹500?',
-      accept: ['150', '₹150'],
+      promptKo: '5,000원의 30%는?',
+      promptEn: '30% of ₩5,000?',
+      accept: ['1500', '₩1500', '1,500', '₩1,500'],
       explainKo: '500 × 0.30 = 150.',
       explainEn: '500 × 0.30 = 150.',
     },
