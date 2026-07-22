@@ -36,6 +36,7 @@ import {
 import { track } from '../lib/analytics';
 import { useT } from '../lib/i18n';
 import { openPlaySubscriptionManage, playStoreListingUrl } from '../lib/play-subscription';
+import { SUPPORT_EMAIL, buildSupportMailtoUrl } from '../lib/support';
 import type { BillingProductDetails } from '../native/billing-bridge';
 import type { TranslationKey } from '../lib/translations';
 import { AnnualPlanPrice } from '../components/AnnualPlanPrice';
@@ -353,6 +354,23 @@ export default function PaywallPage() {
             {t('paywall.manageSubscription')}
           </button>
           <p className="paywall-member-help">{t('paywall.member.manageHint')}</p>
+          {/* Billing-dispute escape hatch (competitor audit 2026-07-21): the
+              worst-rated failure mode across math apps is an unreachable
+              support when a charge goes wrong. Refunds live in Play; anything
+              unresolved gets a prefilled diagnostics email. */}
+          <p className="paywall-member-help">
+            {t('paywall.member.billingHelp')}{' '}
+            <a
+              href={buildSupportMailtoUrl({
+                topic: 'billing',
+                subject: t('paywall.member.billingSubject'),
+                lang,
+                detail: productId ? `product=${productId}` : null,
+              })}
+            >
+              {SUPPORT_EMAIL}
+            </a>
+          </p>
         </main>
       </div>
     );

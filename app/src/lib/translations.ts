@@ -500,6 +500,13 @@ const ko = {
   'settings.verification.title': '이메일 검증',
   'settings.verification.send': '검증 메일 다시 보내기',
   'settings.verification.sent': '검증 메일을 발송했습니다 (개발 환경: 서버 로그 확인)',
+  'settings.section.support': '지원',
+  'settings.support.hint':
+    '계정, 결제, 오류 등 무엇이든 문의하세요. 메일에 진단 정보가 자동으로 첨부되어 빠르게 답변드릴 수 있습니다. Google Play 결제 환불은 Play 스토어에서 처리됩니다.',
+  'settings.support.subject': '[Matheo] 문의',
+  'settings.support.cta': '이메일로 문의하기',
+  'settings.support.copy': '주소 복사',
+  'settings.support.copied': '지원 이메일 주소를 복사했습니다',
   // ===== Forgot / Reset / Verify =====
   'forgot.title': '비밀번호 재설정',
   'forgot.hint': '가입 이메일을 입력하면 재설정 링크를 보내드립니다.',
@@ -1491,6 +1498,8 @@ const ko = {
   'paywall.member.accessUntil': 'Premium 이용 종료일',
   'paywall.member.continue': '학습으로 돌아가기',
   'paywall.member.manageHint': '요금제 변경과 해지는 Google Play 구독 센터에서 처리됩니다.',
+  'paywall.member.billingHelp': '결제 문제가 해결되지 않나요? 환불은 Google Play에서 처리되며, 그 외 결제 문의는 이메일로 도와드립니다:',
+  'paywall.member.billingSubject': '[Matheo] 결제 문의',
   'paywall.autoRenew.disclosure':
     '구독은 취소할 때까지 선택한 주기(월/년)마다 자동 갱신됩니다. Google Play 결제를 통해 청구되며, 가격은 Play에서 표시된 지역 가격이 적용됩니다.',
   'paywall.cancel.hint': '해지는 Google Play 구독 센터에서 할 수 있어요.',
@@ -2001,6 +2010,13 @@ const en: typeof ko = {
   'settings.verification.title': 'Email verification',
   'settings.verification.send': 'Resend verification email',
   'settings.verification.sent': 'Verification email sent (dev: check server logs)',
+  'settings.section.support': 'Support',
+  'settings.support.hint':
+    'Ask us anything about your account, billing, or a bug. Diagnostic info is attached to the email automatically so we can answer fast. Google Play purchase refunds are handled in the Play Store.',
+  'settings.support.subject': '[Matheo] Support request',
+  'settings.support.cta': 'Email support',
+  'settings.support.copy': 'Copy address',
+  'settings.support.copied': 'Support email address copied',
   // Forgot / Reset / Verify
   'forgot.title': 'Reset password',
   'forgot.hint': 'Enter your email and we will send a reset link.',
@@ -2990,6 +3006,8 @@ const en: typeof ko = {
   'paywall.member.accessUntil': 'Premium access until',
   'paywall.member.continue': 'Return to learning',
   'paywall.member.manageHint': 'Plan changes and cancellation are handled in the Google Play subscriptions center.',
+  'paywall.member.billingHelp': 'Payment problem not resolved? Refunds are handled by Google Play — for anything else about billing, email us:',
+  'paywall.member.billingSubject': '[Matheo] Billing question',
   'paywall.autoRenew.disclosure':
     'Subscriptions renew automatically each billing period (monthly or yearly) until you cancel. You are charged through Google Play at the regional price shown at purchase.',
   'paywall.cancel.hint': 'You can cancel anytime in the Google Play subscriptions center:',
