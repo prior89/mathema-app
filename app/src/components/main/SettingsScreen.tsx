@@ -18,6 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Glyph } from '../onboarding/Glyph';
 import { TabBar } from './TabBar';
 import { requiresGuardianConsent } from '../../lib/guardian-consent';
+import { SUPPORT_EMAIL, openSupportMail } from '../../lib/support';
 
 // Backend /privacy/consents 응답 shape — 'active' (boolean) 사용. 이전엔 'granted' 라 매번 undefined 였음.
 type Consent = {
@@ -408,6 +409,56 @@ export function SettingsScreen() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Support — always-reachable contact (competitor audit 2026-07-21:
+            the worst complaint class across math apps is a billing/account
+            problem with nowhere to go). Address stays visible as selectable
+            text because the WebView shell may swallow mailto:. */}
+        <div className="section-h">
+          <span className="label">{t('settingsScreen.support.section')}</span>
+        </div>
+        <div className="card" style={{ padding: 14 }}>
+          <div style={{ fontSize: 12.5, color: 'var(--p-ink-2)', lineHeight: 1.55, marginBottom: 10 }}>
+            {t('settingsScreen.support.hint')}
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, userSelect: 'text' }}>
+            {SUPPORT_EMAIL}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              className="btn"
+              style={{ flex: 1 }}
+              onClick={() =>
+                openSupportMail({
+                  topic: 'general',
+                  subject: t('settingsScreen.support.subject'),
+                  userId: me.data?.id ?? null,
+                  accountEmail: me.data?.email ?? null,
+                  lang,
+                })
+              }
+            >
+              {t('settingsScreen.support.cta')}
+            </button>
+            <button
+              type="button"
+              className="btn outline"
+              style={{ flex: 1 }}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(SUPPORT_EMAIL);
+                  toast(t('settingsScreen.support.copied'), 'success');
+                } catch {
+                  // Clipboard may be unavailable in the WebView — the address
+                  // is rendered as selectable text above as the fallback.
+                }
+              }}
+            >
+              {t('settingsScreen.support.copy')}
+            </button>
+          </div>
         </div>
 
         {/* About */}
