@@ -4,7 +4,6 @@ import { post, del, downloadExport } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../lib/i18n';
 import { toast } from '../components/Toast';
-import { SUPPORT_EMAIL, openSupportMail } from '../lib/support';
 
 const NAVY = '#142850';
 const BG = '#EFEBDF';
@@ -38,10 +37,6 @@ export default function SettingsPage() {
 
         <Section title={t('settings.section.data')}>
           <ExportData />
-        </Section>
-
-        <Section title={t('settings.section.support')}>
-          <ContactSupport userId={user?.id ?? null} accountEmail={user?.email ?? null} />
         </Section>
 
         <Section title={t('settings.section.danger')} tone={DANGER}>
@@ -151,48 +146,6 @@ function ExportData() {
       <button onClick={onClick} disabled={busy} style={{ ...primaryBtn, backgroundColor: OK }}>
         {busy ? t('settings.exporting') : t('settings.export')}
       </button>
-    </div>
-  );
-}
-
-function ContactSupport({ userId, accountEmail }: { userId: string | null; accountEmail: string | null }) {
-  const { t, lang } = useT();
-
-  const mailOpts = {
-    topic: 'general' as const,
-    subject: t('settings.support.subject'),
-    userId,
-    accountEmail,
-    lang,
-  };
-
-  const copyAddress = async () => {
-    try {
-      await navigator.clipboard.writeText(SUPPORT_EMAIL);
-      toast(t('settings.support.copied'));
-    } catch {
-      // Clipboard can be unavailable in the WebView — the address is still
-      // rendered as selectable text right above the button.
-    }
-  };
-
-  return (
-    <div>
-      <p style={{ margin: 0, marginBottom: 12, fontSize: 13, color: TEXT_MUTED }}>{t('settings.support.hint')}</p>
-      {/* Address always visible as selectable text: mailto can be swallowed by
-          the Android WebView shell, and "support you cannot reach" is the exact
-          competitor failure this section exists to prevent. */}
-      <div style={{ fontSize: 13, marginBottom: 12, userSelect: 'text' }}>
-        <strong>{SUPPORT_EMAIL}</strong>
-      </div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button onClick={() => openSupportMail(mailOpts)} style={primaryBtn}>
-          {t('settings.support.cta')}
-        </button>
-        <button onClick={copyAddress} style={secondaryBtn}>
-          {t('settings.support.copy')}
-        </button>
-      </div>
     </div>
   );
 }

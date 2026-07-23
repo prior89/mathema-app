@@ -500,13 +500,13 @@ const ko = {
   'settings.verification.title': '이메일 검증',
   'settings.verification.send': '검증 메일 다시 보내기',
   'settings.verification.sent': '검증 메일을 발송했습니다 (개발 환경: 서버 로그 확인)',
-  'settings.section.support': '지원',
-  'settings.support.hint':
+  'settingsScreen.support.section': '지원',
+  'settingsScreen.support.hint':
     '계정, 결제, 오류 등 무엇이든 문의하세요. 메일에 진단 정보가 자동으로 첨부되어 빠르게 답변드릴 수 있습니다. Google Play 결제 환불은 Play 스토어에서 처리됩니다.',
-  'settings.support.subject': '[Matheo] 문의',
-  'settings.support.cta': '이메일로 문의하기',
-  'settings.support.copy': '주소 복사',
-  'settings.support.copied': '지원 이메일 주소를 복사했습니다',
+  'settingsScreen.support.subject': '[Matheo] 문의',
+  'settingsScreen.support.cta': '이메일로 문의하기',
+  'settingsScreen.support.copy': '주소 복사',
+  'settingsScreen.support.copied': '지원 이메일 주소를 복사했습니다',
   // ===== Forgot / Reset / Verify =====
   'forgot.title': '비밀번호 재설정',
   'forgot.hint': '가입 이메일을 입력하면 재설정 링크를 보내드립니다.',
@@ -2010,13 +2010,13 @@ const en: typeof ko = {
   'settings.verification.title': 'Email verification',
   'settings.verification.send': 'Resend verification email',
   'settings.verification.sent': 'Verification email sent (dev: check server logs)',
-  'settings.section.support': 'Support',
-  'settings.support.hint':
+  'settingsScreen.support.section': 'Support',
+  'settingsScreen.support.hint':
     'Ask us anything about your account, billing, or a bug. Diagnostic info is attached to the email automatically so we can answer fast. Google Play purchase refunds are handled in the Play Store.',
-  'settings.support.subject': '[Matheo] Support request',
-  'settings.support.cta': 'Email support',
-  'settings.support.copy': 'Copy address',
-  'settings.support.copied': 'Support email address copied',
+  'settingsScreen.support.subject': '[Matheo] Support request',
+  'settingsScreen.support.cta': 'Email support',
+  'settingsScreen.support.copy': 'Copy address',
+  'settingsScreen.support.copied': 'Support email address copied',
   // Forgot / Reset / Verify
   'forgot.title': 'Reset password',
   'forgot.hint': 'Enter your email and we will send a reset link.',
