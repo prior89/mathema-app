@@ -135,30 +135,29 @@ function KoreanLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
         </div>
         <HeadAvatar />
       </div>
-      <div className="learn-intro">
-        <span><Sparkles size={14} />{t('learn.hero.kicker')}</span>
-        <h2>{t('learn.hero.title')}</h2>
-        <p>{t('learn.hero.desc')}</p>
-        <div className="learn-loop"><BookOpenCheck size={18} />{t('learn.hero.loop')}</div>
-      </div>
-      <div className="content-rail learn-filters" style={{ padding: '12px 22px 0', flexShrink: 0 }}>
-        <div className="filter-row">
-          {grades.map((g) => (
-            <button
-              type="button"
-              key={g}
-              className={`filter-chip ${grade === g ? 'active' : ''}`}
-              aria-pressed={grade === g}
-              style={{ flex: '0 0 calc((100% - 30px) / 6)', textAlign: 'center' }}
-              onClick={() => setGrade(g)}
-            >
-              {KOREAN_GRADE_LABEL[g]}
-            </button>
-          ))}
+      <div className="app-scroll content-rail learn-scroll" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div className="learn-intro">
+          <span><Sparkles size={14} />{t('learn.hero.kicker')}</span>
+          <h2>{t('learn.hero.title')}</h2>
+          <p>{t('learn.hero.desc')}</p>
+          <div className="learn-loop"><BookOpenCheck size={18} />{t('learn.hero.loop')}</div>
         </div>
-      </div>
-
-      <div className="app-scroll content-rail" style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '0 22px' }}>
+        <div className="learn-filters">
+          <div className="filter-row">
+            {grades.map((g) => (
+              <button
+                type="button"
+                key={g}
+                className={`filter-chip ${grade === g ? 'active' : ''}`}
+                aria-pressed={grade === g}
+                style={{ flex: '0 0 calc((100% - 30px) / 6)', textAlign: 'center' }}
+                onClick={() => setGrade(g)}
+              >
+                {KOREAN_GRADE_LABEL[g]}
+              </button>
+            ))}
+          </div>
+        </div>
         {lessons.isError && <QueryError lang={lang} onRetry={() => void lessons.refetch()} />}
         {lessons.isLoading && <Empty msg={t('learn.loading')} />}
         {!lessons.isError && lessons.data && lessons.data.length === 0 && <Empty msg={t('learn.empty')} />}
@@ -254,33 +253,32 @@ function NcertLearnHub({ me }: { me: { gradeLevel?: string | null } | null }) {
         </div>
         <HeadAvatar />
       </div>
-      <div className="learn-intro">
-        <span><Sparkles size={14} />{t('learn.hero.kicker')}</span>
-        <h2>{t('learn.hero.title')}</h2>
-        <p>{t('learn.hero.desc')}</p>
-        <div className="learn-loop"><BookOpenCheck size={18} />{t('learn.hero.loop')}</div>
-      </div>
-      <div className="content-rail learn-filters" style={{ padding: '12px 22px 0', flexShrink: 0 }}>
-        <div className="filter-row">
-          {classes.map((c) => (
-            <button
-              type="button"
-              key={c}
-              className={`filter-chip ${ncertClass === c ? 'active' : ''}`}
-              aria-pressed={ncertClass === c}
-              style={{
-                flex: '0 0 calc((100% - 18px) / 4)',
-                textAlign: 'center',
-              }}
-              onClick={() => setNcertClass(c)}
-            >
-              {CLASS_LABEL[c]}
-            </button>
-          ))}
+      <div className="app-scroll content-rail learn-scroll" style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div className="learn-intro">
+          <span><Sparkles size={14} />{t('learn.hero.kicker')}</span>
+          <h2>{t('learn.hero.title')}</h2>
+          <p>{t('learn.hero.desc')}</p>
+          <div className="learn-loop"><BookOpenCheck size={18} />{t('learn.hero.loop')}</div>
         </div>
-      </div>
-
-      <div className="app-scroll content-rail" style={{ flex: 1, overflow: 'auto', minHeight: 0, padding: '0 22px' }}>
+        <div className="learn-filters">
+          <div className="filter-row">
+            {classes.map((c) => (
+              <button
+                type="button"
+                key={c}
+                className={`filter-chip ${ncertClass === c ? 'active' : ''}`}
+                aria-pressed={ncertClass === c}
+                style={{
+                  flex: '0 0 calc((100% - 18px) / 4)',
+                  textAlign: 'center',
+                }}
+                onClick={() => setNcertClass(c)}
+              >
+                {CLASS_LABEL[c]}
+              </button>
+            ))}
+          </div>
+        </div>
         {lessons.isError && <QueryError lang={lang} onRetry={() => void lessons.refetch()} />}
         {lessons.isLoading && <Empty msg={t('learn.loading')} />}
         {!lessons.isError && lessons.data && lessons.data.length === 0 && <Empty msg={t('learn.empty')} />}

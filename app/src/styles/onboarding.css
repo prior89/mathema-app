@@ -1520,6 +1520,11 @@
 .cold-start-hero { box-shadow: var(--p-shadow-card); }
 
 /* Learn */
+.learn-scroll {
+  padding: 8px 22px 0;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
 .learn-intro {
   width: calc(100% - 44px);
   max-width: 936px;
@@ -1530,11 +1535,16 @@
   background: linear-gradient(135deg, #29386f, #5143e4 64%, #087d72);
   box-shadow: 0 14px 30px rgba(49,54,130,.19);
 }
+.learn-scroll .learn-intro {
+  width: 100%;
+  margin-top: 0;
+}
 .learn-intro > span { display: flex; align-items: center; gap: 6px; color: #dcd8ff; font-size: 10.5px; font-weight: 800; }
 .learn-intro h2 { margin: 7px 0 0; font-size: 20px; letter-spacing: -.035em; }
 .learn-intro p { margin: 5px 0 0; max-width: 610px; color: var(--p-hero-muted); font-size: 12px; }
 .learn-loop { width: fit-content; margin-top: 12px; display: flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 11px; background: rgba(255,255,255,.11); font-size: 11px; font-weight: 800; }
 .learn-filters { padding-top: 9px !important; }
+.learn-scroll .learn-filters { padding-top: 12px !important; }
 .chapter-path { position: relative; }
 .chapter-node {
   position: relative;
